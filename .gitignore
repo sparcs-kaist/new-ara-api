@@ -237,3 +237,7 @@ $RECYCLE.BIN/
 ### IDE ###
 
 .idea
+
+### Config ###
+
+config.cnf
