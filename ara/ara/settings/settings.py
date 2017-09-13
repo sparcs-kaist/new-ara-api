@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'debug_toolbar',
     'rest_framework',
+    'django_filters',
     'django_s3_storage',
 ]
 
