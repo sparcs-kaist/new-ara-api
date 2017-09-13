@@ -30,4 +30,5 @@ if settings.DEBUG:
 
     urlpatterns += [
         url(r'^__debug__/', include(debug_toolbar.urls)),
+        url(r'^__auth__/', include('rest_framework.urls', namespace='rest_framework'))
     ]
