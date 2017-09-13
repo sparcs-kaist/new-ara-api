@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'debug_toolbar',
     'django_s3_storage',
 ]
 
@@ -49,6 +50,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'ara.urls'
@@ -125,3 +128,10 @@ STATIC_URL = '/static/'
 # http://docs.celeryproject.org/
 
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
+
+
+# https://django-debug-toolbar.readthedocs.io/
+
+INTERNAL_IPS = (
+    '127.0.0.1',
+)

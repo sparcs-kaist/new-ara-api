@@ -4,6 +4,7 @@ boto3==1.4.7
 botocore==1.7.9
 celery==4.1.0
 Django==1.11.5
+django-debug-toolbar==1.8
 django-s3-storage==0.12.0
 docutils==0.14
 jmespath==0.9.3
@@ -14,4 +15,5 @@ pytz==2017.2
 redis==2.10.6
 s3transfer==0.1.11
 six==1.10.0
+sqlparse==0.2.3
 vine==1.1.4
