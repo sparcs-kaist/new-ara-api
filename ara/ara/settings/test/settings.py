@@ -62,3 +62,8 @@ STATIC_URL = 'https://s3.ap-northeast-2.amazonaws.com/sparcs-new-ara-api-static-
 DEFAULT_FILE_STORAGE = 'django_s3_storage.storage.S3Storage'
 
 STATICFILES_STORAGE = 'django_s3_storage.storage.StaticS3Storage'
+
+
+# https://github.com/ottoyiu/django-cors-headers
+
+CORS_ORIGIN_ALLOW_ALL = True
