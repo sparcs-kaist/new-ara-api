@@ -4,3 +4,11 @@ from apps.core.views.viewsets import *
 
 
 router = routers.SimpleRouter()
+
+
+# ArticleViewSet
+
+router.register(
+    prefix=r'articles',
+    viewset=ArticleViewSet,
+)
