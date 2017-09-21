@@ -12,3 +12,12 @@ router.register(
     prefix=r'articles',
     viewset=ArticleViewSet,
 )
+
+# CommentViewSet
+
+router.register(
+    prefix=r'comments',
+    viewset=CommentViewSet,
+)
+
+

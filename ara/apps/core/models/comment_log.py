@@ -34,7 +34,7 @@ class CommentUpdateLog(MetaDataModel):
         except AssertionError:
             raise IntegrityError('self.content and self.attachment should exist.')
 
-        super(Article, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+        super(CommentUpdateLog, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
 
 
