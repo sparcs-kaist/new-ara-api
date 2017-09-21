@@ -2,7 +2,8 @@ from django.contrib import admin
 
 from ara.classes.admin import MetaDataModelAdmin
 
-from apps.core.models import Board, Topic, Article
+from apps.core.models import Board, Topic, Article, \
+        ArticleReadLog, ArticleUpdateLog
 
 
 @admin.register(Board)
@@ -60,3 +61,41 @@ class ArticleAdmin(MetaDataModelAdmin):
         'ko_description',
         'en_description',
     )
+
+
+@admin.register(ArticleReadLog)
+class ArticleReadLogAdmin(MetaDataModelAdmin):
+    list_filter = (
+        'article',
+    )
+    list_display = (
+        'read_by',
+        'article',
+        'created_at',
+    )
+    search_fields = (
+        'read_by__username',
+    )
+
+
+@admin.register(ArticleUpdateLog)
+class ArticleUpdateLogAdmin(MetaDataModelAdmin):
+    list_filter = (
+        'is_content_sexual',
+        'is_content_social',
+        'parent_topic',
+        'parent_board',
+    )
+    list_display = (
+        'updated_by',
+        'article',
+        'is_content_sexual',
+        'is_content_social',
+        'use_signature',
+        'parent_topic',
+        'parent_board',
+    )
+    search_fields = (
+        'updated_by__username',
+    )
+
