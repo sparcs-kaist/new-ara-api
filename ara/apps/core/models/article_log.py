@@ -32,7 +32,7 @@ class ArticleUpdateLog(MetaDataModel):
     updated_by = models.ForeignKey(
         to='auth.User',
         related_name='article_update_log_set',
-        verbose_name='변경된 게시글,'
+        verbose_name='변경자,'
     )
 
     article = models.ForeignKey(
