@@ -7,11 +7,6 @@ class ArticleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
         fields = '__all__'
-        read_only_fields = (
-            'created_at',
-            'updated_at',
-            'deleted_at',
-        )
 
     from apps.core.serializers.topic import TopicSerializer
     from apps.core.serializers.board import BoardSerializer
