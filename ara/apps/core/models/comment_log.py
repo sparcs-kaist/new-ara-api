@@ -2,6 +2,7 @@ from django.db import models, IntegrityError
 
 from ara.classes.model import MetaDataModel
 
+
 class CommentUpdateLog(MetaDataModel):
     class Meta:
         verbose_name = '댓글 변경 기록'
@@ -29,12 +30,12 @@ class CommentUpdateLog(MetaDataModel):
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         try:
-            assert self.content!=None or self.attachment!=None
+            assert (self.content is None) or (self.attachment is None)
 
         except AssertionError:
             raise IntegrityError('self.content and self.attachment should exist.')
 
-        super(Article, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+        super(CommentUpdateLog, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
 
 
