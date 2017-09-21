@@ -28,6 +28,9 @@ class ArticleCreateActionSerializer(serializers.ModelSerializer):
             'parent_topic',
             'parent_board',
         )
+        read_only_fields = (
+            'id',
+        )
 
 
 class ArticleUpdateActionSerializer(serializers.ModelSerializer):
@@ -38,4 +41,7 @@ class ArticleUpdateActionSerializer(serializers.ModelSerializer):
             'content',
             'is_content_sexual',
             'is_content_social',
+        )
+        read_only_fields = (
+            'id',
         )
