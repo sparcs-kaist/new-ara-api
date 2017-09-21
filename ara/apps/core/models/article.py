@@ -5,8 +5,8 @@ from ara.classes.model import MetaDataModel
 
 class Article(MetaDataModel):
     class Meta:
-        verbose_name = '게시물'
-        verbose_name_plural = '게시물'
+        verbose_name = '문서'
+        verbose_name_plural = '문서'
 
     title = models.CharField(
         max_length=256,

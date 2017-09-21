@@ -36,8 +36,8 @@ class Migration(migrations.Migration):
                 ('parent_topic', models.ForeignKey(blank=True, default=None, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='article_set', to='core.Topic', verbose_name='말머리')),
             ],
             options={
-                'verbose_name': '게시물',
-                'verbose_name_plural': '게시물',
+                'verbose_name': '문서',
+                'verbose_name_plural': '문서',
             },
         ),
     ]
