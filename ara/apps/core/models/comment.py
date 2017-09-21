@@ -72,8 +72,10 @@ class Comment(MetaDataModel):
         return self.content
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        #print(self.parent_article)
+        #print(self.parent_comment)
         try:
-            assert self.parent_article==None != self.parent_comment==None
+            assert (self.parent_article==None) != (self.parent_comment==None)
 
         except AssertionError:
             raise IntegrityError('self.parent_article and self.parent_comment should exist exclusively.')
@@ -84,5 +86,5 @@ class Comment(MetaDataModel):
         except AssertionError:
             raise IntegrityError('self.content and self.attachment should exist.')
 
-        super(Article, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+        super(Comment, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 

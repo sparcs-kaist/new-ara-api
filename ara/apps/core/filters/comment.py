@@ -5,10 +5,16 @@ from apps.core.models import Comment
 
 class CommentFilter(filters.FilterSet):
     class Meta:
-        model = Article
+        model = Comment
         fields = {
             'content': [
                 'contains',
+            ],
+            'parent_article': [
+                'exact',
+            ],
+            'parent_comment': [
+                'exact',
             ],
             'is_anonymous': [
                 'exact',
