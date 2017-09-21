@@ -7,6 +7,7 @@ Django==1.11.5
 django-cors-headers==2.1.0
 django-debug-toolbar==1.8
 django-filter==1.0.4
+django-mysql==2.1.0
 django-s3-storage==0.12.0
 djangorestframework==3.6.4
 djangorestframework-filters==0.10.1
@@ -15,6 +16,8 @@ docutils==0.14
 jmespath==0.9.3
 kombu==4.1.0
 mysqlclient==1.3.12
+olefile==0.44
+Pillow==4.2.1
 PyJWT==1.5.3
 python-dateutil==2.6.1
 pytz==2017.2
