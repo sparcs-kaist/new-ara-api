@@ -6,6 +6,14 @@ from apps.core.views.viewsets import *
 router = routers.SimpleRouter()
 
 
+# VoteViewSet
+
+router.register(
+    prefix=r'votes',
+    viewset=VoteViewSet,
+)
+
+
 # ArticleViewSet
 
 router.register(

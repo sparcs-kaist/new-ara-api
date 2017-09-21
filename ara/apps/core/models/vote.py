@@ -42,3 +42,7 @@ class Vote(MetaDataModel):
             raise IntegrityError('self.parent_article and self.parent_comment should exist exclusively.')
 
         super(Vote, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+
+    @property
+    def parent(self):
+        return self.parent_article if self.parent_article else self.parent_comment
