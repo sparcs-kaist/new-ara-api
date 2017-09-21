@@ -16,16 +16,16 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='vote',
+            name='Vote',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('created_at', models.DateTimeField(default=None, null=True, verbose_name='생성 시간')),
                 ('updated_at', models.DateTimeField(default=None, null=True, verbose_name='수정 시간')),
                 ('deleted_at', models.DateTimeField(default=None, null=True, verbose_name='삭제 시간')),
-                ('is_up', models.BooleanField(verbose_name='찬반')),
+                ('is_positive', models.BooleanField(verbose_name='찬반')),
                 ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL, verbose_name='투표자')),
-                ('parent_article', models.ForeignKey(blank=True, default=None, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='vote', to='core.Article', verbose_name='글')),
-                ('parent_comment', models.ForeignKey(blank=True, default=None, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='vote', to='core.Comment', verbose_name='댓글')),
+                ('parent_article', models.ForeignKey(blank=True, default=None, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='vote_set', to='core.Article', verbose_name='상위 문서')),
+                ('parent_comment', models.ForeignKey(blank=True, default=None, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='vote_set', to='core.Comment', verbose_name='상위 댓글')),
             ],
             options={
                 'verbose_name_plural': '투표',
