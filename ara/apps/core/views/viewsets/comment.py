@@ -4,7 +4,7 @@ from ara.classes.viewset import ActionAPIViewSet
 
 from apps.core.models import Comment
 from apps.core.filters.comment import CommentFilter
-#from apps.core.permissions.article import ArticlePermission
+from apps.core.permissions.comment import CommentPermission
 from apps.core.serializers.comment import CommentSerializer, \
     CommentCreateActionSerializer, CommentUpdateActionSerializer
 
@@ -18,11 +18,9 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         'update': CommentUpdateActionSerializer,
         'partial_update': CommentUpdateActionSerializer,
     }
-    """
     permission_classes = (
-        ArticlePermission,
+        CommentPermission,
     )
-    """
 
     def perform_create(self, serializer):
         serializer.save(
