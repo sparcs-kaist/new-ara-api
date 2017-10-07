@@ -80,3 +80,9 @@ class Article(MetaDataModel):
             raise IntegrityError('self.parent_board should be parent_board of self.parent_topic')
 
         super(Article, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+
+    def update_vote_status(self):
+        self.positive_vote_count = self.vote_set.filter(is_positive=True).count()
+        self.negative_vote_count = self.vote_set.filter(is_positive=False).count()
+
+        self.save()

@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from rest_framework import status, viewsets, response, decorators, serializers
 
 from ara.classes.viewset import ActionAPIViewSet
 
@@ -17,6 +17,8 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         'create': CommentCreateActionSerializer,
         'update': CommentUpdateActionSerializer,
         'partial_update': CommentUpdateActionSerializer,
+        'vote_positive': serializers.Serializer,
+        'vote_negative': serializers.Serializer,
     }
     permission_classes = (
         CommentPermission,
@@ -28,15 +30,59 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         )
 
     def perform_update(self, serializer):
-        instance = serializer.instance
         from apps.core.models import CommentUpdateLog
+
+        instance = serializer.instance
+
         CommentUpdateLog.objects.create(
-            content = instance.content,
-            attachment = instance.attachment,
-            parent_comment = instance,
-            updated_by = self.request.user,
+            content=instance.content,
+            attachment=instance.attachment,
+            parent_comment=instance,
+            updated_by=self.request.user,
         )
+
         return super(CommentViewSet, self).perform_update(serializer)
 
+    @decorators.detail_route(methods=['post'])
+    def vote_positive(self, request, *args, **kwargs):
+        from apps.core.models import Vote
 
+        comment = self.get_object()
 
+        vote, created = Vote.objects.get_or_create(
+            created_by=request.user,
+            parent_comment=comment,
+            defaults={
+                'is_positive': True,
+            },
+        )
+
+        if not created:
+            vote.is_positive = True
+            vote.save()
+
+        comment.update_vote_status()
+
+        return response.Response(status=status.HTTP_200_OK)
+
+    @decorators.detail_route(methods=['post'])
+    def vote_negative(self, request, *args, **kwargs):
+        from apps.core.models import Vote
+
+        comment = self.get_object()
+
+        vote, created = Vote.objects.get_or_create(
+            created_by=request.user,
+            parent_comment=comment,
+            defaults={
+                'is_positive': False,
+            },
+        )
+
+        if not created:
+            vote.is_positive = False
+            vote.save()
+
+        comment.update_vote_status()
+
+        return response.Response(status=status.HTTP_200_OK)

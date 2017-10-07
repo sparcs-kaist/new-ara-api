@@ -1,15 +1,13 @@
-from rest_framework import viewsets
+from datetime import datetime
+
+from rest_framework import status, viewsets, response, decorators, serializers
 
 from ara.classes.viewset import ActionAPIViewSet
 
-from apps.core.models import Article, ArticleReadLog, \
-        ArticleUpdateLog
+from apps.core.models import Article, ArticleReadLog, ArticleUpdateLog
 from apps.core.filters.article import ArticleFilter
 from apps.core.permissions.article import ArticlePermission
-from apps.core.serializers.article import ArticleSerializer, \
-    ArticleCreateActionSerializer, ArticleUpdateActionSerializer
-
-from datetime import datetime
+from apps.core.serializers.article import ArticleSerializer, ArticleCreateActionSerializer, ArticleUpdateActionSerializer
 
 
 class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
@@ -20,6 +18,8 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         'create': ArticleCreateActionSerializer,
         'update': ArticleUpdateActionSerializer,
         'partial_update': ArticleUpdateActionSerializer,
+        'vote_positive': serializers.Serializer,
+        'vote_negative': serializers.Serializer,
     }
     permission_classes = (
         ArticlePermission,
@@ -57,3 +57,47 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             article_read_log.save()
 
         return super(ArticleViewSet, self).retrieve(request, *args, **kwargs)
+
+    @decorators.detail_route(methods=['post'])
+    def vote_positive(self, request, *args, **kwargs):
+        from apps.core.models import Vote
+
+        article = self.get_object()
+
+        vote, created = Vote.objects.get_or_create(
+            created_by=request.user,
+            parent_article=article,
+            defaults={
+                'is_positive': True,
+            },
+        )
+
+        if not created:
+            vote.is_positive = True
+            vote.save()
+
+        article.update_vote_status()
+
+        return response.Response(status=status.HTTP_200_OK)
+
+    @decorators.detail_route(methods=['post'])
+    def vote_negative(self, request, *args, **kwargs):
+        from apps.core.models import Vote
+
+        article = self.get_object()
+
+        vote, created = Vote.objects.get_or_create(
+            created_by=request.user,
+            parent_article=article,
+            defaults={
+                'is_positive': False,
+            },
+        )
+
+        if not created:
+            vote.is_positive = False
+            vote.save()
+
+        article.update_vote_status()
+
+        return response.Response(status=status.HTTP_200_OK)
