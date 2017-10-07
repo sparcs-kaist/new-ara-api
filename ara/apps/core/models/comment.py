@@ -8,7 +8,6 @@ class Comment(MetaDataModel):
         verbose_name = '댓글'
         verbose_name_plural = '댓글'
 
-
     content = models.TextField(
         default=None,
         verbose_name='본문',
@@ -67,24 +66,26 @@ class Comment(MetaDataModel):
        verbose_name='첨부 그림',
     )
 
-
     def __str__(self):
         return self.content
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        #print(self.parent_article)
-        #print(self.parent_comment)
         try:
-            assert (self.parent_article==None) != (self.parent_comment==None)
+            assert (self.parent_article is None) != (self.parent_comment is None)
 
         except AssertionError:
             raise IntegrityError('self.parent_article and self.parent_comment should exist exclusively.')
 
         try:
-            assert self.content!=None or self.attachment!=None
+            assert self.content is not None or self.attachment is not None
 
         except AssertionError:
             raise IntegrityError('self.content and self.attachment should exist.')
 
         super(Comment, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
+    def update_vote_status(self):
+        self.positive_vote_count = self.vote_set.filter(is_positive=True).count()
+        self.negative_vote_count = self.vote_set.filter(is_positive=False).count()
+
+        self.save()

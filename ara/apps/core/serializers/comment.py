@@ -12,6 +12,19 @@ class CommentSerializer(serializers.ModelSerializer):
 
         )
 
+    my_vote = serializers.SerializerMethodField()
+
+    def get_my_vote(self, obj):
+        from apps.core.models import Vote
+
+        try:
+            return obj.vote_set.get(
+                created_by=self.context['request'].user,
+            ).is_positive
+
+        except Vote.DoesNotExist:
+            return None
+
 
 class CommentCreateActionSerializer(serializers.ModelSerializer):
     class Meta:
