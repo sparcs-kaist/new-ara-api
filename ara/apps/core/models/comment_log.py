@@ -30,7 +30,7 @@ class CommentUpdateLog(MetaDataModel):
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         try:
-            assert (self.content is None) or (self.attachment is None)
+            assert (self.content is not None) or (self.attachment is not None)
 
         except AssertionError:
             raise IntegrityError('self.content and self.attachment should exist.')
