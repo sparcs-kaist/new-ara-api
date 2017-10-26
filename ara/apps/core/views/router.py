@@ -26,3 +26,10 @@ router.register(
     prefix=r'comments',
     viewset=CommentViewSet,
 )
+
+# ReportViewSet
+
+router.register(
+    prefix=r'reports',
+    viewset=ReportViewSet,
+)
