@@ -143,3 +143,8 @@ CELERY_BROKER_URL = 'redis://localhost:6379/0'
 INTERNAL_IPS = (
     '127.0.0.1',
 )
+
+
+LOGIN_URL = '/session/login/'
+LOGOUT_URL = '/session/logout/'
+
