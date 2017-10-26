@@ -7,7 +7,7 @@ from ara.classes.viewset import ActionAPIViewSet
 from apps.core.models import Article, ArticleReadLog, ArticleUpdateLog
 from apps.core.filters.article import ArticleFilter
 from apps.core.permissions.article import ArticlePermission
-from apps.core.serializers.article import ArticleSerializer, ArticleCreateActionSerializer, ArticleUpdateActionSerializer
+from apps.core.serializers.article import ArticleSerializer, ArticleDetailActionSerializer, ArticleCreateActionSerializer, ArticleUpdateActionSerializer
 
 
 class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
@@ -15,6 +15,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     filter_class = ArticleFilter
     serializer_class = ArticleSerializer
     action_serializer_class = {
+        'retrieve': ArticleDetailActionSerializer,
         'create': ArticleCreateActionSerializer,
         'update': ArticleUpdateActionSerializer,
         'partial_update': ArticleUpdateActionSerializer,
