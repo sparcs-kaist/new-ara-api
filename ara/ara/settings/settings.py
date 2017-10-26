@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django_s3_storage',
 
     'apps.core',
+    'apps.session',
 ]
 
 MIDDLEWARE = [
