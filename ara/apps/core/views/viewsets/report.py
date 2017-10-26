@@ -30,7 +30,7 @@ class ReportViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
     def perform_create(self, serializer):
         serializer.save(
-            created_by=self.request.user,
+            reported_by=self.request.user,
         )
 
     """

@@ -28,7 +28,7 @@ class Report(MetaDataModel):
         to='auth.User',
         verbose_name='신고자',
     )
-    content = models.BooleanField(
+    content = models.TextField(
         blank=True,
         verbose_name='내용',
     )
@@ -40,7 +40,7 @@ class Report(MetaDataModel):
         except AssertionError:
             raise IntegrityError('self.parent_article and self.parent_comment should exist exclusively.')
 
-        super(Vote, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+        super(Report, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     @property
     def parent(self):
