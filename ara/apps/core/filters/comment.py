@@ -19,12 +19,6 @@ class CommentFilter(filters.FilterSet):
             'is_anonymous': [
                 'exact',
             ],
-            'is_content_sexual': [
-                'exact',
-            ],
-            'is_content_social': [
-                'exact',
-            ],
             'created_by': [
                 'exact',
             ],

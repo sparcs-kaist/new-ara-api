@@ -17,14 +17,6 @@ class Comment(MetaDataModel):
         default=False,
         verbose_name='익명',
     )
-    is_content_sexual = models.BooleanField(
-        default=False,
-        verbose_name='성인/음란성 내용',
-    )
-    is_content_social = models.BooleanField(
-        default=False,
-        verbose_name='정치/사회성 내용',
-    )
     use_signature = models.BooleanField(
         default=True,
         verbose_name='서명 사용',
