@@ -6,6 +6,13 @@ from apps.core.views.viewsets import *
 router = routers.SimpleRouter()
 
 
+# BoardViewSet
+
+router.register(
+    prefix=r'boards',
+    viewset=BoardViewSet,
+)
+
 # ArticleViewSet
 
 router.register(
@@ -19,5 +26,3 @@ router.register(
     prefix=r'comments',
     viewset=CommentViewSet,
 )
-
-
