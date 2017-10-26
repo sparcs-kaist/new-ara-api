@@ -14,4 +14,3 @@ class ArticleUpdateLogSerializer(serializers.ModelSerializer):
 
     parent_topic = TopicSerializer()
     parent_board = BoardSerializer()
-
