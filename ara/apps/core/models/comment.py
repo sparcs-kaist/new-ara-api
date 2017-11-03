@@ -69,6 +69,12 @@ class Comment(MetaDataModel):
             raise IntegrityError('self.parent_article and self.parent_comment should exist exclusively.')
 
         try:
+            assert not self.parent_comment or not self.parent_comment.parent_comment
+
+        except AssertionError:
+            raise IntegrityError('comment of comment of comment is not allowed')
+
+        try:
             assert self.content is not None or self.attachment is not None
 
         except AssertionError:
