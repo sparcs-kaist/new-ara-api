@@ -26,3 +26,13 @@ router.register(
     prefix=r'comments',
     viewset=CommentViewSet,
 )
+
+# BlackListViewSet
+
+router.register(
+    prefix=r'blacklist',
+    viewset=BlackListViewSet,
+)
+
+
+
