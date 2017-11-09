@@ -17,14 +17,6 @@ class Comment(MetaDataModel):
         default=False,
         verbose_name='익명',
     )
-    is_content_sexual = models.BooleanField(
-        default=False,
-        verbose_name='성인/음란성 내용',
-    )
-    is_content_social = models.BooleanField(
-        default=False,
-        verbose_name='정치/사회성 내용',
-    )
     use_signature = models.BooleanField(
         default=True,
         verbose_name='서명 사용',
@@ -75,6 +67,12 @@ class Comment(MetaDataModel):
 
         except AssertionError:
             raise IntegrityError('self.parent_article and self.parent_comment should exist exclusively.')
+
+        try:
+            assert not self.parent_comment or not self.parent_comment.parent_comment
+
+        except AssertionError:
+            raise IntegrityError('comment of comment of comment is not allowed')
 
         try:
             assert self.content is not None or self.attachment is not None

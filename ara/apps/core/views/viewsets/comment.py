@@ -1,4 +1,4 @@
-from rest_framework import status, viewsets, response, decorators, serializers
+from rest_framework import status, viewsets, response, decorators, serializers, permissions
 
 from ara.classes.viewset import ActionAPIViewSet
 
@@ -23,6 +23,14 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     permission_classes = (
         CommentPermission,
     )
+    action_permission_classes = {
+        'vote_positive': (
+            permissions.IsAuthenticated,
+        ),
+        'vote_negative': (
+            permissions.IsAuthenticated,
+        ),
+    }
 
     def perform_create(self, serializer):
         serializer.save(
