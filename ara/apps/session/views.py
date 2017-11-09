@@ -20,8 +20,13 @@ sso_client = Client(settings.SSO_CLIENT_ID, settings.SSO_SECRET_KEY, is_beta=is_
 def home(request):
     user = request.user
     if user and user.is_authenticated():
-        # TODO JSON
-        return HttpResponse('works~')
+        return JsonResponse(status=200,
+                data={
+                    'user_id': user.username,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                })
+
     return HttpResponseRedirect('./login/')
 
 
@@ -45,7 +50,10 @@ def login_callback(request):
 
     # Possibility of Session Hijacked
     if state_before != state:
-        return JsonResponse(status=403, data={'msg': 'TOKEN MISMATCH: session might be hijacked!'})
+        return JsonResponse(status=403,
+                data={
+                    'msg': 'TOKEN MISMATCH: session might be hijacked!'
+                })
 
     code = request.GET.get('code')
     user_data = sso_client.get_user_info(code)
@@ -67,8 +75,7 @@ def login_callback(request):
             user=user
         )
 
-        user = authenticate(username=sid)
-        login(request, user)
+        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
         return redirect(next_path)
     else:
         user = authenticate(username=user_list[0].username)
@@ -81,15 +88,36 @@ def login_callback(request):
         login(request, user)
         return redirect(next_path)
 
-    # TODO error JSON
-    return HttpResponse("wow?")
-
 
 def user_logout(request):
-    raise NotImplementedError
+    user = request.user
+    if user and user.is_authenticated():
+        sid = UserProfile.objects.get(user=user).sid
+        redirect_url = request.GET.get('next', request.build_absolute_uri('/'))
+        logout_url = sso_client.get_logout_url(sid, redirect_url)
+        logout(request)
+        return redirect(logout_url)
+    else:
+        return JsonResponse(status=403,
+                data={'msg': 'Should login first'})
 
 
 @login_required(login_url='/session/login/')
 def unregister(request):
-    raise NotImplementedError
+    if request.method != 'POST':
+        return JsonResponse(status=405,
+                data={'msg': 'Should use POST'})
+
+    user = request.user
+    user_profile = UserProfile.objects.get(user=user)
+
+    sid = user_profile.sid
+    if sso_client.unregister(sid):
+        user_profile.delete()
+        user.delete()
+        logout(request)
+        return JsonResponse(status=200, data={})
+    else:
+        return JsonResponse(status=403,
+                data={'msg': 'Unregistered user'})
 
