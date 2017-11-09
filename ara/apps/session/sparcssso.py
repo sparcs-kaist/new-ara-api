@@ -188,3 +188,16 @@ class Client:
         elif not self._validate_sign([sid], timestamp, sign):
             raise RuntimeError('INVALID_REQUEST')
         return sid
+
+    def unregister(self, sid):
+
+        sign, timestamp = self._sign_payload([sid])
+
+        params = {
+            'client_id': self.client_id,
+            'sid': sid,
+            'timestamp': timestamp,
+            'sign': sign,
+        }
+        return self._post_data(self.URLS['unregister'], params)['success']
+
