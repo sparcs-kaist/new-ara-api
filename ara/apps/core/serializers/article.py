@@ -11,7 +11,21 @@ class ArticleSerializer(serializers.ModelSerializer):
     from apps.core.serializers.topic import TopicSerializer
     from apps.core.serializers.board import BoardSerializer
 
+    parent_topic = TopicSerializer()
+    parent_board = BoardSerializer()
+
+
+class ArticleDetailActionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Article
+        fields = '__all__'
+
+    from apps.core.serializers.topic import TopicSerializer
+    from apps.core.serializers.board import BoardSerializer
+
     my_vote = serializers.SerializerMethodField()
+    comments = serializers.SerializerMethodField()
+
     parent_topic = TopicSerializer()
     parent_board = BoardSerializer()
 
@@ -25,6 +39,14 @@ class ArticleSerializer(serializers.ModelSerializer):
 
         except Vote.DoesNotExist:
             return None
+
+    def get_comments(self, obj):
+        from apps.core.serializers.comment import CommentSerializer
+
+        return CommentSerializer(
+            obj.comment_set.all(), many=True,
+            **{'context': {'request': self.context.get('request')}}
+        ).data
 
 
 class ArticleCreateActionSerializer(serializers.ModelSerializer):

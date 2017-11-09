@@ -9,15 +9,16 @@ class CommentSerializer(serializers.ModelSerializer):
         exclude = (
             'parent_article',
             'parent_comment',
-
         )
 
-    my_vote = serializers.SerializerMethodField()
     from apps.core.serializers.comment_log import CommentUpdateLogSerializer
-    comment_update_log_set = CommentUpdateLogSerializer(
-        many = True,
-    )
 
+    my_vote = serializers.SerializerMethodField()
+    comments = serializers.SerializerMethodField()
+
+    comment_update_log_set = CommentUpdateLogSerializer(
+        many=True,
+    )
 
     def get_my_vote(self, obj):
         from apps.core.models import Vote
@@ -26,11 +27,17 @@ class CommentSerializer(serializers.ModelSerializer):
             return obj.vote_set.get(
                 created_by=self.context['request'].user,
             ).is_positive
-        except:
+
+        except Vote.DoesNotExist:
             return None
 
-        #except Vote.DoesNotExist:
-        #    return None
+    def get_comments(self, obj):
+        from apps.core.serializers.comment import CommentSerializer
+
+        return CommentSerializer(
+            obj.comment_set.all(), many=True,
+            ** {'context': {'request': self.context.get('request')}}
+        ).data
 
 
 class CommentCreateActionSerializer(serializers.ModelSerializer):
@@ -39,8 +46,6 @@ class CommentCreateActionSerializer(serializers.ModelSerializer):
         fields = (
             'content',
             'is_anonymous',
-            'is_content_sexual',
-            'is_content_social',
             'use_signature',
             'parent_article',
             'parent_comment',
@@ -53,7 +58,5 @@ class CommentUpdateActionSerializer(serializers.ModelSerializer):
         model = Comment
         fields = (
             'content',
-            'is_content_sexual',
-            'is_content_social',
             'attachment',
         )
