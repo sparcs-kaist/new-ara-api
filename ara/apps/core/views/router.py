@@ -33,3 +33,10 @@ router.register(
     prefix=r'reports',
     viewset=ReportViewSet,
 )
+
+# BlackListViewSet
+
+router.register(
+    prefix=r'blacklist',
+    viewset=BlackListViewSet,
+)
