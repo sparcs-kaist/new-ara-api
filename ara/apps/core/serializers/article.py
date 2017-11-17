@@ -73,6 +73,7 @@ class ArticleCreateActionSerializer(serializers.ModelSerializer):
             'use_signature',
             'parent_topic',
             'parent_board',
+            'attachments',
         )
         read_only_fields = (
             'id',
@@ -87,6 +88,7 @@ class ArticleUpdateActionSerializer(serializers.ModelSerializer):
             'content',
             'is_content_sexual',
             'is_content_social',
+            'attachments',
         )
         read_only_fields = (
             'id',
