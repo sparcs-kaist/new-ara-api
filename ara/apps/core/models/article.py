@@ -46,6 +46,12 @@ class Article(MetaDataModel):
         verbose_name='싫어요 수',
     )
 
+    attachments = models.ManyToManyField(
+        to='core.Attachment',
+        blank=True,
+        db_index=True,
+        verbose_name='첨부 파일(들)',
+    )
     created_by = models.ForeignKey(
         to='auth.User',
         db_index=True,

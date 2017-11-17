@@ -21,6 +21,28 @@ class Comment(MetaDataModel):
         default=True,
         verbose_name='서명 사용',
     )
+    positive_vote_count = models.IntegerField(
+        default=0,
+        verbose_name='좋아요 수',
+    )
+    negative_vote_count = models.IntegerField(
+        default=0,
+        verbose_name='싫어요 수',
+    )
+
+    attachment = models.ForeignKey(
+        to='core.Attachment',
+        null=True,
+        blank=True,
+        db_index=True,
+        verbose_name='첨부 파일',
+    )
+    created_by = models.ForeignKey(
+        to='auth.User',
+        db_index=True,
+        related_name='comment_set',
+        verbose_name='작성자',
+    )
     parent_article = models.ForeignKey(
         to='core.Article',
         default=None,
@@ -38,24 +60,6 @@ class Comment(MetaDataModel):
         db_index=True,
         related_name='comment_set',
         verbose_name='댓글',
-    )
-    created_by = models.ForeignKey(
-        to='auth.User',
-        db_index=True,
-        related_name='comment_set',
-        verbose_name='작성자',
-    )
-    positive_vote_count = models.IntegerField(
-        default=0,
-        verbose_name='좋아요 수',
-    )
-    negative_vote_count = models.IntegerField(
-        default=0,
-        verbose_name='싫어요 수',
-    )
-    attachment = models.ImageField(
-       default=None,
-       verbose_name='첨부 그림',
     )
 
     def __str__(self):

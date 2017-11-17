@@ -9,6 +9,7 @@ TYPE_CHOICES = (
     ('default', 'default'),
 )
 
+
 def get_default_data():
     return {key: '' for key in ['title', 'body', 'icon', 'click_action']}
 
