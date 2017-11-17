@@ -40,3 +40,10 @@ router.register(
     prefix=r'blacklist',
     viewset=BlackListViewSet,
 )
+
+# AttachmentViewSet
+
+router.register(
+    prefix=r'attachments',
+    viewset=AttachmentViewSet,
+)
