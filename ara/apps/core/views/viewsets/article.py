@@ -110,3 +110,18 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         article.update_vote_status()
 
         return response.Response(status=status.HTTP_200_OK)
+
+    @decorators.detail_route(methods=['post'])
+    def vote_cancel(self, request, *args, **kwargs):
+        from apps.core.models import Vote
+
+        article = self.get_object()
+
+        Vote.objects.filter(
+            created_by=request.user,
+            parent_article=article,
+        ).delete()
+
+        article.update_vote_status()
+
+        return response.Response(status=status.HTTP_200_OK)
