@@ -26,3 +26,24 @@ router.register(
     prefix=r'comments',
     viewset=CommentViewSet,
 )
+
+# ReportViewSet
+
+router.register(
+    prefix=r'reports',
+    viewset=ReportViewSet,
+)
+
+# BlackListViewSet
+
+router.register(
+    prefix=r'blacklist',
+    viewset=BlackListViewSet,
+)
+
+# AttachmentViewSet
+
+router.register(
+    prefix=r'attachments',
+    viewset=AttachmentViewSet,
+)

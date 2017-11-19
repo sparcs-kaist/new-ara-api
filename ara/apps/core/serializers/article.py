@@ -25,6 +25,7 @@ class ArticleDetailActionSerializer(serializers.ModelSerializer):
 
     my_vote = serializers.SerializerMethodField()
     comments = serializers.SerializerMethodField()
+    article_current_page = serializers.SerializerMethodField()
 
     parent_topic = TopicSerializer()
     parent_board = BoardSerializer()
@@ -48,6 +49,17 @@ class ArticleDetailActionSerializer(serializers.ModelSerializer):
             **{'context': {'request': self.context.get('request')}}
         ).data
 
+    def get_article_current_page(self, obj):
+        view = self.context.get('view')
+
+        paginator = view.paginator.django_paginator_class(view.filter_queryset(view.get_queryset()), view.paginator.page_size)
+
+        for page_number in paginator.page_range:
+            page = paginator.page(page_number)
+
+            if obj.id in [object.id for object in page.object_list]:
+                return page_number
+
 
 class ArticleCreateActionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -61,6 +73,7 @@ class ArticleCreateActionSerializer(serializers.ModelSerializer):
             'use_signature',
             'parent_topic',
             'parent_board',
+            'attachments',
         )
         read_only_fields = (
             'id',
@@ -75,6 +88,7 @@ class ArticleUpdateActionSerializer(serializers.ModelSerializer):
             'content',
             'is_content_sexual',
             'is_content_social',
+            'attachments',
         )
         read_only_fields = (
             'id',
