@@ -17,19 +17,6 @@ is_beta = [False, True][int(settings.SSO_IS_BETA)]
 sso_client = Client(settings.SSO_CLIENT_ID, settings.SSO_SECRET_KEY, is_beta=is_beta)
 
 
-def home(request):
-    user = request.user
-    if user and user.is_authenticated():
-        return JsonResponse(status=200,
-                data={
-                    'user_id': user.username,
-                    'first_name': user.first_name,
-                    'last_name': user.last_name,
-                })
-
-    return HttpResponseRedirect('./login/')
-
-
 def user_login(request):
     user = request.user
     if user and user.is_authenticated():
@@ -74,9 +61,6 @@ def login_callback(request):
             sid=sid,
             user=user
         )
-
-        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-        return redirect(next_path)
     else:
         user = authenticate(username=user_list[0].username)
         user = user_list[0]
@@ -85,8 +69,16 @@ def login_callback(request):
         user.save()
         user_profile = UserProfile.objects.get(user=user)
         user_profile.save()
-        login(request, user)
-        return redirect(next_path)
+
+    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+
+    # TODO jwt manipulation
+    try:
+        jwt = some_magic_of_raon()
+    except:
+        jwt = "NotImplemtedYet"
+    next_path = '{0}?jwt={1}'.format(next_path, jwt)
+    return redirect(next_path)
 
 
 def user_logout(request):
@@ -120,4 +112,8 @@ def unregister(request):
     else:
         return JsonResponse(status=403,
                 data={'msg': 'Unregistered user'})
+
+
+def login_test(request):
+    return JsonResponse(status=200, data={'msg': 'worked'})
 
