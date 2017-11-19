@@ -86,3 +86,9 @@ REST_FRAMEWORK = {
         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
     ),
 }
+
+
+SSO_CLIENT_ID = ''
+SSO_SECRET_KEY = ''
+SSO_IS_BETA = ''
+
