@@ -10,10 +10,32 @@ sso_client = Client(settings.SSO_CLIENT_ID, settings.SSO_SECRET_KEY, is_beta=is_
 
 
 class UserProfile(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(
+        User,
+        verbose_name='사용자',
+    )
 
     # SPARCS SSO spec
     sid = models.CharField(max_length=30)
+
+    signature = models.TextField(
+        verbose_name='서명'
+    )
+    see_sexual = models.BooleanField(
+        default=False,
+        verbose_name='성인/음란성 보기',
+    )
+    see_social = models.BooleanField(
+        default=False,
+        verbose_name='정치/사회성 보기',
+    )
+    user_nickname= models.CharField(
+        max_length=128,
+        verbose_name='닉네임',
+    )
+    profile_picture = models.ImageField(
+        verbose_name='프로필',
+    )
 
     def __str__(self):
         return self.user.username
