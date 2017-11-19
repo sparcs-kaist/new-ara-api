@@ -9,3 +9,4 @@ from .vote import *
 from .comment_log import *
 from .report import *
 from .black_list import *
+from .scrap import *
