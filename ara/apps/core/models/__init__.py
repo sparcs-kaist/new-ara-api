@@ -2,6 +2,7 @@ from .board import *
 from .topic import *
 from .article import *
 from .article_log import *
+from .attachment import *
 from .notification import *
 from .comment import *
 from .vote import *

@@ -94,3 +94,18 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         comment.update_vote_status()
 
         return response.Response(status=status.HTTP_200_OK)
+
+    @decorators.detail_route(methods=['post'])
+    def vote_cancel(self, request, *args, **kwargs):
+        from apps.core.models import Vote
+
+        comment = self.get_object()
+
+        Vote.objects.filter(
+            created_by=request.user,
+            parent_comment=comment,
+        ).delete()
+
+        comment.update_vote_status()
+
+        return response.Response(status=status.HTTP_200_OK)
