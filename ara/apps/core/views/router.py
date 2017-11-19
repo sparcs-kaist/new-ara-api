@@ -47,3 +47,13 @@ router.register(
     prefix=r'attachments',
     viewset=AttachmentViewSet,
 )
+
+# ScrapViewSet
+
+router.register(
+    prefix=r'scraps',
+    viewset=ScrapViewSet,
+)
+
+
+
