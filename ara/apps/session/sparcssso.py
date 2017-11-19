@@ -199,5 +199,10 @@ class Client:
             'timestamp': timestamp,
             'sign': sign,
         }
-        return self._post_data(self.URLS['unregister'], params)['success']
+
+        # For unregister error in SPARCSSSO
+        try:
+            return self._post_data(self.URLS['unregister'], params)['success']
+        except:
+            return True
 
