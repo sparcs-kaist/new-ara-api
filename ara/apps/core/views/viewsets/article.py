@@ -34,6 +34,16 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         ),
     }
 
+    def get_queryset(self):
+        queryset = super(ArticleViewSet, self).get_queryset()
+
+        if self.action == 'best':
+            queryset = queryset.filter(
+                best__isnull=False,
+            )
+
+        return queryset
+
     def perform_create(self, serializer):
         serializer.save(
             created_by=self.request.user,
@@ -66,6 +76,10 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             article_read_log.save()
 
         return super(ArticleViewSet, self).retrieve(request, *args, **kwargs)
+
+    @decorators.list_route(methods=['get'])
+    def best(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
 
     @decorators.detail_route(methods=['post'])
     def vote_positive(self, request, *args, **kwargs):

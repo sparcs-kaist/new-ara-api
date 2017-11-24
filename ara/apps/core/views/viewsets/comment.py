@@ -32,6 +32,16 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         ),
     }
 
+    def get_queryset(self):
+        queryset = super(CommentViewSet, self).get_queryset()
+
+        if self.action == 'best':
+            queryset = queryset.filter(
+                best__isnull=False,
+            )
+
+        return queryset
+
     def perform_create(self, serializer):
         serializer.save(
             created_by=self.request.user,
@@ -50,6 +60,10 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         )
 
         return super(CommentViewSet, self).perform_update(serializer)
+
+    @decorators.list_route(methods=['get'])
+    def best(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
 
     @decorators.detail_route(methods=['post'])
     def vote_positive(self, request, *args, **kwargs):
