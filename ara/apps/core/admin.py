@@ -3,7 +3,7 @@ from django.contrib import admin
 from ara.classes.admin import MetaDataModelAdmin
 
 from apps.core.models import Board, Topic, Article, \
-        ArticleReadLog, ArticleUpdateLog
+        ArticleReadLog, ArticleUpdateLog, BestArticle, BestComment
 
 
 @admin.register(Board)
@@ -99,3 +99,12 @@ class ArticleUpdateLogAdmin(MetaDataModelAdmin):
         'updated_by__username',
     )
 
+
+@admin.register(BestArticle)
+class BestArticleAdmin(MetaDataModelAdmin):
+    pass
+
+
+@admin.register(BestComment)
+class BestCommentAdmin(MetaDataModelAdmin):
+    pass
