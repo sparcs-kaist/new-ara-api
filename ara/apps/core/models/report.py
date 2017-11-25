@@ -7,6 +7,10 @@ class Report(MetaDataModel):
     class Meta:
         verbose_name = '신고'
         verbose_name_plural = '신고'
+        unique_together = (
+            ('parent_article', 'reported_by'),
+            ('parent_comment', 'reported_by'),
+        )
 
     parent_article = models.ForeignKey(
         to='core.Article',
