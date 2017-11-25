@@ -79,6 +79,15 @@ class ArticleCreateActionSerializer(serializers.ModelSerializer):
             'id',
         )
 
+    @property
+    def data(self):
+        if self.instance:
+            return ArticleSerializer(
+                instance=self.instance,
+            ).data
+
+        return super(ArticleCreateActionSerializer, self).data
+
 
 class ArticleUpdateActionSerializer(serializers.ModelSerializer):
     class Meta:
