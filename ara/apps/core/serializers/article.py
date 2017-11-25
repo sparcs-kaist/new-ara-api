@@ -24,6 +24,8 @@ class ArticleDetailActionSerializer(serializers.ModelSerializer):
     from apps.core.serializers.board import BoardSerializer
 
     my_vote = serializers.SerializerMethodField()
+    my_report = serializers.SerializerMethodField()
+
     comments = serializers.SerializerMethodField()
     article_current_page = serializers.SerializerMethodField()
 
@@ -39,6 +41,20 @@ class ArticleDetailActionSerializer(serializers.ModelSerializer):
             ).is_positive
 
         except Vote.DoesNotExist:
+            return None
+
+    def get_my_report(self, obj):
+        from apps.core.models import Report
+        from apps.core.serializers.report import ReportSerializer
+
+        try:
+            return ReportSerializer(
+                instance=obj.report_set.get(
+                    reported_by=self.context['request'].user,
+                ),
+            ).data
+
+        except Report.DoesNotExist:
             return None
 
     def get_comments(self, obj):
