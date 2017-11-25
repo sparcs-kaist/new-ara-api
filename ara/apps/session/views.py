@@ -7,6 +7,8 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
+from rest_framework_jwt.settings import api_settings
+
 from apps.session.sparcssso import Client
 from apps.session.models import UserProfile
 
@@ -61,6 +63,7 @@ def login_callback(request):
             sid=sid,
             user=user
         )
+        
     else:
         user = authenticate(username=user_list[0].username)
         user = user_list[0]
@@ -72,12 +75,12 @@ def login_callback(request):
 
     login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 
-    # TODO jwt manipulation
-    try:
-        jwt = some_magic_of_raon()
-    except:
-        jwt = "NotImplemtedYet"
-    next_path = '{0}?jwt={1}'.format(next_path, jwt)
+    next_path = '{0}?jwt={1}'.format(next_path, api_settings.JWT_ENCODE_HANDLER(
+        api_settings.JWT_PAYLOAD_HANDLER(
+            request.user
+        )
+    ))
+
     return redirect(next_path)
 
 
@@ -89,6 +92,7 @@ def user_logout(request):
         logout_url = sso_client.get_logout_url(sid, redirect_url)
         logout(request)
         return redirect(logout_url)
+
     else:
         return JsonResponse(status=403,
                 data={'msg': 'Should login first'})
