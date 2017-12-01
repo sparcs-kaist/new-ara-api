@@ -25,6 +25,13 @@ urlpatterns = [
 ]
 
 
+# installed apps (real environment)
+
+urlpatterns += [
+    url(r'^rest-auth/', include('rest_auth.urls')),
+]
+
+
 # installed apps (test environment)
 
 if settings.DEBUG:
@@ -32,5 +39,6 @@ if settings.DEBUG:
 
     urlpatterns += [
         url(r'^__debug__/', include(debug_toolbar.urls)),
-        url(r'^__auth__/', include('rest_framework.urls', namespace='rest_framework'))
+        url(r'^__auth__/', include('rest_framework.urls', namespace='rest_framework')),
     ]
+

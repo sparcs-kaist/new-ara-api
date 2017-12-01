@@ -1,3 +1,4 @@
+import datetime
 import configparser
 
 from ara.settings.settings import *
@@ -67,6 +68,16 @@ STATICFILES_STORAGE = 'django_s3_storage.storage.StaticS3Storage'
 # https://github.com/ottoyiu/django-cors-headers
 
 CORS_ORIGIN_ALLOW_ALL = True
+
+
+# http://getblimp.github.io/django-rest-framework-jwt/
+
+SESSION_COOKIE_AGE = 86400
+
+JWT_AUTH = {
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=SESSION_COOKIE_AGE),
+    'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(seconds=SESSION_COOKIE_AGE),
+}
 
 
 # http://www.django-rest-framework.org/

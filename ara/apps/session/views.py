@@ -3,8 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.shortcuts import redirect
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from django.shortcuts import render
+from django.http import HttpResponseRedirect, JsonResponse
 from django.views.decorators.http import require_http_methods
 
 from rest_framework_jwt.settings import api_settings
