@@ -10,8 +10,9 @@ sso_client = Client(settings.SSO_CLIENT_ID, settings.SSO_SECRET_KEY, is_beta=is_
 
 
 class UserProfile(models.Model):
-    user = models.ForeignKey(
+    user = models.OneToOneField(
         User,
+        related_name='profile',
         verbose_name='사용자',
     )
 
@@ -29,7 +30,7 @@ class UserProfile(models.Model):
         default=False,
         verbose_name='정치/사회성 보기',
     )
-    user_nickname= models.CharField(
+    user_nickname = models.CharField(
         max_length=128,
         verbose_name='닉네임',
     )

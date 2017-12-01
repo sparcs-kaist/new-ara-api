@@ -1,3 +1,4 @@
+import datetime
 import configparser
 
 from ara.settings.settings import *
@@ -70,6 +71,16 @@ CORS_ORIGIN_WHITELIST = (
     'ara.sparcs.org',
     'ara.kaist.ac.kr',
 )
+
+
+# http://getblimp.github.io/django-rest-framework-jwt/
+
+SESSION_COOKIE_AGE = 86400
+
+JWT_AUTH = {
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=SESSION_COOKIE_AGE),
+    'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(seconds=SESSION_COOKIE_AGE),
+}
 
 
 # http://www.django-rest-framework.org/
