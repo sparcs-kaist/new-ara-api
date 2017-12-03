@@ -4,7 +4,7 @@ from rest_framework import status, viewsets, response, decorators, serializers, 
 
 from ara.classes.viewset import ActionAPIViewSet
 
-from apps.core.models import Article, ArticleReadLog, ArticleUpdateLog
+from apps.core.models import Article, ArticleReadLog, ArticleUpdateLog, BlackList
 from apps.core.filters.article import ArticleFilter
 from apps.core.permissions.article import ArticlePermission
 from apps.core.serializers.article import ArticleSerializer, ArticleDetailActionSerializer, ArticleCreateActionSerializer, ArticleUpdateActionSerializer
@@ -51,6 +51,11 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             queryset = queryset.filter(
                 is_content_social=False,
             )
+
+        black_list = BlackList.objects.filter(black_from=user)
+        queryset = queryset.exclude(
+            created_by__in=[b.black_to for b in black_list]
+        )
 
         return queryset
 
