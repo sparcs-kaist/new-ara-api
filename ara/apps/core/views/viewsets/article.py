@@ -42,6 +42,16 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 best__isnull=False,
             )
 
+        user = self.request.user
+        if user.profile.see_sexual == False:
+            queryset = queryset.filter(
+                is_content_sexual=False,
+            )
+        if user.profile.see_social == False:
+            queryset = queryset.filter(
+                is_content_social=False,
+            )
+
         return queryset
 
     def perform_create(self, serializer):
