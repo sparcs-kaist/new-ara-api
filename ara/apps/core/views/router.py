@@ -54,6 +54,3 @@ router.register(
     prefix=r'scraps',
     viewset=ScrapViewSet,
 )
-
-
-

@@ -17,8 +17,3 @@ class BlackListCreateActionSerializer(serializers.ModelSerializer):
         read_only_fields = (
             'black_from',
         )
-
-
-
-
-

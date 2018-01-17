@@ -42,17 +42,17 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 best__isnull=False,
             )
 
-        user = self.request.user
-        if user.profile.see_sexual == False:
+        if not self.request.user.profile.see_sexual:
             queryset = queryset.filter(
                 is_content_sexual=False,
             )
-        if user.profile.see_social == False:
+        if not self.request.user.profile.see_social:
             queryset = queryset.filter(
                 is_content_social=False,
             )
 
-        black_list = BlackList.objects.filter(black_from=user)
+        black_list = BlackList.objects.filter(black_from=self.request.user)
+
         queryset = queryset.exclude(
             created_by__in=[b.black_to for b in black_list]
         )
