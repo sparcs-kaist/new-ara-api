@@ -19,10 +19,6 @@ sso_client = Client(settings.SSO_CLIENT_ID, settings.SSO_SECRET_KEY, is_beta=is_
 
 
 def user_login(request):
-    user = request.user
-    if user and user.is_authenticated():
-        return redirect(request.GET.get('next', '/'))
-
     request.session['next'] = request.GET.get('next', '/')
     login_url, state = sso_client.get_login_params()
     request.session['sso_state'] = state
@@ -79,6 +75,8 @@ def login_callback(request):
             request.user
         )
     ))
+
+    logout(request)
 
     return redirect(next_path)
 
