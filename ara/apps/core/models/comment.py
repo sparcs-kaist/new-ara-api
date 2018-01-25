@@ -88,6 +88,7 @@ class Comment(MetaDataModel):
 
         super(Comment, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
+    # TODO: positive_vote_count, negative_vote_count properties should be cached
     def update_vote_status(self):
         self.positive_vote_count = self.vote_set.filter(is_positive=True).count()
         self.negative_vote_count = self.vote_set.filter(is_positive=False).count()

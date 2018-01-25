@@ -89,6 +89,13 @@ class Article(MetaDataModel):
 
         super(Article, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
+    # TODO: hit_count property should be cached
+    def update_hit_count(self):
+        self.hit_count = self.article_read_log_set.count()
+
+        self.save()
+
+    # TODO: positive_vote_count, negative_vote_count properties should be cached
     def update_vote_status(self):
         self.positive_vote_count = self.vote_set.filter(is_positive=True).count()
         self.negative_vote_count = self.vote_set.filter(is_positive=False).count()
