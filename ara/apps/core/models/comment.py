@@ -84,6 +84,8 @@ class Comment(MetaDataModel):
         except AssertionError:
             raise IntegrityError('self.content and self.attachment should exist.')
 
+        self.content = self.sanitize(self.content)
+
         super(Comment, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     def update_vote_status(self):
@@ -91,3 +93,9 @@ class Comment(MetaDataModel):
         self.negative_vote_count = self.vote_set.filter(is_positive=False).count()
 
         self.save()
+
+    @staticmethod
+    def sanitize(content):
+        import bleach
+
+        return bleach.linkify(bleach.clean(content))

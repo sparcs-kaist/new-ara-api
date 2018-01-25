@@ -2,6 +2,7 @@ amqp==2.2.1
 apns2==0.3.0
 asn1crypto==0.23.0
 billiard==3.5.0.3
+bleach==2.1.2
 boto3==1.4.7
 botocore==1.7.9
 celery==4.1.0
@@ -23,6 +24,7 @@ djangorestframework-jwt==1.11.0
 docutils==0.14
 h2==2.6.2
 hpack==3.0.0
+html5lib==1.0.1
 hyper==0.7.0
 hyperframe==3.2.0
 idna==2.6
@@ -42,3 +44,4 @@ six==1.10.0
 sqlparse==0.2.3
 urllib3==1.22
 vine==1.1.4
+webencodings==0.5.1
