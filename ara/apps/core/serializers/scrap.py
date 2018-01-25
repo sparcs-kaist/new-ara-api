@@ -9,7 +9,6 @@ class ScrapSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-
 class ScrapCreateActionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Scrap
@@ -17,8 +16,3 @@ class ScrapCreateActionSerializer(serializers.ModelSerializer):
         read_only_fields = (
             'scrapped_by',
         )
-
-
-
-
-
