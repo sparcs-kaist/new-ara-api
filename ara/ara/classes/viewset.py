@@ -1,7 +1,7 @@
-from rest_framework import generics, viewsets
+from rest_framework import viewsets
 
 
-class ActionAPIViewSet(viewsets.ViewSetMixin, generics.GenericAPIView):
+class ActionAPIViewSet(viewsets.GenericViewSet):
     def get_permissions(self):
         if hasattr(self, 'action') and hasattr(self, 'action_permission_classes'):
             if self.action in self.action_permission_classes.keys():
