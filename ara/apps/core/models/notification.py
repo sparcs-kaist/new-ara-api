@@ -25,8 +25,7 @@ class Notification(MetaDataModel):
     )
 
     notification_type = models.CharField(
-        verbose_name = '알림 타입',
+        verbose_name='알림 타입',
         choices=TYPE_CHOICES,
         max_length=256,
     )
-
