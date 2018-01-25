@@ -12,10 +12,7 @@ class ReportSerializer(serializers.ModelSerializer):
 class ReportCreateActionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report
-        fields = (
-            'parent_article',
-            'parent_comment',
-            'content',
+        fields = '__all__'
+        read_only_fields = (
+            'scrapped_by',
         )
-
-
