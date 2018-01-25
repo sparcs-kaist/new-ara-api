@@ -48,8 +48,6 @@ class CommentSerializer(serializers.ModelSerializer):
             return None
 
     def get_comments(self, obj):
-        from apps.core.serializers.comment import CommentSerializer
-
         return CommentSerializer(
             obj.comment_set.all(), many=True,
             ** {'context': {'request': self.context.get('request')}}
