@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from rest_framework import status, viewsets, response, decorators, serializers, permissions
 
 from ara.classes.viewset import ActionAPIViewSet
@@ -46,6 +44,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             queryset = queryset.filter(
                 is_content_sexual=False,
             )
+
         if not self.request.user.profile.see_social:
             queryset = queryset.filter(
                 is_content_social=False,
@@ -87,7 +86,6 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         )
 
         if not created:
-            article_read_log.created_at = datetime.now()
             article_read_log.save()
 
         return super(ArticleViewSet, self).retrieve(request, *args, **kwargs)
