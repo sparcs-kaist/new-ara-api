@@ -10,7 +10,10 @@ from apps.core.serializers.comment import CommentSerializer, \
 
 
 class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
-    queryset = Comment.objects.all()
+    queryset = Comment.objects.select_related(
+        'attachment',
+        'created_by',
+    )
     filter_class = CommentFilter
     serializer_class = CommentSerializer
     action_serializer_class = {
@@ -40,7 +43,8 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 best__isnull=False,
             )
 
-        black_list = BlackList.objects.filter(black_from=user)
+        black_list = BlackList.objects.filter(black_from=self.request.user)
+
         queryset = queryset.exclude(
             created_by__in=[b.black_to for b in black_list]
         )

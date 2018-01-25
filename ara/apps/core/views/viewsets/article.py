@@ -5,11 +5,16 @@ from ara.classes.viewset import ActionAPIViewSet
 from apps.core.models import Article, ArticleReadLog, ArticleUpdateLog, BlackList
 from apps.core.filters.article import ArticleFilter
 from apps.core.permissions.article import ArticlePermission
-from apps.core.serializers.article import ArticleSerializer, ArticleDetailActionSerializer, ArticleCreateActionSerializer, ArticleUpdateActionSerializer
+from apps.core.serializers.article import ArticleSerializer, ArticleDetailActionSerializer, \
+    ArticleCreateActionSerializer, ArticleUpdateActionSerializer
 
 
 class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
-    queryset = Article.objects.all()
+    queryset = Article.objects.select_related(
+        'created_by',
+        'parent_topic',
+        'parent_board',
+    )
     filter_class = ArticleFilter
     serializer_class = ArticleSerializer
     action_serializer_class = {
