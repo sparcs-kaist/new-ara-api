@@ -12,3 +12,5 @@ from .vote import *
 from .report import *
 from .black_list import *
 from .scrap import *
+
+from .signals import *
