@@ -75,6 +75,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 SESSION_COOKIE_AGE = 86400
 
 JWT_AUTH = {
+    'JWT_ALLOW_REFRESH': True,
     'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=SESSION_COOKIE_AGE),
     'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(seconds=SESSION_COOKIE_AGE),
 }
