@@ -72,11 +72,9 @@ def login_callback(request):
         user_profile = UserProfile.objects.get(user=user)
         user_profile.save()
 
-    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-
     next_path = '{0}?jwt={1}'.format(next_path, api_settings.JWT_ENCODE_HANDLER(
         api_settings.JWT_PAYLOAD_HANDLER(
-            request.user
+            user,
         )
     ))
 
@@ -85,6 +83,7 @@ def login_callback(request):
 
 def user_logout(request):
     user = request.user
+
     if user and user.is_authenticated():
         sid = UserProfile.objects.get(user=user).sid
         redirect_url = request.GET.get('next', request.build_absolute_uri('/'))
