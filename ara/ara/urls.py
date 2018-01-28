@@ -17,22 +17,16 @@ from django.conf import settings
 from django.conf.urls import url, include
 from django.contrib import admin
 
+from rest_framework_jwt import views
+
 
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
+    url(r'^__admin__/', admin.site.urls),
+    url(r'^obtain-jwt-token/', views.obtain_jwt_token),
+    url(r'^verify-jwt-token/', views.verify_jwt_token),
+    url(r'^refresh-jwt-token/', views.refresh_jwt_token),
     url(r'^', include('apps.core.urls', namespace='core')),
     url(r'^', include('apps.session.urls', namespace='session')),
-]
-
-
-# installed apps (real environment)
-
-from rest_framework_jwt.views import refresh_jwt_token
-
-
-urlpatterns += [
-    url(r'^rest-auth/', include('rest_auth.urls')),
-    url(r'^rest-auth/api-token-refresh/', refresh_jwt_token),
 ]
 
 
@@ -43,6 +37,4 @@ if settings.DEBUG:
 
     urlpatterns += [
         url(r'^__debug__/', include(debug_toolbar.urls)),
-        url(r'^__auth__/', include('rest_framework.urls', namespace='rest_framework')),
     ]
-
