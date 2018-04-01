@@ -91,18 +91,15 @@ class ArticleCreateActionSerializer(serializers.ModelSerializer):
             'parent_board',
             'attachments',
         )
-        read_only_fields = (
-            'id',
-        )
 
     @property
     def data(self):
         if self.instance:
-            return ArticleSerializer(
+            return ArticleDetailActionSerializer(
                 instance=self.instance,
             ).data
 
-        return super(ArticleCreateActionSerializer, self).data
+        return super().data
 
 
 class ArticleUpdateActionSerializer(serializers.ModelSerializer):
@@ -115,6 +112,12 @@ class ArticleUpdateActionSerializer(serializers.ModelSerializer):
             'is_content_social',
             'attachments',
         )
-        read_only_fields = (
-            'id',
-        )
+
+    @property
+    def data(self):
+        if self.instance:
+            return ArticleDetailActionSerializer(
+                instance=self.instance,
+            ).data
+
+        return super().data
