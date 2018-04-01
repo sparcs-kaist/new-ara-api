@@ -22,15 +22,20 @@ class ArticleDetailActionSerializer(serializers.ModelSerializer):
 
     from apps.core.serializers.topic import TopicSerializer
     from apps.core.serializers.board import BoardSerializer
+    from apps.core.serializers.article_log import ArticleUpdateLogSerializer
 
     my_vote = serializers.SerializerMethodField()
     my_report = serializers.SerializerMethodField()
-
     comments = serializers.SerializerMethodField()
+
     article_current_page = serializers.SerializerMethodField()
 
     parent_topic = TopicSerializer()
     parent_board = BoardSerializer()
+    article_update_logs = ArticleUpdateLogSerializer(
+        many=True,
+        source='article_update_log_set',
+    )
 
     def get_my_vote(self, obj):
         from apps.core.models import Vote
