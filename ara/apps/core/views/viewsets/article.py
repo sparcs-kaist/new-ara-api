@@ -29,6 +29,9 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         ArticlePermission,
     )
     action_permission_classes = {
+        'vote_cancel': (
+            permissions.IsAuthenticated,
+        ),
         'vote_positive': (
             permissions.IsAuthenticated,
         ),
@@ -100,6 +103,21 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         return self.list(request, *args, **kwargs)
 
     @decorators.detail_route(methods=['post'])
+    def vote_cancel(self, request, *args, **kwargs):
+        from apps.core.models import Vote
+
+        article = self.get_object()
+
+        Vote.objects.filter(
+            created_by=request.user,
+            parent_article=article,
+        ).delete()
+
+        article.update_vote_status()
+
+        return response.Response(status=status.HTTP_200_OK)
+
+    @decorators.detail_route(methods=['post'])
     def vote_positive(self, request, *args, **kwargs):
         from apps.core.models import Vote
 
@@ -138,21 +156,6 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         if not created:
             vote.is_positive = False
             vote.save()
-
-        article.update_vote_status()
-
-        return response.Response(status=status.HTTP_200_OK)
-
-    @decorators.detail_route(methods=['post'])
-    def vote_cancel(self, request, *args, **kwargs):
-        from apps.core.models import Vote
-
-        article = self.get_object()
-
-        Vote.objects.filter(
-            created_by=request.user,
-            parent_article=article,
-        ).delete()
 
         article.update_vote_status()
 
