@@ -67,6 +67,15 @@ class CommentCreateActionSerializer(serializers.ModelSerializer):
             'attachment',
         )
 
+    @property
+    def data(self):
+        if self.instance:
+            return CommentSerializer(
+                instance=self.instance,
+            ).data
+
+        return super().data
+
 
 class CommentUpdateActionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -75,3 +84,12 @@ class CommentUpdateActionSerializer(serializers.ModelSerializer):
             'content',
             'attachment',
         )
+
+    @property
+    def data(self):
+        if self.instance:
+            return CommentSerializer(
+                instance=self.instance,
+            ).data
+
+        return super().data
