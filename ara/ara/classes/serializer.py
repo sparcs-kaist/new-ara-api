@@ -17,7 +17,7 @@ class UserDetailActionSerializer(serializers.ModelSerializer):
             'profile',
         )
 
-    from apps.session.serializers import UserProfileSerializer
+    from apps.session.serializers.user_profile import UserProfileSerializer
     profile = UserProfileSerializer(
         read_only=True,
     )

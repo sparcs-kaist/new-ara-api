@@ -13,7 +13,6 @@ from apps.session.models import UserProfile
 
 import random
 
-
 is_beta = [False, True][int(settings.SSO_IS_BETA)]
 sso_client = Client(settings.SSO_CLIENT_ID, settings.SSO_SECRET_KEY, is_beta=is_beta)
 
@@ -39,9 +38,9 @@ def login_callback(request):
     # Possibility of Session Hijacked
     if state_before != state:
         return JsonResponse(status=403,
-                data={
-                    'msg': 'TOKEN MISMATCH: session might be hijacked!'
-                })
+                            data={
+                                'msg': 'TOKEN MISMATCH: session might be hijacked!'
+                            })
 
     code = request.GET.get('code')
     user_data = sso_client.get_user_info(code)
@@ -50,19 +49,19 @@ def login_callback(request):
     user_list = User.objects.filter(username=sid)
     if not user_list:
         user = User.objects.create_user(
-                    username=sid,
-                    email=user_data['email'],
-                    password=str(random.getrandbits(32)),
-                    first_name=user_data['first_name'],
-                    last_name=user_data['last_name']
-                )
+            username=sid,
+            email=user_data['email'],
+            password=str(random.getrandbits(32)),
+            first_name=user_data['first_name'],
+            last_name=user_data['last_name']
+        )
         user.save()
 
         profile, created = UserProfile.objects.get_or_create(
             sid=sid,
             user=user
         )
-        
+
     else:
         user = authenticate(username=user_list[0].username)
         user = user_list[0]
@@ -93,14 +92,14 @@ def user_logout(request):
 
     else:
         return JsonResponse(status=403,
-                data={'msg': 'Should login first'})
+                            data={'msg': 'Should login first'})
 
 
 @login_required(login_url='/session/login/')
 def unregister(request):
     if request.method != 'POST':
         return JsonResponse(status=405,
-                data={'msg': 'Should use POST'})
+                            data={'msg': 'Should use POST'})
 
     user = request.user
     user_profile = UserProfile.objects.get(user=user)
@@ -113,9 +112,8 @@ def unregister(request):
         return JsonResponse(status=200, data={})
     else:
         return JsonResponse(status=403,
-                data={'msg': 'Unregistered user'})
+                            data={'msg': 'Unregistered user'})
 
 
 def login_test(request):
     return JsonResponse(status=200, data={'msg': 'worked'})
-
