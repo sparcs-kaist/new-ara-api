@@ -27,6 +27,9 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         CommentPermission,
     )
     action_permission_classes = {
+        'vote_cancel': (
+            permissions.IsAuthenticated,
+        ),
         'vote_positive': (
             permissions.IsAuthenticated,
         ),
@@ -75,6 +78,21 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         return self.list(request, *args, **kwargs)
 
     @decorators.detail_route(methods=['post'])
+    def vote_cancel(self, request, *args, **kwargs):
+        from apps.core.models import Vote
+
+        comment = self.get_object()
+
+        Vote.objects.filter(
+            created_by=request.user,
+            parent_comment=comment,
+        ).delete()
+
+        comment.update_vote_status()
+
+        return response.Response(status=status.HTTP_200_OK)
+
+    @decorators.detail_route(methods=['post'])
     def vote_positive(self, request, *args, **kwargs):
         from apps.core.models import Vote
 
@@ -113,21 +131,6 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         if not created:
             vote.is_positive = False
             vote.save()
-
-        comment.update_vote_status()
-
-        return response.Response(status=status.HTTP_200_OK)
-
-    @decorators.detail_route(methods=['post'])
-    def vote_cancel(self, request, *args, **kwargs):
-        from apps.core.models import Vote
-
-        comment = self.get_object()
-
-        Vote.objects.filter(
-            created_by=request.user,
-            parent_comment=comment,
-        ).delete()
 
         comment.update_vote_status()
 
