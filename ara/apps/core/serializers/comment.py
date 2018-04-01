@@ -18,8 +18,9 @@ class CommentSerializer(serializers.ModelSerializer):
 
     comments = serializers.SerializerMethodField()
 
-    comment_update_log_set = CommentUpdateLogSerializer(
+    comment_update_logs = CommentUpdateLogSerializer(
         many=True,
+        source='comment_update_log_set',
     )
 
     def get_my_vote(self, obj):
