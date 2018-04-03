@@ -7,3 +7,19 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = '__all__'
+
+
+class UserProfileUpdateActionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = (
+            'signature',
+            'see_sexual',
+            'see_social',
+            'user_nickname',
+            'profile_picture',
+        )
+
+    @property
+    def data(self):
+        return super().data
