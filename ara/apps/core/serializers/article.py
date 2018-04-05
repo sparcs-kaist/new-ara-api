@@ -14,6 +14,18 @@ class ArticleSerializer(serializers.ModelSerializer):
     parent_topic = TopicSerializer()
     parent_board = BoardSerializer()
 
+    created_by = serializers.SerializerMethodField()
+
+    def get_created_by(self, obj):
+        from apps.session.models import UserProfile
+        if not obj.is_anonymous:
+            userProfile = UserProfile.objects.filter(user = obj.created_by)
+            if userProfile.first() is None:
+                return None
+            return userProfile.first().user_nickname
+        else:
+            return "익명" 
+
 
 class ArticleDetailActionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -27,8 +39,8 @@ class ArticleDetailActionSerializer(serializers.ModelSerializer):
     my_vote = serializers.SerializerMethodField()
     my_report = serializers.SerializerMethodField()
     comments = serializers.SerializerMethodField()
-
     article_current_page = serializers.SerializerMethodField()
+    created_by = serializers.SerializerMethodField()
 
     parent_topic = TopicSerializer()
     parent_board = BoardSerializer()
@@ -36,6 +48,17 @@ class ArticleDetailActionSerializer(serializers.ModelSerializer):
         many=True,
         source='article_update_log_set',
     )
+
+    def get_created_by(self, obj):
+        from apps.session.models import UserProfile
+        if not obj.is_anonymous:
+            userProfile = UserProfile.objects.filter(user = obj.created_by)
+            if userProfile.first() is None:
+                return None
+            return userProfile.first().user_nickname
+        else:
+            return "익명"
+
 
     def get_my_vote(self, obj):
         from apps.core.models import Vote
@@ -80,7 +103,6 @@ class ArticleDetailActionSerializer(serializers.ModelSerializer):
 
             if obj.id in [object.id for object in page.object_list]:
                 return page_number
-
 
 class ArticleCreateActionSerializer(serializers.ModelSerializer):
     class Meta:
