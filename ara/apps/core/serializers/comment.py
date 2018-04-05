@@ -51,7 +51,7 @@ class CommentSerializer(serializers.ModelSerializer):
     def get_comments(self, obj):
         return CommentSerializer(
             obj.comment_set.all(), many=True,
-            ** {'context': {'request': self.context.get('request')}}
+            **{'context': {'request': self.context.get('request')}}
         ).data
 
 
@@ -67,15 +67,6 @@ class CommentCreateActionSerializer(serializers.ModelSerializer):
             'attachment',
         )
 
-    @property
-    def data(self):
-        if self.instance:
-            return CommentSerializer(
-                instance=self.instance,
-            ).data
-
-        return super().data
-
 
 class CommentUpdateActionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -84,12 +75,3 @@ class CommentUpdateActionSerializer(serializers.ModelSerializer):
             'content',
             'attachment',
         )
-
-    @property
-    def data(self):
-        if self.instance:
-            return CommentSerializer(
-                instance=self.instance,
-            ).data
-
-        return super().data

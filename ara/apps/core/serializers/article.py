@@ -97,15 +97,6 @@ class ArticleCreateActionSerializer(serializers.ModelSerializer):
             'attachments',
         )
 
-    @property
-    def data(self):
-        if self.instance:
-            return ArticleDetailActionSerializer(
-                instance=self.instance,
-            ).data
-
-        return super().data
-
 
 class ArticleUpdateActionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -117,12 +108,3 @@ class ArticleUpdateActionSerializer(serializers.ModelSerializer):
             'is_content_social',
             'attachments',
         )
-
-    @property
-    def data(self):
-        if self.instance:
-            return ArticleDetailActionSerializer(
-                instance=self.instance,
-            ).data
-
-        return super().data

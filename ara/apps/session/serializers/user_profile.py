@@ -19,7 +19,3 @@ class UserProfileUpdateActionSerializer(serializers.ModelSerializer):
             'user_nickname',
             'profile_picture',
         )
-
-    @property
-    def data(self):
-        return super().data
