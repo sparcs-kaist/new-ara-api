@@ -1,5 +1,3 @@
-from rest_framework import viewsets
-
 from ara.classes.viewset import ActionAPIViewSet
 
 from apps.session.models import UserProfile
