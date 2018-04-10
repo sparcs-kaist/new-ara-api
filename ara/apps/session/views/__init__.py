@@ -8,7 +8,8 @@ from django.views.decorators.http import require_http_methods
 
 from rest_framework_jwt.settings import api_settings
 
-from apps.session.sparcssso import Client
+from ara.classes.sparcssso import Client
+
 from apps.session.models import UserProfile
 
 import random
