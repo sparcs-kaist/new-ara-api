@@ -19,10 +19,10 @@ class ArticleSerializer(serializers.ModelSerializer):
     def get_created_by(self, obj):
         from apps.session.models import UserProfile
         if not obj.is_anonymous:
-            userProfile = UserProfile.objects.filter(user = obj.created_by)
-            if userProfile.first() is None:
+            user_profile = UserProfile.objects.filter(user=obj.created_by)
+            if user_profile.first() is None:
                 return None
-            return userProfile.first().user_nickname
+            return user_profile.first().user_nickname
         else:
             return "익명" 
 
@@ -52,13 +52,12 @@ class ArticleDetailActionSerializer(serializers.ModelSerializer):
     def get_created_by(self, obj):
         from apps.session.models import UserProfile
         if not obj.is_anonymous:
-            userProfile = UserProfile.objects.filter(user = obj.created_by)
-            if userProfile.first() is None:
+            user_profile = UserProfile.objects.filter(user=obj.created_by)
+            if user_profile.first() is None:
                 return None
-            return userProfile.first().user_nickname
+            return user_profile.first().user_nickname
         else:
             return "익명"
-
 
     def get_my_vote(self, obj):
         from apps.core.models import Vote
