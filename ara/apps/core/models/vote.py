@@ -8,8 +8,8 @@ class Vote(MetaDataModel):
         verbose_name = '투표'
         verbose_name_plural = '투표'
         unique_together = (
-            ('parent_article', 'created_by'),
-            ('parent_comment', 'created_by'),
+            ('parent_article', 'created_by', 'deleted_at'),
+            ('parent_comment', 'created_by', 'deleted_at'),
         )
 
     parent_article = models.ForeignKey(
