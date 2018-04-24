@@ -16,6 +16,6 @@ class UserProfileUpdateActionSerializer(serializers.ModelSerializer):
             'signature',
             'see_sexual',
             'see_social',
-            'user_nickname',
-            'profile_picture',
+            'nickname',
+            'picture',
         )

@@ -22,7 +22,7 @@ class ArticleSerializer(serializers.ModelSerializer):
             user_profile = UserProfile.objects.filter(user=obj.created_by)
             if user_profile.first() is None:
                 return None
-            return user_profile.first().user_nickname
+            return user_profile.first().nickname
         else:
             return "익명" 
 
@@ -55,7 +55,7 @@ class ArticleDetailActionSerializer(serializers.ModelSerializer):
             user_profile = UserProfile.objects.filter(user=obj.created_by)
             if user_profile.first() is None:
                 return None
-            return user_profile.first().user_nickname
+            return user_profile.first().nickname
         else:
             return "익명"
 
