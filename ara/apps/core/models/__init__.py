@@ -8,6 +8,7 @@ from .comment_log import *
 from .best_comment import *
 from .attachment import *
 from .notification import *
+from .notification_log import *
 from .vote import *
 from .report import *
 from .black_list import *

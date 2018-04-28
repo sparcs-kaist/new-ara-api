@@ -165,7 +165,7 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(default=None, null=True, verbose_name='생성 시간')),
                 ('updated_at', models.DateTimeField(default=None, null=True, verbose_name='수정 시간')),
                 ('deleted_at', models.DateTimeField(default=None, null=True, verbose_name='삭제 시간')),
-                ('data', django_mysql.models.JSONField(default=apps.core.models.notification.get_default_data, verbose_name='알림 JSON')),
+                ('data', django_mysql.models.JSONField(verbose_name='알림 JSON')),
                 ('notification_type', models.CharField(choices=[('default', 'default')], max_length=256, verbose_name='알림 타입')),
             ],
             options={
