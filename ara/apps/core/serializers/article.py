@@ -103,6 +103,7 @@ class ArticleDetailActionSerializer(serializers.ModelSerializer):
             if obj.id in [object.id for object in page.object_list]:
                 return page_number
 
+
 class ArticleCreateActionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article

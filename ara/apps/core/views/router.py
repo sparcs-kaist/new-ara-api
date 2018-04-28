@@ -54,3 +54,10 @@ router.register(
     prefix=r'scraps',
     viewset=ScrapViewSet,
 )
+
+# NotificationViewSet
+
+router.register(
+    prefix=r'notifications',
+    viewset=NotificationViewSet,
+)
