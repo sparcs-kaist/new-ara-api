@@ -7,8 +7,9 @@ class UserProfile(MetaDataModel):
     sid = models.CharField(max_length=30)
 
     picture = models.ImageField(
+        null=True,
         blank=True,
-        default='',
+        default=None,
         upload_to='user_profiles/pictures',
         verbose_name='프로필',
     )
