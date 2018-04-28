@@ -8,15 +8,19 @@ class UserProfile(MetaDataModel):
 
     picture = models.ImageField(
         blank=True,
+        default='',
+        upload_to='user_profiles/pictures',
         verbose_name='프로필',
     )
     nickname = models.CharField(
         blank=True,
+        default='',
         max_length=128,
         verbose_name='닉네임',
     )
     signature = models.TextField(
         blank=True,
+        default='',
         verbose_name='서명',
     )
     see_sexual = models.BooleanField(
