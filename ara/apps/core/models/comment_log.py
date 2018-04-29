@@ -38,5 +38,30 @@ class CommentUpdateLog(MetaDataModel):
         super(CommentUpdateLog, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
 
+class CommentDeleteLog(MetaDataModel):
+    class Meta:
+        verbose_name = '댓글 삭제 기록'
+        verbose_name_plural = '댓글 삭제 기록'
+
+    deleted_by = models.ForeignKey(
+        to='auth.User',
+        related_name='comment_delete_log_set',
+        verbose_name='삭제자',
+    )
+
+    comment = models.ForeignKey(
+        to='core.Comment',
+        related_name='comment_delete_log_set',
+        verbose_name='삭제된 댓글',
+    )
+
+    deleted_time = models.DateTimeField(
+        verbose_name='삭제된 시간',
+        default = timezone.now,
+    )
+
+    def __str__(self):
+        return str(self.deleted_by) + "/" + str(self.comment)
+
 
 

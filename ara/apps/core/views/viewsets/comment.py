@@ -73,6 +73,16 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         return super(CommentViewSet, self).perform_update(serializer)
 
+    def perform_destroy(self, instance):
+        from apps.core.models import CommentDeleteLog
+
+        CommentDeleteLog.objects.create(
+            deleted_by=instance.created_by,
+            comment=instance,
+        )
+
+        self.get_object().delete()
+
     @decorators.list_route(methods=['get'])
     def best(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
