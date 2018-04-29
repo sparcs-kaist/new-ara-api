@@ -241,3 +241,7 @@ $RECYCLE.BIN/
 ### Config ###
 
 config.cnf
+
+# Mac OS X
+.DS_Store
+
