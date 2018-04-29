@@ -2,7 +2,7 @@ from rest_framework import status, viewsets, response, decorators, serializers, 
 
 from ara.classes.viewset import ActionAPIViewSet
 
-from apps.core.models import Article, ArticleReadLog, ArticleUpdateLog, BlackList
+from apps.core.models import Article, ArticleReadLog, ArticleUpdateLog, ArticleDeleteLog, BlackList
 from apps.core.filters.article import ArticleFilter
 from apps.core.permissions.article import ArticlePermission
 from apps.core.serializers.article import ArticleSerializer, ArticleDetailActionSerializer, \
@@ -86,6 +86,14 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         )
 
         return super(ArticleViewSet, self).perform_update(serializer)
+
+    def perform_destroy(self, instance):
+        ArticleDeleteLog.objects.create(
+            deleted_by=instance.created_by,
+            article=instance,
+        )
+
+        return self.get_object().delete()
 
     def retrieve(self, request, *args, **kwargs):
         article_read_log, created = ArticleReadLog.objects.get_or_create(

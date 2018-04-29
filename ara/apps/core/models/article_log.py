@@ -2,6 +2,7 @@ from django.db import models
 
 from ara.classes.model import MetaDataModel
 
+from django.utils import timezone
 
 class ArticleReadLog(MetaDataModel):
     class Meta:
@@ -80,3 +81,28 @@ class ArticleUpdateLog(MetaDataModel):
     def __str__(self):
         return str(self.updated_by) + "/" + str(self.article)
 
+
+class ArticleDeleteLog(MetaDataModel):
+    class Meta:
+        verbose_name = '게시물 삭제 기록'
+        verbose_name_plural = '게시물 삭제 기록'
+
+    deleted_by = models.ForeignKey(
+        to='auth.User',
+        related_name='article_delete_log_set',
+        verbose_name='삭제자',
+    )
+
+    article = models.ForeignKey(
+        to='core.Article',
+        related_name='article_delete_log_set',
+        verbose_name='삭제된 게시글',
+    )
+
+    deleted_time = models.DateTimeField(
+        verbose_name='삭제된 시간',
+        default = timezone.now,
+    )
+
+    def __str__(self):
+        return str(self.deleted_by) + "/" + str(self.article)
