@@ -1,4 +1,5 @@
 from django.db import models, IntegrityError
+from django.utils import timezone
 
 from ara.classes.model import MetaDataModel
 
