@@ -89,11 +89,11 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
     def perform_destroy(self, instance):
         ArticleDeleteLog.objects.create(
-            deleted_by=instance.created_by,
+            deleted_by=self.request.user,
             article=instance,
         )
 
-        return self.get_object().delete()
+        return super(ArticleViewSet, self).perform_destroy(instance)
 
     def retrieve(self, request, *args, **kwargs):
         article_read_log, created = ArticleReadLog.objects.get_or_create(

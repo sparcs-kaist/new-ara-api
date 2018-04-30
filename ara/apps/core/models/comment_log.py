@@ -1,5 +1,4 @@
 from django.db import models, IntegrityError
-from django.utils import timezone
 
 from ara.classes.model import MetaDataModel
 
@@ -56,13 +55,5 @@ class CommentDeleteLog(MetaDataModel):
         verbose_name='삭제된 댓글',
     )
 
-    deleted_time = models.DateTimeField(
-        verbose_name='삭제된 시간',
-        default = timezone.now,
-    )
-
     def __str__(self):
         return str(self.deleted_by) + "/" + str(self.comment)
-
-
-

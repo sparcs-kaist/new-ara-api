@@ -99,6 +99,7 @@ class ArticleUpdateLogAdmin(MetaDataModelAdmin):
         'updated_by__username',
     )
 
+
 @admin.register(ArticleDeleteLog)
 class ArticleDeleteLogAdmin(MetaDataModelAdmin):
     list_filter = (
@@ -107,11 +108,12 @@ class ArticleDeleteLogAdmin(MetaDataModelAdmin):
     list_display = (
         'deleted_by',
         'article',
-        'deleted_time',
+        'created_at',
     )
     search_fields = (
         'deleted_by__username',
     )
+
 
 @admin.register(BestArticle)
 class BestArticleAdmin(MetaDataModelAdmin):
@@ -126,11 +128,12 @@ class CommentDeleteLogAdmin(MetaDataModelAdmin):
     list_display = (
         'deleted_by',
         'comment',
-        'deleted_time',
+        'created_at',
     )
     search_fields = (
         'deleted_by__username',
     )
+
 
 @admin.register(BestComment)
 class BestCommentAdmin(MetaDataModelAdmin):

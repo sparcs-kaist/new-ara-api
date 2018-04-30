@@ -2,7 +2,7 @@ from rest_framework import status, viewsets, response, decorators, serializers, 
 
 from ara.classes.viewset import ActionAPIViewSet
 
-from apps.core.models import Comment, BlackList
+from apps.core.models import Comment, CommentDeleteLog, BlackList
 from apps.core.filters.comment import CommentFilter
 from apps.core.permissions.comment import CommentPermission
 from apps.core.serializers.comment import CommentSerializer, \
@@ -74,14 +74,12 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         return super(CommentViewSet, self).perform_update(serializer)
 
     def perform_destroy(self, instance):
-        from apps.core.models import CommentDeleteLog
-
         CommentDeleteLog.objects.create(
-            deleted_by=instance.created_by,
+            deleted_by=self.request.user,
             comment=instance,
         )
 
-        self.get_object().delete()
+        return super(CommentViewSet, self).perform_destroy(instance)
 
     @decorators.list_route(methods=['get'])
     def best(self, request, *args, **kwargs):
