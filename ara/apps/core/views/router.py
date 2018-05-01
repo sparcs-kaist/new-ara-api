@@ -34,11 +34,11 @@ router.register(
     viewset=ReportViewSet,
 )
 
-# BlackListViewSet
+# BlockViewSet
 
 router.register(
-    prefix=r'blacklist',
-    viewset=BlackListViewSet,
+    prefix=r'blocks',
+    viewset=BlockViewSet,
 )
 
 # AttachmentViewSet

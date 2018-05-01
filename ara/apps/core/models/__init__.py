@@ -11,7 +11,7 @@ from .notification import *
 from .notification_log import *
 from .vote import *
 from .report import *
-from .black_list import *
+from .block import *
 from .scrap import *
 
 from .signals import *

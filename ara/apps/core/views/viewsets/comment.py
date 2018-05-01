@@ -2,7 +2,7 @@ from rest_framework import status, viewsets, response, decorators, serializers, 
 
 from ara.classes.viewset import ActionAPIViewSet
 
-from apps.core.models import Comment, CommentDeleteLog, BlackList
+from apps.core.models import Comment, CommentDeleteLog, Block
 from apps.core.filters.comment import CommentFilter
 from apps.core.permissions.comment import CommentPermission
 from apps.core.serializers.comment import CommentSerializer, \
@@ -46,10 +46,8 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 best__isnull=False,
             )
 
-        black_list = BlackList.objects.filter(black_from=self.request.user)
-
         queryset = queryset.exclude(
-            created_by__in=[b.black_to for b in black_list]
+            created_by__in=[block.user for block in Block.objects.filter(blocked_by=self.request.user)]
         )
 
         return queryset
