@@ -9,3 +9,4 @@ def article_read_log_post_save_signal(**kwargs):
     article_read_log = kwargs['instance']
 
     article_read_log.article.update_hit_count()
+

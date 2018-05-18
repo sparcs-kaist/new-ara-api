@@ -102,6 +102,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         if not created:
             article_read_log.save()
 
+
         return super(ArticleViewSet, self).retrieve(request, *args, **kwargs)
 
     @decorators.list_route(methods=['get'])

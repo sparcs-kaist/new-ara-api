@@ -73,6 +73,16 @@ class Article(MetaDataModel):
         related_name='article_set',
         verbose_name='게시판',
     )
+    commented_at = models.DateTimeField(
+        null=True,
+        default=None,
+        verbose_name='마지막 댓글 시간',
+    )
+    read_status = models.CharField(
+        max_length = 10,
+        default='H',
+        verbose_name='읽음 상태',
+    )
 
     def __str__(self):
         return self.title
