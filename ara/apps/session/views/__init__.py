@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -10,7 +11,7 @@ from rest_framework_jwt.settings import api_settings
 
 from ara.classes.sparcssso import Client
 
-from apps.session.models import UserProfile
+from apps.session.models import UserProfile, OldAraUser
 
 import random
 
@@ -118,3 +119,17 @@ def unregister(request):
 
 def login_test(request):
     return JsonResponse(status=200, data={'msg': 'worked'})
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def old_ara_login(request):
+    username = request.POST.get('username')
+    password = request.POST.get('password')
+
+    old_ara_user = OldAraUser.objects.filter(username=username).first()
+
+    if not old_ara_user or not old_ara_user.compare_password(password):
+        return JsonResponse(status=401, data={'success': False})
+
+    return JsonResponse(status=200, data={'success': True})

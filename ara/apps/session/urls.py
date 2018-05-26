@@ -12,4 +12,5 @@ urlpatterns = [
     url(r'^logout/$', user_logout),
     url(r'^unregister/$', unregister),
     url(r'^test/$', login_test),
+    url(r'^old-ara-login/$', old_ara_login)
 ]
