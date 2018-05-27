@@ -31,9 +31,13 @@ class ArticleSerializer(serializers.ModelSerializer):
         from apps.core.models import ArticleReadLog
         from apps.core.models import ArticleUpdateLog
 
-        user = self.context['request'].user
-
         try:
+            # user = None
+            # request = self.context['request']
+            # if request and hasattr(request, "user"):
+            #     user = request.user
+            user = self.context['request'].user
+
             article_read_log = ArticleReadLog.objects.get(
                 article=obj,
                 read_by=user
