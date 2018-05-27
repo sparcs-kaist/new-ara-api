@@ -50,4 +50,5 @@ class BoardRecentArticleActionSerializer(serializers.ModelSerializer):
         return ArticleSerializer(
             instance=obj.article_set.order_by('-id')[:5],
             many=True,
+            **{'context': {'request': self.context.get('request')}}
         ).data
