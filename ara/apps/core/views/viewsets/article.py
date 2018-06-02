@@ -73,7 +73,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         instance = serializer.instance
 
         ArticleUpdateLog.objects.create(
-            updated_by=instance.created_by,
+            updated_by=self.request.user,
             article=instance,
             content=instance.content,
             is_content_sexual=instance.is_content_sexual,
@@ -101,7 +101,6 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         if not created:
             article_read_log.save()
-
 
         return super(ArticleViewSet, self).retrieve(request, *args, **kwargs)
 
