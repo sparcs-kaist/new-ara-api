@@ -1,7 +1,8 @@
 from django.contrib import admin
 
-from apps.session.models import UserProfile, OldAraUser
 from ara.classes.admin import MetaDataModelAdmin
+
+from apps.session.models import UserProfile, OldAraUser
 
 
 @admin.register(UserProfile)
