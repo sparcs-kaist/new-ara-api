@@ -7,14 +7,16 @@ class Topic(MetaDataModel):
     class Meta:
         verbose_name = '말머리'
         verbose_name_plural = '말머리'
+        unique_together = (
+            ('ko_name', 'deleted_at'),
+            ('en_name', 'deleted_at'),
+        )
 
     ko_name = models.CharField(
-        unique=True,
         max_length=32,
         verbose_name='말머리 국문 이름',
     )
     en_name = models.CharField(
-        unique=True,
         max_length=32,
         verbose_name='말머리 영문 이름',
     )
