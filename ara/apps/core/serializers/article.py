@@ -231,6 +231,7 @@ class ArticleCreateActionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
         fields = (
+            'id',
             'title',
             'content',
             'is_anonymous',
