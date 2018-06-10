@@ -2,7 +2,7 @@ from rest_framework import status, viewsets, response, decorators, serializers, 
 
 from ara.classes.viewset import ActionAPIViewSet
 
-from apps.core.models import Article, ArticleReadLog, ArticleUpdateLog, ArticleDeleteLog, Block
+from apps.core.models import Article, ArticleReadLog, ArticleUpdateLog, ArticleDeleteLog, Vote, Block
 from apps.core.filters.article import ArticleFilter
 from apps.core.permissions.article import ArticlePermission
 from apps.core.serializers.article import ArticleSerializer, ArticleDetailActionSerializer, \
@@ -41,7 +41,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     }
 
     def get_queryset(self):
-        queryset = super(ArticleViewSet, self).get_queryset()
+        queryset = super().get_queryset()
 
         if self.action == 'best':
             queryset = queryset.filter(
@@ -83,7 +83,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             parent_board=instance.parent_board,
         )
 
-        return super(ArticleViewSet, self).perform_update(serializer)
+        return super().perform_update(serializer)
 
     def perform_destroy(self, instance):
         ArticleDeleteLog.objects.create(
@@ -91,7 +91,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             article=instance,
         )
 
-        return super(ArticleViewSet, self).perform_destroy(instance)
+        return super().perform_destroy(instance)
 
     def retrieve(self, request, *args, **kwargs):
         article_read_log, created = ArticleReadLog.objects.get_or_create(
@@ -102,7 +102,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         if not created:
             article_read_log.save()
 
-        return super(ArticleViewSet, self).retrieve(request, *args, **kwargs)
+        return super().retrieve(request, *args, **kwargs)
 
     @decorators.list_route(methods=['get'])
     def best(self, request, *args, **kwargs):
@@ -110,8 +110,6 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
     @decorators.detail_route(methods=['post'])
     def vote_cancel(self, request, *args, **kwargs):
-        from apps.core.models import Vote
-
         article = self.get_object()
 
         Vote.objects.filter(
@@ -125,11 +123,9 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
     @decorators.detail_route(methods=['post'])
     def vote_positive(self, request, *args, **kwargs):
-        from apps.core.models import Vote
-
         article = self.get_object()
 
-        vote, created = Vote.objects.get_or_create(
+        Vote.objects.update_or_create(
             created_by=request.user,
             parent_article=article,
             defaults={
@@ -137,31 +133,21 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             },
         )
 
-        if not created:
-            vote.is_positive = True
-            vote.save()
-
         article.update_vote_status()
 
         return response.Response(status=status.HTTP_200_OK)
 
     @decorators.detail_route(methods=['post'])
     def vote_negative(self, request, *args, **kwargs):
-        from apps.core.models import Vote
-
         article = self.get_object()
 
-        vote, created = Vote.objects.get_or_create(
+        Vote.objects.update_or_create(
             created_by=request.user,
             parent_article=article,
             defaults={
                 'is_positive': False,
             },
         )
-
-        if not created:
-            vote.is_positive = False
-            vote.save()
 
         article.update_vote_status()
 
