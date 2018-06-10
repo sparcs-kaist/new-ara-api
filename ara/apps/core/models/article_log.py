@@ -1,3 +1,5 @@
+import datetime
+
 from django.db import models
 
 from ara.classes.model import MetaDataModel
@@ -19,6 +21,10 @@ class ArticleReadLog(MetaDataModel):
         related_name='article_read_log_set',
         verbose_name='조회된 게시글',
     )
+
+    @property
+    def last_read_at(self):
+        return self.updated_at if self.updated_at != datetime.datetime.min else self.created_at
 
     def __str__(self):
         return str(self.read_by) + "/" + str(self.article)

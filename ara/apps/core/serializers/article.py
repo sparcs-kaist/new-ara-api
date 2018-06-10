@@ -1,15 +1,17 @@
 from rest_framework import serializers
 
-from apps.core.models import Article
+from apps.core.models import Article, ArticleReadLog, ArticleUpdateLog, Report, Vote
+from apps.core.serializers.article_log import ArticleUpdateLogSerializer
+from apps.core.serializers.board import BoardSerializer
+from apps.core.serializers.comment import CommentSerializer
+from apps.core.serializers.topic import TopicSerializer
+from apps.core.serializers.report import ReportSerializer
 
 
 class ArticleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
         fields = '__all__'
-
-    from apps.core.serializers.topic import TopicSerializer
-    from apps.core.serializers.board import BoardSerializer
 
     parent_topic = TopicSerializer()
     parent_board = BoardSerializer()
@@ -24,75 +26,36 @@ class ArticleSerializer(serializers.ModelSerializer):
         return obj.created_by.profile.nickname
 
     def get_read_status(self, obj):
-        from apps.core.models import ArticleReadLog
-        from apps.core.models import ArticleUpdateLog
+        user = self.context['request'].user
 
         try:
-            user = self.context['request'].user
-
             article_read_log = ArticleReadLog.objects.get(
                 article=obj,
                 read_by=user
             )
 
-            article_update_log_set = ArticleUpdateLog.objects.filter(
-                article=obj,
-            )
-
-            if obj.commented_at:
-                if article_update_log_set:
-                    article_update_log = article_update_log_set.order_by('created_at')[0]
-                    if article_read_log.updated_at:
-                        if article_read_log.updated_at < article_update_log.updated_at \
-                                or article_read_log.updated_at < obj.commented_at:
-                            return 'U'
-                    else:
-                        if article_read_log.created_at < article_update_log.updated_at \
-                                or article_read_log.created_at < obj.commented_at:
-                            return 'U'
-
-                else:
-                    if article_read_log.updated_at:
-                        if article_read_log.updated_at < obj.created_at \
-                                or article_read_log.updated_at < obj.commented_at:
-                            return 'U'
-                    else:
-                        if article_read_log.created_at < obj.created_at \
-                                or article_read_log.created_at < obj.commented_at:
-                            return 'U'
-
-            else:
-                if article_update_log_set:
-                    article_update_log = article_update_log_set.order_by('created_at')[0]
-                    if article_read_log.updated_at:
-                        if article_read_log.updated_at < article_update_log.updated_at:
-                            return 'U'
-                    else:
-                        if article_read_log.created_at < article_update_log.updated_at:
-                            return 'U'
-
-                else:
-                    if article_read_log.updated_at:
-                        if article_read_log.updated_at < obj.created_at:
-                            return 'U'
-                    else:
-                        if article_read_log.created_at < obj.created_at:
-                            return 'U'
-
-            return '-'
-
         except ArticleReadLog.DoesNotExist:
             return 'N'
+
+        last_article_update_log = ArticleUpdateLog.objects.order_by('created_at').filter(
+            article=obj,
+        ).last()
+
+        if last_article_update_log:
+            if last_article_update_log.created_at > article_read_log.last_read_at:
+                return 'U'
+
+        if obj.commented_at:
+            if obj.commented_at > article_read_log.last_read_at:
+                return 'U'
+
+        return '-'
 
 
 class ArticleDetailActionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
         fields = '__all__'
-
-    from apps.core.serializers.topic import TopicSerializer
-    from apps.core.serializers.board import BoardSerializer
-    from apps.core.serializers.article_log import ArticleUpdateLogSerializer
 
     my_vote = serializers.SerializerMethodField()
     my_report = serializers.SerializerMethodField()
@@ -117,7 +80,6 @@ class ArticleDetailActionSerializer(serializers.ModelSerializer):
         return obj.created_by.profile.nickname
 
     def get_my_vote(self, obj):
-        from apps.core.models import Vote
 
         try:
             return obj.vote_set.get(
@@ -128,8 +90,6 @@ class ArticleDetailActionSerializer(serializers.ModelSerializer):
             return None
 
     def get_my_report(self, obj):
-        from apps.core.models import Report
-        from apps.core.serializers.report import ReportSerializer
 
         try:
             return ReportSerializer(
@@ -142,8 +102,6 @@ class ArticleDetailActionSerializer(serializers.ModelSerializer):
             return None
 
     def get_comments(self, obj):
-        from apps.core.serializers.comment import CommentSerializer
-
         return CommentSerializer(
             obj.comment_set.all(), many=True,
             **{'context': {'request': self.context.get('request')}}
@@ -161,9 +119,6 @@ class ArticleDetailActionSerializer(serializers.ModelSerializer):
                 return page_number
 
     def get_read_status(self, obj):
-        from apps.core.models import ArticleReadLog
-        from apps.core.models import ArticleUpdateLog
-
         user = self.context['request'].user
 
         try:
@@ -172,54 +127,23 @@ class ArticleDetailActionSerializer(serializers.ModelSerializer):
                 read_by=user
             )
 
-            article_update_log_set = ArticleUpdateLog.objects.filter(
-                article=obj,
-            )
-
-            if obj.commented_at:
-                if article_update_log_set:
-                    article_update_log = article_update_log_set.order_by('created_at')[0]
-                    if article_read_log.updated_at:
-                        if article_read_log.updated_at < article_update_log.updated_at \
-                                or article_read_log.updated_at < obj.commented_at:
-                            return 'U'
-                    else:
-                        if article_read_log.created_at < article_update_log.updated_at \
-                                or article_read_log.created_at < obj.commented_at:
-                            return 'U'
-
-                else:
-                    if article_read_log.updated_at:
-                        if article_read_log.updated_at < obj.created_at \
-                                or article_read_log.updated_at < obj.commented_at:
-                            return 'U'
-                    else:
-                        if article_read_log.created_at < obj.created_at \
-                                or article_read_log.created_at < obj.commented_at:
-                            return 'U'
-
-            else:
-                if article_update_log_set:
-                    article_update_log = article_update_log_set.order_by('created_at')[0]
-                    if article_read_log.updated_at:
-                        if article_read_log.updated_at < article_update_log.updated_at:
-                            return 'U'
-                    else:
-                        if article_read_log.created_at < article_update_log.updated_at:
-                            return 'U'
-
-                else:
-                    if article_read_log.updated_at:
-                        if article_read_log.updated_at < obj.created_at:
-                            return 'U'
-                    else:
-                        if article_read_log.created_at < obj.created_at:
-                            return 'U'
-
-            return '-'
-
         except ArticleReadLog.DoesNotExist:
             return 'N'
+
+        last_article_update_log = ArticleUpdateLog.objects.order_by('created_at').filter(
+            article=obj,
+        ).last()
+
+        if last_article_update_log:
+            if last_article_update_log.created_at > article_read_log.last_read_at:
+                return 'U'
+
+        if obj.commented_at:
+            if obj.commented_at > article_read_log.last_read_at:
+                return 'U'
+
+        return '-'
+
 
 class ArticleCreateActionSerializer(serializers.ModelSerializer):
     class Meta:
