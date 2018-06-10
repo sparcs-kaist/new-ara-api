@@ -18,14 +18,10 @@ class ArticleSerializer(serializers.ModelSerializer):
     read_status = serializers.SerializerMethodField()
 
     def get_created_by(self, obj):
-        from apps.session.models import UserProfile
-        if not obj.is_anonymous:
-            user_profile = UserProfile.objects.filter(user=obj.created_by)
-            if user_profile.first() is None:
-                return None
-            return user_profile.first().nickname
-        else:
-            return "익명"
+        if obj.is_anonymous:
+            return '익명'
+
+        return obj.created_by.profile.nickname
 
     def get_read_status(self, obj):
         from apps.core.models import ArticleReadLog
@@ -112,15 +108,13 @@ class ArticleDetailActionSerializer(serializers.ModelSerializer):
         source='article_update_log_set',
     )
 
+    list_serializer_class = ArticleSerializer
+
     def get_created_by(self, obj):
-        from apps.session.models import UserProfile
-        if not obj.is_anonymous:
-            user_profile = UserProfile.objects.filter(user=obj.created_by)
-            if user_profile.first() is None:
-                return None
-            return user_profile.first().nickname
-        else:
-            return "익명"
+        if obj.is_anonymous:
+            return '익명'
+
+        return obj.created_by.profile.nickname
 
     def get_my_vote(self, obj):
         from apps.core.models import Vote
