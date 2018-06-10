@@ -224,27 +224,34 @@ class ArticleDetailActionSerializer(serializers.ModelSerializer):
 class ArticleCreateActionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
-        fields = (
-            'id',
-            'title',
-            'content',
-            'is_anonymous',
-            'is_content_sexual',
-            'is_content_social',
-            'use_signature',
-            'parent_topic',
-            'parent_board',
-            'attachments',
+        fields = '__all__'
+        read_only_fields = (
+            'hit_count',
+            'positive_vote_count',
+            'negative_vote_count',
+            'created_by',
+            'created_at',
+            'updated_at',
+            'deleted_at',
+            'commented_at',
         )
 
 
 class ArticleUpdateActionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
-        fields = (
-            'title',
-            'content',
-            'is_content_sexual',
-            'is_content_social',
-            'attachments',
+        fields = '__all__'
+        read_only_fields = (
+            'is_anonymous',
+            'use_signature',
+            'hit_count',
+            'positive_vote_count',
+            'negative_vote_count',
+            'created_by',
+            'parent_topic',
+            'parent_board',
+            'created_at',
+            'updated_at',
+            'deleted_at',
+            'commented_at',
         )
