@@ -1,3 +1,5 @@
+import bleach
+
 from django.db import models, IntegrityError
 
 from ara.classes.model import MetaDataModel
@@ -46,12 +48,6 @@ class Article(MetaDataModel):
         verbose_name='싫어요 수',
     )
 
-    attachments = models.ManyToManyField(
-        to='core.Attachment',
-        blank=True,
-        db_index=True,
-        verbose_name='첨부 파일(들)',
-    )
     created_by = models.ForeignKey(
         to='auth.User',
         db_index=True,
@@ -73,15 +69,18 @@ class Article(MetaDataModel):
         related_name='article_set',
         verbose_name='게시판',
     )
+
+    attachments = models.ManyToManyField(
+        to='core.Attachment',
+        blank=True,
+        db_index=True,
+        verbose_name='첨부 파일(들)',
+    )
+
     commented_at = models.DateTimeField(
         null=True,
         default=None,
         verbose_name='마지막 댓글 시간',
-    )
-    read_status = models.CharField(
-        max_length = 10,
-        default='H',
-        verbose_name='읽음 상태',
     )
 
     def __str__(self):
@@ -97,7 +96,7 @@ class Article(MetaDataModel):
 
         self.content = self.sanitize(self.content)
 
-        super(Article, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+        super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     # TODO: hit_count property should be cached
     def update_hit_count(self):
@@ -114,6 +113,6 @@ class Article(MetaDataModel):
 
     @staticmethod
     def sanitize(content):
-        import bleach
         allowed_tags = bleach.ALLOWED_TAGS + [u'p', u'pre', u'span', u'h1', u'h2', u'br']
+
         return bleach.linkify(bleach.clean(content, tags=allowed_tags))
