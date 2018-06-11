@@ -94,12 +94,17 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         return super().perform_destroy(instance)
 
     def retrieve(self, request, *args, **kwargs):
+        article = self.get_object()
+
         article_read_log, created = ArticleReadLog.objects.get_or_create(
             read_by=self.request.user,
-            article=self.get_object(),
+            article=article,
         )
 
-        if not created:
+        if created:
+            article.update_hit_count()
+
+        else:
             article_read_log.save()
 
         return super().retrieve(request, *args, **kwargs)
