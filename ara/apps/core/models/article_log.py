@@ -33,10 +33,10 @@ class ArticleReadLog(MetaDataModel):
 
 class ArticleUpdateLogQuerySet(MetaDataQuerySet):
     def create(self, article, updated_by):
-        from apps.core.serializers.article import ArticleSerializer
+        from apps.core.serializers.article import BaseArticleSerializer
 
         return super().create(**{
-            'data': ArticleSerializer(article).data,
+            'data': BaseArticleSerializer(article).data,
             'article': article,
             'updated_by': updated_by,
         })

@@ -9,8 +9,4 @@ class ArticleUpdateLogSerializer(serializers.ModelSerializer):
         model = ArticleUpdateLog
         fields = '__all__'
 
-    from apps.core.serializers.topic import TopicSerializer
-    from apps.core.serializers.board import BoardSerializer
-
-    parent_topic = TopicSerializer()
-    parent_board = BoardSerializer()
+    data = serializers.JSONField()
