@@ -9,4 +9,4 @@ class CommentUpdateLogSerializer(serializers.ModelSerializer):
         model = CommentUpdateLog
         fields = '__all__'
 
-
+    data = serializers.JSONField()

@@ -7,10 +7,10 @@ from ara.classes.model import MetaDataModel, MetaDataManager, MetaDataQuerySet
 
 class CommentUpdateLogQuerySet(MetaDataQuerySet):
     def create(self, comment, updated_by):
-        from apps.core.serializers.comment import CommentSerializer
+        from apps.core.serializers.comment import BaseCommentSerializer
 
         return super().create(**{
-            'data': CommentSerializer(comment).data,
+            'data': BaseCommentSerializer(comment).data,
             'comment': comment,
             'updated_by': updated_by,
         })
