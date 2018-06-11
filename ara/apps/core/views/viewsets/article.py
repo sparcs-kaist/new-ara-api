@@ -75,12 +75,6 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         ArticleUpdateLog.objects.create(
             updated_by=self.request.user,
             article=instance,
-            content=instance.content,
-            is_content_sexual=instance.is_content_sexual,
-            is_content_social=instance.is_content_social,
-            use_signature=instance.use_signature,
-            parent_topic=instance.parent_topic,
-            parent_board=instance.parent_board,
         )
 
         return super().perform_update(serializer)

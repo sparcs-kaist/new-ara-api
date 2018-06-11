@@ -63,10 +63,8 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         instance = serializer.instance
 
         CommentUpdateLog.objects.create(
-            content=instance.content,
-            attachment=instance.attachment,
-            parent_comment=instance,
             updated_by=self.request.user,
+            comment=instance,
         )
 
         return super().perform_update(serializer)

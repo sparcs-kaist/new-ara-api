@@ -1,6 +1,23 @@
-from django.db import models, IntegrityError
+from django.db import models
 
-from ara.classes.model import MetaDataModel
+from django_mysql.models import JSONField
+
+from ara.classes.model import MetaDataModel, MetaDataManager, MetaDataQuerySet
+
+from apps.core.serializers.comment import CommentSerializer
+
+
+class CommentUpdateLogQuerySet(MetaDataQuerySet):
+    def create(self, comment, updated_by):
+        return super().create(**{
+            'data': CommentSerializer(comment).data,
+            'comment': comment,
+            'updated_by': updated_by,
+        })
+
+
+class CommentUpdateLogManager(MetaDataManager):
+    pass
 
 
 class CommentUpdateLog(MetaDataModel):
@@ -8,34 +25,23 @@ class CommentUpdateLog(MetaDataModel):
         verbose_name = '댓글 변경 기록'
         verbose_name_plural = '댓글 변경 기록'
 
+    objects = CommentUpdateLogManager.from_queryset(queryset_class=CommentUpdateLogQuerySet)()
+
+    data = JSONField()
+
     updated_by = models.ForeignKey(
         to='auth.User',
         related_name='comment_update_log_set',
         verbose_name='변경자',
     )
-
-    content = models.TextField(
-        default=None,
-        verbose_name='본문',
-    )
-    attachment = models.ImageField(
-        default=None,
-        verbose_name='첨부 그림',
-    )
-    parent_comment = models.ForeignKey(
+    comment = models.ForeignKey(
         to='core.Comment',
         related_name='comment_update_log_set',
         verbose_name='변경된 댓글',
     )
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        try:
-            assert (self.content is not None) or (self.attachment is not None)
-
-        except AssertionError:
-            raise IntegrityError('self.content and self.attachment should exist.')
-
-        super(CommentUpdateLog, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+    def __str__(self):
+        return str(self.updated_by) + "/" + str(self.comment)
 
 
 class CommentDeleteLog(MetaDataModel):
@@ -48,7 +54,6 @@ class CommentDeleteLog(MetaDataModel):
         related_name='comment_delete_log_set',
         verbose_name='삭제자',
     )
-
     comment = models.ForeignKey(
         to='core.Comment',
         related_name='comment_delete_log_set',

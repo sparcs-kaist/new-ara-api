@@ -78,28 +78,6 @@ class ArticleReadLogAdmin(MetaDataModelAdmin):
     )
 
 
-@admin.register(ArticleUpdateLog)
-class ArticleUpdateLogAdmin(MetaDataModelAdmin):
-    list_filter = (
-        'is_content_sexual',
-        'is_content_social',
-        'parent_topic',
-        'parent_board',
-    )
-    list_display = (
-        'updated_by',
-        'article',
-        'is_content_sexual',
-        'is_content_social',
-        'use_signature',
-        'parent_topic',
-        'parent_board',
-    )
-    search_fields = (
-        'updated_by__username',
-    )
-
-
 @admin.register(ArticleDeleteLog)
 class ArticleDeleteLogAdmin(MetaDataModelAdmin):
     list_filter = (

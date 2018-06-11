@@ -2,7 +2,11 @@ import datetime
 
 from django.db import models
 
-from ara.classes.model import MetaDataModel
+from django_mysql.models import JSONField
+
+from ara.classes.model import MetaDataModel, MetaDataManager, MetaDataQuerySet
+
+from apps.core.serializers.article import ArticleSerializer
 
 
 class ArticleReadLog(MetaDataModel):
@@ -15,7 +19,6 @@ class ArticleReadLog(MetaDataModel):
         related_name='article_read_log_set',
         verbose_name='조회자',
     )
-
     article = models.ForeignKey(
         to='core.Article',
         related_name='article_read_log_set',
@@ -30,57 +33,37 @@ class ArticleReadLog(MetaDataModel):
         return str(self.read_by) + "/" + str(self.article)
 
 
+class ArticleUpdateLogQuerySet(MetaDataQuerySet):
+    def create(self, article, updated_by):
+        return super().create(**{
+            'data': ArticleSerializer(article).data,
+            'article': article,
+            'updated_by': updated_by,
+        })
+
+
+class ArticleUpdateLogManager(MetaDataManager):
+    pass
+
+
 class ArticleUpdateLog(MetaDataModel):
     class Meta:
         verbose_name = '게시물 변경 기록'
         verbose_name_plural = '게시물 변경 기록'
+
+    objects = ArticleUpdateLogManager.from_queryset(queryset_class=ArticleUpdateLogQuerySet)()
+
+    data = JSONField()
 
     updated_by = models.ForeignKey(
         to='auth.User',
         related_name='article_update_log_set',
         verbose_name='변경자',
     )
-
     article = models.ForeignKey(
         to='core.Article',
         related_name='article_update_log_set',
         verbose_name='변경된 게시글',
-    )
-
-    content = models.TextField(
-        verbose_name='본문',
-    )
-
-    is_content_sexual = models.BooleanField(
-        default=False,
-        verbose_name='성인/음란성 내용',
-    )
-
-    is_content_social = models.BooleanField(
-        default=False,
-        verbose_name='정치/사회성 내용',
-    )
-
-    use_signature = models.BooleanField(
-        default=True,
-        verbose_name='서명 사용',
-    )
-
-    parent_topic = models.ForeignKey(
-        to='core.Topic',
-        null=True,
-        blank=True,
-        default=None,
-        db_index=True,
-        related_name='article_update_log_set',
-        verbose_name='말머리',
-    )
-
-    parent_board = models.ForeignKey(
-        to='core.Board',
-        db_index=True,
-        related_name='article_update_log_set',
-        verbose_name='게시판',
     )
 
     def __str__(self):
@@ -97,7 +80,6 @@ class ArticleDeleteLog(MetaDataModel):
         related_name='article_delete_log_set',
         verbose_name='삭제자',
     )
-
     article = models.ForeignKey(
         to='core.Article',
         related_name='article_delete_log_set',
