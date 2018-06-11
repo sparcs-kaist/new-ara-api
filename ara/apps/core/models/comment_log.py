@@ -4,11 +4,11 @@ from django_mysql.models import JSONField
 
 from ara.classes.model import MetaDataModel, MetaDataManager, MetaDataQuerySet
 
-from apps.core.serializers.comment import CommentSerializer
-
 
 class CommentUpdateLogQuerySet(MetaDataQuerySet):
     def create(self, comment, updated_by):
+        from apps.core.serializers.comment import CommentSerializer
+
         return super().create(**{
             'data': CommentSerializer(comment).data,
             'comment': comment,

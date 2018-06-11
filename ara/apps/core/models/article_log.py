@@ -6,8 +6,6 @@ from django_mysql.models import JSONField
 
 from ara.classes.model import MetaDataModel, MetaDataManager, MetaDataQuerySet
 
-from apps.core.serializers.article import ArticleSerializer
-
 
 class ArticleReadLog(MetaDataModel):
     class Meta:
@@ -35,6 +33,8 @@ class ArticleReadLog(MetaDataModel):
 
 class ArticleUpdateLogQuerySet(MetaDataQuerySet):
     def create(self, article, updated_by):
+        from apps.core.serializers.article import ArticleSerializer
+
         return super().create(**{
             'data': ArticleSerializer(article).data,
             'article': article,
