@@ -115,7 +115,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         article = self.get_object()
 
         Vote.objects.filter(
-            created_by=request.user,
+            voted_by=request.user,
             parent_article=article,
         ).delete()
 
@@ -128,7 +128,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         article = self.get_object()
 
         Vote.objects.update_or_create(
-            created_by=request.user,
+            voted_by=request.user,
             parent_article=article,
             defaults={
                 'is_positive': True,
@@ -144,7 +144,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         article = self.get_object()
 
         Vote.objects.update_or_create(
-            created_by=request.user,
+            voted_by=request.user,
             parent_article=article,
             defaults={
                 'is_positive': False,

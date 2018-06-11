@@ -83,7 +83,7 @@ class ArticleDetailActionSerializer(serializers.ModelSerializer):
 
         try:
             return obj.vote_set.get(
-                created_by=self.context['request'].user,
+                voted_by=self.context['request'].user,
             ).is_positive
 
         except Vote.DoesNotExist:

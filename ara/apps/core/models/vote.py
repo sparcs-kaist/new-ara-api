@@ -8,10 +8,18 @@ class Vote(MetaDataModel):
         verbose_name = '투표'
         verbose_name_plural = '투표'
         unique_together = (
-            ('parent_article', 'created_by', 'deleted_at'),
-            ('parent_comment', 'created_by', 'deleted_at'),
+            ('parent_article', 'voted_by', 'deleted_at'),
+            ('parent_comment', 'voted_by', 'deleted_at'),
         )
 
+    is_positive = models.BooleanField(
+        verbose_name='찬반',
+    )
+
+    voted_by = models.ForeignKey(
+        to='auth.User',
+        verbose_name='투표자',
+    )
     parent_article = models.ForeignKey(
         to='core.Article',
         default=None,
@@ -29,13 +37,6 @@ class Vote(MetaDataModel):
         db_index=True,
         related_name='vote_set',
         verbose_name='상위 댓글',
-    )
-    created_by = models.ForeignKey(
-        to='auth.User',
-        verbose_name='투표자',
-    )
-    is_positive = models.BooleanField(
-        verbose_name='찬반',
     )
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):

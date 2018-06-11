@@ -88,7 +88,7 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         comment = self.get_object()
 
         Vote.objects.filter(
-            created_by=request.user,
+            voted_by=request.user,
             parent_comment=comment,
         ).delete()
 
@@ -101,7 +101,7 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         comment = self.get_object()
 
         Vote.objects.update_or_create(
-            created_by=request.user,
+            voted_by=request.user,
             parent_comment=comment,
             defaults={
                 'is_positive': True,
@@ -117,7 +117,7 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         comment = self.get_object()
 
         Vote.objects.update_or_create(
-            created_by=request.user,
+            voted_by=request.user,
             parent_comment=comment,
             defaults={
                 'is_positive': False,
