@@ -2,7 +2,7 @@ from rest_framework import status, viewsets, response, decorators, serializers, 
 
 from ara.classes.viewset import ActionAPIViewSet
 
-from apps.core.models import Comment, CommentDeleteLog, Block
+from apps.core.models import Block, Comment, CommentDeleteLog, Vote
 from apps.core.filters.comment import CommentFilter
 from apps.core.permissions.comment import CommentPermission
 from apps.core.serializers.comment import CommentSerializer, \
@@ -39,7 +39,7 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     }
 
     def get_queryset(self):
-        queryset = super(CommentViewSet, self).get_queryset()
+        queryset = super().get_queryset()
 
         if self.action == 'best':
             queryset = queryset.filter(
@@ -69,7 +69,7 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             updated_by=self.request.user,
         )
 
-        return super(CommentViewSet, self).perform_update(serializer)
+        return super().perform_update(serializer)
 
     def perform_destroy(self, instance):
         CommentDeleteLog.objects.create(
@@ -77,7 +77,7 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             comment=instance,
         )
 
-        return super(CommentViewSet, self).perform_destroy(instance)
+        return super().perform_destroy(instance)
 
     @decorators.list_route(methods=['get'])
     def best(self, request, *args, **kwargs):
@@ -85,8 +85,6 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
     @decorators.detail_route(methods=['post'])
     def vote_cancel(self, request, *args, **kwargs):
-        from apps.core.models import Vote
-
         comment = self.get_object()
 
         Vote.objects.filter(
@@ -100,11 +98,9 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
     @decorators.detail_route(methods=['post'])
     def vote_positive(self, request, *args, **kwargs):
-        from apps.core.models import Vote
-
         comment = self.get_object()
 
-        vote, created = Vote.objects.get_or_create(
+        Vote.objects.update_or_create(
             created_by=request.user,
             parent_comment=comment,
             defaults={
@@ -112,31 +108,21 @@ class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             },
         )
 
-        if not created:
-            vote.is_positive = True
-            vote.save()
-
         comment.update_vote_status()
 
         return response.Response(status=status.HTTP_200_OK)
 
     @decorators.detail_route(methods=['post'])
     def vote_negative(self, request, *args, **kwargs):
-        from apps.core.models import Vote
-
         comment = self.get_object()
 
-        vote, created = Vote.objects.get_or_create(
+        Vote.objects.update_or_create(
             created_by=request.user,
             parent_comment=comment,
             defaults={
                 'is_positive': False,
             },
         )
-
-        if not created:
-            vote.is_positive = False
-            vote.save()
 
         comment.update_vote_status()
 

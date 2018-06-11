@@ -1,3 +1,5 @@
+import bleach
+
 from django.db import models, IntegrityError
 
 from ara.classes.model import MetaDataModel
@@ -30,18 +32,18 @@ class Comment(MetaDataModel):
         verbose_name='싫어요 수',
     )
 
+    created_by = models.ForeignKey(
+        to='auth.User',
+        db_index=True,
+        related_name='comment_set',
+        verbose_name='작성자',
+    )
     attachment = models.ForeignKey(
         to='core.Attachment',
         null=True,
         blank=True,
         db_index=True,
         verbose_name='첨부 파일',
-    )
-    created_by = models.ForeignKey(
-        to='auth.User',
-        db_index=True,
-        related_name='comment_set',
-        verbose_name='작성자',
     )
     parent_article = models.ForeignKey(
         to='core.Article',
@@ -97,6 +99,4 @@ class Comment(MetaDataModel):
 
     @staticmethod
     def sanitize(content):
-        import bleach
-
         return bleach.linkify(bleach.clean(content))

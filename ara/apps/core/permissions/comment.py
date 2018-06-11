@@ -6,4 +6,4 @@ class CommentPermission(permissions.IsAuthenticated):
         if request.method not in permissions.SAFE_METHODS:
             return request.user.is_staff or request.user == obj.created_by
 
-        return super(CommentPermission, self).has_object_permission(request, view, obj)
+        return super().has_object_permission(request, view, obj)
