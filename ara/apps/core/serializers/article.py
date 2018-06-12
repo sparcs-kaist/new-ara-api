@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.core.models import Article, ArticleReadLog, ArticleUpdateLog, Report, Vote
+from apps.core.models import Article
 from apps.core.serializers.article_log import ArticleUpdateLogSerializer
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.comment import Depth1CommentSerializer
@@ -11,7 +11,22 @@ from apps.core.serializers.report import ReportSerializer
 class BaseArticleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
-        fields = '__all__'
+
+    def get_my_vote(self, obj):
+        if not obj.vote_set.exists():
+            return None
+
+        my_vote = obj.vote_set.all()[0]
+
+        return my_vote.is_positive
+
+    def get_my_report(self, obj):
+        if not obj.report_set.exists():
+            return None
+
+        my_report = obj.report_set.all()[0]
+
+        return ReportSerializer(my_report).data
 
     def get_created_by(self, obj):
         if obj.is_anonymous:
@@ -19,26 +34,27 @@ class BaseArticleSerializer(serializers.ModelSerializer):
 
         return obj.created_by.profile.nickname
 
-    def get_my_vote(self, obj):
-        try:
-            return obj.vote_set.get(
-                voted_by=self.context['request'].user,
-            ).is_positive
+    def get_read_status(self, obj):
+        if not obj.article_read_log_set.exists():
+            return 'N'
 
-        except Vote.DoesNotExist:
-            return None
+        my_article_read_log = obj.article_read_log_set.all()[0]
 
-    def get_my_report(self, obj):
-        try:
-            return ReportSerializer(
-                instance=obj.report_set.get(
-                    reported_by=self.context['request'].user,
-                ),
-            ).data
+        # compare with article's last commented datetime
+        if obj.commented_at:
+            if obj.commented_at > my_article_read_log.last_read_at:
+                return 'U'
 
-        except Report.DoesNotExist:
-            return None
+        # compare with article's last updated datetime
+        if obj.article_update_log_set.exists():
+            last_article_update_log = obj.article_update_log_set.all()[0]
 
+            if last_article_update_log.created_at > my_article_read_log.last_read_at:
+                return 'U'
+
+        return '-'
+
+    # TODO: article_current_page property must be cached
     def get_article_current_page(self, obj):
         view = self.context.get('view')
 
@@ -47,37 +63,14 @@ class BaseArticleSerializer(serializers.ModelSerializer):
         for page_number in paginator.page_range:
             page = paginator.page(page_number)
 
-            if obj.id in [object.id for object in page.object_list]:
+            if obj.id in [obj.id for obj in page.object_list]:
                 return page_number
-
-    def get_read_status(self, obj):
-        user = self.context['request'].user
-
-        try:
-            article_read_log = ArticleReadLog.objects.get(
-                article=obj,
-                read_by=user
-            )
-
-        except ArticleReadLog.DoesNotExist:
-            return 'N'
-
-        last_article_update_log = ArticleUpdateLog.objects.order_by('created_at').filter(
-            article=obj,
-        ).last()
-
-        if last_article_update_log:
-            if last_article_update_log.created_at > article_read_log.last_read_at:
-                return 'U'
-
-        if obj.commented_at:
-            if obj.commented_at > article_read_log.last_read_at:
-                return 'U'
-
-        return '-'
 
 
 class ArticleSerializer(BaseArticleSerializer):
+    class Meta(BaseArticleSerializer.Meta):
+        fields = '__all__'
+
     parent_topic = TopicSerializer(
         read_only=True,
     )
@@ -113,6 +106,11 @@ class ArticleSerializer(BaseArticleSerializer):
     
 
 class ArticleListActionSerializer(BaseArticleSerializer):
+    class Meta(BaseArticleSerializer.Meta):
+        exclude = (
+            'attachments',
+        )
+
     parent_topic = TopicSerializer(
         read_only=True,
     )
@@ -128,8 +126,9 @@ class ArticleListActionSerializer(BaseArticleSerializer):
     )
 
 
-class ArticleCreateActionSerializer(ArticleSerializer):
-    class Meta(ArticleSerializer.Meta):
+class ArticleCreateActionSerializer(BaseArticleSerializer):
+    class Meta(BaseArticleSerializer.Meta):
+        fields = '__all__'
         read_only_fields = (
             'hit_count',
             'positive_vote_count',
@@ -142,8 +141,9 @@ class ArticleCreateActionSerializer(ArticleSerializer):
         )
 
 
-class ArticleUpdateActionSerializer(ArticleSerializer):
-    class Meta(ArticleSerializer.Meta):
+class ArticleUpdateActionSerializer(BaseArticleSerializer):
+    class Meta(BaseArticleSerializer.Meta):
+        fields = '__all__'
         read_only_fields = (
             'is_anonymous',
             'use_signature',

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.core.models import Comment, Report, Vote
+from apps.core.models import Comment
 from apps.core.serializers.comment_log import CommentUpdateLogSerializer
 from apps.core.serializers.report import ReportSerializer
 
@@ -11,40 +11,20 @@ class BaseCommentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_my_vote(self, obj):
-        try:
-            return obj.my_vote[0].is_positive
-
-        except IndexError:
+        if not obj.vote_set.exists():
             return None
 
-        except AttributeError:
-            try:
-                return obj.vote_set.get(
-                    voted_by=self.context['request'].user,
-                ).is_positive
+        my_vote = obj.vote_set.all()[0]
 
-            except Vote.DoesNotExist:
-                return None
+        return my_vote.is_positive
 
     def get_my_report(self, obj):
-        try:
-            return ReportSerializer(
-                instance=obj.my_report[0],
-            ).data
-
-        except IndexError:
+        if not obj.report_set.exists():
             return None
 
-        except AttributeError:
-            try:
-                return ReportSerializer(
-                    instance=obj.report_set.get(
-                        reported_by=self.context['request'].user,
-                    ),
-                ).data
+        my_report = obj.report_set.all()[0]
 
-            except Report.DoesNotExist:
-                return None
+        return ReportSerializer(my_report).data
 
 
 class CommentSerializer(BaseCommentSerializer):
@@ -62,11 +42,11 @@ class CommentSerializer(BaseCommentSerializer):
     )
 
 
-class Depth2CommentSerializer(BaseCommentSerializer):
+class Depth2CommentSerializer(CommentSerializer):
     pass
 
 
-class Depth1CommentSerializer(BaseCommentSerializer):
+class Depth1CommentSerializer(CommentSerializer):
     comments = Depth2CommentSerializer(
         many=True,
         read_only=True,
@@ -74,8 +54,8 @@ class Depth1CommentSerializer(BaseCommentSerializer):
     )
 
 
-class CommentCreateActionSerializer(CommentSerializer):
-    class Meta(CommentSerializer.Meta):
+class CommentCreateActionSerializer(BaseCommentSerializer):
+    class Meta(BaseCommentSerializer.Meta):
         read_only_fields = (
             'positive_vote_count',
             'negative_vote_count',
@@ -86,8 +66,8 @@ class CommentCreateActionSerializer(CommentSerializer):
         )
 
 
-class CommentUpdateActionSerializer(CommentSerializer):
-    class Meta(CommentSerializer.Meta):
+class CommentUpdateActionSerializer(BaseCommentSerializer):
+    class Meta(BaseCommentSerializer.Meta):
         read_only_fields = (
             'is_anonymous',
             'use_signature',

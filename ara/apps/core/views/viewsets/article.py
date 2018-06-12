@@ -4,7 +4,8 @@ from rest_framework import status, viewsets, response, decorators, serializers, 
 
 from ara.classes.viewset import ActionAPIViewSet
 
-from apps.core.models import Article, ArticleReadLog, ArticleUpdateLog, ArticleDeleteLog, Comment, Vote, Block, Report
+from apps.core.models import Article, \
+    ArticleReadLog, ArticleUpdateLog, ArticleDeleteLog, Comment, CommentUpdateLog, Report, Vote
 from apps.core.filters.article import ArticleFilter
 from apps.core.permissions.article import ArticlePermission
 from apps.core.serializers.article import ArticleSerializer, \
@@ -12,11 +13,7 @@ from apps.core.serializers.article import ArticleSerializer, \
 
 
 class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
-    queryset = Article.objects.select_related(
-        'created_by',
-        'parent_topic',
-        'parent_board',
-    )
+    queryset = Article.objects.all()
     filter_class = ArticleFilter
     serializer_class = ArticleSerializer
     action_serializer_class = {
@@ -50,21 +47,82 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 best__isnull=False,
             )
 
-        if not self.request.user.profile.see_sexual:
-            queryset = queryset.filter(
-                is_content_sexual=False,
+        return queryset
+
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+
+        if self.action != 'list':
+            # optimizing queryset for create, update, retrieve actions
+            prefetch_my_vote = models.Prefetch(
+                'vote_set',
+                queryset=Vote.objects.filter(
+                    voted_by=self.request.user,
+                ),
             )
 
-        if not self.request.user.profile.see_social:
-            queryset = queryset.filter(
-                is_content_social=False,
+            prefetch_my_report = models.Prefetch(
+                'report_set',
+                queryset=Report.objects.filter(
+                    reported_by=self.request.user,
+                ),
             )
 
-        queryset = queryset.exclude(
-            created_by__in=[block.user for block in Block.objects.filter(blocked_by=self.request.user)]
-        )
+            prefetch_comment_update_log_set = models.Prefetch(
+                'comment_update_log_set',
+                queryset=CommentUpdateLog.objects.order_by('-created_at'),
+            )
+
+            queryset = queryset.prefetch_related(
+                models.Prefetch(
+                    'comment_set',
+                    queryset=Comment.objects.select_related(
+                        'attachment',
+                    ).prefetch_related(
+                        prefetch_my_vote,
+                        prefetch_my_report,
+                        prefetch_comment_update_log_set,
+                        models.Prefetch(
+                            'comment_set',
+                            queryset=Comment.objects.select_related(
+                                'attachment',
+                            ).prefetch_related(
+                                prefetch_my_vote,
+                                prefetch_my_report,
+                                prefetch_comment_update_log_set,
+                            ),
+                        ),
+                    ),
+                ),
+            )
 
         return queryset
+
+    def paginate_queryset(self, queryset):
+        prefetch_my_article_read_log = models.Prefetch(
+            'article_read_log_set',
+            queryset=ArticleReadLog.objects.filter(
+                read_by=self.request.user,
+            ),
+        )
+
+        prefetch_article_update_log_set = models.Prefetch(
+            'article_update_log_set',
+            queryset=ArticleUpdateLog.objects.order_by('-created_at'),
+        )
+
+        # optimizing queryset for list action
+        queryset = queryset.select_related(
+            'created_by',
+            'created_by__profile',
+            'parent_topic',
+            'parent_board',
+        ).prefetch_related(
+            prefetch_my_article_read_log,
+            prefetch_article_update_log_set,
+        )
+
+        return super().paginate_queryset(queryset)
 
     def perform_create(self, serializer):
         serializer.save(
