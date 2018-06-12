@@ -1,4 +1,4 @@
-from rest_framework import status, viewsets, response, decorators, serializers, permissions
+from rest_framework import mixins, status, response, decorators, serializers, permissions
 
 from ara.classes.viewset import ActionAPIViewSet
 
@@ -9,7 +9,7 @@ from apps.core.serializers.comment import CommentSerializer, \
     CommentCreateActionSerializer, CommentUpdateActionSerializer
 
 
-class CommentViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
+class CommentViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, ActionAPIViewSet):
     queryset = Comment.objects.select_related(
         'attachment',
         'created_by',
