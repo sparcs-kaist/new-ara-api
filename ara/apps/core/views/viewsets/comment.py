@@ -38,20 +38,6 @@ class CommentViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.
         ),
     }
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-
-        if self.action == 'best':
-            queryset = queryset.filter(
-                best__isnull=False,
-            )
-
-        queryset = queryset.exclude(
-            created_by__in=[block.user for block in Block.objects.filter(blocked_by=self.request.user)]
-        )
-
-        return queryset
-
     def perform_create(self, serializer):
         serializer.save(
             created_by=self.request.user,
@@ -76,10 +62,6 @@ class CommentViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.
         )
 
         return super().perform_destroy(instance)
-
-    @decorators.list_route(methods=['get'])
-    def best(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
 
     @decorators.detail_route(methods=['post'])
     def vote_cancel(self, request, *args, **kwargs):
