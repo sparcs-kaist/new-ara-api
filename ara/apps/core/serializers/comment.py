@@ -1,4 +1,4 @@
-from rest_framework import serializers
+from rest_framework import serializers, exceptions
 
 from apps.core.models import Comment
 from apps.core.serializers.comment_log import CommentUpdateLogSerializer
@@ -26,6 +26,57 @@ class BaseCommentSerializer(serializers.ModelSerializer):
 
         return ReportSerializer(my_report).data
 
+    def get_is_hidden(self, obj):
+        if self.validate_content(obj):
+            return True
+
+        return False
+
+    def get_why_hidden(self, obj):
+        errors = self.validate_content(obj)
+
+        return [
+            {
+                'detail': error.detail,
+            } for error in errors
+        ]
+
+    def get_title(self, obj):
+        errors = self.validate_content(obj)
+
+        if errors:
+            return [error.detail for error in errors]
+
+        return obj.title
+
+    def get_hidden_title(self, obj):
+        if self.validate_content(obj):
+            return obj.title
+
+        return ''
+
+    def get_content(self, obj):
+        errors = self.validate_content(obj)
+
+        if errors:
+            return [error.detail for error in errors]
+
+        return obj.content
+
+    def get_hidden_content(self, obj):
+        if self.validate_content(obj):
+            return obj.content
+
+        return ''
+
+    def validate_content(self, obj):
+        errors = []
+
+        if obj.created_by.blocked_by_set.exists():
+            errors.append(exceptions.ValidationError('차단한 사용자의 게시물입니다.'))
+
+        return errors
+
 
 class CommentSerializer(BaseCommentSerializer):
     comment_update_logs = CommentUpdateLogSerializer(
@@ -40,6 +91,24 @@ class CommentSerializer(BaseCommentSerializer):
     my_report = serializers.SerializerMethodField(
         read_only=True,
     )
+    is_hidden = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    why_hidden = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    # title = serializers.SerializerMethodField(
+    #     read_only=True,
+    # )
+    # hidden_title = serializers.SerializerMethodField(
+    #     read_only=True,
+    # )
+    # content = serializers.SerializerMethodField(
+    #     read_only=True,
+    # )
+    # hidden_content = serializers.SerializerMethodField(
+    #     read_only=True,
+    # )
 
 
 class Depth2CommentSerializer(CommentSerializer):

@@ -54,7 +54,12 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         if self.action != 'list':
             # optimizing queryset for create, update, retrieve actions
-            queryset = queryset.prefetch_related(
+            queryset = queryset.select_related(
+                'created_by',
+                'created_by__profile',
+                'parent_topic',
+                'parent_board',
+            ).prefetch_related(
                 models.Prefetch(
                     'comment_set',
                     queryset=Comment.objects.select_related(

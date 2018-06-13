@@ -1,4 +1,4 @@
-from rest_framework import serializers
+from rest_framework import serializers, exceptions
 
 from apps.core.models import Article
 from apps.core.serializers.article_log import ArticleUpdateLogSerializer
@@ -27,6 +27,49 @@ class BaseArticleSerializer(serializers.ModelSerializer):
         my_report = obj.report_set.all()[0]
 
         return ReportSerializer(my_report).data
+
+    def get_is_hidden(self, obj):
+        if self.validate_content(obj):
+            return True
+
+        return False
+
+    def get_why_hidden(self, obj):
+        errors = self.validate_content(obj)
+
+        return [
+            {
+                'detail': error.detail,
+            } for error in errors
+        ]
+
+    def get_title(self, obj):
+        errors = self.validate_content(obj)
+
+        if errors:
+            return [error.detail for error in errors]
+
+        return obj.title
+
+    def get_hidden_title(self, obj):
+        if self.validate_content(obj):
+            return obj.title
+
+        return ''
+
+    def get_content(self, obj):
+        errors = self.validate_content(obj)
+
+        if errors:
+            return [error.detail for error in errors]
+
+        return obj.content
+
+    def get_hidden_content(self, obj):
+        if self.validate_content(obj):
+            return obj.content
+
+        return ''
 
     def get_created_by(self, obj):
         if obj.is_anonymous:
@@ -66,6 +109,20 @@ class BaseArticleSerializer(serializers.ModelSerializer):
             if obj.id in [obj.id for obj in page.object_list]:
                 return page_number
 
+    def validate_content(self, obj):
+        errors = []
+
+        if obj.created_by.blocked_by_set.exists():
+            errors.append(exceptions.ValidationError('차단한 사용자의 게시물입니다.'))
+
+        if obj.is_content_sexual and not self.context['request'].user.profile.see_sexual:
+            errors.append(exceptions.ValidationError('성인/음란성 내용의 게시물입니다.'))
+
+        if obj.is_content_social and not self.context['request'].user.profile.see_social:
+            errors.append(exceptions.ValidationError('정치/사회성 내뇽의 게시물입니다.'))
+
+        return errors
+
 
 class ArticleSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
@@ -88,6 +145,24 @@ class ArticleSerializer(BaseArticleSerializer):
         source='article_update_log_set',
     )
 
+    is_hidden = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    why_hidden = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    # title = serializers.SerializerMethodField(
+    #     read_only=True,
+    # )
+    # hidden_title = serializers.SerializerMethodField(
+    #     read_only=True,
+    # )
+    # content = serializers.SerializerMethodField(
+    #     read_only=True,
+    # )
+    # hidden_content = serializers.SerializerMethodField(
+    #     read_only=True,
+    # )
     my_vote = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -118,6 +193,24 @@ class ArticleListActionSerializer(BaseArticleSerializer):
         read_only=True,
     )
 
+    is_hidden = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    why_hidden = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    # title = serializers.SerializerMethodField(
+    #     read_only=True,
+    # )
+    # hidden_title = serializers.SerializerMethodField(
+    #     read_only=True,
+    # )
+    # content = serializers.SerializerMethodField(
+    #     read_only=True,
+    # )
+    # hidden_content = serializers.SerializerMethodField(
+    #     read_only=True,
+    # )
     created_by = serializers.SerializerMethodField(
         read_only=True,
     )
