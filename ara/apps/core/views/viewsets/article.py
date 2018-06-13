@@ -5,7 +5,7 @@ from rest_framework import status, viewsets, response, decorators, serializers, 
 from ara.classes.viewset import ActionAPIViewSet
 
 from apps.core.models import Article, \
-    ArticleReadLog, ArticleUpdateLog, ArticleDeleteLog, Comment, CommentUpdateLog, Report, Vote
+    ArticleReadLog, ArticleUpdateLog, ArticleDeleteLog, Block, Comment, CommentUpdateLog, Report, Vote
 from apps.core.filters.article import ArticleFilter
 from apps.core.permissions.article import ArticlePermission
 from apps.core.serializers.article import ArticleSerializer, \
@@ -54,42 +54,25 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         if self.action != 'list':
             # optimizing queryset for create, update, retrieve actions
-            prefetch_my_vote = models.Prefetch(
-                'vote_set',
-                queryset=Vote.objects.filter(
-                    voted_by=self.request.user,
-                ),
-            )
-
-            prefetch_my_report = models.Prefetch(
-                'report_set',
-                queryset=Report.objects.filter(
-                    reported_by=self.request.user,
-                ),
-            )
-
-            prefetch_comment_update_log_set = models.Prefetch(
-                'comment_update_log_set',
-                queryset=CommentUpdateLog.objects.order_by('-created_at'),
-            )
-
             queryset = queryset.prefetch_related(
                 models.Prefetch(
                     'comment_set',
                     queryset=Comment.objects.select_related(
                         'attachment',
                     ).prefetch_related(
-                        prefetch_my_vote,
-                        prefetch_my_report,
-                        prefetch_comment_update_log_set,
+                        Vote.prefetch_my_vote(self.request.user),
+                        Block.prefetch_my_block(self.request.user),
+                        Report.prefetch_my_report(self.request.user),
+                        CommentUpdateLog.prefetch_comment_update_log_set(),
                         models.Prefetch(
                             'comment_set',
                             queryset=Comment.objects.select_related(
                                 'attachment',
                             ).prefetch_related(
-                                prefetch_my_vote,
-                                prefetch_my_report,
-                                prefetch_comment_update_log_set,
+                                Vote.prefetch_my_vote(self.request.user),
+                                Block.prefetch_my_block(self.request.user),
+                                Report.prefetch_my_report(self.request.user),
+                                CommentUpdateLog.prefetch_comment_update_log_set(),
                             ),
                         ),
                     ),
@@ -99,18 +82,6 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         return queryset
 
     def paginate_queryset(self, queryset):
-        prefetch_my_article_read_log = models.Prefetch(
-            'article_read_log_set',
-            queryset=ArticleReadLog.objects.filter(
-                read_by=self.request.user,
-            ),
-        )
-
-        prefetch_article_update_log_set = models.Prefetch(
-            'article_update_log_set',
-            queryset=ArticleUpdateLog.objects.order_by('-created_at'),
-        )
-
         # optimizing queryset for list action
         queryset = queryset.select_related(
             'created_by',
@@ -118,8 +89,9 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             'parent_topic',
             'parent_board',
         ).prefetch_related(
-            prefetch_my_article_read_log,
-            prefetch_article_update_log_set,
+            Block.prefetch_my_block(self.request.user),
+            ArticleReadLog.prefetch_my_article_read_log(self.request.user),
+            ArticleUpdateLog.prefetch_article_update_log_set(),
         )
 
         return super().paginate_queryset(queryset)

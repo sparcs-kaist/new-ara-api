@@ -49,3 +49,12 @@ class Report(MetaDataModel):
     @property
     def parent(self):
         return self.parent_article if self.parent_article else self.parent_comment
+
+    @classmethod
+    def prefetch_my_report(cls, user):
+        return models.Prefetch(
+            'report_set',
+            queryset=Report.objects.filter(
+                reported_by=user,
+            ),
+        )

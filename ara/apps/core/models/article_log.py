@@ -23,12 +23,21 @@ class ArticleReadLog(MetaDataModel):
         verbose_name='조회된 게시글',
     )
 
+    def __str__(self):
+        return str(self.read_by) + "/" + str(self.article)
+
     @property
     def last_read_at(self):
         return self.updated_at if self.updated_at != datetime.datetime.min else self.created_at
 
-    def __str__(self):
-        return str(self.read_by) + "/" + str(self.article)
+    @classmethod
+    def prefetch_my_article_read_log(cls, user):
+        return models.Prefetch(
+            'article_read_log_set',
+            queryset=ArticleReadLog.objects.filter(
+                read_by=user,
+            ),
+        )
 
 
 class ArticleUpdateLogQuerySet(MetaDataQuerySet):
@@ -68,6 +77,13 @@ class ArticleUpdateLog(MetaDataModel):
 
     def __str__(self):
         return str(self.updated_by) + "/" + str(self.article)
+
+    @classmethod
+    def prefetch_article_update_log_set(cls):
+        return models.Prefetch(
+            'article_update_log_set',
+            queryset=ArticleUpdateLog.objects.order_by('-created_at'),
+        )
 
 
 class ArticleDeleteLog(MetaDataModel):
