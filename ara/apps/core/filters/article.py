@@ -25,6 +25,14 @@ class ArticleFilter(filters.FilterSet):
             'created_by': [
                 'exact',
             ],
+            'created_by__username': [
+                'exact',
+                'contains',
+            ],
+            'created_by__profile__nickname': [
+                'exact',
+                'contains',
+            ],
             'parent_topic': [
                 'in',
                 'exact',
