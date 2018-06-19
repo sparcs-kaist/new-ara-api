@@ -101,13 +101,14 @@ class BaseArticleSerializer(serializers.ModelSerializer):
     def get_article_current_page(self, obj):
         view = self.context.get('view')
 
-        paginator = view.paginator.django_paginator_class(view.filter_queryset(view.get_queryset()), view.paginator.page_size)
+        if view:
+            queryset = view.filter_queryset(view.get_queryset()).filter(
+                created_at__gt=obj.created_at,
+            )
 
-        for page_number in paginator.page_range:
-            page = paginator.page(page_number)
+            return queryset.count() // view.paginator.page_size + 1
 
-            if obj.id in [obj.id for obj in page.object_list]:
-                return page_number
+        return None
 
     def validate_content(self, obj):
         errors = []
