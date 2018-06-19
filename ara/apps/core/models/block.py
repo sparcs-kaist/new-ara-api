@@ -1,12 +1,12 @@
 from django.db import models, IntegrityError
 
-from ara.classes.model import MetaDataModel
+from ara.db.models import MetaDataModel
 
 
 class Block(MetaDataModel):
-    class Meta:
+    class Meta(MetaDataModel.Meta):
         verbose_name = '차단'
-        verbose_name_plural = '차단'
+        verbose_name_plural = '차단 목록'
 
     blocked_by = models.ForeignKey(
         to='auth.User',

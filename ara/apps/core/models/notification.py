@@ -1,6 +1,6 @@
 from django.db import models
 
-from ara.classes.model import MetaDataModel
+from ara.db.models import MetaDataModel
 
 
 TYPE_CHOICES = (
@@ -11,9 +11,9 @@ TYPE_CHOICES = (
 
 
 class Notification(MetaDataModel):
-    class Meta:
+    class Meta(MetaDataModel.Meta):
         verbose_name = '알림'
-        verbose_name_plural = '알림'
+        verbose_name_plural = '알림 목록'
 
     type = models.CharField(
         choices=TYPE_CHOICES,

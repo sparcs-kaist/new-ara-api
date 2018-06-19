@@ -1,12 +1,12 @@
 from django.db import models
 
-from ara.classes.model import MetaDataModel
+from ara.db.models import MetaDataModel
 
 
 class Board(MetaDataModel):
-    class Meta:
+    class Meta(MetaDataModel.Meta):
         verbose_name = '게시판'
-        verbose_name_plural = '게시판'
+        verbose_name_plural = '게시판 목록'
         unique_together = (
             ('ko_name', 'deleted_at'),
             ('en_name', 'deleted_at'),

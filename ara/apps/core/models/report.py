@@ -1,12 +1,12 @@
 from django.db import models, IntegrityError
 
-from ara.classes.model import MetaDataModel
+from ara.db.models import MetaDataModel
 
 
 class Report(MetaDataModel):
-    class Meta:
+    class Meta(MetaDataModel.Meta):
         verbose_name = '신고'
-        verbose_name_plural = '신고'
+        verbose_name_plural = '신고 목록'
         unique_together = (
             ('parent_article', 'reported_by', 'deleted_at'),
             ('parent_comment', 'reported_by', 'deleted_at'),

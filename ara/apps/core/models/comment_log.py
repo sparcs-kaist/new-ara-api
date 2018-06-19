@@ -2,7 +2,7 @@ from django.db import models
 
 from django_mysql.models import JSONField
 
-from ara.classes.model import MetaDataModel, MetaDataManager, MetaDataQuerySet
+from ara.db.models import MetaDataModel, MetaDataManager, MetaDataQuerySet
 
 
 class CommentUpdateLogQuerySet(MetaDataQuerySet):
@@ -21,9 +21,9 @@ class CommentUpdateLogManager(MetaDataManager):
 
 
 class CommentUpdateLog(MetaDataModel):
-    class Meta:
+    class Meta(MetaDataModel.Meta):
         verbose_name = '댓글 변경 기록'
-        verbose_name_plural = '댓글 변경 기록'
+        verbose_name_plural = '댓글 변경 기록 목록'
 
     objects = CommentUpdateLogManager.from_queryset(queryset_class=CommentUpdateLogQuerySet)()
 
@@ -52,9 +52,9 @@ class CommentUpdateLog(MetaDataModel):
 
 
 class CommentDeleteLog(MetaDataModel):
-    class Meta:
+    class Meta(MetaDataModel.Meta):
         verbose_name = '댓글 삭제 기록'
-        verbose_name_plural = '댓글 삭제 기록'
+        verbose_name_plural = '댓글 삭제 기록 목록'
 
     deleted_by = models.ForeignKey(
         to='auth.User',

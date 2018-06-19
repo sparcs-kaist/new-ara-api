@@ -1,12 +1,12 @@
 from django.db import models, IntegrityError
 
-from ara.classes.model import MetaDataModel
+from ara.db.models import MetaDataModel
 
 
 class Vote(MetaDataModel):
-    class Meta:
+    class Meta(MetaDataModel.Meta):
         verbose_name = '투표'
-        verbose_name_plural = '투표'
+        verbose_name_plural = '투표 목록'
         unique_together = (
             ('parent_article', 'voted_by', 'deleted_at'),
             ('parent_comment', 'voted_by', 'deleted_at'),

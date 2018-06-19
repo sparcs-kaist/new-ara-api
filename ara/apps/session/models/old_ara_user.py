@@ -2,7 +2,7 @@ from django.db import models
 from string import ascii_lowercase, ascii_uppercase, digits
 from crypt import crypt
 
-from ara.classes.model import MetaDataModel
+from ara.db.models import MetaDataModel
 
 
 # Constant from ARAra project.
@@ -10,6 +10,10 @@ SALT_SET = f'{ascii_lowercase}{ascii_uppercase}{digits}./'
 
 
 class OldAraUser(MetaDataModel):
+    class Meta(MetaDataModel.Meta):
+        verbose_name = '기존 사용자'
+        verbose_name_plural = '기존 사용자 목록'
+
     """
     Model for ARAra DB migration.
     Methods here are exatly same as those in [User] model of ARAra, except for Python version update. (2.7 -> 3.6)

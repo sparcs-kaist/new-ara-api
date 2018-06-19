@@ -1,6 +1,6 @@
 from django.db import models
 
-from ara.classes.model import MetaDataModel
+from ara.db.models import MetaDataModel
 
 
 PERIOD_CHOICES = (
@@ -15,16 +15,9 @@ BEST_BY_CHOICES = (
 
 
 class BestArticle(MetaDataModel):
-    class Meta:
+    class Meta(MetaDataModel.Meta):
         verbose_name = '베스트 문서'
-        verbose_name_plural = '베스트 문서'
-
-    article = models.OneToOneField(
-        to='core.Article',
-        db_index=True,
-        related_name='best',
-        verbose_name='문서',
-    )
+        verbose_name_plural = '베스트 문서 목록'
 
     period = models.CharField(
         choices=PERIOD_CHOICES,
@@ -32,10 +25,16 @@ class BestArticle(MetaDataModel):
         max_length=32,
         verbose_name='베스트 문서 종류',
     )
-
     best_by = models.CharField(
         choices=BEST_BY_CHOICES,
         default='positive_vote_count',
         max_length=32,
         verbose_name="베스트 문서 선정 기준"
+    )
+
+    article = models.OneToOneField(
+        to='core.Article',
+        db_index=True,
+        related_name='best',
+        verbose_name='문서',
     )

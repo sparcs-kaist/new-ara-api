@@ -1,12 +1,12 @@
 from django.db import models
 
-from ara.classes.model import MetaDataModel
+from ara.db.models import MetaDataModel
 
 
 class Scrap(MetaDataModel):
-    class Meta:
+    class Meta(MetaDataModel.Meta):
         verbose_name = '스크랩'
-        verbose_name_plural = '스크랩'
+        verbose_name_plural = '스크랩 목록'
         unique_together = (
             ('parent_article', 'scrapped_by', 'deleted_at'),
         )

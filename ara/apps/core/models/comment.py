@@ -2,13 +2,13 @@ import bleach
 
 from django.db import models, IntegrityError
 
-from ara.classes.model import MetaDataModel
+from ara.db.models import MetaDataModel
 
 
 class Comment(MetaDataModel):
-    class Meta:
+    class Meta(MetaDataModel.Meta):
         verbose_name = '댓글'
-        verbose_name_plural = '댓글'
+        verbose_name_plural = '댓글 목록'
 
     content = models.TextField(
         default=None,

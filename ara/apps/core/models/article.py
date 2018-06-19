@@ -2,13 +2,13 @@ import bleach
 
 from django.db import models, IntegrityError
 
-from ara.classes.model import MetaDataModel
+from ara.db.models import MetaDataModel
 
 
 class Article(MetaDataModel):
-    class Meta:
+    class Meta(MetaDataModel.Meta):
         verbose_name = '문서'
-        verbose_name_plural = '문서'
+        verbose_name_plural = '문서 목록'
 
     title = models.CharField(
         max_length=256,

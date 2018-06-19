@@ -39,6 +39,9 @@ class MetaDataManager(models.Manager):
 class MetaDataModel(models.Model):
     class Meta:
         abstract = True
+        ordering = (
+            '-created_at',
+        )
 
     objects = MetaDataManager.from_queryset(queryset_class=MetaDataQuerySet)()
 

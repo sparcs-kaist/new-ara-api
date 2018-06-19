@@ -4,13 +4,13 @@ from django.db import models
 
 from django_mysql.models import JSONField
 
-from ara.classes.model import MetaDataModel, MetaDataManager, MetaDataQuerySet
+from ara.db.models import MetaDataModel, MetaDataManager, MetaDataQuerySet
 
 
 class ArticleReadLog(MetaDataModel):
-    class Meta:
+    class Meta(MetaDataModel.Meta):
         verbose_name = '게시물 조회 기록'
-        verbose_name_plural = '게시물 조회 기록'
+        verbose_name_plural = '게시물 조회 기록 목록'
 
     read_by = models.ForeignKey(
         to='auth.User',
@@ -56,9 +56,9 @@ class ArticleUpdateLogManager(MetaDataManager):
 
 
 class ArticleUpdateLog(MetaDataModel):
-    class Meta:
+    class Meta(MetaDataModel.Meta):
         verbose_name = '게시물 변경 기록'
-        verbose_name_plural = '게시물 변경 기록'
+        verbose_name_plural = '게시물 변경 기록 목록'
 
     objects = ArticleUpdateLogManager.from_queryset(queryset_class=ArticleUpdateLogQuerySet)()
 
@@ -87,9 +87,9 @@ class ArticleUpdateLog(MetaDataModel):
 
 
 class ArticleDeleteLog(MetaDataModel):
-    class Meta:
+    class Meta(MetaDataModel.Meta):
         verbose_name = '게시물 삭제 기록'
-        verbose_name_plural = '게시물 삭제 기록'
+        verbose_name_plural = '게시물 삭제 기록 목록'
 
     deleted_by = models.ForeignKey(
         to='auth.User',
