@@ -19,10 +19,7 @@ class Comment(MetaDataModel):
         default=False,
         verbose_name='익명',
     )
-    use_signature = models.BooleanField(
-        default=True,
-        verbose_name='서명 사용',
-    )
+
     positive_vote_count = models.IntegerField(
         default=0,
         verbose_name='좋아요 수',

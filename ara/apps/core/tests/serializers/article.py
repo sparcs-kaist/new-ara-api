@@ -50,7 +50,6 @@ class ArticleSerializerLevelTestCase(TestCase):
             'is_anonymous': True,
             'is_content_sexual': True,
             'is_content_social': True,
-            'use_signature': False,
             'parent_topic': self.topic1.id,
             'parent_board': self.board1.id,
         })
@@ -77,7 +76,6 @@ class ArticleSerializerLevelTestCase(TestCase):
         self.assertEqual(instance.is_anonymous, False)
         self.assertEqual(instance.is_content_sexual, False)
         self.assertEqual(instance.is_content_social, False)
-        self.assertEqual(instance.use_signature, True)
 
     def test_create_article_with_integrity_error(self):
         serializer = ArticleCreateActionSerializer(data={
@@ -86,7 +84,6 @@ class ArticleSerializerLevelTestCase(TestCase):
             'is_anonymous': True,
             'is_content_sexual': True,
             'is_content_social': True,
-            'use_signature': False,
             'parent_topic': self.topic1.id,
             'parent_board': self.board2.id,
         })
@@ -105,7 +102,6 @@ class ArticleSerializerLevelTestCase(TestCase):
             'is_anonymous': True,
             'is_content_sexual': True,
             'is_content_social': True,
-            'use_signature': False,
             'parent_topic': self.topic1.id,
             'parent_board': self.board1.id,
         }
@@ -116,7 +112,6 @@ class ArticleSerializerLevelTestCase(TestCase):
             'is_anonymous': False,
             'is_content_sexual': False,
             'is_content_social': False,
-            'use_signature': True,
             'parent_topic': self.topic2.id,
             'parent_board': self.board2.id,
         }

@@ -30,10 +30,6 @@ class Article(MetaDataModel):
         default=False,
         verbose_name='정치/사회성 내용',
     )
-    use_signature = models.BooleanField(
-        default=True,
-        verbose_name='서명 사용',
-    )
 
     hit_count = models.IntegerField(
         default=0,

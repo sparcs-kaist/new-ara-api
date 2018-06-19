@@ -239,7 +239,6 @@ class ArticleUpdateActionSerializer(BaseArticleSerializer):
         fields = '__all__'
         read_only_fields = (
             'is_anonymous',
-            'use_signature',
             'hit_count',
             'positive_vote_count',
             'negative_vote_count',

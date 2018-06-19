@@ -139,7 +139,6 @@ class CommentUpdateActionSerializer(BaseCommentSerializer):
     class Meta(BaseCommentSerializer.Meta):
         read_only_fields = (
             'is_anonymous',
-            'use_signature',
             'positive_vote_count',
             'negative_vote_count',
             'created_by',

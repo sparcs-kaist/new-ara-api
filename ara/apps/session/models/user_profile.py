@@ -19,11 +19,6 @@ class UserProfile(MetaDataModel):
         max_length=128,
         verbose_name='닉네임',
     )
-    signature = models.TextField(
-        blank=True,
-        default='',
-        verbose_name='서명',
-    )
     see_sexual = models.BooleanField(
         blank=True,
         default=False,

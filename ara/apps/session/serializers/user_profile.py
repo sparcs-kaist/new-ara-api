@@ -13,7 +13,6 @@ class UserProfileUpdateActionSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = (
-            'signature',
             'see_sexual',
             'see_social',
             'nickname',
