@@ -62,7 +62,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             ).prefetch_related(
                 models.Prefetch(
                     'comment_set',
-                    queryset=Comment.objects.select_related(
+                    queryset=Comment.objects.order_by('created_at').select_related(
                         'attachment',
                     ).prefetch_related(
                         Vote.prefetch_my_vote(self.request.user),
@@ -71,7 +71,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                         CommentUpdateLog.prefetch_comment_update_log_set(),
                         models.Prefetch(
                             'comment_set',
-                            queryset=Comment.objects.select_related(
+                            queryset=Comment.objects.order_by('created_at').select_related(
                                 'attachment',
                             ).prefetch_related(
                                 Vote.prefetch_my_vote(self.request.user),
