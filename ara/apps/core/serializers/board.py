@@ -45,9 +45,9 @@ class BoardRecentArticleActionSerializer(serializers.ModelSerializer):
     recent_articles = serializers.SerializerMethodField()
 
     def get_recent_articles(self, obj):
-        from apps.core.serializers.article import ArticleSerializer
+        from apps.core.serializers.article import ArticleListActionSerializer
 
-        return ArticleSerializer(
+        return ArticleListActionSerializer(
             instance=obj.article_set.order_by('-id')[:5],
             many=True,
             **{'context': {'request': self.context.get('request')}}

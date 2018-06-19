@@ -1,7 +1,7 @@
 from rest_framework import views, response
 
 from apps.core.models import BestArticle, Board, PERIOD_CHOICES, BEST_BY_CHOICES
-from apps.core.serializers.article import ArticleSerializer
+from apps.core.serializers.article import ArticleListActionSerializer
 from apps.core.serializers.board import BoardRecentArticleActionSerializer
 
 
@@ -30,7 +30,7 @@ def _best_articles(period, best_by, request):
     except AssertionError:
         raise ValueError(f'Wrong period or best_by: {period} / {best_by}')
 
-    return ArticleSerializer(
+    return ArticleListActionSerializer(
         instance=[
             best_article.article for best_article
             in BestArticle.objects.filter(period=period, best_by=best_by).order_by('-id')[:5]
