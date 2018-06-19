@@ -47,7 +47,7 @@ class CommentUpdateLog(MetaDataModel):
     def prefetch_comment_update_log_set(cls):
         return models.Prefetch(
             'comment_update_log_set',
-            queryset=CommentUpdateLog.objects.order_by('-created_at'),
+            queryset=CommentUpdateLog.objects.all(),
         )
 
 

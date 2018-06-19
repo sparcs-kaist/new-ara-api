@@ -82,7 +82,7 @@ class ArticleUpdateLog(MetaDataModel):
     def prefetch_article_update_log_set(cls):
         return models.Prefetch(
             'article_update_log_set',
-            queryset=ArticleUpdateLog.objects.order_by('-created_at'),
+            queryset=ArticleUpdateLog.objects.all(),
         )
 
 

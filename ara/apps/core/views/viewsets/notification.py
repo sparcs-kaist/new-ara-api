@@ -13,8 +13,6 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
         'related_comment',
     ).prefetch_related(
         'notification_read_log_set'
-    ).order_by(
-        '-created_at',
     )
     filter_class = NotificationFilter
     serializer_class = NotificationSerializer

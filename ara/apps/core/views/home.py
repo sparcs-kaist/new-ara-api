@@ -33,7 +33,7 @@ def _best_articles(period, best_by, request):
     return ArticleListActionSerializer(
         instance=[
             best_article.article for best_article
-            in BestArticle.objects.filter(period=period, best_by=best_by).order_by('-id')[:5]
+            in BestArticle.objects.filter(period=period, best_by=best_by).all()[:5]
         ],
         many=True,
         **{'context': {'request': request}},
