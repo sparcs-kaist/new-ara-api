@@ -81,13 +81,10 @@ class Notification(MetaDataModel):
                 ),
             )
 
-        if comment.parent_comment:
-            if comment.created_by != comment.parent_comment.created_by:
-                notify_comment_commented(comment.parent_comment.parent_article, comment)
+        article = comment.parent_article if comment.parent_article else comment.parent_comment.parent_article
 
-            if comment.created_by != comment.parent_comment.parent_article.created_by:
-                notify_article_commented(comment.parent_comment.parent_article, comment)
+        if comment.created_by != article.created_by:
+            notify_article_commented(article, comment)
 
-        else:
-            if comment.created_by != comment.parent_article.created_by:
-                notify_article_commented(comment.parent_article, comment)
+        if comment.parent_comment and comment.created_by != comment.parent_comment.created_by:
+            notify_comment_commented(article, comment)

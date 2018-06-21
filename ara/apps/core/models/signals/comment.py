@@ -12,13 +12,9 @@ def comment_post_save_signal(**kwargs):
         Notification.notify_commented(comment)
 
     def update_article_commented_at(comment):
-        if comment.parent_article:
-            comment.parent_article.commented_at = datetime.datetime.now()
-            comment.parent_article.save()
-
-        else:
-            comment.parent_comment.parent_article.commented_at = datetime.datetime.now()
-            comment.parent_comment.parent_article.save()
+        article = comment.parent_article if comment.parent_article else comment.parent_comment.parent_article
+        article.commented_at = datetime.datetime.now()
+        article.save()
 
     comment = kwargs['instance']
 
