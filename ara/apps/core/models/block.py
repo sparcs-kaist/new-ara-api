@@ -1,4 +1,5 @@
 from django.db import models, IntegrityError
+from django.conf import settings
 
 from ara.db.models import MetaDataModel
 
@@ -9,14 +10,14 @@ class Block(MetaDataModel):
         verbose_name_plural = '차단 목록'
 
     blocked_by = models.ForeignKey(
-        to='auth.User',
+        to=settings.AUTH_USER_MODEL,
         db_index=True,
         related_name='block_set',
         verbose_name='차단한 사람',
     )
 
     user = models.ForeignKey(
-        to='auth.User',
+        to=settings.AUTH_USER_MODEL,
         db_index=True,
         related_name='blocked_by_set',
         verbose_name='차단당한 사람',

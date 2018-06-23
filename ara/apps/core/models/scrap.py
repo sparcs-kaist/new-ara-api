@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 from ara.db.models import MetaDataModel
 
@@ -17,7 +18,7 @@ class Scrap(MetaDataModel):
         verbose_name='글',
     )
     scrapped_by = models.ForeignKey(
-        to='auth.User',
+        to=settings.AUTH_USER_MODEL,
         db_index=True,
         related_name='scrap_set',
         verbose_name='스크랩한 사람',

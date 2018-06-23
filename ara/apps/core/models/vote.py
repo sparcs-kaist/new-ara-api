@@ -1,4 +1,5 @@
 from django.db import models, IntegrityError
+from django.conf import settings
 
 from ara.db.models import MetaDataModel
 
@@ -17,7 +18,7 @@ class Vote(MetaDataModel):
     )
 
     voted_by = models.ForeignKey(
-        to='auth.User',
+        to=settings.AUTH_USER_MODEL,
         verbose_name='투표자',
     )
     parent_article = models.ForeignKey(

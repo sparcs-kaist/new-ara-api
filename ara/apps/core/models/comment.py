@@ -1,6 +1,7 @@
 import bleach
 
 from django.db import models, IntegrityError
+from django.conf import settings
 
 from ara.db.models import MetaDataModel
 
@@ -30,7 +31,7 @@ class Comment(MetaDataModel):
     )
 
     created_by = models.ForeignKey(
-        to='auth.User',
+        to=settings.AUTH_USER_MODEL,
         db_index=True,
         related_name='comment_set',
         verbose_name='작성자',

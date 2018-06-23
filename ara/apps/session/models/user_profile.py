@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 from ara.db.models import MetaDataModel
 
@@ -35,7 +36,7 @@ class UserProfile(MetaDataModel):
     )
 
     user = models.OneToOneField(
-        to='auth.User',
+        to=settings.AUTH_USER_MODEL,
         related_name='profile',
         verbose_name='사용자',
     )

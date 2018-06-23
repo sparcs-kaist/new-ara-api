@@ -1,4 +1,5 @@
 from django.db import models, IntegrityError
+from django.conf import settings
 
 from ara.db.models import MetaDataModel
 
@@ -29,7 +30,7 @@ class Report(MetaDataModel):
         verbose_name='신고된 댓글',
     )
     reported_by = models.ForeignKey(
-        to='auth.User',
+        to=settings.AUTH_USER_MODEL,
         verbose_name='신고자',
     )
     content = models.TextField(

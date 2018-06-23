@@ -1,6 +1,7 @@
 import datetime
 
 from django.db import models
+from django.conf import settings
 
 from django_mysql.models import JSONField
 
@@ -13,7 +14,7 @@ class ArticleReadLog(MetaDataModel):
         verbose_name_plural = '게시물 조회 기록 목록'
 
     read_by = models.ForeignKey(
-        to='auth.User',
+        to=settings.AUTH_USER_MODEL,
         related_name='article_read_log_set',
         verbose_name='조회자',
     )
@@ -65,7 +66,7 @@ class ArticleUpdateLog(MetaDataModel):
     data = JSONField()
 
     updated_by = models.ForeignKey(
-        to='auth.User',
+        to=settings.AUTH_USER_MODEL,
         related_name='article_update_log_set',
         verbose_name='변경자',
     )
@@ -92,7 +93,7 @@ class ArticleDeleteLog(MetaDataModel):
         verbose_name_plural = '게시물 삭제 기록 목록'
 
     deleted_by = models.ForeignKey(
-        to='auth.User',
+        to=settings.AUTH_USER_MODEL,
         related_name='article_delete_log_set',
         verbose_name='삭제자',
     )

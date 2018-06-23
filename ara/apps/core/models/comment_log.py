@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 from django_mysql.models import JSONField
 
@@ -30,7 +31,7 @@ class CommentUpdateLog(MetaDataModel):
     data = JSONField()
 
     updated_by = models.ForeignKey(
-        to='auth.User',
+        to=settings.AUTH_USER_MODEL,
         related_name='comment_update_log_set',
         verbose_name='변경자',
     )
@@ -57,7 +58,7 @@ class CommentDeleteLog(MetaDataModel):
         verbose_name_plural = '댓글 삭제 기록 목록'
 
     deleted_by = models.ForeignKey(
-        to='auth.User',
+        to=settings.AUTH_USER_MODEL,
         related_name='comment_delete_log_set',
         verbose_name='삭제자',
     )
