@@ -7,7 +7,10 @@ from apps.core.permissions.report import ReportPermission
 from apps.core.serializers.report import ReportSerializer, ReportCreateActionSerializer
 
 
-class ReportViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, mixins.DestroyModelMixin, ActionAPIViewSet):
+class ReportViewSet(mixins.ListModelMixin,
+                    mixins.CreateModelMixin,
+                    mixins.DestroyModelMixin,
+                    ActionAPIViewSet):
     queryset = Report.objects.all()
     serializer_class = ReportSerializer
     action_serializer_class = {
