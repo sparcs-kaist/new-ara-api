@@ -1,5 +1,7 @@
 from django.db import models
 
+from django_extensions.db.fields import AutoSlugField
+
 from ara.db.models import MetaDataModel
 
 
@@ -12,6 +14,11 @@ class Topic(MetaDataModel):
             ('en_name', 'deleted_at'),
         )
 
+    slug = AutoSlugField(
+        populate_from=[
+            'en_name',
+        ],
+    )
     ko_name = models.CharField(
         max_length=32,
         verbose_name='말머리 국문 이름',
