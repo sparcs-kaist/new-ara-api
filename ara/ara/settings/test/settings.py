@@ -72,7 +72,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 # http://getblimp.github.io/django-rest-framework-jwt/
 
-SESSION_COOKIE_AGE = 86400
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 7
 
 JWT_AUTH = {
     'JWT_ALLOW_REFRESH': True,
