@@ -17,5 +17,8 @@ class ScrapCreateActionSerializer(serializers.ModelSerializer):
         model = Scrap
         fields = '__all__'
         read_only_fields = (
+            'created_at',
+            'updated_at',
+            'deleted_at',
             'scrapped_by',
         )
