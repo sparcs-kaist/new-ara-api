@@ -11,6 +11,7 @@ from apps.core.serializers.report import ReportSerializer
 class BaseArticleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
+        fields = '__all__'
 
     def get_my_vote(self, obj):
         if not obj.vote_set.exists():
@@ -29,13 +30,13 @@ class BaseArticleSerializer(serializers.ModelSerializer):
         return ReportSerializer(my_report).data
 
     def get_is_hidden(self, obj):
-        if self.validate_content(obj):
+        if self.validate_hidden(obj):
             return True
 
         return False
 
     def get_why_hidden(self, obj):
-        errors = self.validate_content(obj)
+        errors = self.validate_hidden(obj)
 
         return [
             {
@@ -44,7 +45,7 @@ class BaseArticleSerializer(serializers.ModelSerializer):
         ]
 
     def get_title(self, obj):
-        errors = self.validate_content(obj)
+        errors = self.validate_hidden(obj)
 
         if errors:
             return [error.detail for error in errors]
@@ -52,13 +53,13 @@ class BaseArticleSerializer(serializers.ModelSerializer):
         return obj.title
 
     def get_hidden_title(self, obj):
-        if self.validate_content(obj):
+        if self.validate_hidden(obj):
             return obj.title
 
         return ''
 
     def get_content(self, obj):
-        errors = self.validate_content(obj)
+        errors = self.validate_hidden(obj)
 
         if errors:
             return [error.detail for error in errors]
@@ -66,7 +67,7 @@ class BaseArticleSerializer(serializers.ModelSerializer):
         return obj.content
 
     def get_hidden_content(self, obj):
-        if self.validate_content(obj):
+        if self.validate_hidden(obj):
             return obj.content
 
         return ''
@@ -110,7 +111,7 @@ class BaseArticleSerializer(serializers.ModelSerializer):
 
         return None
 
-    def validate_content(self, obj):
+    def validate_hidden(self, obj):
         errors = []
 
         if obj.created_by.blocked_by_set.exists():
