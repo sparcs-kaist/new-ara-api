@@ -184,9 +184,7 @@ class ArticleSerializer(BaseArticleSerializer):
 
 class ArticleListActionSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
-        exclude = (
-            'attachments',
-        )
+        fields = '__all__'
 
     parent_topic = TopicSerializer(
         read_only=True,
