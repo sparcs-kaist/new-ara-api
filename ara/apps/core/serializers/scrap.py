@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
 from apps.core.models import Scrap
-from apps.core.serializers.article import BaseArticleSerializer
 
 
 class ScrapSerializer(serializers.ModelSerializer):
@@ -9,6 +8,7 @@ class ScrapSerializer(serializers.ModelSerializer):
         model = Scrap
         fields = '__all__'
 
+    from apps.core.serializers.article import BaseArticleSerializer
     parent_article = BaseArticleSerializer()
 
 

@@ -10,11 +10,11 @@ class NotificationSerializer(serializers.ModelSerializer):
 
     is_read = serializers.SerializerMethodField()
 
-    from apps.core.serializers.article import ArticleSerializer
-    related_article = ArticleSerializer()
+    from apps.core.serializers.article import BaseArticleSerializer
+    related_article = BaseArticleSerializer()
 
-    from apps.core.serializers.comment import CommentSerializer
-    related_comment = CommentSerializer()
+    from apps.core.serializers.comment import BaseCommentSerializer
+    related_comment = BaseCommentSerializer()
 
     def get_is_read(self, obj):
         return obj.notification_read_log_set.get(
