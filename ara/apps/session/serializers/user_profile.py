@@ -9,6 +9,18 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class PublicUserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = (
+            'id',
+            'picture',
+            'nickname',
+
+            'user'
+        )
+
+
 class UserProfileUpdateActionSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile

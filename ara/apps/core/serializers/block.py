@@ -14,6 +14,9 @@ class BlockSerializer(serializers.ModelSerializer):
             'deleted_at',
         )
 
+    from apps.session.serializers.user import PublicUserSerializer
+    user = PublicUserSerializer()
+
 
 class BlockCreateActionSerializer(serializers.ModelSerializer):
     class Meta:
