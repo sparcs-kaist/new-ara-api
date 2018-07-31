@@ -2,7 +2,6 @@ from rest_framework import serializers, exceptions
 
 from apps.core.models import Comment
 from apps.core.serializers.comment_log import CommentUpdateLogSerializer
-from apps.core.serializers.report import ReportSerializer
 
 
 class BaseCommentSerializer(serializers.ModelSerializer):
@@ -19,6 +18,8 @@ class BaseCommentSerializer(serializers.ModelSerializer):
         return my_vote.is_positive
 
     def get_my_report(self, obj):
+        from apps.core.serializers.report import ReportSerializer
+
         if not obj.report_set.exists():
             return None
 

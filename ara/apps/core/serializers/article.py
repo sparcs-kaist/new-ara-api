@@ -3,9 +3,7 @@ from rest_framework import serializers, exceptions
 from apps.core.models import Article
 from apps.core.serializers.article_log import ArticleUpdateLogSerializer
 from apps.core.serializers.board import BoardSerializer
-from apps.core.serializers.comment import Depth1CommentSerializer
 from apps.core.serializers.topic import TopicSerializer
-from apps.core.serializers.report import ReportSerializer
 
 
 class BaseArticleSerializer(serializers.ModelSerializer):
@@ -32,6 +30,8 @@ class BaseArticleSerializer(serializers.ModelSerializer):
         return ScrapSerializer(my_scrap).data
 
     def get_my_report(self, obj):
+        from apps.core.serializers.report import ReportSerializer
+
         if not obj.report_set.exists():
             return None
 
@@ -146,6 +146,8 @@ class ArticleSerializer(BaseArticleSerializer):
     parent_board = BoardSerializer(
         read_only=True,
     )
+
+    from apps.core.serializers.comment import Depth1CommentSerializer
     comments = Depth1CommentSerializer(
         many=True,
         read_only=True,
