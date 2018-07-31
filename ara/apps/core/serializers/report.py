@@ -14,5 +14,8 @@ class ReportCreateActionSerializer(serializers.ModelSerializer):
         model = Report
         fields = '__all__'
         read_only_fields = (
-            'scrapped_by',
+            'reported_by',
+            'created_at',
+            'updated_at',
+            'deleted_at',
         )
