@@ -42,20 +42,6 @@ class BaseCommentSerializer(serializers.ModelSerializer):
             } for error in errors
         ]
 
-    def get_title(self, obj):
-        errors = self.validate_hidden(obj)
-
-        if errors:
-            return [error.detail for error in errors]
-
-        return obj.title
-
-    def get_hidden_title(self, obj):
-        if self.validate_hidden(obj):
-            return obj.title
-
-        return ''
-
     def get_content(self, obj):
         errors = self.validate_hidden(obj)
 
@@ -96,12 +82,6 @@ class CommentSerializer(BaseCommentSerializer):
         read_only=True,
     )
     why_hidden = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    title = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    hidden_title = serializers.SerializerMethodField(
         read_only=True,
     )
     content = serializers.SerializerMethodField(
