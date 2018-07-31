@@ -5,7 +5,7 @@ from rest_framework import status, viewsets, response, decorators, serializers, 
 from ara.classes.viewset import ActionAPIViewSet
 
 from apps.core.models import Article, \
-    ArticleReadLog, ArticleUpdateLog, ArticleDeleteLog, Block, Comment, CommentUpdateLog, Report, Vote
+    ArticleReadLog, ArticleUpdateLog, ArticleDeleteLog, Block, Comment, CommentUpdateLog, Report, Vote, Scrap
 from apps.core.filters.article import ArticleFilter
 from apps.core.permissions.article import ArticlePermission
 from apps.core.serializers.article import ArticleSerializer, \
@@ -60,6 +60,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 'parent_topic',
                 'parent_board',
             ).prefetch_related(
+                Scrap.prefetch_my_scrap(self.request.user),
                 models.Prefetch(
                     'comment_set',
                     queryset=Comment.objects.order_by('created_at').select_related(

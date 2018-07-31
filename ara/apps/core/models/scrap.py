@@ -23,3 +23,12 @@ class Scrap(MetaDataModel):
         related_name='scrap_set',
         verbose_name='스크랩한 사람',
     )
+
+    @classmethod
+    def prefetch_my_scrap(cls, user):
+        return models.Prefetch(
+            'scrap_set',
+            queryset=Scrap.objects.filter(
+                scrapped_by=user,
+            ),
+        )

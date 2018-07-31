@@ -21,6 +21,16 @@ class BaseArticleSerializer(serializers.ModelSerializer):
 
         return my_vote.is_positive
 
+    def get_my_scrap(self, obj):
+        from apps.core.serializers.scrap import ScrapSerializer
+
+        if not obj.scrap_set.exists():
+            return None
+
+        my_scrap = obj.scrap_set.all()[0]
+
+        return ScrapSerializer(my_scrap).data
+
     def get_my_report(self, obj):
         if not obj.report_set.exists():
             return None
@@ -166,6 +176,9 @@ class ArticleSerializer(BaseArticleSerializer):
         read_only=True,
     )
     my_vote = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    my_scrap = serializers.SerializerMethodField(
         read_only=True,
     )
     my_report = serializers.SerializerMethodField(
