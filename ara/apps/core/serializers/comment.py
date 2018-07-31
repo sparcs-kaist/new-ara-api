@@ -98,18 +98,18 @@ class CommentSerializer(BaseCommentSerializer):
     why_hidden = serializers.SerializerMethodField(
         read_only=True,
     )
-    # title = serializers.SerializerMethodField(
-    #     read_only=True,
-    # )
-    # hidden_title = serializers.SerializerMethodField(
-    #     read_only=True,
-    # )
-    # content = serializers.SerializerMethodField(
-    #     read_only=True,
-    # )
-    # hidden_content = serializers.SerializerMethodField(
-    #     read_only=True,
-    # )
+    title = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    hidden_title = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    content = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    hidden_content = serializers.SerializerMethodField(
+        read_only=True,
+    )
 
 
 class Depth2CommentSerializer(CommentSerializer):
