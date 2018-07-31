@@ -153,18 +153,18 @@ class ArticleSerializer(BaseArticleSerializer):
     why_hidden = serializers.SerializerMethodField(
         read_only=True,
     )
-    # title = serializers.SerializerMethodField(
-    #     read_only=True,
-    # )
-    # hidden_title = serializers.SerializerMethodField(
-    #     read_only=True,
-    # )
-    # content = serializers.SerializerMethodField(
-    #     read_only=True,
-    # )
-    # hidden_content = serializers.SerializerMethodField(
-    #     read_only=True,
-    # )
+    title = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    hidden_title = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    content = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    hidden_content = serializers.SerializerMethodField(
+        read_only=True,
+    )
     my_vote = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -199,18 +199,18 @@ class ArticleListActionSerializer(BaseArticleSerializer):
     why_hidden = serializers.SerializerMethodField(
         read_only=True,
     )
-    # title = serializers.SerializerMethodField(
-    #     read_only=True,
-    # )
-    # hidden_title = serializers.SerializerMethodField(
-    #     read_only=True,
-    # )
-    # content = serializers.SerializerMethodField(
-    #     read_only=True,
-    # )
-    # hidden_content = serializers.SerializerMethodField(
-    #     read_only=True,
-    # )
+    title = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    hidden_title = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    content = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    hidden_content = serializers.SerializerMethodField(
+        read_only=True,
+    )
     created_by = serializers.SerializerMethodField(
         read_only=True,
     )
