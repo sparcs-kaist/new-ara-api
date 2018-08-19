@@ -83,10 +83,12 @@ class BaseArticleSerializer(serializers.ModelSerializer):
         return ''
 
     def get_created_by(self, obj):
+        from apps.session.serializers.user import PublicUserSerializer
+
         if obj.is_anonymous:
             return '익명'
 
-        return obj.created_by.profile.nickname
+        return PublicUserSerializer(obj.created_by).data
 
     def get_read_status(self, obj):
         if not obj.article_read_log_set.exists():
