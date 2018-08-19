@@ -1,7 +1,6 @@
 from rest_framework import serializers, exceptions
 
 from apps.core.models import Comment
-from apps.core.serializers.comment_log import CommentUpdateLogSerializer
 
 
 class BaseCommentSerializer(serializers.ModelSerializer):
@@ -66,6 +65,12 @@ class BaseCommentSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(BaseCommentSerializer):
+    from apps.session.serializers.user import PublicUserSerializer
+    created_by = PublicUserSerializer(
+        read_only=True,
+    )
+
+    from apps.core.serializers.comment_log import CommentUpdateLogSerializer
     comment_update_logs = CommentUpdateLogSerializer(
         many=True,
         read_only=True,
