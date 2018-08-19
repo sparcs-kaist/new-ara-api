@@ -1,6 +1,6 @@
 from rest_framework import serializers, exceptions
 
-from apps.core.models import Article
+from apps.core.models import Article, Comment
 from apps.core.serializers.article_log import ArticleUpdateLogSerializer
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
@@ -159,6 +159,9 @@ class ArticleSerializer(BaseArticleSerializer):
         source='article_update_log_set',
     )
 
+    comments_count = serializers.ReadOnlyField()
+    nested_comments_count = serializers.ReadOnlyField()
+
     is_hidden = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -205,6 +208,13 @@ class ArticleListActionSerializer(BaseArticleSerializer):
         read_only=True,
     )
     parent_board = BoardSerializer(
+        read_only=True,
+    )
+
+    comments_count = serializers.ReadOnlyField(
+        read_only=True,
+    )
+    nested_comments_count = serializers.ReadOnlyField(
         read_only=True,
     )
 

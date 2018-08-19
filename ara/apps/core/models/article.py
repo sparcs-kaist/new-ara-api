@@ -108,6 +108,21 @@ class Article(MetaDataModel):
 
         self.save()
 
+    @property
+    def comments_count(self):
+        from apps.core.models import Comment
+
+        return Comment.objects.filter(parent_article=self).count()
+
+    @property
+    def nested_comments_count(self):
+        from apps.core.models import Comment
+
+        return Comment.objects.filter(
+            models.Q(parent_article=self) |
+            models.Q(parent_comment__parent_article=self)
+        ).count()
+
     @staticmethod
     def sanitize(content):
         allowed_tags = bleach.ALLOWED_TAGS + [u'p', u'pre', u'span', u'h1', u'h2', u'br']
