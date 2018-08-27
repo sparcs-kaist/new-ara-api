@@ -10,18 +10,15 @@ class BaseScrapSerializer(serializers.ModelSerializer):
 
 
 class ScrapSerializer(BaseScrapSerializer):
-    class Meta:
-        model = Scrap
-        fields = '__all__'
-
     from apps.core.serializers.article import BaseArticleSerializer
     parent_article = BaseArticleSerializer()
 
+    from apps.session.serializers.user import PublicUserSerializer
+    scrapped_by = PublicUserSerializer()
+
 
 class ScrapCreateActionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Scrap
-        fields = '__all__'
+    class Meta(BaseScrapSerializer.Meta):
         read_only_fields = (
             'created_at',
             'updated_at',
