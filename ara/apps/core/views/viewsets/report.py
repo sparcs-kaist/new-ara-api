@@ -25,6 +25,9 @@ class ReportViewSet(mixins.ListModelMixin,
 
         queryset = queryset.filter(
             reported_by=self.request.user,
+        ).prefetch_related(
+            'reported_by',
+            'reported_by__profile',
         )
 
         return queryset

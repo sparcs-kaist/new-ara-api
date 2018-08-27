@@ -25,6 +25,11 @@ class ScrapViewSet(mixins.ListModelMixin,
 
         queryset = queryset.filter(
             scrapped_by=self.request.user,
+        ).prefetch_related(
+            'parent_article',
+            'parent_article__attachments',
+            'scrapped_by',
+            'scrapped_by__profile',
         )
 
         return queryset
