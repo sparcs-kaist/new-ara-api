@@ -33,9 +33,9 @@ class Block(MetaDataModel):
         super(Block, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     @classmethod
-    def prefetch_my_block(cls, user):
+    def prefetch_my_block(cls, user, prefix=''):
         return models.Prefetch(
-            'created_by__blocked_by_set',
+            f'{prefix}created_by__blocked_by_set',
             queryset=Block.objects.filter(
                 blocked_by=user,
             ),
