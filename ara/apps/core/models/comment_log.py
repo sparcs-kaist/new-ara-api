@@ -44,13 +44,6 @@ class CommentUpdateLog(MetaDataModel):
     def __str__(self):
         return str(self.updated_by) + "/" + str(self.comment)
 
-    @classmethod
-    def prefetch_comment_update_log_set(cls):
-        return models.Prefetch(
-            'comment_update_log_set',
-            queryset=CommentUpdateLog.objects.all(),
-        )
-
 
 class CommentDeleteLog(MetaDataModel):
     class Meta(MetaDataModel.Meta):

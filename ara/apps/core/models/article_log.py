@@ -79,13 +79,6 @@ class ArticleUpdateLog(MetaDataModel):
     def __str__(self):
         return str(self.updated_by) + "/" + str(self.article)
 
-    @classmethod
-    def prefetch_article_update_log_set(cls):
-        return models.Prefetch(
-            'article_update_log_set',
-            queryset=ArticleUpdateLog.objects.all(),
-        )
-
 
 class ArticleDeleteLog(MetaDataModel):
     class Meta(MetaDataModel.Meta):
