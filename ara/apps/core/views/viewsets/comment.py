@@ -2,11 +2,18 @@ from rest_framework import mixins, status, response, decorators, serializers, pe
 
 from ara.classes.viewset import ActionAPIViewSet
 
-from apps.core.models import Comment, CommentDeleteLog, Vote
+from apps.core.models import (
+    Comment,
+    CommentDeleteLog,
+    Vote,
+)
 from apps.core.filters.comment import CommentFilter
 from apps.core.permissions.comment import CommentPermission
-from apps.core.serializers.comment import CommentSerializer, \
-    CommentCreateActionSerializer, CommentUpdateActionSerializer
+from apps.core.serializers.comment import (
+    CommentSerializer,
+    CommentCreateActionSerializer,
+    CommentUpdateActionSerializer,
+)
 
 
 class CommentViewSet(mixins.CreateModelMixin,

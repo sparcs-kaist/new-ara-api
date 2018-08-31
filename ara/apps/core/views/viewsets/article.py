@@ -4,12 +4,25 @@ from rest_framework import status, viewsets, response, decorators, serializers, 
 
 from ara.classes.viewset import ActionAPIViewSet
 
-from apps.core.models import Article, \
-    ArticleReadLog, ArticleUpdateLog, ArticleDeleteLog, Block, Comment, CommentUpdateLog, Report, Vote, Scrap
+from apps.core.models import (
+    Article,
+    ArticleReadLog,
+    ArticleUpdateLog,
+    ArticleDeleteLog,
+    Block,
+    Comment,
+    Report,
+    Vote,
+    Scrap,
+)
 from apps.core.filters.article import ArticleFilter
 from apps.core.permissions.article import ArticlePermission
-from apps.core.serializers.article import ArticleSerializer, \
-    ArticleListActionSerializer, ArticleCreateActionSerializer, ArticleUpdateActionSerializer
+from apps.core.serializers.article import (
+    ArticleSerializer,
+    ArticleListActionSerializer,
+    ArticleCreateActionSerializer,
+    ArticleUpdateActionSerializer,
+)
 
 
 class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):

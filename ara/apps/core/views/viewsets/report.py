@@ -4,7 +4,10 @@ from ara.classes.viewset import ActionAPIViewSet
 
 from apps.core.models import Report
 from apps.core.permissions.report import ReportPermission
-from apps.core.serializers.report import ReportSerializer, ReportCreateActionSerializer
+from apps.core.serializers.report import (
+    ReportSerializer,
+    ReportCreateActionSerializer,
+)
 
 
 class ReportViewSet(mixins.ListModelMixin,

@@ -3,7 +3,10 @@ from rest_framework import mixins
 from ara.classes.viewset import ActionAPIViewSet
 
 from apps.core.models import Block
-from apps.core.serializers.block import BlockSerializer, BlockCreateActionSerializer
+from apps.core.serializers.block import (
+    BlockSerializer,
+    BlockCreateActionSerializer,
+)
 
 
 class BlockViewSet(mixins.ListModelMixin,
