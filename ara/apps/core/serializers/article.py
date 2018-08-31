@@ -1,6 +1,6 @@
 from rest_framework import serializers, exceptions
 
-from apps.core.models import Article, Comment
+from apps.core.models import Article
 from apps.core.serializers.article_log import ArticleUpdateLogSerializer
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer

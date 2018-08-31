@@ -66,19 +66,19 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                     queryset=Comment.objects.order_by('created_at').select_related(
                         'attachment',
                     ).prefetch_related(
+                        'comment_update_log_set',
                         Vote.prefetch_my_vote(self.request.user),
                         Block.prefetch_my_block(self.request.user),
                         Report.prefetch_my_report(self.request.user),
-                        CommentUpdateLog.prefetch_comment_update_log_set(),
                         models.Prefetch(
                             'comment_set',
                             queryset=Comment.objects.order_by('created_at').select_related(
                                 'attachment',
                             ).prefetch_related(
+                                'comment_update_log_set',
                                 Vote.prefetch_my_vote(self.request.user),
                                 Block.prefetch_my_block(self.request.user),
                                 Report.prefetch_my_report(self.request.user),
-                                CommentUpdateLog.prefetch_comment_update_log_set(),
                             ),
                         ),
                     ),
@@ -95,9 +95,10 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             'parent_topic',
             'parent_board',
         ).prefetch_related(
+            'attachments',
+            'article_update_log_set',
             Block.prefetch_my_block(self.request.user),
             ArticleReadLog.prefetch_my_article_read_log(self.request.user),
-            ArticleUpdateLog.prefetch_article_update_log_set(),
         )
 
         return super().paginate_queryset(queryset)
