@@ -2,7 +2,11 @@ from rest_framework import mixins
 
 from ara.classes.viewset import ActionAPIViewSet
 
-from apps.core.models import Report
+from apps.core.models import (
+    ArticleReadLog,
+    Block,
+    Report,
+)
 from apps.core.permissions.report import ReportPermission
 from apps.core.serializers.report import (
     ReportSerializer,
@@ -28,9 +32,25 @@ class ReportViewSet(mixins.ListModelMixin,
 
         queryset = queryset.filter(
             reported_by=self.request.user,
-        ).prefetch_related(
+        ).select_related(
             'reported_by',
             'reported_by__profile',
+            'parent_article',
+            'parent_article__created_by',
+            'parent_article__created_by__profile',
+            'parent_article__parent_topic',
+            'parent_article__parent_board',
+            'parent_comment',
+            'parent_comment__created_by',
+            'parent_comment__created_by__profile',
+        ).prefetch_related(
+            'parent_article__comment_set',
+            'parent_article__comment_set__comment_set',
+            'parent_article__attachments',
+            'parent_article__article_update_log_set',
+            Block.prefetch_my_block(self.request.user, prefix='parent_article__'),
+            Block.prefetch_my_block(self.request.user, prefix='parent_comment__'),
+            ArticleReadLog.prefetch_my_article_read_log(self.request.user, prefix='parent_article__'),
         )
 
         return queryset
