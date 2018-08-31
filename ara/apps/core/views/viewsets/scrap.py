@@ -2,9 +2,16 @@ from rest_framework import mixins
 
 from ara.classes.viewset import ActionAPIViewSet
 
-from apps.core.models import Scrap
+from apps.core.models import (
+    ArticleReadLog,
+    Block,
+    Scrap,
+)
 from apps.core.permissions.scrap import ScrapPermission
-from apps.core.serializers.scrap import ScrapSerializer, ScrapCreateActionSerializer
+from apps.core.serializers.scrap import (
+    ScrapSerializer,
+    ScrapCreateActionSerializer,
+)
 
 
 class ScrapViewSet(mixins.ListModelMixin,
@@ -25,11 +32,21 @@ class ScrapViewSet(mixins.ListModelMixin,
 
         queryset = queryset.filter(
             scrapped_by=self.request.user,
-        ).prefetch_related(
-            'parent_article',
-            'parent_article__attachments',
+        ).select_related(
             'scrapped_by',
             'scrapped_by__profile',
+            'parent_article',
+            'parent_article__created_by',
+            'parent_article__created_by__profile',
+            'parent_article__parent_topic',
+            'parent_article__parent_board',
+        ).prefetch_related(
+            'parent_article__comment_set',
+            'parent_article__comment_set__comment_set',
+            'parent_article__attachments',
+            'parent_article__article_update_log_set',
+            Block.prefetch_my_block(self.request.user, prefix='parent_article__'),
+            ArticleReadLog.prefetch_my_article_read_log(self.request.user, prefix='parent_article__'),
         )
 
         return queryset
