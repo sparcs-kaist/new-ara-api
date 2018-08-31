@@ -29,3 +29,12 @@ class NotificationReadLog(MetaDataModel):
         related_name='notification_read_log_set',
         verbose_name='관련 알림',
     )
+
+    @classmethod
+    def prefetch_my_notification_read_log(cls, user, prefix=''):
+        return models.Prefetch(
+            f'{prefix}notification_read_log_set',
+            queryset=NotificationReadLog.objects.filter(
+                read_by=user,
+            ),
+        )

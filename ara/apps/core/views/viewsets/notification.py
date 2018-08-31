@@ -8,12 +8,7 @@ from apps.core.serializers.notification import NotificationSerializer
 
 
 class NotificationViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
-    queryset = Notification.objects.select_related(
-        'related_article',
-        'related_comment',
-    ).prefetch_related(
-        'notification_read_log_set'
-    )
+    queryset = Notification.objects.all()
     filter_class = NotificationFilter
     serializer_class = NotificationSerializer
     action_serializer_class = {
@@ -26,6 +21,12 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
 
         queryset = queryset.filter(
             notification_read_log_set__read_by=self.request.user,
+        ).select_related(
+            'related_article',
+            'related_comment',
+        ).prefetch_related(
+            'related_article__attachments',
+            NotificationReadLog.prefetch_my_notification_read_log(self.request.user),
         )
 
         return queryset
