@@ -54,6 +54,6 @@ class ArticleFilter(filters.FilterSet):
     @staticmethod
     def get_title_or_contents__contains(queryset, name, value):
         return queryset.filter(
-            models.Q(title=value) |
-            models.Q(content=value)
+            models.Q(title__contains=value) |
+            models.Q(content__contains=value)
         ).distinct()
