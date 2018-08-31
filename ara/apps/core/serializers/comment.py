@@ -17,14 +17,14 @@ class BaseCommentSerializer(serializers.ModelSerializer):
         return my_vote.is_positive
 
     def get_my_report(self, obj):
-        from apps.core.serializers.report import ReportSerializer
+        from apps.core.serializers.report import BaseReportSerializer
 
         if not obj.report_set.exists():
             return None
 
         my_report = obj.report_set.all()[0]
 
-        return ReportSerializer(my_report).data
+        return BaseReportSerializer(my_report).data
 
     def get_is_hidden(self, obj):
         if self.validate_hidden(obj):
@@ -97,12 +97,45 @@ class CommentSerializer(BaseCommentSerializer):
     )
 
 
-class Depth2CommentSerializer(CommentSerializer):
+class CommentListActionSerializer(BaseCommentSerializer):
+    from apps.session.serializers.user import PublicUserSerializer
+    created_by = PublicUserSerializer(
+        read_only=True,
+    )
+
+    from apps.core.serializers.comment_log import CommentUpdateLogSerializer
+    comment_update_logs = CommentUpdateLogSerializer(
+        many=True,
+        read_only=True,
+        source='comment_update_log_set',
+    )
+
+    my_vote = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    my_report = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    is_hidden = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    why_hidden = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    content = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    hidden_content = serializers.SerializerMethodField(
+        read_only=True,
+    )
+
+
+class CommentNestedCommentListActionSerializer(CommentListActionSerializer):
     pass
 
 
-class Depth1CommentSerializer(CommentSerializer):
-    comments = Depth2CommentSerializer(
+class ArticleNestedCommentListActionSerializer(CommentListActionSerializer):
+    comments = CommentNestedCommentListActionSerializer(
         many=True,
         read_only=True,
         source='comment_set',

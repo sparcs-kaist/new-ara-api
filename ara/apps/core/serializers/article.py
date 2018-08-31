@@ -20,24 +20,24 @@ class BaseArticleSerializer(serializers.ModelSerializer):
         return my_vote.is_positive
 
     def get_my_scrap(self, obj):
-        from apps.core.serializers.scrap import ScrapSerializer
+        from apps.core.serializers.scrap import BaseScrapSerializer
 
         if not obj.scrap_set.exists():
             return None
 
         my_scrap = obj.scrap_set.all()[0]
 
-        return ScrapSerializer(my_scrap).data
+        return BaseScrapSerializer(my_scrap).data
 
     def get_my_report(self, obj):
-        from apps.core.serializers.report import ReportSerializer
+        from apps.core.serializers.report import BaseReportSerializer
 
         if not obj.report_set.exists():
             return None
 
         my_report = obj.report_set.all()[0]
 
-        return ReportSerializer(my_report).data
+        return BaseReportSerializer(my_report).data
 
     def get_is_hidden(self, obj):
         if self.validate_hidden(obj):
@@ -149,8 +149,8 @@ class ArticleSerializer(BaseArticleSerializer):
         read_only=True,
     )
 
-    from apps.core.serializers.comment import Depth1CommentSerializer
-    comments = Depth1CommentSerializer(
+    from apps.core.serializers.comment import ArticleNestedCommentListActionSerializer
+    comments = ArticleNestedCommentListActionSerializer(
         many=True,
         read_only=True,
         source='comment_set',
