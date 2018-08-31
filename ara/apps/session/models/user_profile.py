@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 
+from django_mysql.models import JSONField
+
 from ara.db.models import MetaDataModel
 
 
@@ -33,6 +35,9 @@ class UserProfile(MetaDataModel):
         blank=True,
         default=False,
         verbose_name='정치/사회성 보기',
+    )
+    extra_preferences = JSONField(
+        verbose_name='기타 설정',
     )
 
     user = models.OneToOneField(
