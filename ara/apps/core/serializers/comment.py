@@ -153,6 +153,11 @@ class CommentCreateActionSerializer(BaseCommentSerializer):
             'deleted_at',
         )
 
+    from apps.session.serializers.user import PublicUserSerializer
+    created_by = PublicUserSerializer(
+        read_only=True,
+    )
+
 
 class CommentUpdateActionSerializer(BaseCommentSerializer):
     class Meta(BaseCommentSerializer.Meta):
@@ -167,3 +172,8 @@ class CommentUpdateActionSerializer(BaseCommentSerializer):
             'updated_at',
             'deleted_at',
         )
+
+    from apps.session.serializers.user import PublicUserSerializer
+    created_by = PublicUserSerializer(
+        read_only=True,
+    )
