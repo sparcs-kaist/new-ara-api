@@ -1,3 +1,5 @@
+from django.db import models
+
 import rest_framework_filters as filters
 
 from apps.core.models import Article
@@ -42,3 +44,16 @@ class ArticleFilter(filters.FilterSet):
                 'exact',
             ],
         }
+
+    title_or_contents_contains = filters.CharFilter(
+        name='title_or_contents_contains',
+        label='제목 or 본문 contains',
+        method='get_title_or_contents_contains',
+    )
+
+    @staticmethod
+    def get_title_or_contents_contains(queryset, name, value):
+        return queryset.filter(
+            models.Q(title=value) |
+            models.Q(content=value)
+        ).distinct()
