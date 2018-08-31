@@ -10,8 +10,8 @@ class BaseScrapSerializer(serializers.ModelSerializer):
 
 
 class ScrapSerializer(BaseScrapSerializer):
-    from apps.core.serializers.article import BaseArticleSerializer
-    parent_article = BaseArticleSerializer()
+    from apps.core.serializers.article import ArticleListActionSerializer
+    parent_article = ArticleListActionSerializer()
 
     from apps.session.serializers.user import PublicUserSerializer
     scrapped_by = PublicUserSerializer()
