@@ -45,14 +45,14 @@ class ArticleFilter(filters.FilterSet):
             ],
         }
 
-    title_or_contents_contains = filters.CharFilter(
-        name='title_or_contents_contains',
+    title_or_contents__contains = filters.CharFilter(
+        name='title_or_contents__contains',
         label='제목 or 본문 contains',
-        method='get_title_or_contents_contains',
+        method='get_title_or_contents__contains',
     )
 
     @staticmethod
-    def get_title_or_contents_contains(queryset, name, value):
+    def get_title_or_contents__contains(queryset, name, value):
         return queryset.filter(
             models.Q(title=value) |
             models.Q(content=value)
