@@ -19,6 +19,11 @@ class AttachmentViewSet(mixins.CreateModelMixin,
     )
     serializer_class = AttachmentSerializer
 
+    def perform_create(self, serializer):
+        serializer.save(
+            name=self.request.FILES['file'].name,
+        )
+
     @decorators.detail_route(methods=['get'])
     def url(self, request, *args, **kwargs):
         return HttpResponseRedirect(

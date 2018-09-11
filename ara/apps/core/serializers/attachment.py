@@ -8,6 +8,7 @@ class AttachmentSerializer(serializers.ModelSerializer):
         model = Attachment
         fields = '__all__'
         read_only_fields = (
+            'name',
             'created_at',
             'updated_at',
             'deleted_at',
