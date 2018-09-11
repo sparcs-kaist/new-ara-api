@@ -1,4 +1,6 @@
-from rest_framework import mixins
+from django.http import HttpResponseRedirect
+
+from rest_framework import mixins, decorators
 
 from ara.classes.viewset import ActionAPIViewSet
 
@@ -8,6 +10,7 @@ from apps.core.permissions.attachment import AttachmentPermission
 
 
 class AttachmentViewSet(mixins.CreateModelMixin,
+                        mixins.RetrieveModelMixin,
                         mixins.DestroyModelMixin,
                         ActionAPIViewSet):
     queryset = Attachment.objects.all()
@@ -15,3 +18,9 @@ class AttachmentViewSet(mixins.CreateModelMixin,
         AttachmentPermission,
     )
     serializer_class = AttachmentSerializer
+
+    @decorators.detail_route(methods=['get'])
+    def url(self, request, *args, **kwargs):
+        return HttpResponseRedirect(
+            redirect_to=self.get_object().file.url,
+        )
