@@ -1,3 +1,5 @@
+import uuid
+
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
@@ -61,7 +63,8 @@ def login_callback(request):
 
         profile, created = UserProfile.objects.get_or_create(
             sid=sid,
-            user=user
+            user=user,
+            defaults={'nickname': str(uuid.uuid4())},
         )
 
     else:
