@@ -1,28 +1,20 @@
 from rest_framework import serializers
 
+from ara.classes.serializers import MetaDataModelSerializer
+
 from apps.core.models import Board
 
 
-class BoardSerializer(serializers.ModelSerializer):
+class BoardSerializer(MetaDataModelSerializer):
     class Meta:
         model = Board
         fields = '__all__'
-        read_only_fields = (
-            'created_at',
-            'updated_at',
-            'deleted_at',
-        )
 
 
-class BoardDetailActionSerializer(serializers.ModelSerializer):
+class BoardDetailActionSerializer(MetaDataModelSerializer):
     class Meta:
         model = Board
         fields = '__all__'
-        read_only_fields = (
-            'created_at',
-            'updated_at',
-            'deleted_at',
-        )
 
     from apps.core.serializers.topic import TopicSerializer
 
@@ -32,15 +24,10 @@ class BoardDetailActionSerializer(serializers.ModelSerializer):
     )
 
 
-class BoardRecentArticleActionSerializer(serializers.ModelSerializer):
+class BoardRecentArticleActionSerializer(MetaDataModelSerializer):
     class Meta:
         model = Board
         fields = '__all__'
-        read_only_fields = (
-            'created_at',
-            'updated_at',
-            'deleted_at',
-        )
 
     recent_articles = serializers.SerializerMethodField()
 

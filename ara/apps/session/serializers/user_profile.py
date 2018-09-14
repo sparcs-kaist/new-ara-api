@@ -1,9 +1,11 @@
 from rest_framework import serializers
 
+from ara.classes.serializers import MetaDataModelSerializer
+
 from apps.session.models import UserProfile
 
 
-class BaseUserProfileSerializer(serializers.ModelSerializer):
+class BaseUserProfileSerializer(MetaDataModelSerializer):
     class Meta:
         model = UserProfile
         fields = '__all__'
@@ -28,9 +30,6 @@ class UserProfileUpdateActionSerializer(BaseUserProfileSerializer):
         read_only_fields = (
             'sid',
             'user',
-            'created_at',
-            'updated_at',
-            'deleted_at',
         )
 
     extra_preferences = serializers.JSONField()

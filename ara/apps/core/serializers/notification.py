@@ -1,9 +1,11 @@
 from rest_framework import serializers
 
+from ara.classes.serializers import MetaDataModelSerializer
+
 from apps.core.models import Notification
 
 
-class BaseNotificationSerializer(serializers.ModelSerializer):
+class BaseNotificationSerializer(MetaDataModelSerializer):
     class Meta:
         model = Notification
         fields = '__all__'

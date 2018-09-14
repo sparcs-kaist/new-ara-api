@@ -1,9 +1,11 @@
 from rest_framework import serializers
 
+from ara.classes.serializers import MetaDataModelSerializer
+
 from apps.core.models import Report
 
 
-class BaseReportSerializer(serializers.ModelSerializer):
+class BaseReportSerializer(MetaDataModelSerializer):
     class Meta:
         model = Report
         fields = '__all__'
@@ -24,7 +26,4 @@ class ReportCreateActionSerializer(BaseReportSerializer):
     class Meta(BaseReportSerializer.Meta):
         read_only_fields = (
             'reported_by',
-            'created_at',
-            'updated_at',
-            'deleted_at',
         )

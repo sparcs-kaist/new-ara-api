@@ -1,17 +1,14 @@
-from rest_framework import serializers
+from ara.classes.serializers import MetaDataModelSerializer
 
 from apps.core.models import Block
 
 
-class BaseBlockSerializer(serializers.ModelSerializer):
+class BaseBlockSerializer(MetaDataModelSerializer):
     class Meta:
         model = Block
         fields = '__all__'
         read_only_fields = (
             'blocked_by',
-            'created_at',
-            'updated_at',
-            'deleted_at',
         )
 
 

@@ -9,22 +9,14 @@ class BaseUserSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta(BaseUserSerializer.Meta):
-        fields = '__all__'
-
+class UserSerializer(BaseUserSerializer):
     from apps.session.serializers.user_profile import UserProfileSerializer
     profile = UserProfileSerializer()
 
 
-class UserDetailActionSerializer(serializers.ModelSerializer):
+class UserDetailActionSerializer(BaseUserSerializer):
     class Meta(BaseUserSerializer.Meta):
         fields = (
-            'id',
-            'username',
-            'profile',
-        )
-        read_only_fields = (
             'id',
             'username',
             'profile',
@@ -36,13 +28,12 @@ class UserDetailActionSerializer(serializers.ModelSerializer):
     )
 
 
-class PublicUserSerializer(serializers.ModelSerializer):
+class PublicUserSerializer(BaseUserSerializer):
     class Meta(BaseUserSerializer.Meta):
         fields = (
             'id',
             'email',
             'username',
-
             'profile',
         )
 

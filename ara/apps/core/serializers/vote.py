@@ -1,9 +1,11 @@
 from rest_framework import serializers
 
+from ara.classes.serializers import MetaDataModelSerializer
+
 from apps.core.models import Vote
 
 
-class VoteCreateActionSerializer(serializers.ModelSerializer):
+class VoteCreateActionSerializer(MetaDataModelSerializer):
     class Meta:
         model = Vote
         fields = (
@@ -13,7 +15,7 @@ class VoteCreateActionSerializer(serializers.ModelSerializer):
         )
 
 
-class VoteUpdateActionSerializer(serializers.ModelSerializer):
+class VoteUpdateActionSerializer(MetaDataModelSerializer):
     class Meta:
         model = Vote
         fields = (
