@@ -17,6 +17,25 @@ class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer()
 
 
+class UserDetailActionSerializer(serializers.ModelSerializer):
+    class Meta(BaseUserSerializer.Meta):
+        fields = (
+            'id',
+            'username',
+            'profile',
+        )
+        read_only_fields = (
+            'id',
+            'username',
+            'profile',
+        )
+
+    from apps.session.serializers.user_profile import UserProfileSerializer
+    profile = UserProfileSerializer(
+        read_only=True,
+    )
+
+
 class PublicUserSerializer(serializers.ModelSerializer):
     class Meta(BaseUserSerializer.Meta):
         fields = (
