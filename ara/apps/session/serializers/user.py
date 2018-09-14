@@ -11,7 +11,9 @@ class BaseUserSerializer(serializers.ModelSerializer):
 
 class UserSerializer(BaseUserSerializer):
     from apps.session.serializers.user_profile import UserProfileSerializer
-    profile = UserProfileSerializer()
+    profile = UserProfileSerializer(
+        read_only=True,
+    )
 
 
 class UserDetailActionSerializer(BaseUserSerializer):
@@ -38,4 +40,6 @@ class PublicUserSerializer(BaseUserSerializer):
         )
 
     from apps.session.serializers.user_profile import PublicUserProfileSerializer
-    profile = PublicUserProfileSerializer()
+    profile = PublicUserProfileSerializer(
+        read_only=True,
+    )

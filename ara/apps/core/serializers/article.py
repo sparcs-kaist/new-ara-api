@@ -141,9 +141,6 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
 
 class ArticleSerializer(BaseArticleSerializer):
-    class Meta(BaseArticleSerializer.Meta):
-        fields = '__all__'
-
     parent_topic = TopicSerializer(
         read_only=True,
     )
@@ -205,9 +202,6 @@ class ArticleSerializer(BaseArticleSerializer):
     
 
 class ArticleListActionSerializer(BaseArticleSerializer):
-    class Meta(BaseArticleSerializer.Meta):
-        fields = '__all__'
-
     parent_topic = TopicSerializer(
         read_only=True,
     )

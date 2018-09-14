@@ -20,10 +20,16 @@ class BaseNotificationSerializer(MetaDataModelSerializer):
 
 
 class NotificationSerializer(BaseNotificationSerializer):
-    is_read = serializers.SerializerMethodField()
+    is_read = serializers.SerializerMethodField(
+        read_only=True,
+    )
 
     from apps.core.serializers.article import BaseArticleSerializer
-    related_article = BaseArticleSerializer()
+    related_article = BaseArticleSerializer(
+        read_only=True,
+    )
 
     from apps.core.serializers.comment import BaseCommentSerializer
-    related_comment = BaseCommentSerializer()
+    related_comment = BaseCommentSerializer(
+        read_only=True,
+    )

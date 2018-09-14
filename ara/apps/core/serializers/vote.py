@@ -1,23 +1,29 @@
-from rest_framework import serializers
-
 from ara.classes.serializers import MetaDataModelSerializer
 
 from apps.core.models import Vote
 
 
-class VoteCreateActionSerializer(MetaDataModelSerializer):
+class BaseVoteSerializer(MetaDataModelSerializer):
     class Meta:
         model = Vote
-        fields = (
-            'parent_article',
-            'parent_comment',
-            'is_positive',
+        fields = '__all__'
+
+
+class VoteSerializer(BaseVoteSerializer):
+    pass
+
+
+class VoteCreateActionSerializer(BaseVoteSerializer):
+    class Meta(BaseVoteSerializer.Meta):
+        read_only_fields = (
+            'voted_by',
         )
 
 
-class VoteUpdateActionSerializer(MetaDataModelSerializer):
-    class Meta:
-        model = Vote
-        fields = (
-            'is_positive',
+class VoteUpdateActionSerializer(BaseVoteSerializer):
+    class Meta(BaseVoteSerializer.Meta):
+        read_only_fields = (
+            'voted_by'
+            'parent_article',
+            'parent_comment',
         )

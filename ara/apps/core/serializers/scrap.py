@@ -11,10 +11,14 @@ class BaseScrapSerializer(MetaDataModelSerializer):
 
 class ScrapSerializer(BaseScrapSerializer):
     from apps.core.serializers.article import ArticleListActionSerializer
-    parent_article = ArticleListActionSerializer()
+    parent_article = ArticleListActionSerializer(
+        read_only=True,
+    )
 
     from apps.session.serializers.user import PublicUserSerializer
-    scrapped_by = PublicUserSerializer()
+    scrapped_by = PublicUserSerializer(
+        read_only=True,
+    )
 
 
 class ScrapCreateActionSerializer(MetaDataModelSerializer):

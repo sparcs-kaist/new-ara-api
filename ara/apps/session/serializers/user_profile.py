@@ -12,6 +12,18 @@ class BaseUserProfileSerializer(MetaDataModelSerializer):
 
 
 class UserProfileSerializer(BaseUserProfileSerializer):
+    extra_preferences = serializers.JSONField(
+        read_only=True,
+    )
+
+
+class UserProfileUpdateActionSerializer(BaseUserProfileSerializer):
+    class Meta(BaseUserProfileSerializer.Meta):
+        read_only_fields = (
+            'sid',
+            'user',
+        )
+
     extra_preferences = serializers.JSONField()
 
 
@@ -23,13 +35,3 @@ class PublicUserProfileSerializer(BaseUserProfileSerializer):
             'nickname',
             'user'
         )
-
-
-class UserProfileUpdateActionSerializer(BaseUserProfileSerializer):
-    class Meta(BaseUserProfileSerializer.Meta):
-        read_only_fields = (
-            'sid',
-            'user',
-        )
-
-    extra_preferences = serializers.JSONField()
