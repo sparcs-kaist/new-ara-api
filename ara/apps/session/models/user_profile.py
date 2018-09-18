@@ -10,6 +10,9 @@ class UserProfile(MetaDataModel):
     class Meta(MetaDataModel.Meta):
         verbose_name = '유저 프로필'
         verbose_name_plural = '유저 프로필 목록'
+        unique_together = (
+            ('nickname', 'deleted_at'),
+        )
 
     sid = models.CharField(max_length=30)
 
