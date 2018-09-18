@@ -1,4 +1,6 @@
-from rest_framework import serializers, exceptions
+from rest_framework import exceptions, serializers
+
+from ara.classes.serializers import MetaDataModelSerializer
 
 from apps.core.models import Article
 from apps.core.serializers.article_log import ArticleUpdateLogSerializer
@@ -6,7 +8,7 @@ from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
 
 
-class BaseArticleSerializer(serializers.ModelSerializer):
+class BaseArticleSerializer(MetaDataModelSerializer):
     class Meta:
         model = Article
         fields = '__all__'
@@ -139,9 +141,6 @@ class BaseArticleSerializer(serializers.ModelSerializer):
 
 
 class ArticleSerializer(BaseArticleSerializer):
-    class Meta(BaseArticleSerializer.Meta):
-        fields = '__all__'
-
     parent_topic = TopicSerializer(
         read_only=True,
     )
@@ -203,9 +202,6 @@ class ArticleSerializer(BaseArticleSerializer):
     
 
 class ArticleListActionSerializer(BaseArticleSerializer):
-    class Meta(BaseArticleSerializer.Meta):
-        fields = '__all__'
-
     parent_topic = TopicSerializer(
         read_only=True,
     )
@@ -248,22 +244,17 @@ class ArticleListActionSerializer(BaseArticleSerializer):
 
 class ArticleCreateActionSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
-        fields = '__all__'
         read_only_fields = (
             'hit_count',
             'positive_vote_count',
             'negative_vote_count',
             'created_by',
-            'created_at',
-            'updated_at',
-            'deleted_at',
             'commented_at',
         )
 
 
 class ArticleUpdateActionSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
-        fields = '__all__'
         read_only_fields = (
             'is_anonymous',
             'hit_count',
@@ -272,8 +263,5 @@ class ArticleUpdateActionSerializer(BaseArticleSerializer):
             'created_by',
             'parent_topic',
             'parent_board',
-            'created_at',
-            'updated_at',
-            'deleted_at',
             'commented_at',
         )

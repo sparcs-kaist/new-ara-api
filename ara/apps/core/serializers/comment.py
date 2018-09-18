@@ -1,9 +1,11 @@
 from rest_framework import serializers, exceptions
 
+from ara.classes.serializers import MetaDataModelSerializer
+
 from apps.core.models import Comment
 
 
-class BaseCommentSerializer(serializers.ModelSerializer):
+class BaseCommentSerializer(MetaDataModelSerializer):
     class Meta:
         model = Comment
         fields = '__all__'
@@ -148,9 +150,6 @@ class CommentCreateActionSerializer(BaseCommentSerializer):
             'positive_vote_count',
             'negative_vote_count',
             'created_by',
-            'created_at',
-            'updated_at',
-            'deleted_at',
         )
 
     from apps.session.serializers.user import PublicUserSerializer
@@ -168,9 +167,6 @@ class CommentUpdateActionSerializer(BaseCommentSerializer):
             'created_by',
             'parent_article',
             'parent_comment',
-            'created_at',
-            'updated_at',
-            'deleted_at',
         )
 
     from apps.session.serializers.user import PublicUserSerializer

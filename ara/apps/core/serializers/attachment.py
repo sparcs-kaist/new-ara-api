@@ -1,15 +1,16 @@
-from rest_framework import serializers
+from ara.classes.serializers import MetaDataModelSerializer
 
 from apps.core.models import Attachment
 
 
-class AttachmentSerializer(serializers.ModelSerializer):
+class BaseAttachmentSerializer(MetaDataModelSerializer):
     class Meta:
         model = Attachment
         fields = '__all__'
         read_only_fields = (
             'name',
-            'created_at',
-            'updated_at',
-            'deleted_at',
         )
+
+
+class AttachmentSerializer(BaseAttachmentSerializer):
+    pass

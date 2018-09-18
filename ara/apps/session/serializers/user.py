@@ -9,23 +9,37 @@ class BaseUserSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(BaseUserSerializer):
+    from apps.session.serializers.user_profile import UserProfileSerializer
+    profile = UserProfileSerializer(
+        read_only=True,
+    )
+
+
+class UserDetailActionSerializer(BaseUserSerializer):
     class Meta(BaseUserSerializer.Meta):
-        fields = '__all__'
+        fields = (
+            'id',
+            'username',
+            'profile',
+        )
 
     from apps.session.serializers.user_profile import UserProfileSerializer
-    profile = UserProfileSerializer()
+    profile = UserProfileSerializer(
+        read_only=True,
+    )
 
 
-class PublicUserSerializer(serializers.ModelSerializer):
+class PublicUserSerializer(BaseUserSerializer):
     class Meta(BaseUserSerializer.Meta):
         fields = (
             'id',
             'email',
             'username',
-
             'profile',
         )
 
     from apps.session.serializers.user_profile import PublicUserProfileSerializer
-    profile = PublicUserProfileSerializer()
+    profile = PublicUserProfileSerializer(
+        read_only=True,
+    )

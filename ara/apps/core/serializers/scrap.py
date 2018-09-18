@@ -1,9 +1,9 @@
-from rest_framework import serializers
+from ara.classes.serializers import MetaDataModelSerializer
 
 from apps.core.models import Scrap
 
 
-class BaseScrapSerializer(serializers.ModelSerializer):
+class BaseScrapSerializer(MetaDataModelSerializer):
     class Meta:
         model = Scrap
         fields = '__all__'
@@ -11,17 +11,18 @@ class BaseScrapSerializer(serializers.ModelSerializer):
 
 class ScrapSerializer(BaseScrapSerializer):
     from apps.core.serializers.article import ArticleListActionSerializer
-    parent_article = ArticleListActionSerializer()
+    parent_article = ArticleListActionSerializer(
+        read_only=True,
+    )
 
     from apps.session.serializers.user import PublicUserSerializer
-    scrapped_by = PublicUserSerializer()
+    scrapped_by = PublicUserSerializer(
+        read_only=True,
+    )
 
 
-class ScrapCreateActionSerializer(serializers.ModelSerializer):
+class ScrapCreateActionSerializer(MetaDataModelSerializer):
     class Meta(BaseScrapSerializer.Meta):
         read_only_fields = (
-            'created_at',
-            'updated_at',
-            'deleted_at',
             'scrapped_by',
         )

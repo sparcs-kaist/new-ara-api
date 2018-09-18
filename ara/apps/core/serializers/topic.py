@@ -1,29 +1,20 @@
-from rest_framework import serializers
+from ara.classes.serializers import MetaDataModelSerializer
 
 from apps.core.models import Topic
 
 
-class TopicSerializer(serializers.ModelSerializer):
+class BaseTopicSerializer(MetaDataModelSerializer):
     class Meta:
         model = Topic
         fields = '__all__'
-        read_only_fields = (
-            'created_at',
-            'updated_at',
-            'deleted_at',
-        )
+        
+
+class TopicSerializer(BaseTopicSerializer):
+    pass
 
 
-class BoardNestedTopicSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Topic
-        fields = '__all__'
-        read_only_fields = (
-            'created_at',
-            'updated_at',
-            'deleted_at',
-        )
-
+class BoardNestedTopicSerializer(BaseTopicSerializer):
     from apps.core.serializers.board import BoardSerializer
-
-    board = BoardSerializer()
+    board = BoardSerializer(
+        read_only=True,
+    )
