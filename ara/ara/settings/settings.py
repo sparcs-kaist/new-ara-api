@@ -146,16 +146,6 @@ INTERNAL_IPS = (
 )
 
 
-# https://docs.djangoproject.com/en/1.11/ref/settings/#login-url
-
-LOGIN_URL = '/user/login/'
-
-
-# https://docs.djangoproject.com/en/1.11/ref/settings/#logout-url
-
-LOGOUT_URL = '/user/logout/'
-
-
 # http://django-rest-auth.readthedocs.io/
 
 SITE_ID = 1
