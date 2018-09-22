@@ -153,5 +153,5 @@ SITE_ID = 1
 REST_USE_JWT = True
 
 REST_AUTH_SERIALIZERS = {
-    'USER_DETAILS_SERIALIZER': 'ara.classes.serializer.UserDetailActionSerializer',
+    'USER_DETAILS_SERIALIZER': 'apps.user.serializers.user.UserDetailActionSerializer',
 }

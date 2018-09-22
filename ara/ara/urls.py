@@ -17,16 +17,18 @@ from django.conf import settings
 from django.conf.urls import url, include
 from django.contrib import admin
 
-from rest_framework_jwt import views
-
 
 urlpatterns = [
     url(r'^__admin__/', admin.site.urls),
-    url(r'^obtain-jwt-token/', views.obtain_jwt_token),
-    url(r'^verify-jwt-token/', views.verify_jwt_token),
-    url(r'^refresh-jwt-token/', views.refresh_jwt_token),
     url(r'^', include('apps.core.urls', namespace='core')),
     url(r'^', include('apps.user.urls', namespace='user')),
+]
+
+
+# installed apps (real environment)
+
+urlpatterns += [
+    url(r'^rest-auth/', include('rest_auth.urls')),
 ]
 
 
