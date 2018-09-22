@@ -114,3 +114,10 @@ class UserViewSet(
             return response.Response(
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+    @decorators.detail_route(methods=['get'])
+    def sso_logout_url(self, request, *args, **kwargs):
+        return self.sso_client.get_logout_url(
+            sid=request.user.profile.sid,
+            redirect_uri=request.GET.get('next', 'https://sparcssso.kaist.ac.kr/'),
+        )
