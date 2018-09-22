@@ -15,7 +15,7 @@ class ScrapSerializer(BaseScrapSerializer):
         read_only=True,
     )
 
-    from apps.session.serializers.user import PublicUserSerializer
+    from apps.user.serializers.user import PublicUserSerializer
     scrapped_by = PublicUserSerializer(
         read_only=True,
     )

@@ -9,7 +9,7 @@ from ara.db.models import MetaDataModel
 SALT_SET = f'{ascii_lowercase}{ascii_uppercase}{digits}./'
 
 
-class OldAraUser(MetaDataModel):
+class LegacyUser(MetaDataModel):
     class Meta(MetaDataModel.Meta):
         verbose_name = '기존 사용자'
         verbose_name_plural = '기존 사용자 목록'

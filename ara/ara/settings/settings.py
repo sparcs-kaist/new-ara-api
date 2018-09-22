@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     'django_s3_storage',
 
     'apps.core',
-    'apps.session',
+    'apps.user',
 ]
 
 MIDDLEWARE = [
@@ -144,16 +144,6 @@ CELERY_BROKER_URL = 'redis://localhost:6379/0'
 INTERNAL_IPS = (
     '127.0.0.1',
 )
-
-
-# https://docs.djangoproject.com/en/1.11/ref/settings/#login-url
-
-LOGIN_URL = '/session/login/'
-
-
-# https://docs.djangoproject.com/en/1.11/ref/settings/#logout-url
-
-LOGOUT_URL = '/session/logout/'
 
 
 # http://django-rest-auth.readthedocs.io/

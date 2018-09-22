@@ -2,9 +2,9 @@ from rest_framework import mixins
 
 from ara.classes.viewset import ActionAPIViewSet
 
-from apps.session.models import UserProfile
-from apps.session.permissions.user_profile import UserProfilePermission
-from apps.session.serializers.user_profile import UserProfileSerializer, UserProfileUpdateActionSerializer
+from apps.user.models import UserProfile
+from apps.user.permissions.user_profile import UserProfilePermission
+from apps.user.serializers.user_profile import UserProfileSerializer, UserProfileUpdateActionSerializer
 
 
 class UserProfileViewSet(mixins.RetrieveModelMixin,

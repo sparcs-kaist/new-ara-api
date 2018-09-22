@@ -67,7 +67,7 @@ class BaseCommentSerializer(MetaDataModelSerializer):
 
 
 class CommentSerializer(BaseCommentSerializer):
-    from apps.session.serializers.user import PublicUserSerializer
+    from apps.user.serializers.user import PublicUserSerializer
     created_by = PublicUserSerializer(
         read_only=True,
     )
@@ -100,7 +100,7 @@ class CommentSerializer(BaseCommentSerializer):
 
 
 class CommentListActionSerializer(BaseCommentSerializer):
-    from apps.session.serializers.user import PublicUserSerializer
+    from apps.user.serializers.user import PublicUserSerializer
     created_by = PublicUserSerializer(
         read_only=True,
     )
@@ -152,7 +152,7 @@ class CommentCreateActionSerializer(BaseCommentSerializer):
             'created_by',
         )
 
-    from apps.session.serializers.user import PublicUserSerializer
+    from apps.user.serializers.user import PublicUserSerializer
     created_by = PublicUserSerializer(
         read_only=True,
     )
@@ -169,7 +169,7 @@ class CommentUpdateActionSerializer(BaseCommentSerializer):
             'parent_comment',
         )
 
-    from apps.session.serializers.user import PublicUserSerializer
+    from apps.user.serializers.user import PublicUserSerializer
     created_by = PublicUserSerializer(
         read_only=True,
     )

@@ -85,7 +85,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return ''
 
     def get_created_by(self, obj):
-        from apps.session.serializers.user import PublicUserSerializer
+        from apps.user.serializers.user import PublicUserSerializer
 
         if obj.is_anonymous:
             return '익명'

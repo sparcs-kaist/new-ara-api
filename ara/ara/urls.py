@@ -26,7 +26,7 @@ urlpatterns = [
     url(r'^verify-jwt-token/', views.verify_jwt_token),
     url(r'^refresh-jwt-token/', views.refresh_jwt_token),
     url(r'^', include('apps.core.urls', namespace='core')),
-    url(r'^', include('apps.session.urls', namespace='session')),
+    url(r'^', include('apps.user.urls', namespace='user')),
 ]
 
 
