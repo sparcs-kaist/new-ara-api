@@ -14,11 +14,20 @@ class UserProfile(MetaDataModel):
             ('nickname', 'deleted_at'),
         )
 
-    sid = models.CharField(max_length=30)
+    uid = models.CharField(
+        max_length=30,
+        verbose_name='Sparcs SSO uid',
+    )
+    sid = models.CharField(
+        max_length=30,
+        verbose_name='Sparcs SSO sid',
+    )
+    sso_user_info = JSONField(
+        verbose_name='Sparcs SSO 정보',
+    )
 
     picture = models.ImageField(
         null=True,
-        blank=True,
         default=None,
         upload_to='user_profiles/pictures',
         verbose_name='프로필',
@@ -30,12 +39,10 @@ class UserProfile(MetaDataModel):
         verbose_name='닉네임',
     )
     see_sexual = models.BooleanField(
-        blank=True,
         default=False,
         verbose_name='성인/음란성 보기',
     )
     see_social = models.BooleanField(
-        blank=True,
         default=False,
         verbose_name='정치/사회성 보기',
     )

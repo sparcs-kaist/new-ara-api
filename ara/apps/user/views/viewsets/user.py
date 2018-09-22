@@ -74,20 +74,22 @@ class UserViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        user_data = self.sso_client.get_user_info(request.GET['code'])
+        user_info = self.sso_client.get_user_info(request.GET['code'])
 
         try:
             user_profile = UserProfile.objects.get(
-                sid=user_data['sid'],
+                sid=user_info['sid'],
             )
 
         except UserProfile.DoesNotExist:
             with transaction.atomic():
                 user_profile = UserProfile.objects.create(
-                    sid=user_data['sid'],
+                    uid=user_info['uid'],
+                    sid=user_info['sid'],
                     nickname=str(uuid.uuid4()),
+                    sso_user_info=user_info,
                     user=get_user_model().objects.create_user(
-                        email=user_data['email'],
+                        email=user_info['email'],
                         username=str(uuid.uuid4()),
                         password=str(uuid.uuid4()),
                     ),
