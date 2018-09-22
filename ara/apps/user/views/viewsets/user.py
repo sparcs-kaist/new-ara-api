@@ -97,3 +97,18 @@ class UserViewSet(
             next=request.session.pop('next', '/'),
             token=self.get_jwt(user_profile.user),
         ))
+
+    @decorators.detail_route(methods=['post'])
+    def unregister(self, request, *args, **kwargs):
+        if self.sso_client.unregister(request.user.profile.sid):
+            request.user.is_active = False
+            request.user.save()
+
+            return response.Response(
+                status=status.HTTP_200_OK,
+            )
+
+        else:
+            return response.Response(
+                status=status.HTTP_400_BAD_REQUEST,
+            )

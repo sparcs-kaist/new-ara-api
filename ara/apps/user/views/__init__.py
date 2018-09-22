@@ -20,26 +20,6 @@ is_beta = [False, True][int(settings.SSO_IS_BETA)]
 sso_client = Client(settings.SSO_CLIENT_ID, settings.SSO_SECRET_KEY, is_beta=is_beta)
 
 
-@login_required(login_url='/user/login/')
-def unregister(request):
-    if request.method != 'POST':
-        return JsonResponse(status=405,
-                            data={'msg': 'Should use POST'})
-
-    user = request.user
-    user_profile = UserProfile.objects.get(user=user)
-
-    sid = user_profile.sid
-    if sso_client.unregister(sid):
-        user_profile.delete()
-        user.delete()
-        logout(request)
-        return JsonResponse(status=200, data={})
-    else:
-        return JsonResponse(status=403,
-                            data={'msg': 'Unregistered user'})
-
-
 @csrf_exempt
 @require_http_methods(['POST'])
 def old_ara_login(request):

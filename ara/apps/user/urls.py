@@ -7,6 +7,5 @@ from apps.user.views.router import *
 urlpatterns = [
     url(r'^api/', include(router.urls)),
 
-    url(r'^unregister/$', unregister),
     url(r'^old-ara-login/$', old_ara_login)
 ]
