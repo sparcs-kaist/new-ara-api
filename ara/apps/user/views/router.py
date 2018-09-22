@@ -6,6 +6,14 @@ from apps.user.views.viewsets import *
 router = routers.SimpleRouter()
 
 
+# UserViewSet
+
+router.register(
+    prefix=r'users',
+    viewset=UserViewSet,
+)
+
+
 # UserProfileViewSet
 
 router.register(
