@@ -1,6 +1,6 @@
-from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
 
-from rest_framework import mixins, decorators
+from rest_framework import mixins, decorators, permissions
 
 from ara.classes.viewset import ActionAPIViewSet
 
@@ -9,15 +9,22 @@ from apps.core.serializers.attachment import AttachmentSerializer
 from apps.core.permissions.attachment import AttachmentPermission
 
 
-class AttachmentViewSet(mixins.CreateModelMixin,
-                        mixins.RetrieveModelMixin,
-                        mixins.DestroyModelMixin,
-                        ActionAPIViewSet):
+class AttachmentViewSet(
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.DestroyModelMixin,
+    ActionAPIViewSet,
+):
     queryset = Attachment.objects.all()
+    serializer_class = AttachmentSerializer
     permission_classes = (
         AttachmentPermission,
     )
-    serializer_class = AttachmentSerializer
+    action_permission_classes = {
+        'url': (
+            permissions.IsAuthenticated,
+        ),
+    }
 
     def perform_create(self, serializer):
         serializer.save(
@@ -26,6 +33,6 @@ class AttachmentViewSet(mixins.CreateModelMixin,
 
     @decorators.detail_route(methods=['get'])
     def url(self, request, *args, **kwargs):
-        return HttpResponseRedirect(
-            redirect_to=self.get_object().file.url,
+        return redirect(
+            to=self.get_object().file.url,
         )
