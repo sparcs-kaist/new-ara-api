@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.shortcuts import redirect
 
-from rest_framework import mixins, status, response, decorators, permissions
+from rest_framework import status, response, decorators, permissions
 from rest_framework_jwt.settings import api_settings
 
 from ara.classes.viewset import ActionAPIViewSet
@@ -13,30 +13,18 @@ from ara.classes.sparcssso import Client as SSOClient
 
 from apps.user.models import UserProfile
 from apps.user.permissions.user import UserPermission
-from apps.user.serializers.user import (
-    UserSerializer,
-    UserDetailActionSerializer,
-)
 
 
-class UserViewSet(
-    mixins.ListModelMixin,
-    mixins.RetrieveModelMixin,
-    ActionAPIViewSet,
-):
+class UserViewSet(ActionAPIViewSet):
     queryset = get_user_model().objects.all()
-    serializer_class = UserSerializer
-    action_serializer_class = {
-        'retrieve': UserDetailActionSerializer,
-    }
     permission_classes = (
         UserPermission,
     )
     action_permission_classes = {
-        'login': (
+        'sso_login': (
             permissions.AllowAny,
         ),
-        'login_callback': (
+        'sso_login_callback': (
             permissions.AllowAny,
         ),
     }
@@ -54,15 +42,17 @@ class UserViewSet(
         )
 
     @decorators.list_route(methods=['get'])
-    def login(self, request, *args, **kwargs):
+    def sso_login(self, request, *args, **kwargs):
         request.session['next'] = request.GET.get('next', '/')
 
         sso_login_url, request.session['state'] = self.sso_client.get_login_params()
 
-        return redirect(sso_login_url)
+        return redirect(
+            to=sso_login_url,
+        )
 
     @decorators.list_route(methods=['get'])
-    def login_callback(self, request, *args, **kwargs):
+    def sso_login_callback(self, request, *args, **kwargs):
         if not request.GET.get('code') or not request.GET.get('state'):
             return response.Response(
                 status=status.HTTP_400_BAD_REQUEST,
@@ -95,28 +85,41 @@ class UserViewSet(
                     ),
                 )
 
-        return redirect('{next}?jwt={token}'.format(
-            next=request.session.pop('next', '/'),
-            token=self.get_jwt(user_profile.user),
-        ))
+        return redirect(
+            to='{next}?jwt={token}'.format(
+                next=request.session.pop('next', '/'),
+                token=self.get_jwt(user_profile.user),
+            ),
+        )
 
     @decorators.detail_route(methods=['post'])
-    def unregister(self, request, *args, **kwargs):
-        if self.sso_client.unregister(request.user.profile.sid):
-            request.user.is_active = False
-            request.user.save()
-
-            return response.Response(
-                status=status.HTTP_200_OK,
-            )
-
-        else:
+    def sso_unregister(self, request, *args, **kwargs):
+        # In case of user who isn't logged in with Sparcs SSO
+        if not request.user.profile.sid:
             return response.Response(
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        if not self.sso_client.unregister(request.user.profile.sid):
+            return response.Response(
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        request.user.is_active = False
+        request.user.save()
+
+        return response.Response(
+            status=status.HTTP_200_OK,
+        )
+
     @decorators.detail_route(methods=['get'])
     def sso_logout_url(self, request, *args, **kwargs):
+        # In case of user who isn't logged in with Sparcs SSO
+        if not request.user.profile.sid:
+            return response.Response(
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         return self.sso_client.get_logout_url(
             sid=request.user.profile.sid,
             redirect_uri=request.GET.get('next', 'https://sparcssso.kaist.ac.kr/'),
