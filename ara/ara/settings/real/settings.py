@@ -100,7 +100,11 @@ REST_FRAMEWORK = {
 }
 
 
-SSO_CLIENT_ID = ''
-SSO_SECRET_KEY = ''
-SSO_IS_BETA = ''
+# https://wiki.sparcs.org/w/index.php/SPARCS_SSO
+
+SSO_IS_BETA = False
+
+SSO_CLIENT_ID = config.get('SPARCS_SSO', 'sso_client_id')
+
+SSO_SECRET_KEY = config.get('SPARCS_SSO', 'sso_secret_key')
 
