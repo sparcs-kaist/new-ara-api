@@ -1,13 +1,17 @@
+import uuid
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.shortcuts import redirect
 
-from rest_framework import mixins, decorators, permissions
+from rest_framework import mixins, status, response, decorators, permissions
 from rest_framework_jwt.settings import api_settings
 
 from ara.classes.viewset import ActionAPIViewSet
 from ara.classes.sparcssso import Client as SSOClient
 
+from apps.user.models import UserProfile
 from apps.user.permissions.user import UserPermission
 from apps.user.serializers.user import (
     UserSerializer,
@@ -32,6 +36,9 @@ class UserViewSet(
         'login': (
             permissions.AllowAny,
         ),
+        'login_callback': (
+            permissions.AllowAny,
+        ),
     }
 
     @property
@@ -50,6 +57,43 @@ class UserViewSet(
     def login(self, request, *args, **kwargs):
         request.session['next'] = request.GET.get('next', '/')
 
-        sso_login_url, request.session['sso_state'] = self.sso_client.get_login_params()
+        sso_login_url, request.session['state'] = self.sso_client.get_login_params()
 
         return redirect(sso_login_url)
+
+    @decorators.list_route(methods=['get'])
+    def login_callback(self, request, *args, **kwargs):
+        if not request.GET.get('code') or not request.GET.get('state'):
+            return response.Response(
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Security Issues
+        if request.GET.get('state') != request.session.get('state'):
+            return response.Response(
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user_data = self.sso_client.get_user_info(request.GET['code'])
+
+        try:
+            user_profile = UserProfile.objects.get(
+                sid=user_data['sid'],
+            )
+
+        except UserProfile.DoesNotExist:
+            with transaction.atomic():
+                user_profile = UserProfile.objects.create(
+                    sid=user_data['sid'],
+                    nickname=str(uuid.uuid4()),
+                    user=get_user_model().objects.create_user(
+                        email=user_data['email'],
+                        username=str(uuid.uuid4()),
+                        password=str(uuid.uuid4()),
+                    ),
+                )
+
+        return redirect('{next}?jwt={token}'.format(
+            next=request.session.pop('next', '/'),
+            token=self.get_jwt(user_profile.user),
+        ))
