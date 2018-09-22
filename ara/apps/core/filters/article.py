@@ -15,6 +15,9 @@ class ArticleFilter(filters.FilterSet):
             'content': [
                 'contains',
             ],
+            'content_text': [
+                'contains',
+            ],
             'is_anonymous': [
                 'exact',
             ],
@@ -45,15 +48,28 @@ class ArticleFilter(filters.FilterSet):
             ],
         }
 
-    title_or_contents__contains = filters.CharFilter(
-        name='title_or_contents__contains',
+    title_or_content__contains = filters.CharFilter(
+        name='title_or_content__contains',
         label='제목 or 본문 contains',
-        method='get_title_or_contents__contains',
+        method='get_title_or_content__contains',
+    )
+
+    title_or_content_text__contains = filters.CharFilter(
+        name='title_or_content_text__contains',
+        label='제목 or 본문 contains',
+        method='get_title_or_content_text__contains',
     )
 
     @staticmethod
-    def get_title_or_contents__contains(queryset, name, value):
+    def get_title_or_content__contains(queryset, name, value):
         return queryset.filter(
             models.Q(title__contains=value) |
             models.Q(content__contains=value)
+        ).distinct()
+
+    @staticmethod
+    def get_title_or_content_text__contains(queryset, name, value):
+        return queryset.filter(
+            models.Q(title__contains=value) |
+            models.Q(content_text__contains=value)
         ).distinct()
