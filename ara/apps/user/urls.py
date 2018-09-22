@@ -9,8 +9,6 @@ urlpatterns = [
 
     url(r'^login/$', user_login),
     url(r'^login/callback/$', login_callback),
-    url(r'^logout/$', user_logout),
     url(r'^unregister/$', unregister),
-    url(r'^test/$', login_test),
     url(r'^old-ara-login/$', old_ara_login)
 ]

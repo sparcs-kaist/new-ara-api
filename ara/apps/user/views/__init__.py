@@ -85,21 +85,6 @@ def login_callback(request):
     return redirect(next_path)
 
 
-def user_logout(request):
-    user = request.user
-
-    if user and user.is_authenticated():
-        sid = UserProfile.objects.get(user=user).sid
-        redirect_url = request.GET.get('next', request.build_absolute_uri('/'))
-        logout_url = sso_client.get_logout_url(sid, redirect_url)
-        logout(request)
-        return redirect(logout_url)
-
-    else:
-        return JsonResponse(status=403,
-                            data={'msg': 'Should login first'})
-
-
 @login_required(login_url='/user/login/')
 def unregister(request):
     if request.method != 'POST':
@@ -118,10 +103,6 @@ def unregister(request):
     else:
         return JsonResponse(status=403,
                             data={'msg': 'Unregistered user'})
-
-
-def login_test(request):
-    return JsonResponse(status=200, data={'msg': 'worked'})
 
 
 @csrf_exempt
