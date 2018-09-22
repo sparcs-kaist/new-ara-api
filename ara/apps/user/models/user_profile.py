@@ -11,18 +11,27 @@ class UserProfile(MetaDataModel):
         verbose_name = '유저 프로필'
         verbose_name_plural = '유저 프로필 목록'
         unique_together = (
+            ('uid', 'deleted_at'),
+            ('sid', 'deleted_at'),
             ('nickname', 'deleted_at'),
         )
 
     uid = models.CharField(
+        null=True,
+        default=None,
+        editable=False,
         max_length=30,
         verbose_name='Sparcs SSO uid',
     )
     sid = models.CharField(
+        null=True,
+        default=None,
+        editable=False,
         max_length=30,
         verbose_name='Sparcs SSO sid',
     )
     sso_user_info = JSONField(
+        editable=False,
         verbose_name='Sparcs SSO 정보',
     )
 
@@ -47,6 +56,7 @@ class UserProfile(MetaDataModel):
         verbose_name='정치/사회성 보기',
     )
     extra_preferences = JSONField(
+        editable=False,
         verbose_name='기타 설정',
     )
 
