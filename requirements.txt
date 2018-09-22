@@ -1,6 +1,7 @@
 amqp==2.2.1
 apns2==0.3.0
 asn1crypto==0.23.0
+beautifulsoup4==4.6.3
 billiard==3.5.0.3
 bleach==2.1.2
 boto3==1.4.7

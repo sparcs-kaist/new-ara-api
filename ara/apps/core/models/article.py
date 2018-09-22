@@ -1,3 +1,4 @@
+import bs4
 import bleach
 
 from django.db import models, IntegrityError
@@ -17,6 +18,10 @@ class Article(MetaDataModel):
     )
     content = models.TextField(
         verbose_name='본문',
+    )
+    content_text = models.TextField(
+        editable=False,
+        verbose_name='text 형식 본문',
     )
 
     is_anonymous = models.BooleanField(
@@ -92,6 +97,8 @@ class Article(MetaDataModel):
             raise IntegrityError('self.parent_board should be parent_board of self.parent_topic')
 
         self.content = self.sanitize(self.content)
+
+        self.content_text = bs4.BeautifulSoup(self.content).find_all(text=True)
 
         super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
