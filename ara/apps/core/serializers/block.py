@@ -15,7 +15,7 @@ class BlockSerializer(BaseBlockSerializer):
             'blocked_by',
         )
 
-    from apps.session.serializers.user import PublicUserSerializer
+    from apps.user.serializers.user import PublicUserSerializer
     user = PublicUserSerializer(
         read_only=True,
     )

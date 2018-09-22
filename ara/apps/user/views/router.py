@@ -1,6 +1,6 @@
 from rest_framework import routers
 
-from apps.session.views.viewsets import *
+from apps.user.views.viewsets import *
 
 
 router = routers.SimpleRouter()

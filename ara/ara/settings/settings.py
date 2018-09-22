@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     'django_s3_storage',
 
     'apps.core',
-    'apps.session',
+    'apps.user',
 ]
 
 MIDDLEWARE = [
@@ -148,12 +148,12 @@ INTERNAL_IPS = (
 
 # https://docs.djangoproject.com/en/1.11/ref/settings/#login-url
 
-LOGIN_URL = '/session/login/'
+LOGIN_URL = '/user/login/'
 
 
 # https://docs.djangoproject.com/en/1.11/ref/settings/#logout-url
 
-LOGOUT_URL = '/session/logout/'
+LOGOUT_URL = '/user/logout/'
 
 
 # http://django-rest-auth.readthedocs.io/

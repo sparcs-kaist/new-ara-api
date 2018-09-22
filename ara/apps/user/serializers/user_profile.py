@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from ara.classes.serializers import MetaDataModelSerializer
 
-from apps.session.models import UserProfile
+from apps.user.models import UserProfile
 
 
 class BaseUserProfileSerializer(MetaDataModelSerializer):

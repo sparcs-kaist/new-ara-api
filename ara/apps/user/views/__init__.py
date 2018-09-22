@@ -13,7 +13,7 @@ from rest_framework_jwt.settings import api_settings
 
 from ara.classes.sparcssso import Client
 
-from apps.session.models import UserProfile, OldAraUser
+from apps.user.models import UserProfile, OldAraUser
 
 import random
 
@@ -100,7 +100,7 @@ def user_logout(request):
                             data={'msg': 'Should login first'})
 
 
-@login_required(login_url='/session/login/')
+@login_required(login_url='/user/login/')
 def unregister(request):
     if request.method != 'POST':
         return JsonResponse(status=405,

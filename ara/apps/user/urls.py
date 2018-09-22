@@ -1,7 +1,7 @@
 from django.conf.urls import url, include
 
-from apps.session.views import *
-from apps.session.views.router import *
+from apps.user.views import *
+from apps.user.views.router import *
 
 
 urlpatterns = [
