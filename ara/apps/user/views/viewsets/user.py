@@ -1,4 +1,5 @@
 import uuid
+import datetime
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -84,6 +85,13 @@ class UserViewSet(ActionAPIViewSet):
                         password=str(uuid.uuid4()),
                     ),
                 )
+
+        if not user_profile.user.is_active:
+            return response.Response(
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user_profile.user.last_login = datetime.datetime.now()
 
         return redirect(
             to='{next}?jwt={token}'.format(
