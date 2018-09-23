@@ -98,7 +98,7 @@ class Article(MetaDataModel):
 
         self.content = self.sanitize(self.content)
 
-        self.content_text = bs4.BeautifulSoup(self.content).find_all(text=True)
+        self.content_text = ' '.join(bs4.BeautifulSoup(self.content, features='html5lib').find_all(text=True))
 
         super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
