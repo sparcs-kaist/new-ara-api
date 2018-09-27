@@ -22,7 +22,7 @@ class AttachmentViewSet(
     )
     action_permission_classes = {
         'url': (
-            permissions.IsAuthenticated,
+            permissions.AllowAny,
         ),
     }
 
