@@ -19,6 +19,7 @@ class UserProfileViewSet(
     serializer_class = UserProfileSerializer
     action_serializer_class = {
         'update': UserProfileUpdateActionSerializer,
+        'partial_update': UserProfileUpdateActionSerializer,
     }
     permission_classes = (
         UserProfilePermission,
