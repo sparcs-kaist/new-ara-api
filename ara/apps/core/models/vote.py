@@ -56,7 +56,7 @@ class Vote(MetaDataModel):
     @classmethod
     def prefetch_my_vote(cls, user, prefix=''):
         return models.Prefetch(
-            f'{prefix}vote_set',
+            '{}vote_set'.format(prefix),
             queryset=Vote.objects.filter(
                 voted_by=user,
             ),

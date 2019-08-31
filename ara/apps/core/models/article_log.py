@@ -34,7 +34,7 @@ class ArticleReadLog(MetaDataModel):
     @classmethod
     def prefetch_my_article_read_log(cls, user, prefix=''):
         return models.Prefetch(
-            f'{prefix}article_read_log_set',
+            '{}article_read_log_set'.format(prefix),
             queryset=ArticleReadLog.objects.filter(
                 read_by=user,
             ),

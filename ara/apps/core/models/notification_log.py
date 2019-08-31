@@ -33,7 +33,7 @@ class NotificationReadLog(MetaDataModel):
     @classmethod
     def prefetch_my_notification_read_log(cls, user, prefix=''):
         return models.Prefetch(
-            f'{prefix}notification_read_log_set',
+            '{}notification_read_log_set'.format(prefix),
             queryset=NotificationReadLog.objects.filter(
                 read_by=user,
             ),

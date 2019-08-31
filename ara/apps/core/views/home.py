@@ -28,7 +28,7 @@ def _best_articles(period, best_by, request):
     try:
         assert (period, period) in PERIOD_CHOICES and (best_by, best_by) in BEST_BY_CHOICES
     except AssertionError:
-        raise ValueError(f'Wrong period or best_by: {period} / {best_by}')
+        raise ValueError('Wrong period or best_by: {} / {}'.format(period, best_by))
 
     return ArticleListActionSerializer(
         instance=[

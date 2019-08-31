@@ -35,7 +35,7 @@ class Block(MetaDataModel):
     @classmethod
     def prefetch_my_block(cls, user, prefix=''):
         return models.Prefetch(
-            f'{prefix}created_by__blocked_by_set',
+            '{}created_by__blocked_by_set'.format(prefix),
             queryset=Block.objects.filter(
                 blocked_by=user,
             ),
