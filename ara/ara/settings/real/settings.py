@@ -48,17 +48,17 @@ AWS_S3_BUCKET_AUTH = False
 
 AWS_S3_MAX_AGE_SECONDS = 60 * 60 * 24 * 365
 
-AWS_S3_BUCKET_NAME = 'new-ara-api-media-real'
+AWS_S3_BUCKET_NAME = config.get('AWS', 'bucket_name')
 
-AWS_S3_BUCKET_NAME_STATIC = 'new-ara-api-static-real'
+AWS_S3_BUCKET_NAME_STATIC = config.get('AWS', 'bucket_name_static')
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
-MEDIA_URL = 'https://s3.ap-northeast-2.amazonaws.com/new-ara-api-media-real/'
+MEDIA_URL = config.get('STATIC', 'media_url')
 
-STATIC_URL = 'https://s3.ap-northeast-2.amazonaws.com/new-ara-api-static-real/'
+STATIC_URL = config.get('STATIC', 'static_url')
 
 DEFAULT_FILE_STORAGE = 'django_s3_storage.storage.S3Storage'
 
