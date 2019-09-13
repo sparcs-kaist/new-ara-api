@@ -132,6 +132,6 @@ class Article(MetaDataModel):
 
     @staticmethod
     def sanitize(content):
-        allowed_tags = bleach.ALLOWED_TAGS + [u'p', u'pre', u'span', u'h1', u'h2', u'br']
+        #allowed_tags = bleach.ALLOWED_TAGS + [u'p', u'pre', u'span', u'h1', u'h2', u'br']
 
-        return bleach.linkify(bleach.clean(content, tags=allowed_tags))
+        return content #bleach.linkify(bleach.clean(content, tags=allowed_tags))
