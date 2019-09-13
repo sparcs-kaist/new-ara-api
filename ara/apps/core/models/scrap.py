@@ -27,7 +27,7 @@ class Scrap(MetaDataModel):
     @classmethod
     def prefetch_my_scrap(cls, user, prefix=''):
         return models.Prefetch(
-            f'{prefix}scrap_set',
+            '{}scrap_set'.format(prefix),
             queryset=Scrap.objects.filter(
                 scrapped_by=user,
             ),

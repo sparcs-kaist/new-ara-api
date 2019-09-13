@@ -54,7 +54,7 @@ class Report(MetaDataModel):
     @classmethod
     def prefetch_my_report(cls, user, prefix=''):
         return models.Prefetch(
-            f'{prefix}report_set',
+            '{}report_set'.format(prefix),
             queryset=Report.objects.filter(
                 reported_by=user,
             ),

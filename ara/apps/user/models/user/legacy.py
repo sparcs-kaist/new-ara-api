@@ -6,7 +6,7 @@ from ara.db.models import MetaDataModel
 
 
 # Constant from ARAra project.
-SALT_SET = f'{ascii_lowercase}{ascii_uppercase}{digits}./'
+SALT_SET = '{}{}{}./'.format(ascii_lowercase, ascii_uppercase, digits)
 
 
 class LegacyUser(MetaDataModel):
