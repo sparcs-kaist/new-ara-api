@@ -1,0 +1,24 @@
+[SECRET_KEY]
+	secret_key		=
+
+[DB]
+	database		=
+	host			=
+	port			=
+	user			=
+	password		=
+
+[AWS]
+	bucket_name		=
+	bucket_name_static	=
+	access_key_id		=
+	secret_access_key	=
+
+[STATIC]
+	media_url		=
+	static_url		=
+
+[SPARCS_SSO]
+	sso_client_id		=
+	sso_secret_key		=
+
