@@ -74,7 +74,7 @@ class CommentViewSet(mixins.CreateModelMixin,
 
         return super().perform_destroy(instance)
 
-    @decorators.detail_route(methods=['post'])
+    @decorators.action(detail=True, methods=['post'])
     def vote_cancel(self, request, *args, **kwargs):
         comment = self.get_object()
 
@@ -87,7 +87,7 @@ class CommentViewSet(mixins.CreateModelMixin,
 
         return response.Response(status=status.HTTP_200_OK)
 
-    @decorators.detail_route(methods=['post'])
+    @decorators.action(detail=True, methods=['post'])
     def vote_positive(self, request, *args, **kwargs):
         comment = self.get_object()
 
@@ -103,7 +103,7 @@ class CommentViewSet(mixins.CreateModelMixin,
 
         return response.Response(status=status.HTTP_200_OK)
 
-    @decorators.detail_route(methods=['post'])
+    @decorators.action(detail=True, methods=['post'])
     def vote_negative(self, request, *args, **kwargs):
         comment = self.get_object()
 

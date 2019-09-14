@@ -42,7 +42,7 @@ class UserViewSet(ActionAPIViewSet):
             )
         )
 
-    @decorators.list_route(methods=['get'])
+    @decorators.action(detail=False, methods=['get'])
     def sso_login(self, request, *args, **kwargs):
         request.session['next'] = request.GET.get('next', '/')
 
@@ -52,7 +52,7 @@ class UserViewSet(ActionAPIViewSet):
             to=sso_login_url,
         )
 
-    @decorators.list_route(methods=['get'])
+    @decorators.action(detail=False, methods=['get'])
     def sso_login_callback(self, request, *args, **kwargs):
         if not request.GET.get('code') or not request.GET.get('state'):
             return response.Response(
@@ -100,7 +100,7 @@ class UserViewSet(ActionAPIViewSet):
             ),
         )
 
-    @decorators.detail_route(methods=['post'])
+    @decorators.action(detail=True, methods=['post'])
     def sso_unregister(self, request, *args, **kwargs):
         # In case of user who isn't logged in with Sparcs SSO
         if not request.user.profile.sid:
@@ -120,7 +120,7 @@ class UserViewSet(ActionAPIViewSet):
             status=status.HTTP_200_OK,
         )
 
-    @decorators.detail_route(methods=['get'])
+    @decorators.action(detail=True, methods=['get'])
     def sso_logout_url(self, request, *args, **kwargs):
         # In case of user who isn't logged in with Sparcs SSO
         if not request.user.profile.sid:
