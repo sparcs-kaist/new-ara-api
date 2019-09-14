@@ -33,6 +33,7 @@ class BestArticle(MetaDataModel):
     )
 
     article = models.OneToOneField(
+        on_delete=models.CASCADE,
         to='core.Article',
         db_index=True,
         related_name='best',
