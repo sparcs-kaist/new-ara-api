@@ -1,6 +1,7 @@
 amqp==2.5.1
 apns2==0.3.0
 asn1crypto==0.23.0
+astroid==2.2.5
 beautifulsoup4==4.6.3
 billiard==3.5.0.3
 bleach==2.1.2
@@ -31,14 +32,18 @@ hyper==0.7.0
 hyperframe==3.2.0
 idna==2.6
 importlib-metadata==0.22
+isort==4.3.21
 jmespath==0.9.3
 kombu==4.6.4
+lazy-object-proxy==1.4.2
+mccabe==0.6.1
 more-itertools==7.2.0
 mysqlclient==1.4.4
 olefile==0.44
 Pillow==6.1.0
 pycparser==2.18
 PyJWT==1.5.3
+pylint==2.3.1
 python-dateutil==2.6.1
 pytz==2017.2
 redis==2.10.6
@@ -46,7 +51,9 @@ requests==2.18.4
 s3transfer==0.1.11
 six==1.10.0
 sqlparse==0.2.3
+typed-ast==1.4.0
 urllib3==1.22
 vine==1.1.4
 webencodings==0.5.1
+wrapt==1.11.2
 zipp==0.6.0
