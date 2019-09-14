@@ -1,4 +1,4 @@
-amqp==2.2.1
+amqp==2.5.1
 apns2==0.3.0
 asn1crypto==0.23.0
 beautifulsoup4==4.6.3
@@ -11,12 +11,12 @@ certifi==2017.11.5
 cffi==1.11.2
 chardet==3.0.4
 cryptography==2.1.2
-Django==1.11.5
+Django==1.11.24
 django-cors-headers==2.1.0
 django-debug-toolbar==1.8
 django-extensions==2.1.0
 django-filter==1.0.4
-django-mysql==2.1.0
+django-mysql==3.2.0
 django-push-notifications==1.5.0
 django-rest-auth==0.9.2
 django-s3-storage==0.12.0
@@ -30,8 +30,10 @@ html5lib==1.0.1
 hyper==0.7.0
 hyperframe==3.2.0
 idna==2.6
+importlib-metadata==0.22
 jmespath==0.9.3
-kombu==4.1.0
+kombu==4.6.4
+more-itertools==7.2.0
 mysqlclient==1.4.4
 olefile==0.44
 Pillow==6.1.0
@@ -47,3 +49,4 @@ sqlparse==0.2.3
 urllib3==1.22
 vine==1.1.4
 webencodings==0.5.1
+zipp==0.6.0
