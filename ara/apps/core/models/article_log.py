@@ -14,11 +14,13 @@ class ArticleReadLog(MetaDataModel):
         verbose_name_plural = '게시물 조회 기록 목록'
 
     read_by = models.ForeignKey(
+        on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
         related_name='article_read_log_set',
         verbose_name='조회자',
     )
     article = models.ForeignKey(
+        on_delete=models.CASCADE,
         to='core.Article',
         related_name='article_read_log_set',
         verbose_name='조회된 게시글',
@@ -66,11 +68,13 @@ class ArticleUpdateLog(MetaDataModel):
     data = JSONField()
 
     updated_by = models.ForeignKey(
+        on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
         related_name='article_update_log_set',
         verbose_name='변경자',
     )
     article = models.ForeignKey(
+        on_delete=models.CASCADE,
         to='core.Article',
         related_name='article_update_log_set',
         verbose_name='변경된 게시글',
@@ -86,11 +90,13 @@ class ArticleDeleteLog(MetaDataModel):
         verbose_name_plural = '게시물 삭제 기록 목록'
 
     deleted_by = models.ForeignKey(
+        on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
         related_name='article_delete_log_set',
         verbose_name='삭제자',
     )
     article = models.ForeignKey(
+        on_delete=models.CASCADE,
         to='core.Article',
         related_name='article_delete_log_set',
         verbose_name='삭제된 게시글',

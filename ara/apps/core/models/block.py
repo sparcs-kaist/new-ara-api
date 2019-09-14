@@ -10,6 +10,7 @@ class Block(MetaDataModel):
         verbose_name_plural = '차단 목록'
 
     blocked_by = models.ForeignKey(
+        on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
         db_index=True,
         related_name='block_set',
@@ -17,6 +18,7 @@ class Block(MetaDataModel):
     )
 
     user = models.ForeignKey(
+        on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
         db_index=True,
         related_name='blocked_by_set',

@@ -51,12 +51,14 @@ class Article(MetaDataModel):
     )
 
     created_by = models.ForeignKey(
+        on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
         db_index=True,
         related_name='article_set',
         verbose_name='작성자',
     )
     parent_topic = models.ForeignKey(
+        on_delete=models.CASCADE,
         to='core.Topic',
         null=True,
         blank=True,
@@ -66,6 +68,7 @@ class Article(MetaDataModel):
         verbose_name='말머리',
     )
     parent_board = models.ForeignKey(
+        on_delete=models.CASCADE,
         to='core.Board',
         db_index=True,
         related_name='article_set',

@@ -30,6 +30,7 @@ class Notification(MetaDataModel):
     )
 
     related_article = models.ForeignKey(
+        on_delete=models.CASCADE,
         to='core.Article',
         null=True,
         db_index=True,
@@ -37,6 +38,7 @@ class Notification(MetaDataModel):
         verbose_name='알림 관련 제보',
     )
     related_comment = models.ForeignKey(
+        on_delete=models.CASCADE,
         to='core.Comment',
         null=True,
         db_index=True,

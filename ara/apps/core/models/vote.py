@@ -18,10 +18,12 @@ class Vote(MetaDataModel):
     )
 
     voted_by = models.ForeignKey(
+        on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
         verbose_name='투표자',
     )
     parent_article = models.ForeignKey(
+        on_delete=models.CASCADE,
         to='core.Article',
         default=None,
         null=True,
@@ -31,6 +33,7 @@ class Vote(MetaDataModel):
         verbose_name='상위 문서',
     )
     parent_comment = models.ForeignKey(
+        on_delete=models.CASCADE,
         to='core.Comment',
         default=None,
         null=True,

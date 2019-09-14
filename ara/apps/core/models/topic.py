@@ -35,6 +35,7 @@ class Topic(MetaDataModel):
     )
 
     parent_board = models.ForeignKey(
+        on_delete=models.CASCADE,
         to='core.Board',
         db_index=True,
         related_name='topic_set',
