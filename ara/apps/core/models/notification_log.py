@@ -18,12 +18,14 @@ class NotificationReadLog(MetaDataModel):
     )
 
     read_by = models.ForeignKey(
+        on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
         db_index=True,
         related_name='notification_read_log_set',
         verbose_name='관련 사용자',
     )
     notification = models.ForeignKey(
+        on_delete=models.CASCADE,
         to='core.Notification',
         db_index=True,
         related_name='notification_read_log_set',

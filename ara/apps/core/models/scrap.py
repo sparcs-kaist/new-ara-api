@@ -13,11 +13,13 @@ class Scrap(MetaDataModel):
         )
 
     parent_article = models.ForeignKey(
+        on_delete=models.CASCADE,
         to='core.Article',
         related_name='scrap_set',
         verbose_name='글',
     )
     scrapped_by = models.ForeignKey(
+        on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
         db_index=True,
         related_name='scrap_set',

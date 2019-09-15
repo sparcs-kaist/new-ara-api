@@ -152,11 +152,11 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         return super().retrieve(request, *args, **kwargs)
 
-    @decorators.list_route(methods=['get'])
+    @decorators.action(detail=False, methods=['get'])
     def best(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 
-    @decorators.detail_route(methods=['post'])
+    @decorators.action(detail=True, methods=['post'])
     def vote_cancel(self, request, *args, **kwargs):
         article = self.get_object()
 
@@ -169,7 +169,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         return response.Response(status=status.HTTP_200_OK)
 
-    @decorators.detail_route(methods=['post'])
+    @decorators.action(detail=True, methods=['post'])
     def vote_positive(self, request, *args, **kwargs):
         article = self.get_object()
 
@@ -185,7 +185,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         return response.Response(status=status.HTTP_200_OK)
 
-    @decorators.detail_route(methods=['post'])
+    @decorators.action(detail=True, methods=['post'])
     def vote_negative(self, request, *args, **kwargs):
         article = self.get_object()
 

@@ -33,6 +33,7 @@ class BestComment(MetaDataModel):
     )
 
     comment = models.OneToOneField(
+        on_delete=models.CASCADE,
         to='core.Comment',
         db_index=True,
         related_name='best',

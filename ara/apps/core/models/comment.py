@@ -31,12 +31,14 @@ class Comment(MetaDataModel):
     )
 
     created_by = models.ForeignKey(
+        on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
         db_index=True,
         related_name='comment_set',
         verbose_name='작성자',
     )
     attachment = models.ForeignKey(
+        on_delete=models.CASCADE,
         to='core.Attachment',
         null=True,
         blank=True,
@@ -44,6 +46,7 @@ class Comment(MetaDataModel):
         verbose_name='첨부 파일',
     )
     parent_article = models.ForeignKey(
+        on_delete=models.CASCADE,
         to='core.Article',
         default=None,
         null=True,
@@ -53,6 +56,7 @@ class Comment(MetaDataModel):
         verbose_name='글',
     )
     parent_comment = models.ForeignKey(
+        on_delete=models.CASCADE,
         to='core.Comment',
         default=None,
         null=True,

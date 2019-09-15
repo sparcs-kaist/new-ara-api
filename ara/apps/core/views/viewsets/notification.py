@@ -31,7 +31,7 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
 
         return queryset
 
-    @decorators.list_route(methods=['post'])
+    @decorators.action(detail=False, methods=['post'])
     def read_all(self, request, *args, **kwargs):
         notification_read_logs = NotificationReadLog.objects.filter(
             read_by=request.user,
@@ -44,7 +44,7 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
             status=status.HTTP_200_OK,
         )
 
-    @decorators.detail_route(methods=['post'])
+    @decorators.action(detail=True, methods=['post'])
     def read(self, request, *args, **kwargs):
         try:
             notification_read_log = self.get_object().notification_read_log_set.get(

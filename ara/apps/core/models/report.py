@@ -14,6 +14,7 @@ class Report(MetaDataModel):
         )
 
     parent_article = models.ForeignKey(
+        on_delete=models.CASCADE,
         to='core.Article',
         default=None,
         null=True,
@@ -22,6 +23,7 @@ class Report(MetaDataModel):
         verbose_name='신고된 문서',
     )
     parent_comment = models.ForeignKey(
+        on_delete=models.CASCADE,
         to='core.Comment',
         default=None,
         null=True,
@@ -30,6 +32,7 @@ class Report(MetaDataModel):
         verbose_name='신고된 댓글',
     )
     reported_by = models.ForeignKey(
+        on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
         verbose_name='신고자',
     )

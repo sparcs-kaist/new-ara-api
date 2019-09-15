@@ -31,7 +31,7 @@ class AttachmentViewSet(
             name=self.request.FILES['file'].name,
         )
 
-    @decorators.detail_route(methods=['get'])
+    @decorators.action(detail=True, methods=['get'])
     def url(self, request, *args, **kwargs):
         return redirect(
             to=self.get_object().file.url,
