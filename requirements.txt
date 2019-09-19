@@ -2,6 +2,7 @@ amqp==2.5.1
 apns2==0.5.0
 asn1crypto==0.24.0
 astroid==2.2.5
+autopep8==1.4.4
 beautifulsoup4==4.8.0
 billiard==3.6.1.0
 bleach==3.1.0
@@ -19,11 +20,9 @@ django-extensions==2.2.1
 django-filter==2.2.0
 django-mysql==3.2.0
 django-push-notifications==1.6.1
-django-rest-auth==0.9.5
 django-s3-storage==0.12.5
 djangorestframework==3.10.3
 djangorestframework-filters==1.0.0.dev0
-djangorestframework-jwt==1.11.0
 docutils==0.15.2
 h2==3.1.1
 hpack==3.0.0
@@ -41,11 +40,14 @@ mccabe==0.6.1
 more-itertools==7.2.0
 mysqlclient==1.4.4
 olefile==0.46
+pep8==1.7.1
 Pillow==6.1.0
 py-vapid==1.7.0
+pycodestyle==2.5.0
 pycparser==2.19
-PyJWT==1.7.1
 pylint==2.3.1
+pylint-django==2.0.11
+pylint-plugin-utils==0.5
 python-dateutil==2.8.0
 pytz==2019.2
 pywebpush==1.10.0

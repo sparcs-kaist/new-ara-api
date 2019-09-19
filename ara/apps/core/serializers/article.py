@@ -199,7 +199,7 @@ class ArticleSerializer(BaseArticleSerializer):
     article_current_page = serializers.SerializerMethodField(
         read_only=True,
     )
-    
+
 
 class ArticleListActionSerializer(BaseArticleSerializer):
     parent_topic = TopicSerializer(

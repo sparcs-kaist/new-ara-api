@@ -1,8 +1,6 @@
-from django.conf.urls import url
 from django.urls import path, include
 
-from apps.core.views import *
-from apps.core.views.router import *
+from apps.core.views import HomeView, router
 
 urlpatterns = [
     path('api/', include(router.urls)),

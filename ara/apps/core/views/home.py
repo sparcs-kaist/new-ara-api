@@ -6,7 +6,7 @@ from apps.core.serializers.board import BoardRecentArticleActionSerializer
 
 
 class HomeView(views.APIView):
-    def get(self, request, format=None):
+    def get(self, request):
         return response.Response(data={
             'daily_bests': {
                 'positive_vote_count': _best_articles('daily', 'positive_vote_count', request),
@@ -26,9 +26,11 @@ class HomeView(views.APIView):
 
 def _best_articles(period, best_by, request):
     try:
-        assert (period, period) in PERIOD_CHOICES and (best_by, best_by) in BEST_BY_CHOICES
+        assert (period, period) in PERIOD_CHOICES and (
+            best_by, best_by) in BEST_BY_CHOICES
     except AssertionError:
-        raise ValueError('Wrong period or best_by: {} / {}'.format(period, best_by))
+        raise ValueError(
+            'Wrong period or best_by: {} / {}'.format(period, best_by))
 
     return ArticleListActionSerializer(
         instance=[
