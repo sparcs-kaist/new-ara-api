@@ -14,22 +14,22 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
 from django.conf import settings
-from django.conf.urls import url, include
+from django.urls import path, include
 from django.contrib import admin
 
 
 urlpatterns = [
-    url(r'^__admin__/', admin.site.urls),
-    url(r'^', include(('apps.core.urls', 'core'), namespace='core')),
-    url(r'^', include(('apps.user.urls', 'user'), namespace='user')),
+    path('admin/', admin.site.urls),
+    path('', include(('apps.core.urls', 'core'))),
+    path('', include(('apps.user.urls', 'user'))),
 ]
 
 
 # installed apps (real environment)
 
 urlpatterns += [
-    url(r'^api-auth/', include('rest_framework.urls')),
-    url(r'^rest-auth/', include('rest_auth.urls')),
+    path('api-auth/', include('rest_framework.urls')),
+    path('rest-auth/', include('rest_auth.urls')),
 ]
 
 
@@ -37,7 +37,6 @@ urlpatterns += [
 
 if settings.DEBUG:
     import debug_toolbar
-
     urlpatterns += [
-        url(r'^__debug__/', include(debug_toolbar.urls)),
+        path('__debug__/', include(debug_toolbar.urls)),
     ]

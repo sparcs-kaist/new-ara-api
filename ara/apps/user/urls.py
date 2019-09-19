@@ -1,8 +1,7 @@
-from django.conf.urls import url, include
+from django.urls import path, include
 
 from apps.user.views.router import *
 
-
 urlpatterns = [
-    url(r'^api/', include(router.urls)),
+    path('api/', include(router.urls)),
 ]
