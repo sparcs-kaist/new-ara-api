@@ -1,63 +1,53 @@
 from rest_framework import routers
 
-from apps.core.views.viewsets import *
+from apps.core.views import viewsets
 
-
-router = routers.SimpleRouter()
-
+router = routers.DefaultRouter()
 
 # BoardViewSet
-
 router.register(
     prefix=r'boards',
-    viewset=BoardViewSet,
+    viewset=viewsets.BoardViewSet,
 )
 
 # ArticleViewSet
-
 router.register(
     prefix=r'articles',
-    viewset=ArticleViewSet,
+    viewset=viewsets.ArticleViewSet,
 )
 
 # CommentViewSet
-
 router.register(
     prefix=r'comments',
-    viewset=CommentViewSet,
+    viewset=viewsets.CommentViewSet,
 )
 
 # ReportViewSet
-
 router.register(
     prefix=r'reports',
-    viewset=ReportViewSet,
+    viewset=viewsets.ReportViewSet,
 )
 
 # BlockViewSet
-
 router.register(
     prefix=r'blocks',
-    viewset=BlockViewSet,
+    viewset=viewsets.BlockViewSet,
 )
 
 # AttachmentViewSet
-
 router.register(
     prefix=r'attachments',
-    viewset=AttachmentViewSet,
+    viewset=viewsets.AttachmentViewSet,
 )
 
 # ScrapViewSet
-
 router.register(
     prefix=r'scraps',
-    viewset=ScrapViewSet,
+    viewset=viewsets.ScrapViewSet,
 )
 
 # NotificationViewSet
-
 router.register(
     prefix=r'notifications',
-    viewset=NotificationViewSet,
+    viewset=viewsets.NotificationViewSet,
 )
