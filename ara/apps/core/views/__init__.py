@@ -1,1 +1,2 @@
-from .home import HomeView
+from .home import *
+from .router import *

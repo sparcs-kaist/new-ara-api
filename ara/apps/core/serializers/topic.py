@@ -7,7 +7,7 @@ class BaseTopicSerializer(MetaDataModelSerializer):
     class Meta:
         model = Topic
         fields = '__all__'
-        
+
 
 class TopicSerializer(BaseTopicSerializer):
     pass
