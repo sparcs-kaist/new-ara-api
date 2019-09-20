@@ -37,7 +37,7 @@ class UserViewSet(ActionAPIViewSet):
     #TODO
     @staticmethod
     def get_token(user):
-        return Token.objects.create(user=user)
+        return Token.objects.get_or_create(user=user)[0]
 
     @decorators.action(detail=False, methods=['get'])
     def sso_login(self, request, *args, **kwargs):
@@ -92,9 +92,10 @@ class UserViewSet(ActionAPIViewSet):
 
         return redirect(
             # TODO
-            to='{next}?jwt={token}'.format(
+            to='{next}?token={token}&user_id={uid}'.format(
                 next=request.session.pop('next', '/'),
-                token=self.get_token(user_profile.user).key,
+                token=self.get_token(user_profile.user),
+                uid=user_profile.user.id,
             ),
         )
 
