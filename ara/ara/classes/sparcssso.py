@@ -205,4 +205,3 @@ class Client:
             return self._post_data(self.URLS['unregister'], params)['success']
         except:
             return True
-
