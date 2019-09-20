@@ -7,7 +7,7 @@ from django.db import transaction
 from django.shortcuts import redirect
 
 from rest_framework import status, response, decorators, permissions
-from rest_framework_jwt.settings import api_settings
+from rest_framework.authtoken.models import Token
 
 from ara.classes.viewset import ActionAPIViewSet
 from ara.classes.sparcssso import Client as SSOClient
@@ -34,13 +34,10 @@ class UserViewSet(ActionAPIViewSet):
     def sso_client(self):
         return SSOClient(settings.SSO_CLIENT_ID, settings.SSO_SECRET_KEY, is_beta=settings.SSO_IS_BETA)
 
+    #TODO
     @staticmethod
-    def get_jwt(user):
-        return api_settings.JWT_ENCODE_HANDLER(
-            payload=api_settings.JWT_PAYLOAD_HANDLER(
-                user=user,
-            )
-        )
+    def get_token(user):
+        return Token.objects.create(user=user)
 
     @decorators.action(detail=False, methods=['get'])
     def sso_login(self, request, *args, **kwargs):
@@ -94,9 +91,10 @@ class UserViewSet(ActionAPIViewSet):
         user_profile.user.last_login = datetime.datetime.now()
 
         return redirect(
+            # TODO
             to='{next}?jwt={token}'.format(
                 next=request.session.pop('next', '/'),
-                token=self.get_jwt(user_profile.user),
+                token=self.get_token(user_profile.user).key,
             ),
         )
 
