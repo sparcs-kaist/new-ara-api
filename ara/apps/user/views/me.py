@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
+from apps.user.models.user_profile import UserProfile
 from apps.user.permissions.user_profile import UserProfilePermission
 from apps.user.serializers.user_profile import UserProfileSerializer
 
@@ -14,5 +15,5 @@ class MeView(APIView):
     )
 
     def get(self, request):
-        serializer = UserProfileSerializer(request.user)
+        serializer = UserProfileSerializer(UserProfile.objects.get(user_id=request.user.id))
         return Response(serializer.data)
