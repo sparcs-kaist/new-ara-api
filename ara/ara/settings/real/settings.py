@@ -72,18 +72,6 @@ CORS_ORIGIN_WHITELIST = (
     'ara.kaist.ac.kr',
 )
 
-
-# http://getblimp.github.io/django-rest-framework-jwt/
-
-SESSION_COOKIE_AGE = 60 * 60 * 24 * 7
-
-JWT_AUTH = {
-    'JWT_ALLOW_REFRESH': True,
-    'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=SESSION_COOKIE_AGE),
-    'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(seconds=SESSION_COOKIE_AGE),
-}
-
-
 # http://www.django-rest-framework.org/
 
 REST_FRAMEWORK = {
@@ -95,7 +83,8 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
     ),
 }
 
