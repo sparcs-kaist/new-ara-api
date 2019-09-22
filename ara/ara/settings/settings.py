@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django_filters',
     'django_extensions',
     'django_s3_storage',
+    'drf_yasg',
 
     'apps.core',
     'apps.user',
