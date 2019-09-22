@@ -55,13 +55,6 @@ urlpatterns += [
     path('redoc/', schema_view.with_ui('redoc'), name='schema-redoc'),
 ]
 
-# installed apps (real environment)
-
-urlpatterns += [
-    path('api-auth/', include('rest_framework.urls')),
-    path('rest-auth/', include('rest_auth.urls')),
-]
-
 
 # installed apps (test environment)
 if settings.DEBUG:
