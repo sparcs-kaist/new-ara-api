@@ -34,7 +34,6 @@ http-ece==1.1.0
 hyper==0.7.0
 hyperframe==3.2.0
 idna==2.8
-importlib-metadata==0.22
 inflection==0.3.1
 importlib-metadata==0.23
 isort==4.3.21
