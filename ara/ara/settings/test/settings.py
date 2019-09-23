@@ -69,18 +69,6 @@ STATICFILES_STORAGE = 'django_s3_storage.storage.StaticS3Storage'
 
 CORS_ORIGIN_ALLOW_ALL = True
 
-
-# http://getblimp.github.io/django-rest-framework-jwt/
-
-SESSION_COOKIE_AGE = 60 * 60 * 24 * 7
-
-JWT_AUTH = {
-    'JWT_ALLOW_REFRESH': True,
-    'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=SESSION_COOKIE_AGE),
-    'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(seconds=SESSION_COOKIE_AGE),
-}
-
-
 # http://www.django-rest-framework.org/
 
 REST_FRAMEWORK = {
@@ -92,8 +80,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ),
 }

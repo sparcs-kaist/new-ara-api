@@ -65,6 +65,7 @@ class UserProfile(MetaDataModel):
         to=settings.AUTH_USER_MODEL,
         related_name='profile',
         verbose_name='사용자',
+        primary_key=True,
     )
 
     def __str__(self):

@@ -30,7 +30,7 @@ class UserProfileUpdateActionSerializer(BaseUserProfileSerializer):
 class PublicUserProfileSerializer(BaseUserProfileSerializer):
     class Meta(BaseUserProfileSerializer.Meta):
         fields = (
-            'id',
+            'user_id',
             'picture',
             'nickname',
             'user'

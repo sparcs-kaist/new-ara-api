@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'debug_toolbar',
     'rest_framework',
+    'rest_framework.authtoken',
     'django_filters',
     'django_extensions',
     'django_s3_storage',
@@ -144,14 +145,3 @@ CELERY_BROKER_URL = 'redis://localhost:6379/0'
 INTERNAL_IPS = (
     '127.0.0.1',
 )
-
-
-# http://django-rest-auth.readthedocs.io/
-
-SITE_ID = 1
-
-REST_USE_JWT = True
-
-REST_AUTH_SERIALIZERS = {
-    'USER_DETAILS_SERIALIZER': 'apps.user.serializers.user.UserDetailActionSerializer',
-}
