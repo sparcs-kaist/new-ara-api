@@ -36,6 +36,7 @@ hyperframe==3.2.0
 idna==2.8
 importlib-metadata==0.22
 inflection==0.3.1
+importlib-metadata==0.23
 isort==4.3.21
 itypes==1.1.0
 Jinja2==2.10.1
@@ -72,6 +73,7 @@ sqlparse==0.3.0
 typed-ast==1.4.0
 uritemplate==3.0.0
 urllib3==1.25.3
+urllib3==1.25.4
 uWSGI==2.0.18
 vine==1.3.0
 webencodings==0.5.1

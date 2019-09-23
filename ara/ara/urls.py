@@ -39,8 +39,6 @@ schema_view = get_schema_view(
     ),
 )
 
-# admin, core, user
-
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include(('apps.core.urls', 'core'))),
@@ -54,7 +52,6 @@ urlpatterns += [
     path('swagger/', schema_view.with_ui('swagger'), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc'), name='schema-redoc'),
 ]
-
 
 # installed apps (test environment)
 if settings.DEBUG:
