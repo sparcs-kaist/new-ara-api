@@ -79,7 +79,7 @@ class UserViewSet(ActionAPIViewSet):
                 user_profile = UserProfile.objects.create(
                     uid=user_info['uid'],
                     sid=user_info['sid'],
-                    nickname=(nouns[0] + '' + adjectives[0]),
+                    nickname=(adjectives[0] + ' ' + nouns[0]),
                     sso_user_info=user_info,
                     user=get_user_model().objects.create_user(
                         email=user_info['email'],
