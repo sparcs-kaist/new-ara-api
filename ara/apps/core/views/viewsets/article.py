@@ -142,10 +142,10 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def retrieve(self, request, *args, **kwargs):
         article = self.get_object()
 
-        article_read_log, created = ArticleReadLog.objects.update_or_create(
+        created = ArticleReadLog.objects.update_or_create(
             read_by=self.request.user,
             article=article,
-        )
+        )[1]
 
         if created:
             article.update_hit_count()

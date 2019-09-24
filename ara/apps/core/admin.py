@@ -3,7 +3,7 @@ from django.contrib import admin
 from ara.classes.admin import MetaDataModelAdmin
 
 from apps.core.models import Board, Topic, Article, \
-        ArticleReadLog, ArticleUpdateLog, ArticleDeleteLog, BestArticle, CommentDeleteLog, BestComment
+        ArticleReadLog, ArticleDeleteLog, BestArticle, CommentDeleteLog, BestComment
 
 
 @admin.register(Board)
