@@ -91,11 +91,9 @@ class UserViewSet(ActionAPIViewSet):
         user_profile.user.last_login = datetime.datetime.now()
 
         return redirect(
-            # TODO
-            to='{next}?token={token}&user_id={uid}'.format(
+            to='{next}?token={token}'.format(
                 next=request.session.pop('next', '/'),
                 token=self.get_token(user_profile.user),
-                uid=user_profile.user.id,
             ),
         )
 
