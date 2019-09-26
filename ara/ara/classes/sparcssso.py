@@ -4,8 +4,8 @@ import time
 from urllib.parse import urlencode
 
 import binascii
-import requests
 import os
+import requests
 
 # SPARCS SSO V2 Client Version 1.1
 # VALID ONLY AFTER 2016-09-10T01:00+09:00
@@ -203,5 +203,5 @@ class Client:
         # For unregister error in SPARCSSSO
         try:
             return self._post_data(self.URLS['unregister'], params)['success']
-        except:
+        except RuntimeError:
             return True

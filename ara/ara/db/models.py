@@ -17,7 +17,7 @@ class MetaDataQuerySet(models.QuerySet):
             'deleted_at': datetime.datetime.now(),
         })
 
-    def bulk_create(self, objs, batch_size=None):
+    def bulk_create(self, objs, batch_size=None, ignore_conflicts=False):
         for obj in objs:
             if not hasattr(obj, 'created_at'):
                 obj.created_at = datetime.datetime.now()
