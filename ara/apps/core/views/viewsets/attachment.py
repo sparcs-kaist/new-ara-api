@@ -26,7 +26,8 @@ class AttachmentViewSet(mixins.CreateModelMixin,
 
     def perform_create(self, serializer):
         serializer.save(
-            name=self.request.FILES['file'].name,
+            size=self.request.FILES['file'].size,
+            mimetype=self.request.FILES['file'].content_type,
         )
 
     @decorators.action(detail=True, methods=['get'])
