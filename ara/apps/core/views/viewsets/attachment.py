@@ -9,12 +9,10 @@ from apps.core.serializers.attachment import AttachmentSerializer
 from apps.core.permissions.attachment import AttachmentPermission
 
 
-class AttachmentViewSet(
-    mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
-    mixins.DestroyModelMixin,
-    ActionAPIViewSet,
-):
+class AttachmentViewSet(mixins.CreateModelMixin,
+                        mixins.RetrieveModelMixin,
+                        mixins.DestroyModelMixin,
+                        ActionAPIViewSet):
     queryset = Attachment.objects.all()
     serializer_class = AttachmentSerializer
     permission_classes = (
@@ -28,7 +26,8 @@ class AttachmentViewSet(
 
     def perform_create(self, serializer):
         serializer.save(
-            name=self.request.FILES['file'].name,
+            size=self.request.FILES['file'].size,
+            mimetype=self.request.FILES['file'].content_type,
         )
 
     @decorators.action(detail=True, methods=['get'])

@@ -10,11 +10,9 @@ from apps.user.serializers.user_profile import (
 )
 
 
-class UserProfileViewSet(
-    mixins.RetrieveModelMixin,
-    mixins.UpdateModelMixin,
-    ActionAPIViewSet,
-):
+class UserProfileViewSet(mixins.RetrieveModelMixin,
+                         mixins.UpdateModelMixin,
+                         ActionAPIViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     action_serializer_class = {
