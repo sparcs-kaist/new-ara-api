@@ -9,12 +9,10 @@ from apps.core.serializers.attachment import AttachmentSerializer
 from apps.core.permissions.attachment import AttachmentPermission
 
 
-class AttachmentViewSet(
-    mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
-    mixins.DestroyModelMixin,
-    ActionAPIViewSet,
-):
+class AttachmentViewSet(mixins.CreateModelMixin,
+                        mixins.RetrieveModelMixin,
+                        mixins.DestroyModelMixin,
+                        ActionAPIViewSet):
     queryset = Attachment.objects.all()
     serializer_class = AttachmentSerializer
     permission_classes = (
