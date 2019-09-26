@@ -1,5 +1,6 @@
 import uuid
 import datetime
+import random
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -70,11 +71,27 @@ class UserViewSet(ActionAPIViewSet):
             )
 
         except UserProfile.DoesNotExist:
+            nouns = ['강아지', '고양이', '원숭이', '고양이', '낙타', '망아지', '시조새', '힙스터', '로봇', '감자', '고구마', '가마우지', '직박구리', '오리너구리', '보노보', '개미핥기', '치타', '사자', '구렁이', '도마뱀', '개구리', '올빼미', '부엉이']
+            adjectives = ['가냘픈', '신나는', '귀여운', '기쁜', '귀찮은', '날랜', '바쁜', '듬직한', '사나운', '똑똑한', '더운', '추운', '징그러운', '젊은', '늙은']
+            random.shuffle(nouns)
+            random.shuffle(adjectives)
+            temp_nickname = adjectives[0] + ' ' + nouns[0]
+            try:
+                duplicate_user_profile = UserProfile.objects.get(
+                    nickname=temp_nickname,
+                )
+                tmparr = str(duplicate_user_profile.nickname).split(' ')
+                if len(tmparr) == 3:
+                    temp_nickname += ' ' + str(int(tmparr[-1]) + 1)
+                else:
+                    temp_nickname += ' 1'
+            except UserProfile.DoesNotExist:
+                pass
             with transaction.atomic():
                 user_profile = UserProfile.objects.create(
                     uid=user_info['uid'],
                     sid=user_info['sid'],
-                    nickname=str(uuid.uuid4()),
+                    nickname=temp_nickname,
                     sso_user_info=user_info,
                     user=get_user_model().objects.create_user(
                         email=user_info['email'],
