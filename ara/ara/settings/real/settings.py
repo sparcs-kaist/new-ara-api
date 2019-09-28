@@ -14,7 +14,8 @@ DEBUG = False
 SECRET_KEY = config.get('SECRET_KEY', 'secret_key')
 
 ALLOWED_HOSTS = [
-    'api.ara.sparcs.org',
+    'beta.ara-api.sparcs.org',
+    'ara-api.sparcs.org',
 ]
 
 
@@ -68,8 +69,9 @@ STATICFILES_STORAGE = 'django_s3_storage.storage.StaticS3Storage'
 # https://github.com/ottoyiu/django-cors-headers
 
 CORS_ORIGIN_WHITELIST = (
-    'ara.sparcs.org',
-    'ara.kaist.ac.kr',
+    'https://ara-beta.sparcs.org',
+    'https://ara.sparcs.org',
+    'https://ara.kaist.ac.kr',
 )
 
 # http://www.django-rest-framework.org/
