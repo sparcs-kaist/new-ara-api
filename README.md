@@ -1,5 +1,9 @@
 # SPARCS NewAra API
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/sparcs-kaist/new-ara-web/master/src/assets/Services-Ara.png" alt="Logo" height="150">
+</p>
+
 Restful API for NewAra @ SPARCS
 
 ## Project Stack
