@@ -20,6 +20,7 @@ drf-yasg = "^1.17"
 mysqlclient = "^1.4"
 bleach = "^3.1"
 Pillow = "^6.2"
+django-environ = "^0.4.5"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
