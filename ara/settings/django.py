@@ -101,6 +101,8 @@ DATABASES = {
     'default': env.db()
 }
 
+STATIC_URL = '/static/'
+
 
 # https://django-debug-toolbar.readthedocs.io/
 
