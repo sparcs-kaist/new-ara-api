@@ -5,6 +5,7 @@ from .env import env, root
 BASE_DIR = root()
 
 
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -19,7 +20,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'rest_framework',
     'rest_framework.authtoken',
-    'django_filters',
+    'rest_framework_filters',
     'django_extensions',
     'django_s3_storage',
     'drf_yasg',
@@ -64,7 +65,7 @@ WSGI_APPLICATION = 'ara.wsgi.application'
 
 
 # Password validation
-# https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
+# https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -83,7 +84,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # Internationalization
-# https://docs.djangoproject.com/en/1.11/topics/i18n/
+# https://docs.djangoproject.com/en/2.2/topics/i18n/
 
 LANGUAGE_CODE = 'ko-kr'
 

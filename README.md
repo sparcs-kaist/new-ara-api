@@ -56,7 +56,8 @@ $ source env/bin/activate
 ### Install Requirements
 
 ```bash
-$ pip install -r requirements.txt
+$ pip install poetry
+$ poetry install # in production - $ poetry install --no-dev
 ```
 
 For macOS, you may need to install `openssl` & `mysqlclient` and set `LDFLAGS=-L/usr/local/opt/openssl/lib` before installing requirements. Only tested for macOS Mojave. See [link](https://stackoverflow.com/questions/50940302/installing-mysql-python-causes-command-clang-failed-with-exit-status-1-on-mac).
