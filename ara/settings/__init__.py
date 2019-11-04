@@ -1,5 +1,10 @@
-try:
-    from .test import *
+from .env import env
+from .django import *
+from .djangorestframework import *
+from .s3 import *
 
-except ImportError:
-    from .real import *
+
+if env('DJANGO_ENV') == 'development':
+    from .dev import *
+elif env('DJANGO_ENV') == 'production':
+    from .prod import *
