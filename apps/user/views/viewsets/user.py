@@ -38,7 +38,6 @@ class UserViewSet(ActionAPIViewSet):
             settings.SSO_SECRET_KEY,
             is_beta=settings.SSO_IS_BETA)
 
-    # TODO
     @staticmethod
     def get_token(user):
         return Token.objects.get_or_create(user=user)[0]

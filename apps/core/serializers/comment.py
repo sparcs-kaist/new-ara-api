@@ -3,6 +3,9 @@ from rest_framework import serializers, exceptions
 from ara.classes.serializers import MetaDataModelSerializer
 
 from apps.core.models import Comment
+from apps.core.serializers.report import BaseReportSerializer
+from apps.user.serializers.user import PublicUserSerializer
+from apps.core.serializers.comment_log import CommentUpdateLogSerializer
 
 
 class BaseCommentSerializer(MetaDataModelSerializer):
@@ -19,7 +22,6 @@ class BaseCommentSerializer(MetaDataModelSerializer):
         return my_vote.is_positive
 
     def get_my_report(self, obj):
-        from apps.core.serializers.report import BaseReportSerializer
 
         if not obj.report_set.exists():
             return None
@@ -67,12 +69,10 @@ class BaseCommentSerializer(MetaDataModelSerializer):
 
 
 class CommentSerializer(BaseCommentSerializer):
-    from apps.user.serializers.user import PublicUserSerializer
     created_by = PublicUserSerializer(
         read_only=True,
     )
 
-    from apps.core.serializers.comment_log import CommentUpdateLogSerializer
     comment_update_logs = CommentUpdateLogSerializer(
         many=True,
         read_only=True,
@@ -100,12 +100,10 @@ class CommentSerializer(BaseCommentSerializer):
 
 
 class CommentListActionSerializer(BaseCommentSerializer):
-    from apps.user.serializers.user import PublicUserSerializer
     created_by = PublicUserSerializer(
         read_only=True,
     )
 
-    from apps.core.serializers.comment_log import CommentUpdateLogSerializer
     comment_update_logs = CommentUpdateLogSerializer(
         many=True,
         read_only=True,
@@ -152,7 +150,6 @@ class CommentCreateActionSerializer(BaseCommentSerializer):
             'created_by',
         )
 
-    from apps.user.serializers.user import PublicUserSerializer
     created_by = PublicUserSerializer(
         read_only=True,
     )
@@ -169,7 +166,6 @@ class CommentUpdateActionSerializer(BaseCommentSerializer):
             'parent_comment',
         )
 
-    from apps.user.serializers.user import PublicUserSerializer
     created_by = PublicUserSerializer(
         read_only=True,
     )

@@ -4,6 +4,7 @@ from ara.classes.viewset import ActionAPIViewSet
 
 from apps.core.models import (
     Comment,
+    CommentUpdateLog,
     CommentDeleteLog,
     Vote,
 )
@@ -55,8 +56,6 @@ class CommentViewSet(mixins.CreateModelMixin,
         )
 
     def perform_update(self, serializer):
-        from apps.core.models import CommentUpdateLog
-
         instance = serializer.instance
 
         CommentUpdateLog.objects.create(

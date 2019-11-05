@@ -7,9 +7,8 @@ class AttachmentPermission(permissions.IsAuthenticated):
             return request.user.is_staff or all([request.user == article.created_by
                                                  for article in obj.article_set.all()])
 
-        return super(
-            AttachmentPermission,
-            self).has_object_permission(
+        return super(AttachmentPermission, self).has_object_permission(
             request,
             view,
-            obj)
+            obj
+        )

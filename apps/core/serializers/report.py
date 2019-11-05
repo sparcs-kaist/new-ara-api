@@ -1,6 +1,9 @@
 from ara.classes.serializers import MetaDataModelSerializer
 
 from apps.core.models import Report
+from apps.core.serializers.article import ArticleListActionSerializer
+from apps.core.serializers.comment import CommentListActionSerializer
+from apps.user.serializers.user import PublicUserSerializer
 
 
 class BaseReportSerializer(MetaDataModelSerializer):
@@ -10,17 +13,14 @@ class BaseReportSerializer(MetaDataModelSerializer):
 
 
 class ReportSerializer(BaseReportSerializer):
-    from apps.core.serializers.article import ArticleListActionSerializer
     parent_article = ArticleListActionSerializer(
         read_only=True,
     )
 
-    from apps.core.serializers.comment import CommentListActionSerializer
     parent_comment = CommentListActionSerializer(
         read_only=True,
     )
 
-    from apps.user.serializers.user import PublicUserSerializer
     reported_by = PublicUserSerializer(
         read_only=True,
     )

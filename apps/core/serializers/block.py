@@ -1,6 +1,7 @@
 from ara.classes.serializers import MetaDataModelSerializer
 
 from apps.core.models import Block
+from apps.user.serializers.user import PublicUserSerializer
 
 
 class BaseBlockSerializer(MetaDataModelSerializer):
@@ -15,7 +16,6 @@ class BlockSerializer(BaseBlockSerializer):
             'blocked_by',
         )
 
-    from apps.user.serializers.user import PublicUserSerializer
     user = PublicUserSerializer(
         read_only=True,
     )

@@ -37,13 +37,12 @@ class Block(MetaDataModel):
         except AssertionError:
             raise IntegrityError('self.user must not be self.blocked_by.')
 
-        super(
-            Block,
-            self).save(
+        super(Block, self).save(
             force_insert=force_insert,
             force_update=force_update,
             using=using,
-            update_fields=update_fields)
+            update_fields=update_fields
+        )
 
     @classmethod
     def prefetch_my_block(cls, user, prefix=''):

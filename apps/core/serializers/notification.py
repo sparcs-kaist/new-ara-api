@@ -3,6 +3,8 @@ from rest_framework import serializers
 from ara.classes.serializers import MetaDataModelSerializer
 
 from apps.core.models import Notification
+from apps.core.serializers.article import BaseArticleSerializer
+from apps.core.serializers.comment import BaseCommentSerializer
 
 
 class BaseNotificationSerializer(MetaDataModelSerializer):
@@ -24,12 +26,10 @@ class NotificationSerializer(BaseNotificationSerializer):
         read_only=True,
     )
 
-    from apps.core.serializers.article import BaseArticleSerializer
     related_article = BaseArticleSerializer(
         read_only=True,
     )
 
-    from apps.core.serializers.comment import BaseCommentSerializer
     related_comment = BaseCommentSerializer(
         read_only=True,
     )

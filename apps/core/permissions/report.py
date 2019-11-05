@@ -6,9 +6,8 @@ class ReportPermission(permissions.IsAuthenticated):
         if request.method not in permissions.SAFE_METHODS:
             return request.user.is_staff or request.user == obj.reported_by
 
-        return super(
-            ReportPermission,
-            self).has_object_permission(
+        return super(ReportPermission, self).has_object_permission(
             request,
             view,
-            obj)
+            obj
+        )

@@ -6,6 +6,10 @@ from apps.core.models import Article
 from apps.core.serializers.article_log import ArticleUpdateLogSerializer
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
+from apps.core.serializers.scrap import BaseScrapSerializer
+from apps.core.serializers.report import BaseReportSerializer
+from apps.user.serializers.user import PublicUserSerializer
+from apps.core.serializers.comment import ArticleNestedCommentListActionSerializer
 
 
 class BaseArticleSerializer(MetaDataModelSerializer):
@@ -22,8 +26,6 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return my_vote.is_positive
 
     def get_my_scrap(self, obj):
-        from apps.core.serializers.scrap import BaseScrapSerializer
-
         if not obj.scrap_set.exists():
             return None
 
@@ -32,8 +34,6 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return BaseScrapSerializer(my_scrap).data
 
     def get_my_report(self, obj):
-        from apps.core.serializers.report import BaseReportSerializer
-
         if not obj.report_set.exists():
             return None
 
@@ -85,8 +85,6 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return ''
 
     def get_created_by(self, obj):
-        from apps.user.serializers.user import PublicUserSerializer
-
         if obj.is_anonymous:
             return '익명'
 
@@ -148,7 +146,6 @@ class ArticleSerializer(BaseArticleSerializer):
         read_only=True,
     )
 
-    from apps.core.serializers.comment import ArticleNestedCommentListActionSerializer
     comments = ArticleNestedCommentListActionSerializer(
         many=True,
         read_only=True,

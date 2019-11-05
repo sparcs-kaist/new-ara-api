@@ -2,6 +2,9 @@ from django.contrib.auth import get_user_model
 
 from rest_framework import serializers
 
+from apps.user.serializers.user_profile import UserProfileSerializer
+from apps.user.serializers.user_profile import PublicUserProfileSerializer
+
 
 class BaseUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -10,7 +13,6 @@ class BaseUserSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(BaseUserSerializer):
-    from apps.user.serializers.user_profile import UserProfileSerializer
     profile = UserProfileSerializer(
         read_only=True,
     )
@@ -24,7 +26,6 @@ class UserDetailActionSerializer(BaseUserSerializer):
             'profile',
         )
 
-    from apps.user.serializers.user_profile import UserProfileSerializer
     profile = UserProfileSerializer(
         read_only=True,
     )
@@ -39,7 +40,6 @@ class PublicUserSerializer(BaseUserSerializer):
             'profile',
         )
 
-    from apps.user.serializers.user_profile import PublicUserProfileSerializer
     profile = PublicUserProfileSerializer(
         read_only=True,
     )

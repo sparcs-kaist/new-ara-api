@@ -1,6 +1,7 @@
 from ara.classes.serializers import MetaDataModelSerializer
 
 from apps.core.models import Topic
+from apps.core.serializers.board import BoardSerializer
 
 
 class BaseTopicSerializer(MetaDataModelSerializer):
@@ -14,7 +15,6 @@ class TopicSerializer(BaseTopicSerializer):
 
 
 class BoardNestedTopicSerializer(BaseTopicSerializer):
-    from apps.core.serializers.board import BoardSerializer
     board = BoardSerializer(
         read_only=True,
     )
