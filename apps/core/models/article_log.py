@@ -63,7 +63,8 @@ class ArticleUpdateLog(MetaDataModel):
         verbose_name = '게시물 변경 기록'
         verbose_name_plural = '게시물 변경 기록 목록'
 
-    objects = ArticleUpdateLogManager.from_queryset(queryset_class=ArticleUpdateLogQuerySet)()
+    objects = ArticleUpdateLogManager.from_queryset(
+        queryset_class=ArticleUpdateLogQuerySet)()
 
     data = JSONField()
 

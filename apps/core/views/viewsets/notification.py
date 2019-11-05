@@ -26,7 +26,8 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
             'related_comment',
         ).prefetch_related(
             'related_article__attachments',
-            NotificationReadLog.prefetch_my_notification_read_log(self.request.user),
+            NotificationReadLog.prefetch_my_notification_read_log(
+                self.request.user),
         )
 
         return queryset
@@ -47,9 +48,8 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
     @decorators.action(detail=True, methods=['post'])
     def read(self, request, *args, **kwargs):
         try:
-            notification_read_log = self.get_object().notification_read_log_set.get(
-                read_by=request.user,
-            )
+            notification_read_log = self.get_object(
+            ).notification_read_log_set.get(read_by=request.user, )
 
             notification_read_log.is_read = True
 

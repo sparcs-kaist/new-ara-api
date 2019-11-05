@@ -15,5 +15,7 @@ class MeView(APIView):
     )
 
     def get(self, request):
-        serializer = UserProfileSerializer(UserProfile.objects.get(user_id=request.user.id))
+        serializer = UserProfileSerializer(
+            UserProfile.objects.get(
+                user_id=request.user.id))
         return Response(serializer.data)

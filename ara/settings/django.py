@@ -5,7 +5,6 @@ from .env import env, root
 BASE_DIR = root()
 
 
-
 # Application definition
 
 INSTALLED_APPS = [

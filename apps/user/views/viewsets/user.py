@@ -33,9 +33,12 @@ class UserViewSet(ActionAPIViewSet):
 
     @property
     def sso_client(self):
-        return SSOClient(settings.SSO_CLIENT_ID, settings.SSO_SECRET_KEY, is_beta=settings.SSO_IS_BETA)
+        return SSOClient(
+            settings.SSO_CLIENT_ID,
+            settings.SSO_SECRET_KEY,
+            is_beta=settings.SSO_IS_BETA)
 
-    #TODO
+    # TODO
     @staticmethod
     def get_token(user):
         return Token.objects.get_or_create(user=user)[0]
@@ -44,7 +47,8 @@ class UserViewSet(ActionAPIViewSet):
     def sso_login(self, request, *args, **kwargs):
         request.session['next'] = request.GET.get('next', '/')
 
-        sso_login_url, request.session['state'] = self.sso_client.get_login_params()
+        sso_login_url, request.session['state'] = self.sso_client.get_login_params(
+        )
 
         return redirect(
             to=sso_login_url,
@@ -71,8 +75,46 @@ class UserViewSet(ActionAPIViewSet):
             )
 
         except UserProfile.DoesNotExist:
-            nouns = ['강아지', '고양이', '원숭이', '고양이', '낙타', '망아지', '시조새', '힙스터', '로봇', '감자', '고구마', '가마우지', '직박구리', '오리너구리', '보노보', '개미핥기', '치타', '사자', '구렁이', '도마뱀', '개구리', '올빼미', '부엉이']
-            adjectives = ['가냘픈', '신나는', '귀여운', '기쁜', '귀찮은', '날랜', '바쁜', '듬직한', '사나운', '똑똑한', '더운', '추운', '징그러운', '젊은', '늙은']
+            nouns = [
+                '강아지',
+                '고양이',
+                '원숭이',
+                '고양이',
+                '낙타',
+                '망아지',
+                '시조새',
+                '힙스터',
+                '로봇',
+                '감자',
+                '고구마',
+                '가마우지',
+                '직박구리',
+                '오리너구리',
+                '보노보',
+                '개미핥기',
+                '치타',
+                '사자',
+                '구렁이',
+                '도마뱀',
+                '개구리',
+                '올빼미',
+                '부엉이']
+            adjectives = [
+                '가냘픈',
+                '신나는',
+                '귀여운',
+                '기쁜',
+                '귀찮은',
+                '날랜',
+                '바쁜',
+                '듬직한',
+                '사나운',
+                '똑똑한',
+                '더운',
+                '추운',
+                '징그러운',
+                '젊은',
+                '늙은']
             random.shuffle(nouns)
             random.shuffle(adjectives)
             temp_nickname = adjectives[0] + ' ' + nouns[0]
@@ -143,6 +185,5 @@ class UserViewSet(ActionAPIViewSet):
             )
 
         return self.sso_client.get_logout_url(
-            sid=request.user.profile.sid,
-            redirect_uri=request.GET.get('next', 'https://sparcssso.kaist.ac.kr/'),
-        )
+            sid=request.user.profile.sid, redirect_uri=request.GET.get(
+                'next', 'https://sparcssso.kaist.ac.kr/'), )

@@ -75,7 +75,7 @@ class Client:
 
         try:
             return r.json()
-        except:
+        except BaseException:
             raise RuntimeError('INVALID_OBJECT')
 
     def get_login_params(self):

@@ -91,19 +91,33 @@ class Article(MetaDataModel):
     def __str__(self):
         return self.title
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(
+            self,
+            force_insert=False,
+            force_update=False,
+            using=None,
+            update_fields=None):
         try:
             if self.parent_topic:
                 assert self.parent_topic.parent_board == self.parent_board
 
         except AssertionError:
-            raise IntegrityError('self.parent_board should be parent_board of self.parent_topic')
+            raise IntegrityError(
+                'self.parent_board should be parent_board of self.parent_topic')
 
         self.content = self.sanitize(self.content)
 
-        self.content_text = ' '.join(bs4.BeautifulSoup(self.content, features='html5lib').find_all(text=True))
+        self.content_text = ' '.join(
+            bs4.BeautifulSoup(
+                self.content,
+                features='html5lib').find_all(
+                text=True))
 
-        super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+        super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields)
 
     # TODO: hit_count property should be cached
     def update_hit_count(self):
@@ -111,10 +125,13 @@ class Article(MetaDataModel):
 
         self.save()
 
-    # TODO: positive_vote_count, negative_vote_count properties should be cached
+    # TODO: positive_vote_count, negative_vote_count properties should be
+    # cached
     def update_vote_status(self):
-        self.positive_vote_count = self.vote_set.filter(is_positive=True).count()
-        self.negative_vote_count = self.vote_set.filter(is_positive=False).count()
+        self.positive_vote_count = self.vote_set.filter(
+            is_positive=True).count()
+        self.negative_vote_count = self.vote_set.filter(
+            is_positive=False).count()
 
         self.save()
 
@@ -137,4 +154,5 @@ class Article(MetaDataModel):
     def sanitize(content):
         #allowed_tags = bleach.ALLOWED_TAGS + [u'p', u'pre', u'span', u'h1', u'h2', u'br']
 
-        return content #bleach.linkify(bleach.clean(content, tags=allowed_tags))
+        # bleach.linkify(bleach.clean(content, tags=allowed_tags))
+        return content

@@ -43,14 +43,28 @@ class Vote(MetaDataModel):
         verbose_name='상위 댓글',
     )
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(
+            self,
+            force_insert=False,
+            force_update=False,
+            using=None,
+            update_fields=None):
         try:
-            assert (self.parent_article is None) != (self.parent_comment is None)
+            assert (
+                self.parent_article is None) != (
+                self.parent_comment is None)
 
         except AssertionError:
-            raise IntegrityError('self.parent_article and self.parent_comment should exist exclusively.')
+            raise IntegrityError(
+                'self.parent_article and self.parent_comment should exist exclusively.')
 
-        super(Vote, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+        super(
+            Vote,
+            self).save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields)
 
     @property
     def parent(self):

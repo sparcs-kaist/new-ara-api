@@ -69,33 +69,52 @@ class Comment(MetaDataModel):
     def __str__(self):
         return self.content
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(
+            self,
+            force_insert=False,
+            force_update=False,
+            using=None,
+            update_fields=None):
         try:
-            assert (self.parent_article is None) != (self.parent_comment is None)
+            assert (
+                self.parent_article is None) != (
+                self.parent_comment is None)
 
         except AssertionError:
-            raise IntegrityError('self.parent_article and self.parent_comment should exist exclusively.')
+            raise IntegrityError(
+                'self.parent_article and self.parent_comment should exist exclusively.')
 
         try:
             assert not self.parent_comment or not self.parent_comment.parent_comment
 
         except AssertionError:
-            raise IntegrityError('comment of comment of comment is not allowed')
+            raise IntegrityError(
+                'comment of comment of comment is not allowed')
 
         try:
             assert self.content is not None or self.attachment is not None
 
         except AssertionError:
-            raise IntegrityError('self.content and self.attachment should exist.')
+            raise IntegrityError(
+                'self.content and self.attachment should exist.')
 
         self.content = self.sanitize(self.content)
 
-        super(Comment, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+        super(
+            Comment,
+            self).save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields)
 
-    # TODO: positive_vote_count, negative_vote_count properties should be cached
+    # TODO: positive_vote_count, negative_vote_count properties should be
+    # cached
     def update_vote_status(self):
-        self.positive_vote_count = self.vote_set.filter(is_positive=True).count()
-        self.negative_vote_count = self.vote_set.filter(is_positive=False).count()
+        self.positive_vote_count = self.vote_set.filter(
+            is_positive=True).count()
+        self.negative_vote_count = self.vote_set.filter(
+            is_positive=False).count()
 
         self.save()
 

@@ -58,7 +58,12 @@ class MetaDataModel(models.Model):
         verbose_name='삭제 시간',
     )
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(
+            self,
+            force_insert=False,
+            force_update=False,
+            using=None,
+            update_fields=None):
         if self._state.adding:
             self.created_at = datetime.datetime.now()
 

@@ -17,11 +17,16 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='attachment',
             name='mimetype',
-            field=models.CharField(default='text/plain', max_length=50, verbose_name='타입'),
+            field=models.CharField(
+                default='text/plain',
+                max_length=50,
+                verbose_name='타입'),
         ),
         migrations.AddField(
             model_name='attachment',
             name='size',
-            field=models.BigIntegerField(default=-1, verbose_name='용량'),
+            field=models.BigIntegerField(
+                default=-1,
+                verbose_name='용량'),
         ),
     ]

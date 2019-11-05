@@ -25,14 +25,25 @@ class Block(MetaDataModel):
         verbose_name='차단당한 사람',
     )
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(
+            self,
+            force_insert=False,
+            force_update=False,
+            using=None,
+            update_fields=None):
         try:
             assert self.blocked_by != self.user
 
         except AssertionError:
             raise IntegrityError('self.user must not be self.blocked_by.')
 
-        super(Block, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+        super(
+            Block,
+            self).save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields)
 
     @classmethod
     def prefetch_my_block(cls, user, prefix=''):

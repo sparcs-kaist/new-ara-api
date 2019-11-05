@@ -26,7 +26,8 @@ class CommentUpdateLog(MetaDataModel):
         verbose_name = '댓글 변경 기록'
         verbose_name_plural = '댓글 변경 기록 목록'
 
-    objects = CommentUpdateLogManager.from_queryset(queryset_class=CommentUpdateLogQuerySet)()
+    objects = CommentUpdateLogManager.from_queryset(
+        queryset_class=CommentUpdateLogQuerySet)()
 
     data = JSONField()
 

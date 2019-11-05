@@ -48,9 +48,18 @@ urlpatterns = [
 # drf-yasg
 
 urlpatterns += [
-    re_path(r'swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(), name='schema-json'),
-    path('swagger/', schema_view.with_ui('swagger'), name='schema-swagger-ui'),
-    path('redoc/', schema_view.with_ui('redoc'), name='schema-redoc'),
+    re_path(
+        r'swagger(?P<format>\.json|\.yaml)$',
+        schema_view.without_ui(),
+        name='schema-json'),
+    path(
+        'swagger/',
+        schema_view.with_ui('swagger'),
+        name='schema-swagger-ui'),
+    path(
+        'redoc/',
+        schema_view.with_ui('redoc'),
+        name='schema-redoc'),
 ]
 
 # installed apps (test environment)
