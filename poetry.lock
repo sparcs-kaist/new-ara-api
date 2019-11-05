@@ -269,6 +269,14 @@ uritemplate = ">=3.0.0"
 
 [[package]]
 category = "main"
+description = "WSGI HTTP Server for UNIX"
+name = "gunicorn"
+optional = false
+python-versions = ">=2.6, !=3.0.*, !=3.1.*"
+version = "19.9.0"
+
+[[package]]
+category = "main"
 description = "Internationalized Domain Names in Applications (IDNA)"
 name = "idna"
 optional = false
@@ -556,7 +564,7 @@ python-versions = "*"
 version = "1.11.2"
 
 [metadata]
-content-hash = "99427819299560b06bcf843b59437ad247ec861d81f881291c99d55cb890c894"
+content-hash = "408e3b1091e4a9a666f616c885955dac37ed712746115ab9b6f775bda9344467"
 python-versions = "^3.7"
 
 [metadata.hashes]
@@ -583,6 +591,7 @@ djangorestframework = ["5488aed8f8df5ec1d70f04b2114abc52ae6729748a176c453313834a
 djangorestframework-filters = ["d53692f9f0dfcdc1df4e890787f7212c3602476b85faffdefec02e2bc386c5b6", "dfb58706f5f00ce72a01968d99fcc3e500bdeaaa275568fd60ae868bf2b90aad"]
 docutils = ["6c4f696463b79f1fb8ba0c594b63840ebd41f059e92b31957c46b74a4599b6d0", "9e4d7ecfc600058e07ba661411a2b7de2fd0fafa17d1a7f7361cd47b1175c827", "a2aeea129088da402665e92e0b25b04b073c04b2dce4ab65caaa38b7ce2e1a99"]
 drf-yasg = ["4cfec631880ae527a91ec7cd3241aea2f82189f59e2f089119aa687761afb227", "504cce09035cf1bace63b84d9d778b772f86bb37d8a71ed6f723346362e633b2"]
+gunicorn = ["aa8e0b40b4157b36a5df5e599f45c9c76d6af43845ba3b3b0efe2c70473c2471", "fa2662097c66f920f53f70621c6c58ca4a3c4d3434205e608e121b5b3b71f4f3"]
 idna = ["c357b3f628cf53ae2c4c05627ecc484553142ca23264e593d327bcde5e9c3407", "ea8b7f6188e6fa117537c3df7da9fc686d485087abf6ac197f9c46432f7e4a3c"]
 inflection = ["18ea7fb7a7d152853386523def08736aa8c32636b047ade55f7578c4edeb16ca"]
 isort = ["54da7e92468955c4fceacd0c86bd0ec997b0e1ee80d97f67c35a78b719dccab1", "6e811fcb295968434526407adb8796944f1988c5b65e8139058f2014cbe100fd"]
