@@ -64,7 +64,7 @@ For macOS, you may need to install `openssl` & `mysqlclient` and set `LDFLAGS=-L
 
 ### Fill Environment Configuration
 
-Copy `config.cnf.example` file to appropriate directory(test or real) and fill database, storage, etc. informations. For SPARCS SSO, create a test service or ask SYSOP to deploy production server.
+Copy `.env` file and fill required informations. informations. For SPARCS SSO, create a test service or ask SYSOP to deploy production server.
 
 ### Migrate Database
 
