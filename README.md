@@ -11,7 +11,8 @@ Restful API for NewAra @ SPARCS
 ### Interpreter
 
 * `Python 3.7`
-* `pip 19.2`
+* ~~`pip 19.2`~~
+* `poetry` is used as package manager
 
 ### Framework
 
