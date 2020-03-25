@@ -356,7 +356,7 @@ description = "Python interface to MySQL"
 name = "mysqlclient"
 optional = false
 python-versions = "*"
-version = "1.4.4"
+version = "1.4.6"
 
 [[package]]
 category = "main"
