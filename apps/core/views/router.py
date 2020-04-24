@@ -51,3 +51,10 @@ router.register(
     prefix=r'notifications',
     viewset=viewsets.NotificationViewSet,
 )
+
+
+# FAQViewSet
+router.register(
+    prefix=r'faqs',
+    viewset=viewsets.FAQViewSet,
+)
