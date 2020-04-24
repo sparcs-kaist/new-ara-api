@@ -3,7 +3,7 @@ from django.contrib import admin
 from ara.classes.admin import MetaDataModelAdmin
 
 from apps.core.models import Board, Topic, Article, \
-        ArticleReadLog, ArticleDeleteLog, BestArticle, CommentDeleteLog, BestComment
+    ArticleReadLog, ArticleDeleteLog, BestArticle, CommentDeleteLog, BestComment, FAQ
 
 
 @admin.register(Board)
@@ -31,6 +31,16 @@ class TopicAdmin(MetaDataModelAdmin):
         'en_name',
         'ko_description',
         'en_description',
+    )
+
+
+@admin.register(FAQ)
+class FAQAdmin(MetaDataModelAdmin):
+    list_display = (
+        'ko_question',
+        'en_question',
+        'ko_answer',
+        'en_answer',
     )
 
 
