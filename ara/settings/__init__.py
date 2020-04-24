@@ -2,6 +2,7 @@ from .env import env
 from .django import *
 from .djangorestframework import *
 from .s3 import *
+from .sso import *
 
 
 if env('DJANGO_ENV') == 'development':
