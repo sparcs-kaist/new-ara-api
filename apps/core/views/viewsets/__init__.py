@@ -6,3 +6,4 @@ from .block import *
 from .attachment import *
 from .notification import *
 from .scrap import *
+from .faq import *
