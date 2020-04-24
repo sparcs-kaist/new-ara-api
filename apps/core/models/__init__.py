@@ -13,5 +13,6 @@ from .vote import *
 from .report import *
 from .block import *
 from .scrap import *
+from .faq import *
 
 from .signals import *
