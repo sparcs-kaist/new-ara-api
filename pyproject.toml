@@ -22,6 +22,9 @@ bleach = "^3.1"
 Pillow = "^6.2"
 django-environ = "^0.4.5"
 gunicorn = "^19.9"
+pytest = "^5.4.2"
+pytest-django = "^3.9.0"
+pytest-cov = "^2.8.1"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
