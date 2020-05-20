@@ -19,3 +19,12 @@ migrate:
 	python manage.py makemigrations --merge
 	python manage.py makemigrations
 	python manage.py migrate
+
+test:
+	pytest tests/
+
+test_coverage:
+	pytest --cov=. tests/
+
+test_coverage_missing:
+	pytest --cov-report term-missing --cov=. tests/
