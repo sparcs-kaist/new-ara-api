@@ -1,4 +1,5 @@
 from .env import env, root
+from os import environ as os_environ
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -99,7 +100,17 @@ USE_TZ = False
 SECRET_KEY = env('SECRET_KEY')
 
 DATABASES = {
-    'default': env.db()
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+        },
+        'NAME': os_environ.get('NEWARA_DB_NAME', 'new_ara'),
+        'USER': os_environ.get('NEWARA_DB_USER', 'root'),
+        'PASSWORD': os_environ.get('NEWARA_DB_PASSWORD', ''),
+        'HOST': os_environ.get('NEWARA_DB_HOST', 'localhost'),
+        'PORT': os_environ.get('NEWARA_DB_PORT', '3306'),
+    }
 }
 
 STATIC_URL = '/static/'
