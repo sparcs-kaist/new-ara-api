@@ -68,5 +68,10 @@ class UserProfile(MetaDataModel):
         primary_key=True,
     )
 
+    past_user = models.BooleanField(
+        default=False,
+        verbose_name='이전 사용자',
+    )
+
     def __str__(self):
         return self.user.username
