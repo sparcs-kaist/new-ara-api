@@ -13,7 +13,7 @@ class UserProfile(MetaDataModel):
         unique_together = (
             ('uid', 'deleted_at'),
             ('sid', 'deleted_at'),
-            ('nickname', 'deleted_at'),
+            ('nickname', 'past_user', 'deleted_at'),
         )
 
     uid = models.CharField(

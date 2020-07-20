@@ -1,5 +1,4 @@
 import uuid
-
 import requests
 from bs4 import BeautifulSoup as bs
 
@@ -96,6 +95,5 @@ def crawl_all():
                 content_text=info['content'],
                 created_by=user,
                 url=full_link,
-
             )
 
