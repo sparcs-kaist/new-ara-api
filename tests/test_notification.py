@@ -33,33 +33,25 @@ def set_comments(request):
     """set_articles 먼저 적용"""
     request.cls.comment = Comment.objects.create(
         content='댓글입니다.',
-        created_by=request.cls.user,
+        created_by=request.cls.user2,
         parent_article=request.cls.article
     )
 
+    request.cls.comment_reply = Comment.objects.create(
+        content='대댓글입니다.',
+        created_by=request.cls.user,
+        parent_comment=request.cls.comment
+    )
 
-@pytest.mark.usefixtures('set_user_client', 'set_board', 'set_articles', 'set_comments')
+
+@pytest.mark.usefixtures('set_user_clients', 'set_board', 'set_articles', 'set_comments')
 class TestNotification(TestCase, RequestSetting):
     def test_list(self):
-        Notification.objects.create(
-            type='article_commented',
-            title='테스트1',
-            content='내용1',
-            related_article=self.article,
-            related_comment=None
-        )
-
-        Notification.objects.create(
-            type='comment_commented',
-            title='테스트2',
-            content='내용2',
-            related_comment=self.comment,
-            related_article=None
-        )
-
         notifications = self.http_request('get', 'notifications')
 
         assert notifications.status_code == 200
+        # user에게 알림: user의 글에 user2가 댓글을 달아서
+        # user2에게 알림: user2의 댓글에 user가 대댓글을 달아서
         assert Notification.objects.all().count() == 2
 
         # not working
