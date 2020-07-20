@@ -18,11 +18,14 @@ def set_admin_client(request):
 
 
 @pytest.fixture(scope='class')
-def set_user_client(request):
+def set_user_clients(request):
     request.cls.user, _ = User.objects.get_or_create(username='User', email='user@sparcs.org')
     client = APIClient()
     client.force_authenticate(user=request.cls.user)
     request.cls.api_client = client
+
+    request.cls.user2, _ = User.objects.get_or_create(username='User2', email='user2@sparcs.org')
+    client.force_authenticate(user=request.cls.user2)
 
 
 class RequestSetting:
