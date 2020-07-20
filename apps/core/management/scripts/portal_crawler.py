@@ -11,7 +11,7 @@ from apps.user.models import UserProfile
 # TODO: 본인 아이디 비번으로 채워주세요.
 LOGIN_INFO = {
     'userid': '아이디',
-    'password': '비밀번'
+    'password': '비밀번호'
 }
 
 BASE_URL = 'https://portal.kaist.ac.kr'
@@ -41,20 +41,20 @@ def crawl_all():
             article_req = session.get(url)
             soup = bs(article_req.text, 'lxml')
             title = soup.select('table > tbody > tr > td.req_first')[0].contents[0]
-            contents = soup.select('table > tbody > tr > td > p')[0].contents
+            raw = soup.select('table > tbody > tr:nth-child(4) > td')
             writer = soup.select('table > tbody > tr > td > label')[0].contents[0]
             dt = soup.select('table > tbody > tr:nth-child(2) > td:nth-child(4)')[0].contents[0]
 
-            content = ''
-            for c in contents:
-                if isinstance(c, str):
-                    content += c
-                else:
-                    content += '\n'
+            html = ''
+            for r in raw:
+                html += str(r)
+
+            content_text = ' '.join(bs(html, features='html5lib').find_all(text=True))
 
             return {
                 'title': title,
-                'content': content,
+                'content_text': content_text,
+                'content': html,
                 'writer': writer,
                 'dt': dt,
             }
@@ -74,7 +74,6 @@ def crawl_all():
             num = link.split('/')[-1]
             full_link = f'{BASE_URL}/board/read.brd?cmd=READ&boardId={board_id}&bltnNo={num}&lang_knd=ko'
             info = get_article(full_link)
-            print(info)
 
             exist = UserProfile.objects.filter(nickname=info['writer'])
             if exist:
@@ -92,7 +91,7 @@ def crawl_all():
                 created_at=info['dt'],
                 title=info['title'],
                 content=info['content'],
-                content_text=info['content'],
+                content_text=info['content_text'],
                 created_by=user,
                 url=full_link,
             )
