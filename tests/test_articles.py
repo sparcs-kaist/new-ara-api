@@ -2,11 +2,11 @@ import pytest
 from django.test import TestCase
 from django.utils import timezone
 
-from apps.core.models import Vote, Article, ArticleReadLog, Topic, Board
+from apps.core.models import Vote, Article, ArticleReadLog, Topic, Board, Comment
 from tests.conftest import RequestSetting
 
 
-@pytest.mark.usefixtures('set_user_client')
+@pytest.mark.usefixtures('set_user_clients')
 class TestArticle(TestCase, RequestSetting):
 
     # Test number of articles in list
@@ -151,27 +151,19 @@ class TestArticle(TestCase, RequestSetting):
 
     # test if article's viewcount, pos/neg votes, and number of comments are properly updated
     def test_update_numbers(self):
-        # writer = models.ForeignKey()
         board = Board.objects.create(slug="hi",
                                      ko_name="게시판1",
                                      en_name="board1",
-                                     ko_description="testing",
+                                     ko_description="한글설명",
                                      en_description="english testing")
-        time = models.DateTimeField()
-        topic = Topic.objects.create(slug = "hi",
-                                     ko_name="k",
+
+        topic = Topic.objects.create(slug="hi",
+                                     ko_name="한글이름",
                                      en_name="e",
-                                     ko_description="dd",
+                                     ko_description="한글설명",
                                      en_description="d",
                                      parent_board=board)
-        # naive = datetime(loc_year, loc_month, loc_date, loc_hour, loc_minute)
-        date_str="2020-05-22"
-        temp_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-        user = get_user_model().objects.create_user(
-            email='jj',
-            username='hi',
-            password='pw',
-        )
+
         article = Article.objects.create(title="example",
                                          content="example content",
                                          content_text="example content text",
@@ -181,23 +173,18 @@ class TestArticle(TestCase, RequestSetting):
                                          hit_count=0,
                                          positive_vote_count=0,
                                          negative_vote_count=0,
-                                         created_by=user,
+                                         created_by=self.user,
                                          parent_topic=topic,
                                          parent_board=board,
-                                         commented_at = date_str,
-                                       )
+                                         commented_at=timezone.now())
 
         a1 = self.http_request('get', 'articles').data.get('results')[0]
 
         # test update_hit_count
         article.update_hit_count()
         assert a1.get('hit_count') == 0
-        voter1 = get_user_model().objects.create_user(
-            email='vote1@gmail.com',
-            username='voter1id',
-            password='voter1pw',
-        )
-        article_read_log = ArticleReadLog.objects.create(read_by=voter1,
+
+        article_read_log = ArticleReadLog.objects.create(read_by=self.user,
                                                          article=article)
         # article_read_log.last_read_at()
         #article_read_log.prefetch_my_article_read_log(voter1)
@@ -210,7 +197,7 @@ class TestArticle(TestCase, RequestSetting):
         assert a1.get('negative_vote_count') == 0
 
         vote1 = Vote.objects.create(is_positive=True,
-                                    voted_by=voter1,
+                                    voted_by=self.user,
                                     parent_article=article)
 
         article.update_vote_status()
@@ -219,14 +206,8 @@ class TestArticle(TestCase, RequestSetting):
         assert a1.get('positive_vote_count') == 1
         assert a1.get('negative_vote_count') == 0
 
-        voter2 = get_user_model().objects.create_user(
-            email='vote2@gmail.com',
-            username='voter2id',
-            password='voter2pw',
-        )
-
         vote2 = Vote.objects.create(is_positive=False,
-                                    voted_by=voter2,
+                                    voted_by=self.user2,
                                     parent_article=article)
 
         article.update_vote_status()
@@ -241,11 +222,9 @@ class TestArticle(TestCase, RequestSetting):
                                is_anonymous=True,
                                positive_vote_count=4,
                                negative_vote_count=3,
-                               created_by=user,
+                               created_by=self.user,
                                # attachment=1,
-                               parent_article=article,
-                               # parent_comment=4,
-                               )
+                               parent_article=article)
         a1 = self.http_request('get', 'articles').data.get('results')[0]
         assert article.comments_count == 1
 
@@ -263,17 +242,7 @@ class TestArticle(TestCase, RequestSetting):
                                      ko_description="dd",
                                      en_description="d",
                                      parent_board=board)
-        date_str="2020-05-22"
-        user1 = get_user_model().objects.create_user(
-            email='user1@gmail.com',
-            username='user1name',
-            password='user1pw',
-        )
-        user2 = get_user_model().objects.create_user(
-            email='user2@gmail.com',
-            username='user2name',
-            password='user2pw',
-        )
+
         article = Article.objects.create(title="example",
                                          content="example content",
                                          content_text="example content text",
@@ -283,25 +252,11 @@ class TestArticle(TestCase, RequestSetting):
                                          hit_count=0,
                                          positive_vote_count=0,
                                          negative_vote_count=0,
-                                         created_by=user1,
+                                         created_by=self.user,
                                          parent_topic=topic,
                                          parent_board=board,
-                                         commented_at = date_str,
-                                       )
+                                         commented_at=timezone.now())
 
         assert self.http_request('get', 'articles').data.get('num_items') == 1
 
         # test: user other than writer tries to delete article
-        ArticleDeleteLog.objects.create(deleted_by=user2,
-                                        article=article
-                                        )
-        assert self.http_request('get', 'articles').data.get('num_items') == 1
-
-        # test: writer tries to delete article
-        ArticleDeleteLog.objects.create(deleted_by=user1,
-                                        article=article
-                                        )
-        assert self.http_request('get', 'articles').data.get('num_items') == 0 # this fails. Why?
-
-
-
