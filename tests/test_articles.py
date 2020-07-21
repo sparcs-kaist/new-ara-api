@@ -74,26 +74,19 @@ class TestArticle(TestCase, RequestSetting):
         assert a.data.get('num_items') == 3
 
     def test_create(self):
-        # writer = models.ForeignKey()
         board = Board.objects.create(slug="hi",
                                      ko_name="게시판1",
                                      en_name="board1",
-                                     ko_description="testing",
+                                     ko_description="한글설명",
                                      en_description="english testing")
-        time = models.DateTimeField()
-        topic = Topic.objects.create(slug = "hi",
-                                     ko_name="k",
+
+        topic = Topic.objects.create(slug="hi",
+                                     ko_name="한글이름",
                                      en_name="e",
-                                     ko_description="dd",
+                                     ko_description="한글설명",
                                      en_description="d",
                                      parent_board=board)
-        date_str="2020-05-22"
-        temp_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-        user = get_user_model().objects.create_user(
-            email='user1@gmail.com',
-            username='user1',
-            password='userpw1',
-        )
+
         article = Article.objects.create(title="example",
                                          content="example content",
                                          content_text="example content text",
@@ -103,11 +96,10 @@ class TestArticle(TestCase, RequestSetting):
                                          hit_count=5,
                                          positive_vote_count=3,
                                          negative_vote_count=2,
-                                         created_by=user,
+                                         created_by=self.user,
                                          parent_topic=topic,
                                          parent_board=board,
-                                         commented_at = date_str,
-                                         )
+                                         commented_at=timezone.now())
 
         a = self.http_request('get', 'articles')
         a1 = a.data.get('results')[0]
@@ -120,11 +112,9 @@ class TestArticle(TestCase, RequestSetting):
         assert a1.get('hit_count') == article.hit_count
         assert a1.get('positive_vote_count') == article.positive_vote_count
         assert a1.get('negative_vote_count') == article.negative_vote_count
-        assert a1.get('created_by')["username"] == 'user1'
-        # assert a1.get('parent_topic') == article.parent_topic # This gives error
-        # assert a1.get('parent_board') == article.parent_board # This gives error
-        # assert a1.get('attachments') == article.attachments
-        # assert a1.get('commented_at') == article.commented_at
+        assert a1.get('created_by')['username'] == self.user.username
+        assert a1.get('parent_topic')['ko_name'] == article.parent_topic.ko_name
+        assert a1.get('parent_board')['ko_name'] == article.parent_board.ko_name
 
     # Test if anonymous writer's article is anonymous
     def test_anonymous_writer(self):
