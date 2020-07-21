@@ -1,40 +1,28 @@
 import pytest
 from django.test import TestCase
-from django.db import models
-from django.contrib.auth import get_user_model
+from django.utils import timezone
 
-from apps.core.models import Comment, Vote, Article, ArticleReadLog, ArticleDeleteLog, Topic, Board
+from apps.core.models import Vote, Article, ArticleReadLog, Topic, Board
 from tests.conftest import RequestSetting
-from datetime import datetime
-from apps.core.models import FAQ
 
 
 @pytest.mark.usefixtures('set_user_client')
-class TestFAQ(TestCase, RequestSetting):
+class TestArticle(TestCase, RequestSetting):
 
     # Test number of articles in list
     def test_list(self):
-        # writer = models.ForeignKey()
         board = Board.objects.create(slug="hi",
                                      ko_name="게시판1",
                                      en_name="board1",
-                                     ko_description="testing",
+                                     ko_description="한글설명",
                                      en_description="english testing")
-        time = models.DateTimeField()
-        topic = Topic.objects.create(slug = "hi",
-                                     ko_name="k",
+
+        topic = Topic.objects.create(slug="hi",
+                                     ko_name="한글이름",
                                      en_name="e",
-                                     ko_description="dd",
+                                     ko_description="한글설명",
                                      en_description="d",
                                      parent_board=board)
-        # naive = datetime(loc_year, loc_month, loc_date, loc_hour, loc_minute)
-        date_str="2020-05-22"
-        temp_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-        user = get_user_model().objects.create_user(
-            email='jj',
-            username='hi',
-            password='pw',
-        )
 
         a = self.http_request('get', 'articles')
         assert a.data.get('num_items') == 0
@@ -47,11 +35,10 @@ class TestFAQ(TestCase, RequestSetting):
                                          hit_count=5,
                                          positive_vote_count=3,
                                          negative_vote_count=2,
-                                         created_by=user,
+                                         created_by=self.user,
                                          parent_topic=topic,
                                          parent_board=board,
-                                         commented_at = date_str,
-                                       )
+                                         commented_at=timezone.now())
         a = self.http_request('get', 'articles')
         assert a.data.get('num_items') == 1
         article2 = Article.objects.create(title="example2",
@@ -63,12 +50,10 @@ class TestFAQ(TestCase, RequestSetting):
                                           hit_count=5,
                                           positive_vote_count=3,
                                           negative_vote_count=2,
-                                          created_by=user,
+                                          created_by=self.user,
                                           parent_topic=topic,
                                           parent_board=board,
-                                          commented_at=date_str,
-                                          )
-
+                                          commented_at=timezone.now())
         a = self.http_request('get', 'articles')
         assert a.data.get('num_items') == 2
 
@@ -81,12 +66,10 @@ class TestFAQ(TestCase, RequestSetting):
                                           hit_count=5,
                                           positive_vote_count=3,
                                           negative_vote_count=2,
-                                          created_by=user,
+                                          created_by=self.user,
                                           parent_topic=topic,
                                           parent_board=board,
-                                          commented_at=date_str,
-                                          )
-
+                                          commented_at=timezone.now())
         a = self.http_request('get', 'articles')
         assert a.data.get('num_items') == 3
 
