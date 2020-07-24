@@ -6,12 +6,11 @@ from django.contrib.auth import get_user_model
 
 from apps.core.models import Article
 from apps.user.models import UserProfile
+from ara.settings import PORTAL_ID, PORTAL_PASSWORD
 
-
-# TODO: 본인 아이디 비번으로 채워주세요.
 LOGIN_INFO = {
-    'userid': '아이디',
-    'password': '비밀번호'
+    'userid': PORTAL_ID,
+    'password': PORTAL_PASSWORD
 }
 
 BASE_URL = 'https://portal.kaist.ac.kr'

@@ -12,7 +12,9 @@ env = environ.Env(
     AWS_ACCESS_KEY_ID=(str, os_environ.get('AWS_ACCESS_KEY_ID')),
     AWS_SECRET_ACCESS_KEY=(str, os_environ.get('AWS_SECRET_ACCESS_KEY')),
     SSO_CLIENT_ID=(str, os_environ.get('SSO_CLIENT_ID')),
-    SSO_SECRET_KEY=(str, os_environ.get('SSO_SECRET_KEY'))
+    SSO_SECRET_KEY=(str, os_environ.get('SSO_SECRET_KEY')),
+    PORTAL_ID=(str, os_environ.get('PORTAL_ID')),
+    PORTAL_PASSWORD=(str, os_environ.get('PORTAL_PASSWORD')),
 )
 
 # For local environment
