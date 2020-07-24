@@ -19,3 +19,8 @@ migrate:
 	python manage.py makemigrations --merge
 	python manage.py makemigrations
 	python manage.py migrate
+
+env:  # use for local & might not be ~/.bashrc
+	git clone git://github.com/inishchith/autoenv.git ~/.autoenv
+	echo 'source ~/.autoenv/activate.sh' >> ~/.bashrc
+	source ~/.bashrc
