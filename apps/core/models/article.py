@@ -88,6 +88,12 @@ class Article(MetaDataModel):
         verbose_name='마지막 댓글 시간',
     )
 
+    url = models.TextField(
+        null=True,
+        default=None,
+        verbose_name='링크',
+    )
+
     def __str__(self):
         return self.title
 
