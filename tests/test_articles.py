@@ -54,24 +54,8 @@ def set_article(request):
 class TestArticle(TestCase, RequestSetting):
 
     # article 개수를 확인하는 테스트
+    @pytest.mark.usefixtures('set_article')
     def test_list(self):
-        assert self.http_request('get', 'articles').data.get('num_items') == 0
-
-        Article.objects.create(
-            title="example article",
-            content="example content",
-            content_text="example content text",
-            is_anonymous=False,
-            is_content_sexual=False,
-            is_content_social=False,
-            hit_count=0,
-            positive_vote_count=0,
-            negative_vote_count=0,
-            created_by=self.user,
-            parent_topic=self.topic,
-            parent_board=self.board,
-            commented_at=timezone.now()
-        )
 
         a = self.http_request('get', 'articles')
         assert a.data.get('num_items') == 1
