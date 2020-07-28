@@ -53,24 +53,6 @@ def set_article(request):
 @pytest.mark.usefixtures('set_user_client', 'set_board', 'set_topic')
 class TestArticle(TestCase, RequestSetting):
 
-    # TODO: 밑의 test함수에서 create_article을 사용하려고 하니, create_article을 못찾겠다고 함. 계속 같은 코드를 쓰지 않기 위해서, 이 문제 해결해야함
-    def create_article(self):
-        Article.objects.create(
-            title="example article",
-            content="example content",
-            content_text="example content text",
-            is_anonymous=False,
-            is_content_sexual=False,
-            is_content_social=False,
-            hit_count=0,
-            positive_vote_count=0,
-            negative_vote_count=0,
-            created_by=self.user,
-            parent_topic=self.topic,
-            parent_board=self.board,
-            commented_at=timezone.now()
-        )
-
     # article 개수를 확인하는 테스트
     def test_list(self):
         assert self.http_request('get', 'articles').data.get('num_items') == 0
