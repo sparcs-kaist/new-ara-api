@@ -30,7 +30,27 @@ def set_topic(request):
     )
 
 
-@pytest.mark.usefixtures('set_user_clients', 'set_board', 'set_topic')
+@pytest.fixture(scope='function')
+def set_article(request):
+    """set_board 먼저 적용"""
+    request.cls.article = Article.objects.create(
+            title="example article",
+            content="example content",
+            content_text="example content text",
+            is_anonymous=False,
+            is_content_sexual=False,
+            is_content_social=False,
+            hit_count=0,
+            positive_vote_count=0,
+            negative_vote_count=0,
+            created_by=request.cls.user,
+            parent_topic=request.cls.topic,
+            parent_board=request.cls.board,
+            commented_at=timezone.now()
+    )
+
+
+@pytest.mark.usefixtures('set_user_client', 'set_board', 'set_topic')
 class TestArticle(TestCase, RequestSetting):
 
     # TODO: 밑의 test함수에서 create_article을 사용하려고 하니, create_article을 못찾겠다고 함. 계속 같은 코드를 쓰지 않기 위해서, 이 문제 해결해야함
