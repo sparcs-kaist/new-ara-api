@@ -73,5 +73,12 @@ class UserProfile(MetaDataModel):
         verbose_name='이전 사용자',
     )
 
+    ara_id = models.CharField(
+        blank=True,
+        default='',
+        max_length=128,
+        verbose_name='이전 아라 아이디',
+    )
+
     def __str__(self):
         return self.user.username
