@@ -170,6 +170,19 @@ class TestArticle(TestCase, RequestSetting):
 
         assert self.http_request('get', f'articles/{article.id}').data.get('created_by') == '익명'
 
+    # TODO(jessie)
+    '''
+    - set_user_client2 fixture의 scope를 function으로 바꿨기 때문에, 사용하는 function 위에 usefixtures 하면 됩니다.
+    - 1~5 모두 HTTP get request가 아닌 Article.objects.get(~~) 으로 확인
+    
+    1. test_create: HTTP request (POST)를 이용해서 생성
+    2 .test_update_hitcount: user가 만든 set_article의 hitcount를 set_user_client2를 이용해서 바꿈 (set_article retrieve)
+    3. test_update_votes: user가 만든 set_article의 positive vote, negative vote 를 set_user_client2를 이용해서 바꿈 (투표 취소 가능한지, 둘다 중복투표 불가능한지 확인)
+    4. test_delete: user가 만든 set_article을 본인이 지울때 잘 지워지는지
+    5. test_delete_different_user: user가 만든 set_article을 set_user_client2를 이용해서 지웠을 때 안지워지는지
+    +) comments count는 comments의 test 파일에서 학인합시다.
+    '''
+
     # hit_count, positive/negative votes, comments_count가 잘 업데이트 되는지 테스트
     def test_update_numbers(self):
         article = Article.objects.create(
