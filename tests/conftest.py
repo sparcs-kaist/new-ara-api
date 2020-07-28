@@ -20,23 +20,22 @@ def set_admin_client(request):
 @pytest.fixture(scope='class')
 def set_user_client(request):
     request.cls.user, _ = User.objects.get_or_create(username='User', email='user@sparcs.org')
-    request.user = request.cls.user
     client = APIClient()
-    client.force_authenticate(user=request.cls.user)
     request.cls.api_client = client
 
 
 @pytest.fixture(scope='function')
 def set_user_client2(request):
     request.cls.user2, _ = User.objects.get_or_create(username='User2', email='user2@sparcs.org')
-    request.user = request.cls.user2
     client = APIClient()
-    client.force_authenticate(user=request.cls.user2)
     request.cls.api_client = client
 
 
 class RequestSetting:
-    def http_request(self, method, path, data=None, querystring=''):
+    def http_request(self, user, method, path, data=None, querystring=''):
+        self.user = user
+        self.api_client.force_authenticate(user=self.user)
+
         request_func = {
             'post': self.api_client.post,
             'patch': self.api_client.patch,
