@@ -132,39 +132,22 @@ class TestArticle(TestCase, RequestSetting):
         a = self.http_request('get', 'articles')
         assert a.data.get('num_items') == 3
 
-    # article 생성이 잘 되는지 확인하는 테스트
-    def test_create(self):
+    # article retrieve가 잘 되는지 확인
+    @pytest.mark.usefixtures('set_article')
+    def test_get(self):
+        res = self.http_request('get', f'articles/{self.article.id}').data
 
-        article = Article.objects.create(
-            title="example article",
-            content="example content",
-            content_text="example content text",
-            is_anonymous=False,
-            is_content_sexual=False,
-            is_content_social=False,
-            hit_count=0,
-            positive_vote_count=0,
-            negative_vote_count=0,
-            created_by=self.user,
-            parent_topic=self.topic,
-            parent_board=self.board,
-            commented_at=timezone.now()
-        )
-
-        a = self.http_request('get', 'articles').data.get('results')[0]
-
-        assert a.get('title') == article.title
-        assert a.get('content') == article.content
-        assert a.get('content_text') == article.content_text
-        assert a.get('is_anonymous') == article.is_anonymous
-        assert a.get('is_content_sexual') == article.is_content_sexual
-        assert a.get('is_content_social') == article.is_content_social
-        assert a.get('hit_count') == article.hit_count
-        assert a.get('positive_vote_count') == article.positive_vote_count
-        assert a.get('negative_vote_count') == article.negative_vote_count
-        assert a.get('created_by')['username'] == self.user.username
-        assert a.get('parent_topic')['ko_name'] == article.parent_topic.ko_name
-        assert a.get('parent_board')['ko_name'] == article.parent_board.ko_name
+        assert res.get('title') == self.article.title
+        assert res.get('content') == self.article.content
+        assert res.get('content_text') == self.article.content_text
+        assert res.get('is_anonymous') == self.article.is_anonymous
+        assert res.get('is_content_sexual') == self.article.is_content_sexual
+        assert res.get('is_content_social') == self.article.is_content_social
+        assert res.get('positive_vote_count') == self.article.positive_vote_count
+        assert res.get('negative_vote_count') == self.article.negative_vote_count
+        assert res.get('created_by')['username'] == self.user.username
+        assert res.get('parent_topic')['ko_name'] == self.article.parent_topic.ko_name
+        assert res.get('parent_board')['ko_name'] == self.article.parent_board.ko_name
 
     # 익명의 글쓴이가 익명임을 확인하는 테스트
     def test_anonymous_writer(self):
