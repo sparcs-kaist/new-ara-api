@@ -78,7 +78,7 @@ def crawl_all():
             if exist:
                 user = exist[0].user
             else:
-                user = get_user_model().objects.create(username=str(uuid.uuid1()))
+                user = get_user_model().objects.create(username=str(uuid.uuid1()), is_active=False)
                 user_profile = UserProfile.objects.create(
                     past_user=True,
                     user=user,
