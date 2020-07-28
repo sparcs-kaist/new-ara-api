@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 from django.test import TestCase
 from django.utils import timezone
@@ -142,12 +144,24 @@ class TestArticle(TestCase, RequestSetting):
     - 1~5 모두 HTTP get request가 아닌 Article.objects.get(~~) 으로 확인
     
     1. test_create: HTTP request (POST)를 이용해서 생성
-    2 .test_update_hitcount: user가 만든 set_article의 hitcount를 set_user_client2를 이용해서 바꿈 (set_article retrieve)
+    2. test_update_hitcount: user가 만든 set_article의 hitcount를 set_user_client2를 이용해서 바꿈 (set_article retrieve)
     3. test_update_votes: user가 만든 set_article의 positive vote, negative vote 를 set_user_client2를 이용해서 바꿈 (투표 취소 가능한지, 둘다 중복투표 불가능한지 확인)
     4. test_delete: user가 만든 set_article을 본인이 지울때 잘 지워지는지
     5. test_delete_different_user: user가 만든 set_article을 set_user_client2를 이용해서 지웠을 때 안지워지는지
     +) comments count는 comments의 test 파일에서 학인합시다.
     '''
+
+    @pytest.mark.usefixtures('set_article', 'set_user_client2')
+    def test_update_hitcounts(self):
+        previous_hitcount = self.article.hit_count
+        res = self.http_request('get', f'articles/{self.article.id}').data
+        assert res.get('hit_count') == previous_hitcount + 1
+
+    @pytest.mark.usefixtures('set_article')
+    def test_delete(self):
+        assert Article.objects.filter(id=self.article.id)
+        res = self.http_request('delete', f'articles/{self.article.id}')
+        assert not Article.objects.filter(id=self.article.id)
 
     # hit_count, positive/negative votes, comments_count가 잘 업데이트 되는지 테스트
     def test_update_numbers(self):
