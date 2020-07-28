@@ -32,7 +32,7 @@ def set_topic(request):
     )
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='class')
 def set_article(request):
     """set_board 먼저 적용"""
     request.cls.article = Article.objects.create(
@@ -52,14 +52,13 @@ def set_article(request):
     )
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_board', 'set_topic')
+@pytest.mark.usefixtures('set_user_client', 'set_board', 'set_topic', 'set_article')
 class TestArticle(TestCase, RequestSetting):
 
     # article 개수를 확인하는 테스트
-    @pytest.mark.usefixtures('set_article')
     def test_list(self):
 
-        a = self.http_request('get', 'articles')
+        a = self.http_request(self.user, 'get', 'articles')
         assert a.data.get('num_items') == 1
 
         Article.objects.create(
@@ -78,7 +77,7 @@ class TestArticle(TestCase, RequestSetting):
             commented_at=timezone.now()
         )
 
-        a = self.http_request('get', 'articles')
+        a = self.http_request(self.user, 'get', 'articles')
         assert a.data.get('num_items') == 2
 
         Article.objects.create(
@@ -97,13 +96,12 @@ class TestArticle(TestCase, RequestSetting):
             commented_at=timezone.now()
         )
 
-        a = self.http_request('get', 'articles')
+        a = self.http_request(self.user, 'get', 'articles')
         assert a.data.get('num_items') == 3
 
     # article retrieve가 잘 되는지 확인
-    @pytest.mark.usefixtures('set_article')
     def test_get(self):
-        res = self.http_request('get', f'articles/{self.article.id}').data
+        res = self.http_request(self.user, 'get', f'articles/{self.article.id}').data
 
         assert res.get('title') == self.article.title
         assert res.get('content') == self.article.content
@@ -136,7 +134,7 @@ class TestArticle(TestCase, RequestSetting):
             commented_at=timezone.now()
         )
 
-        assert self.http_request('get', f'articles/{article.id}').data.get('created_by') == '익명'
+        assert self.http_request(self.user, 'get', f'articles/{article.id}').data.get('created_by') == '익명'
 
     # TODO(jessie)
     '''
@@ -151,18 +149,16 @@ class TestArticle(TestCase, RequestSetting):
     +) comments count는 comments의 test 파일에서 학인합시다.
     '''
 
-    @pytest.mark.usefixtures('set_article', 'set_user_client2')
+    @pytest.mark.usefixtures('set_user_client2')
     def test_update_hitcounts(self):
         previous_hitcount = self.article.hit_count
-        res = self.http_request('get', f'articles/{self.article.id}').data
+        res = self.http_request(self.user2, 'get', f'articles/{self.article.id}').data
         assert res.get('hit_count') == previous_hitcount + 1
 
-    @pytest.mark.usefixtures('set_article')
     def test_delete(self):
         assert Article.objects.filter(id=self.article.id)
-        res = self.http_request('delete', f'articles/{self.article.id}')
+        res = self.http_request(self.user, 'delete', f'articles/{self.article.id}')
         assert not Article.objects.filter(id=self.article.id)
-
     # hit_count, positive/negative votes, comments_count가 잘 업데이트 되는지 테스트
     def test_update_numbers(self):
         article = Article.objects.create(
