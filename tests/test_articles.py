@@ -149,10 +149,10 @@ class TestArticle(TestCase, RequestSetting):
         assert res.get('parent_topic')['ko_name'] == self.article.parent_topic.ko_name
         assert res.get('parent_board')['ko_name'] == self.article.parent_board.ko_name
 
-    # 익명의 글쓴이가 익명임을 확인하는 테스트
+    # 익명의 글쓴이가 익명임을 확인
     def test_anonymous_writer(self):
 
-        Article.objects.create(
+        article = Article.objects.create(
             title="example article",
             content="example content",
             content_text="example content text",
@@ -168,7 +168,7 @@ class TestArticle(TestCase, RequestSetting):
             commented_at=timezone.now()
         )
 
-        assert self.http_request('get', 'articles').data.get('results')[0].get('created_by') == '익명'
+        assert self.http_request('get', f'articles/{article.id}').data.get('created_by') == '익명'
 
     # hit_count, positive/negative votes, comments_count가 잘 업데이트 되는지 테스트
     def test_update_numbers(self):
