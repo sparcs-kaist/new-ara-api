@@ -24,7 +24,7 @@ def set_user_client(request):
     request.cls.api_client = client
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='class')
 def set_user_client2(request):
     request.cls.user2, _ = User.objects.get_or_create(username='User2', email='user2@sparcs.org')
     client = APIClient()

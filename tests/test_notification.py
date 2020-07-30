@@ -28,7 +28,7 @@ def set_articles(request):
     )
 
 
-@pytest.fixture(scope='class')
+@pytest.fixture(scope='function')
 def set_comment(request):
     """set_articles 먼저 적용"""
     request.cls.comment = Comment.objects.create(
@@ -38,11 +38,11 @@ def set_comment(request):
     )
 
 
-@pytest.mark.usefixtures('set_user_clients', 'set_board', 'set_articles', 'set_comment')
+@pytest.mark.usefixtures('set_user_client', 'set_board', 'set_articles')
 class TestNotification(TestCase, RequestSetting):
+    @pytest.mark.usefixtures('set_user_client2', 'set_comment')
     def test_notification_article_commented(self):
-        self.api_client.force_authenticate(user=self.user)
-        notifications = self.http_request('get', 'notifications')
+        notifications = self.http_request(self.user, 'get', 'notifications')
 
         # user에게 알림: user의 글에 user2가 댓글을 달아서
         assert notifications.status_code == 200
@@ -57,8 +57,7 @@ class TestNotification(TestCase, RequestSetting):
             parent_comment=self.comment
         )
 
-        self.api_client.force_authenticate(user=self.user2)
-        notifications = self.http_request('get', 'notifications')
+        notifications = self.http_request(self.user2, 'get', 'notifications')
 
         # user2에게 알림: user2의 댓글에 user가 대댓글을 달아서
         assert notifications.status_code == 200
@@ -66,52 +65,31 @@ class TestNotification(TestCase, RequestSetting):
 
         assert notifications.data.get('num_items') == 1
 
-'''
-@pytest.mark.usefixtures('set_user_clients', 'set_board', 'set_articles', 'set_comments')
+
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_articles')
 class TestNotificationReadLog(TestCase, RequestSetting):
+    @pytest.mark.usefixtures('set_comment')
     def test_read(self):
-        notification = Notification.objects.first()
-
-        print(notification.__dict__)
-        noti_dict = {'user': self.user.id}
-
-        notification_read = self.http_request('post', f'notifications/{notification.id}/read', noti_dict)
+        notification = Notification.objects.get(related_article=self.article)
+        notification_read = self.http_request(self.user, 'post', f'notifications/{notification.id}/read')
 
         assert notification_read.status_code == 200
 
-        # gets error
-        # check is_read == true
-        notification_read_log = NotificationReadLog.objects.filter(read_by=self.user, notification=notification).all()
-
-        print (notification_read_log.__dict__)
-
+        # check is_read is True
+        notification_read_log = NotificationReadLog.objects.filter(read_by=self.user, notification=notification).get()
         assert notification_read_log.is_read
 
-
     def test_read_all(self):
-        Notification.objects.create(
-            type='article_commented',
-            title='테스트1',
-            content='내용1',
-            related_article=self.article
+        Comment.objects.create(
+            content='댓글입니다.',
+            created_by=self.user2,
+            parent_article=self.article
         )
 
-        Notification.objects.create(
-            type='comment_commented',
-            title='테스트2',
-            content='내용2',
-            related_comment=self.comment
-        )
-
-        noti_dict = {'user': self.user.id}
-
-        notification_read = self.http_request('post', 'notifications/read_all', noti_dict)
+        notification_read = self.http_request(self.user, 'post', 'notifications/read_all')
         assert notification_read.status_code == 200
 
-        # gets error
-        # check is_read == true
-        for noti in notification_read:
-            print(noti)
-            notification_read_log = NotificationReadLog.objects.filter(read_by=self.user, notification=noti).first()
-            assert notification_read_log.is_read
-'''
+        notification_read_log = NotificationReadLog.objects.filter(read_by=self.user).all()
+        # check is_read is True
+        for noti in notification_read_log:
+            assert noti.is_read
