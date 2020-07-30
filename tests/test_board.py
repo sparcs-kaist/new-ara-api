@@ -17,3 +17,4 @@ class TestBoard(TestCase, RequestSetting):
         boards = self.http_request('get', 'boards')
 
         assert boards.data.get('num_items') == 1
+        assert boards.data.get('results')[0].get('en_name') == 'Free Board'
