@@ -171,8 +171,7 @@ class TestArticle(TestCase, RequestSetting):
             "parent_board": self.board.id
         }
         # convert user data to JSON
-        user_data_json = json.dumps(user_data)
-        self.http_request(self.user, 'post', 'articles/create', user_data_json)
+        self.http_request(self.user, 'post', 'articles', user_data)
         assert Article.objects.filter(title='article for test_create')
 
     @pytest.mark.usefixtures('set_user_client2')
