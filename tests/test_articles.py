@@ -1,5 +1,5 @@
 from datetime import datetime
-
+import json
 import pytest
 from django.test import TestCase
 from django.utils import timezone
@@ -57,28 +57,8 @@ class TestArticle(TestCase, RequestSetting):
 
     # article 개수를 확인하는 테스트
     def test_list(self):
-
-        a = self.http_request(self.user, 'get', 'articles')
-        assert a.data.get('num_items') == 1
-
-        Article.objects.create(
-            title="example article",
-            content="example content",
-            content_text="example content text",
-            is_anonymous=False,
-            is_content_sexual=False,
-            is_content_social=False,
-            hit_count=0,
-            positive_vote_count=0,
-            negative_vote_count=0,
-            created_by=self.user,
-            parent_topic=self.topic,
-            parent_board=self.board,
-            commented_at=timezone.now()
-        )
-
-        a = self.http_request(self.user, 'get', 'articles')
-        assert a.data.get('num_items') == 2
+        res = self.http_request(self.user, 'get', 'articles')
+        assert res.data.get('num_items') == 1
 
         Article.objects.create(
             title="example article",
@@ -96,8 +76,25 @@ class TestArticle(TestCase, RequestSetting):
             commented_at=timezone.now()
         )
 
-        a = self.http_request(self.user, 'get', 'articles')
-        assert a.data.get('num_items') == 3
+        Article.objects.create(
+            title="example article",
+            content="example content",
+            content_text="example content text",
+            is_anonymous=False,
+            is_content_sexual=False,
+            is_content_social=False,
+            hit_count=0,
+            positive_vote_count=0,
+            negative_vote_count=0,
+            created_by=self.user,
+            parent_topic=self.topic,
+            parent_board=self.board,
+            commented_at=timezone.now()
+        )
+
+        res = self.http_request(self.user, 'get', 'articles')
+        assert res.data.get('num_items') == 3
+
 
     # article retrieve가 잘 되는지 확인
     def test_get(self):
@@ -149,86 +146,115 @@ class TestArticle(TestCase, RequestSetting):
     +) comments count는 comments의 test 파일에서 학인합시다.
     '''
 
+
+    # TODO: article이 HTTP request로 어떤 함수들을 거쳐 생성되는지 잘 이해가 되지 않습니다.
+    ''' 
+    conftest를 보고, 생성 정보는 JSON 형식으로, data field로 보낸다고 생각했습니다.
+    viewsets/article.py를 보고, path는 'article/create'라고 생각했습니다.
+    ArticleViewSet에서 perform_create는 serializer.save(created_by=self.request.user,)
+    이렇게 구성되어있습니다.
+    이 코드로 어떻게 article이 만들어지는지 잘 이해가 되지 않습니다.
+    우선 parent_topic과 parent_board는 각각의 id를 넣어보았습니다. 
+    현재 http_request(self.user, 'post', 'articles/create')가 405 response입니다.
+    '''
+    # test_create: HTTP request (POST)를 이용해서 생성
+    def test_create(self):
+        # user data in dict
+        user_data = {
+            "title": "article for test_create",
+            "content": "content for test_create",
+            "content_text": "content_text for test_create",
+            "is_anonymous": True,
+            "is_content_sexual": False,
+            "is_content_social": False,
+            "parent_topic": self.topic.id,
+            "parent_board": self.board.id
+        }
+        # convert user data to JSON
+        user_data_json = json.dumps(user_data)
+        self.http_request(self.user, 'post', 'articles/create', user_data_json)
+        assert Article.objects.filter(title='article for test_create')
+
     @pytest.mark.usefixtures('set_user_client2')
     def test_update_hitcounts(self):
         previous_hitcount = self.article.hit_count
         res = self.http_request(self.user2, 'get', f'articles/{self.article.id}').data
         assert res.get('hit_count') == previous_hitcount + 1
+        assert Article.objects.get(id=self.article.id).hit_count == previous_hitcount + 1
 
-    def test_delete(self):
+    # 글쓴이가 아닌 사람은 글을 지울 수 없음
+    @pytest.mark.usefixtures('set_user_client2')
+    def test_delete_by_nonwriter(self):
         assert Article.objects.filter(id=self.article.id)
-        res = self.http_request(self.user, 'delete', f'articles/{self.article.id}')
+        self.http_request(self.user2, 'delete', f'articles/{self.article.id}')
+        assert Article.objects.filter(id=self.article.id)
+
+    # 글쓴이는 본인 글을 지울 수 있음
+    def test_delete_by_writer(self):
+        assert Article.objects.filter(id=self.article.id)
+        self.http_request(self.user, 'delete', f'articles/{self.article.id}')
         assert not Article.objects.filter(id=self.article.id)
-    # hit_count, positive/negative votes, comments_count가 잘 업데이트 되는지 테스트
-    def test_update_numbers(self):
-        article = Article.objects.create(
-            title="example article",
-            content="example content",
-            content_text="example content text",
-            is_anonymous=False,
-            is_content_sexual=False,
-            is_content_social=False,
-            hit_count=0,
-            positive_vote_count=0,
-            negative_vote_count=0,
-            created_by=self.user,
-            parent_topic=self.topic,
-            parent_board=self.board,
-            commented_at=timezone.now()
-        )
 
-        a = self.http_request('get', 'articles').data.get('results')[0]
+    # user가 만든 set_article의 positive vote, negative vote 를 set_user_client2를 이용해서 바꿈 (투표 취소 가능한지, 둘다 중복투표 불가능한지 확인)
+    @pytest.mark.usefixtures('set_user_client2')
+    def test_update_votes(self):
+        # positive vote 확인
+        self.http_request(self.user2, 'post', f'articles/{self.article.id}/vote_positive')
+        article = Article.objects.get(id=self.article.id)
+        assert article.positive_vote_count == 1
+        assert article.negative_vote_count == 0
 
-        # test update_hit_count
+        # 같은 사람이 positive_vote 여러 번 투표할 수 없음
+        self.http_request(self.user2, 'post', f'articles/{self.article.id}/vote_positive')
+        article = Article.objects.get(id=self.article.id)
+        assert article.positive_vote_count == 1
+        assert article.negative_vote_count == 0
 
-        # originally, hit_count 0
-        assert a.get('hit_count') == 0
+        # positive_vote 취소
+        self.http_request(self.user2, 'post', f'articles/{self.article.id}/vote_cancel')
+        article = Article.objects.get(id=self.article.id)
+        assert article.positive_vote_count == 0
+        assert article.negative_vote_count == 0
 
-        # TODO: HTTP request로 hit_count 증가하는 방법이 있을 것 같음. 직접 article read log 만들 필요 없을 것 같음. 이 다른 방법 찾기
-        # creating ArticleReadLog increments hit_count by 1
-        article_read_log = ArticleReadLog.objects.create(read_by=self.user2,
-                                                         article=article)
-        article.update_hit_count()
-        a = self.http_request('get', 'articles').data.get('results')[0]
-        assert a.get('hit_count') == 1
+        # positive_vote 취소 후 재투표
+        self.http_request(self.user2, 'post', f'articles/{self.article.id}/vote_positive')
+        article = Article.objects.get(id=self.article.id)
+        assert article.positive_vote_count == 1
+        assert article.negative_vote_count == 0
+        self.http_request(self.user2, 'post', f'articles/{self.article.id}/vote_cancel')
 
-        # test vote count
-        assert a.get('positive_vote_count') == 0
-        assert a.get('negative_vote_count') == 0
+        # negative vote 확인
+        self.http_request(self.user2, 'post', f'articles/{self.article.id}/vote_negative')
+        article = Article.objects.get(id=self.article.id)
+        assert article.positive_vote_count == 0
+        assert article.negative_vote_count == 1
 
-        article_id_str = str(article.id)
+        # 같은 사람이 negative vote 여러 번 투표할 수 없음
+        self.http_request(self.user2, 'post', f'articles/{self.article.id}/vote_negative')
+        article = Article.objects.get(id=self.article.id)
+        assert article.positive_vote_count == 0
+        assert article.negative_vote_count == 1
 
-        # TODO: POST request로 vote_positive를 부를 때, 유저 정보 전달하는 방법 찾기
-        # 현재는 누적이 안되고 count가 0이나 1만 되어서, 계속 같은 유저로 들어가는 것 같음
-        self.http_request('post', 'articles/' + article_id_str + '/vote_positive')
+        # negative vote 투표 취소
+        self.http_request(self.user2, 'post', f'articles/{self.article.id}/vote_cancel')
+        article = Article.objects.get(id=self.article.id)
+        assert article.positive_vote_count == 0
+        assert article.negative_vote_count == 0
 
-        a = self.http_request('get', 'articles').data.get('results')[0]
-        assert a.get('positive_vote_count') == 1
-        assert a.get('negative_vote_count') == 0
+        # negative vote 취소 후 재투표
+        self.http_request(self.user2, 'post', f'articles/{self.article.id}/vote_negative')
+        article = Article.objects.get(id=self.article.id)
+        assert article.positive_vote_count == 0
+        assert article.negative_vote_count == 1
 
-        self.http_request('post', 'articles/' + article_id_str + '/vote_negative')
+        # 중복 투표 시도 (negative 투표한 상태로 positive 투표하면, positive 1개로 바뀌어야함)
+        self.http_request(self.user2, 'post', f'articles/{self.article.id}/vote_positive')
+        article = Article.objects.get(id=self.article.id)
+        assert article.positive_vote_count == 1
+        assert article.negative_vote_count == 0
 
-        a = self.http_request('get', 'articles').data.get('results')[0]
-        assert a.get('positive_vote_count') == 0
-        assert a.get('negative_vote_count') == 1
-
-        # test comments_count
-        assert article.comments_count == 0
-        Comment.objects.create(content='Sample comment',
-                               is_anonymous=True,
-                               positive_vote_count=4,
-                               negative_vote_count=3,
-                               created_by=self.user,
-                               parent_article=article)
-        a = self.http_request('get', 'articles').data.get('results')[0]
-        assert a.get('comments_count') == 1
-
-        Comment.objects.create(content='Sample comment',
-                               is_anonymous=True,
-                               positive_vote_count=4,
-                               negative_vote_count=3,
-                               created_by=self.user,
-                               parent_article=article)
-        a = self.http_request('get', 'articles').data.get('results')[0]
-        assert a.get('comments_count') == 2
-
+        # 중복 투표 시도 (positive 투표한 상태로 negative 투표하면, negative 1개로 바뀌어야함)
+        self.http_request(self.user2, 'post', f'articles/{self.article.id}/vote_negative')
+        article = Article.objects.get(id=self.article.id)
+        assert article.positive_vote_count == 0
+        assert article.negative_vote_count == 1
