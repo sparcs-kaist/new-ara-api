@@ -1,10 +1,8 @@
-from datetime import datetime
-import json
 import pytest
 from django.test import TestCase
 from django.utils import timezone
 
-from apps.core.models import Article, ArticleReadLog, Topic, Board, Comment
+from apps.core.models import Article, Topic, Board
 from tests.conftest import RequestSetting
 
 
