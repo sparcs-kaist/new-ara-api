@@ -1,11 +1,8 @@
 import pytest
-from django.contrib.auth.models import User
 from django.test import TestCase
 from django.utils import timezone
 
-from apps.core.models import Article, Board, Topic
-from apps.user import models
-from apps.user.models import UserProfile
+from apps.core.models import Article, Board
 from tests.conftest import RequestSetting
 
 
@@ -76,13 +73,15 @@ class TestUser(TestCase, RequestSetting):
         assert res.data.get('see_sexual') == self.user.profile.see_sexual
         assert res.data.get('see_social') == self.user.profile.see_social
         assert res.data.get('nickname') == self.user.profile.nickname
+        assert res.data.get('extra_preferences') == self.user.profile.extra_preferences
 
-        update_data = {'see_sexual': True, 'see_social': True}
+        update_data = {'see_sexual': True, 'see_social': True, 'extra_preferences': '{"test": 1}'}
         res = self.http_request(self.user, 'put', f'user_profiles/{self.user.id}', data=update_data)
         assert res.status_code == 200
-        assert res.data.get('see_sexual') == self.user.profile.see_sexual
-        assert res.data.get('see_social') == self.user.profile.see_social
-        assert res.data.get('nickname') == self.user.profile.nickname
+        res = self.http_request(self.user, 'get', f'user_profiles/{self.user.id}')
+        assert res.data.get('see_sexual')
+        assert res.data.get('see_social')
+        assert res.data.get('extra_preferences') == '{"test": 1}'
 
     def test_filter_articles_list(self):
         # 사용자의 게시물 필터에 따라 게시물 목록에서 필터링이 잘 되는지 테스트합니다.
