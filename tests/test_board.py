@@ -14,7 +14,7 @@ class TestBoard(TestCase, RequestSetting):
                              ko_description='자유 게시판 입니다.',
                              en_description='This is a free board.')
 
-        boards = self.http_request('get', 'boards')
+        boards = self.http_request(self.user, 'get', 'boards')
 
         assert boards.data.get('num_items') == 1
         assert boards.data.get('results')[0].get('en_name') == 'Free Board'
