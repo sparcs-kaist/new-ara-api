@@ -17,7 +17,7 @@ class HomeView(views.APIView):
                 'hit_count': _best_articles('weekly', 'hit_count', request),
             },
             'boards': BoardRecentArticleActionSerializer(
-                instance=Board.objects.prefetch_related('article_set'),
+                instance=Board.objects.prefetch_related('article_set', 'article_set__created_by', 'article_set__created_by__blocked_by_set'),
                 many=True,
                 **{'context': {'request': request}},
             ).data
