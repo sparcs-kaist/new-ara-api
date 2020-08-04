@@ -51,7 +51,7 @@ class TestNotification(TestCase, RequestSetting):
         assert notifications.data.get('num_items') == 1
 
     def test_notification_comment_commented(self):
-        Comment.objects.create(
+        cc = Comment.objects.create(
             content='대댓글입니다.',
             created_by=self.user,
             parent_comment=self.comment
@@ -61,14 +61,14 @@ class TestNotification(TestCase, RequestSetting):
 
         # user2에게 알림: user2의 댓글에 user가 대댓글을 달아서
         assert notifications.status_code == 200
-        assert Notification.objects.all().count() == 2
+        assert Notification.objects.filter(related_comment=cc).count() == 1
 
         assert notifications.data.get('num_items') == 1
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_articles')
+@pytest.mark.usefixtures('set_user_client', 'set_board', 'set_articles')
 class TestNotificationReadLog(TestCase, RequestSetting):
-    @pytest.mark.usefixtures('set_comment')
+    @pytest.mark.usefixtures('set_user_client2', 'set_comment')
     def test_read(self):
         notification = Notification.objects.get(related_article=self.article)
         notification_read = self.http_request(self.user, 'post', f'notifications/{notification.id}/read')
@@ -89,7 +89,7 @@ class TestNotificationReadLog(TestCase, RequestSetting):
         notification_read = self.http_request(self.user, 'post', 'notifications/read_all')
         assert notification_read.status_code == 200
 
-        notification_read_log = NotificationReadLog.objects.filter(read_by=self.user).all()
+        notification_read_log = NotificationReadLog.objects.filter(read_by=self.user)
+
         # check is_read is True
-        for noti in notification_read_log:
-            assert noti.is_read
+        assert notification_read_log.count() == notification_read_log.filter(is_read=True).count()
