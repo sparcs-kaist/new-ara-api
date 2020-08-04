@@ -92,6 +92,7 @@ class UserViewSet(ActionAPIViewSet):
                     uid=user_info['uid'],
                     sid=user_info['sid'],
                     nickname=temp_nickname,
+                    is_kaist=True if user_info.get('kaist_id') else False,
                     sso_user_info=user_info,
                     user=get_user_model().objects.create_user(
                         email=user_info['email'],

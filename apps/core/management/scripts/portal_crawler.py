@@ -80,7 +80,7 @@ def crawl_all():
             else:
                 user = get_user_model().objects.create(username=str(uuid.uuid1()), is_active=False)
                 user_profile = UserProfile.objects.create(
-                    past_user=True,
+                    is_past=True,
                     user=user,
                     nickname=info['writer'],
                 )
