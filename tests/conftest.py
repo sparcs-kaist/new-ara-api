@@ -8,6 +8,8 @@ from django.contrib.auth.models import User
 from django.test import TestCase as DjangoTestCase
 from rest_framework.test import APIClient
 
+from apps.user.models import UserProfile
+
 
 @pytest.fixture(scope='class')
 def set_admin_client(request):
@@ -44,6 +46,16 @@ class RequestSetting:
         }
         url = f'/api/{path}/?{querystring}'
         return request_func[method](url, data, format='json')
+
+
+@pytest.fixture(scope='class')
+def set_user_client_with_profile(request):
+    request.cls.user, _ = User.objects.get_or_create(username='User', email='user@sparcs.org')
+    if not hasattr(request.cls.user, 'profile'):
+        user_profile = UserProfile(user=request.cls.user, nickname='TestUser')
+        user_profile.save()
+    client = APIClient()
+    request.cls.api_client = client
 
 
 class TestCase(DjangoTestCase):
