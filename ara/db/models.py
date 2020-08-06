@@ -17,6 +17,9 @@ class MetaDataQuerySet(models.QuerySet):
             'deleted_at': datetime.datetime.now(),
         })
 
+    def hard_delete(self):
+        return super().delete()
+
     def bulk_create(self, objs, batch_size=None, ignore_conflicts=False):
         for obj in objs:
             if not hasattr(obj, 'created_at'):
@@ -26,14 +29,10 @@ class MetaDataQuerySet(models.QuerySet):
 
 
 class MetaDataManager(models.Manager):
+    queryset_class = MetaDataQuerySet
+
     def get_queryset(self):
-        queryset = super().get_queryset()
-
-        queryset = queryset.filter(
-            deleted_at=datetime.datetime.min,
-        )
-
-        return queryset
+        return self.queryset_class(self.model).filter(deleted_at=datetime.datetime.min)
 
 
 class MetaDataModel(models.Model):
@@ -43,10 +42,11 @@ class MetaDataModel(models.Model):
             '-created_at',
         )
 
-    objects = MetaDataManager.from_queryset(queryset_class=MetaDataQuerySet)()
+    objects = MetaDataManager()
 
     created_at = models.DateTimeField(
         default=datetime.datetime.min,
+        db_index=True,
         verbose_name='생성 시간',
     )
     updated_at = models.DateTimeField(
@@ -55,6 +55,7 @@ class MetaDataModel(models.Model):
     )
     deleted_at = models.DateTimeField(
         default=datetime.datetime.min,
+        db_index=True,
         verbose_name='삭제 시간',
     )
 
