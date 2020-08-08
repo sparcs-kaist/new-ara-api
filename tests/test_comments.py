@@ -184,10 +184,6 @@ class TestComments(TestCase, RequestSetting):
         self.http_request(self.user2, 'patch', f'comments/{self.comment.id}', edited_comment_data)
         assert Comment.objects.get(id=self.comment.id).content == original_content
 
-    # TODO: 익명 댓글
-    #  현재 익명 댓글을 http get으로 가져왔을때, 작성자 이름이 들어옵니다.
-    #  articles의 경우, 익명 글은 'created_by': '익명'인 것을 보아, 익명 댓글도 'created_by': '익명'으로 넣는 것이 어떨까 생각됩니다.
-    #  또한, article은 'created_by'가 String username 이지만 댓글은 'created_by'가 OrderedDict(id, email, username 등)로 들어옵니다.
     # http get으로 익명 댓글을 retrieve했을 때 작성자가 익명으로 나타나는지 확인
     @pytest.mark.usefixtures('set_user_client2')
     def test_comment_anonymity(self):
@@ -198,13 +194,8 @@ class TestComments(TestCase, RequestSetting):
                                 parent_article=self.article
                             )
 
-        # 이 테스트를 패스 하면. get으로 익명 댓글의 작성자를 알 수 있다.
-        assert self.http_request(self.user, 'get', f'comments/{anonymous_comment.id}').data.get('created_by')['username'] == 'User'
-        assert self.http_request(self.user2, 'get', f'comments/{anonymous_comment.id}').data.get('created_by')['username'] == 'User'
-
-        # 익명 댓글을 get 했을 때 작성자가 '익명'으로 나온다면, 아래 테스트들을 패스해야 한다.
-        # assert self.http_request(self.user, 'get', f'comments/{anonymous_comment.id}').data.get('created_by')['username'] == '익명'
-        # assert self.http_request(self.user2, 'get', f'comments/{anonymous_comment.id}').data.get('created_by')['username'] == '익명'
+        assert self.http_request(self.user, 'get', f'comments/{anonymous_comment.id}').data.get('created_by') == '익명'
+        assert self.http_request(self.user2, 'get', f'comments/{anonymous_comment.id}').data.get('created_by') == '익명'
 
     # 댓글 좋아요 확인
     @pytest.mark.usefixtures('set_user_client2')
@@ -251,12 +242,3 @@ class TestComments(TestCase, RequestSetting):
         comment = Comment.objects.get(id=self.comment.id)
         assert comment.positive_vote_count == 0
         assert comment.negative_vote_count == 1
-
-
-
-
-
-
-
-
-
