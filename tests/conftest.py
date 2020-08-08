@@ -8,6 +8,8 @@ from django.contrib.auth.models import User
 from django.test import TestCase as DjangoTestCase
 from rest_framework.test import APIClient
 
+from apps.user.models import UserProfile
+
 
 @pytest.fixture(scope='class')
 def set_admin_client(request):
@@ -24,9 +26,18 @@ def set_user_client(request):
     request.cls.api_client = client
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='class')
 def set_user_client2(request):
     request.cls.user2, _ = User.objects.get_or_create(username='User2', email='user2@sparcs.org')
+    client = APIClient()
+    request.cls.api_client = client
+
+
+@pytest.fixture(scope='class')
+def set_user_client_with_profile(request):
+    request.cls.user, _ = User.objects.get_or_create(username='User', email='user@sparcs.org')
+    if not hasattr(request.cls.user, 'profile'):
+        UserProfile.objects.get_or_create(user=request.cls.user, nickname='TestUser')
     client = APIClient()
     request.cls.api_client = client
 
@@ -39,6 +50,7 @@ class RequestSetting:
         request_func = {
             'post': self.api_client.post,
             'patch': self.api_client.patch,
+            'put': self.api_client.put,
             'get': self.api_client.get,
             'delete': self.api_client.delete
         }

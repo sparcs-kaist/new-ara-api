@@ -152,10 +152,6 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         return super().retrieve(request, *args, **kwargs)
 
-    @decorators.action(detail=False, methods=['get'])
-    def best(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-
     @decorators.action(detail=True, methods=['post'])
     def vote_cancel(self, request, *args, **kwargs):
         article = self.get_object()
