@@ -60,7 +60,7 @@ def set_comment(request):
     )
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_board', 'set_topic', 'set_article', 'set_comment')
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_topic', 'set_article', 'set_comment')
 class TestComments(TestCase, RequestSetting):
     # comment 개수를 확인하는 테스트
     def test_comment_list(self):
@@ -148,7 +148,6 @@ class TestComments(TestCase, RequestSetting):
         assert not Comment.objects.filter(id=self.comment.id)
 
     # 다른 사용자의 댓글을 지울 수 없는 것 확인
-    @pytest.mark.usefixtures('set_user_client2')
     def test_delete_comment_by_not_comment_writer(self):
         assert Comment.objects.filter(id=self.comment.id)
         self.http_request(self.user2, 'delete', f'comments/{self.comment.id}')
@@ -175,7 +174,6 @@ class TestComments(TestCase, RequestSetting):
         assert Comment.objects.get(id=self.comment.id).content == edited_content
 
     # 다른 사용자의 댓글을 수정할 수 없는 것 확인
-    @pytest.mark.usefixtures('set_user_client2')
     def test_edit_comment_by_nonwriter(self):
         original_content = self.comment.content
         edited_comment_data = {
@@ -185,7 +183,6 @@ class TestComments(TestCase, RequestSetting):
         assert Comment.objects.get(id=self.comment.id).content == original_content
 
     # http get으로 익명 댓글을 retrieve했을 때 작성자가 익명으로 나타나는지 확인
-    @pytest.mark.usefixtures('set_user_client2')
     def test_comment_anonymity(self):
         anonymous_comment = Comment.objects.create(
                                 content='Anonymous test comment',
@@ -198,7 +195,6 @@ class TestComments(TestCase, RequestSetting):
         assert self.http_request(self.user2, 'get', f'comments/{anonymous_comment.id}').data.get('created_by') == '익명'
 
     # 댓글 좋아요 확인
-    @pytest.mark.usefixtures('set_user_client2')
     def test_positive_vote(self):
         # 좋아요 2표
         self.http_request(self.user, 'post', f'comments/{self.comment.id}/vote_positive')
@@ -209,7 +205,6 @@ class TestComments(TestCase, RequestSetting):
         assert comment.negative_vote_count == 0
 
     # 댓글 싫어요 확인
-    @pytest.mark.usefixtures('set_user_client2')
     def test_negative_vote(self):
         # 싫어요 2표
         self.http_request(self.user, 'post', f'comments/{self.comment.id}/vote_negative')
