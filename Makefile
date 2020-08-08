@@ -20,6 +20,14 @@ migrate:
 	python manage.py makemigrations
 	python manage.py migrate
 
+test:
+	pytest tests/
+
+test_coverage:
+	pytest --cov=. tests/
+
+test_coverage_missing:
+	pytest --cov-report term-missing --cov=. tests/
 env:  # use for local & might not be ~/.bashrc
 	git clone git://github.com/inishchith/autoenv.git ~/.autoenv
 	echo 'source ~/.autoenv/activate.sh' >> ~/.bashrc

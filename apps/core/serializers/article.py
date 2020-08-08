@@ -13,7 +13,8 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         model = Article
         fields = '__all__'
 
-    def get_my_vote(self, obj):
+    @staticmethod
+    def get_my_vote(obj):
         if not obj.vote_set.exists():
             return None
 
@@ -21,7 +22,8 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return my_vote.is_positive
 
-    def get_my_scrap(self, obj):
+    @staticmethod
+    def get_my_scrap(obj):
         from apps.core.serializers.scrap import BaseScrapSerializer
 
         if not obj.scrap_set.exists():
@@ -31,7 +33,8 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return BaseScrapSerializer(my_scrap).data
 
-    def get_my_report(self, obj):
+    @staticmethod
+    def get_my_report(obj):
         from apps.core.serializers.report import BaseReportSerializer
 
         if not obj.report_set.exists():
@@ -84,7 +87,8 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return ''
 
-    def get_created_by(self, obj):
+    @staticmethod
+    def get_created_by(obj):
         from apps.user.serializers.user import PublicUserSerializer
 
         if obj.is_anonymous:
@@ -92,7 +96,8 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return PublicUserSerializer(obj.created_by).data
 
-    def get_read_status(self, obj):
+    @staticmethod
+    def get_read_status(obj):
         if not obj.article_read_log_set.exists():
             return 'N'
 

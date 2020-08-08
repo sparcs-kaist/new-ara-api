@@ -35,7 +35,7 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
     def read_all(self, request, *args, **kwargs):
         notification_read_logs = NotificationReadLog.objects.filter(
             read_by=request.user,
-            id__in=[notification.id for notification in self.get_queryset()]
+            notification__in=[notification.id for notification in self.get_queryset()]
         )
 
         notification_read_logs.update(is_read=True)
