@@ -37,8 +37,7 @@ def set_user_client2(request):
 def set_user_client_with_profile(request):
     request.cls.user, _ = User.objects.get_or_create(username='User', email='user@sparcs.org')
     if not hasattr(request.cls.user, 'profile'):
-        user_profile = UserProfile(user=request.cls.user, nickname='TestUser')
-        user_profile.save()
+        UserProfile.objects.get_or_create(user=request.cls.user, nickname='TestUser')
     client = APIClient()
     request.cls.api_client = client
 

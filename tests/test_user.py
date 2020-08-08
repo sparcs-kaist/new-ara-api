@@ -88,7 +88,6 @@ class TestUser(TestCase, RequestSetting):
         def single_case(see_sexual: bool, see_social: bool):
             self.user.profile.see_sexual = see_sexual
             self.user.profile.see_social = see_social
-            self.user.profile.save()
 
             resp = self.http_request(self.user, 'get', 'articles', querystring=f'parent_board={self.board.id}').data
             # 목록에 fixture 에서 설정한 게시물만 들어가 있는지 확인
@@ -108,7 +107,6 @@ class TestUser(TestCase, RequestSetting):
         def single_case(see_sexual: bool, see_social: bool):
             self.user.profile.see_sexual = see_sexual
             self.user.profile.see_social = see_social
-            self.user.profile.save()
 
             for article_id, meta in self.articles_meta.items():
                 resp = self.http_request(self.user, 'get', f'articles/{article_id}').data
@@ -121,22 +119,5 @@ class TestUser(TestCase, RequestSetting):
         single_case(False, True)
         single_case(False, False)
 
-    def test_filter_articles_best(self):
-        # 사용자의 게시물 필터에 따라 베스트 게시물 목록에서 필터링이 잘 되는지 테스트합니다.
-        def single_case(see_sexual: bool, see_social: bool):
-            self.user.profile.see_sexual = see_sexual
-            self.user.profile.see_social = see_social
-            self.user.profile.save()
 
-            resp = self.http_request(
-                self.user, 'get', 'articles/best', querystring=f'parent_board={self.board.id}').data
-            for post in resp.get('results'):
-                hidden = post.get('is_hidden')
-                post_id = post.get('id')
-                is_sexual, is_social = self.articles_meta[post_id]
-                assert hidden == ((is_sexual and not see_sexual) or (is_social and not see_social))
-
-        single_case(True, True)
-        single_case(True, False)
-        single_case(False, True)
-        single_case(False, False)
+    # TODO: home/ view에서 best_articles 에서 어떻게 나오는지 확인하는 함수도 필요
