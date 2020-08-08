@@ -10,7 +10,8 @@ class BaseCommentSerializer(MetaDataModelSerializer):
         model = Comment
         fields = '__all__'
 
-    def get_my_vote(self, obj):
+    @staticmethod
+    def get_my_vote(obj):
         if not obj.vote_set.exists():
             return None
 
@@ -18,7 +19,8 @@ class BaseCommentSerializer(MetaDataModelSerializer):
 
         return my_vote.is_positive
 
-    def get_my_report(self, obj):
+    @staticmethod
+    def get_my_report(obj):
         from apps.core.serializers.report import BaseReportSerializer
 
         if not obj.report_set.exists():
@@ -56,6 +58,15 @@ class BaseCommentSerializer(MetaDataModelSerializer):
             return obj.content
 
         return ''
+
+    @staticmethod
+    def get_created_by(obj):
+        from apps.user.serializers.user import PublicUserSerializer
+
+        if obj.is_anonymous:
+            return '익명'
+
+        return PublicUserSerializer(obj.created_by).data
 
     def validate_hidden(self, obj):
         errors = []
@@ -97,6 +108,9 @@ class CommentSerializer(BaseCommentSerializer):
     hidden_content = serializers.SerializerMethodField(
         read_only=True,
     )
+    created_by = serializers.SerializerMethodField(
+        read_only=True,
+    )
 
 
 class CommentListActionSerializer(BaseCommentSerializer):
@@ -128,6 +142,9 @@ class CommentListActionSerializer(BaseCommentSerializer):
         read_only=True,
     )
     hidden_content = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    created_by = serializers.SerializerMethodField(
         read_only=True,
     )
 
