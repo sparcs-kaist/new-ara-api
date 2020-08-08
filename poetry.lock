@@ -198,6 +198,17 @@ Django = ">=2.0"
 
 [[package]]
 category = "main"
+description = "dead simple crontab powered job scheduling for django"
+name = "django-crontab"
+optional = false
+python-versions = "*"
+version = "0.7.1"
+
+[package.dependencies]
+Django = ">=1.8"
+
+[[package]]
+category = "main"
 description = "A configurable set of panels that display various debug information about the current request/response."
 name = "django-debug-toolbar"
 optional = false
@@ -789,7 +800,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "97f7656e5d456c2602c368400a15e7070ce877982f81c723fb85a8c877d6b0a0"
+content-hash = "d481f5f8f0143b238b2c52764109479e4c32b4eca67ec66a35c0706f986a7d6b"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -888,6 +899,9 @@ django = [
 django-cors-headers = [
     {file = "django-cors-headers-3.4.0.tar.gz", hash = "sha256:f5218f2f0bb1210563ff87687afbf10786e080d8494a248e705507ebd92d7153"},
     {file = "django_cors_headers-3.4.0-py3-none-any.whl", hash = "sha256:5240062ef0b16668ce8a5f43324c388d65f5439e1a30e22c38684d5ddaff0d15"},
+]
+django-crontab = [
+    {file = "django-crontab-0.7.1.tar.gz", hash = "sha256:1201810a212460aaaa48eb6a766738740daf42c1a4f6aafecfb1525036929236"},
 ]
 django-debug-toolbar = [
     {file = "django-debug-toolbar-2.2.tar.gz", hash = "sha256:eabbefe89881bbe4ca7c980ff102e3c35c8e8ad6eb725041f538988f2f39a943"},
