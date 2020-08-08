@@ -13,7 +13,7 @@ class UserProfile(MetaDataModel):
         unique_together = (
             ('uid', 'deleted_at'),
             ('sid', 'deleted_at'),
-            ('nickname', 'deleted_at'),
+            ('nickname', 'past_user', 'deleted_at'),
         )
 
     uid = models.CharField(
@@ -66,6 +66,18 @@ class UserProfile(MetaDataModel):
         related_name='profile',
         verbose_name='사용자',
         primary_key=True,
+    )
+
+    past_user = models.BooleanField(
+        default=False,
+        verbose_name='이전 사용자',
+    )
+
+    ara_id = models.CharField(
+        blank=True,
+        default='',
+        max_length=128,
+        verbose_name='이전 아라 아이디',
     )
 
     def __str__(self):

@@ -28,3 +28,7 @@ test_coverage:
 
 test_coverage_missing:
 	pytest --cov-report term-missing --cov=. tests/
+env:  # use for local & might not be ~/.bashrc
+	git clone git://github.com/inishchith/autoenv.git ~/.autoenv
+	echo 'source ~/.autoenv/activate.sh' >> ~/.bashrc
+	source ~/.bashrc
