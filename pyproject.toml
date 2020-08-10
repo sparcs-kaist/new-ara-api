@@ -27,6 +27,7 @@ pytest-django = "^3.9.0"
 pytest-cov = "^2.8.1"
 lxml = "^4.5.2"
 django-crontab = "^0.7.1"
+redis = "^3.5.3"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
