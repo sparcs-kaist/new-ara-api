@@ -98,6 +98,7 @@ class UserViewSet(ActionAPIViewSet):
                         email=user_info['email'],
                         username=str(uuid.uuid4()),
                         password=str(uuid.uuid4()),
+                        is_active=True if user_info.get('kaist_id') else False,
                     ),
                 )
 
