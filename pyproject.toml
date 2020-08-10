@@ -29,6 +29,7 @@ lxml = "^4.5.2"
 django-crontab = "^0.7.1"
 redis = "^3.5.3"
 celery = {extras = ["redis"], version = "^4.4.7"}
+django-celery-beat = "^2.0.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
