@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 
 from django_mysql.models import JSONField
 
@@ -47,6 +50,12 @@ class UserProfile(MetaDataModel):
         max_length=128,
         verbose_name='닉네임',
     )
+    nickname_updated_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        default=None,
+        verbose_name='최근 닉네임 변경일시'
+    )
     see_sexual = models.BooleanField(
         default=False,
         verbose_name='성인/음란성 보기',
@@ -67,6 +76,11 @@ class UserProfile(MetaDataModel):
         verbose_name='사용자',
         primary_key=True,
     )
+
+    def can_change_nickname(self) -> bool:
+        if self.nickname_updated_at is None:
+            return True
+        return (timezone.now() - self.nickname_updated_at) >= timedelta(days=90)
 
     def __str__(self):
         return self.user.username
