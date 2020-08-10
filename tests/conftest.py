@@ -41,6 +41,7 @@ class RequestSetting:
         request_func = {
             'post': self.api_client.post,
             'patch': self.api_client.patch,
+            'put': self.api_client.put,
             'get': self.api_client.get,
             'delete': self.api_client.delete
         }
