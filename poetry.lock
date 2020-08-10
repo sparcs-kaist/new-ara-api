@@ -272,6 +272,17 @@ python-crontab = ">=2.3.4"
 
 [[package]]
 category = "main"
+description = "Celery result backends for Django."
+name = "django-celery-results"
+optional = false
+python-versions = "*"
+version = "1.2.1"
+
+[package.dependencies]
+celery = ">=4.4,<5.0"
+
+[[package]]
+category = "main"
 description = "django-cors-headers is a Django application for handling the server headers required for Cross-Origin Resource Sharing (CORS)."
 name = "django-cors-headers"
 optional = false
@@ -962,7 +973,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "86b6d683102198e67b6ac8051bfce3dfd7ad830128eafae285441fc7d1e212a1"
+content-hash = "0aff61a89165741b4f4c8be92146362a5c273f489a7b06e95a11ef555c1904ef"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -1073,6 +1084,10 @@ django = [
 django-celery-beat = [
     {file = "django-celery-beat-2.0.0.tar.gz", hash = "sha256:fdf1255eecfbeb770c6521fe3e69989dfc6373cd5a7f0fe62038d37f80f47e48"},
     {file = "django_celery_beat-2.0.0-py2.py3-none-any.whl", hash = "sha256:fe0b2a1b31d4a6234fea4b31986ddfd4644a48fab216ce1843f3ed0ddd2e9097"},
+]
+django-celery-results = [
+    {file = "django_celery_results-1.2.1-py2.py3-none-any.whl", hash = "sha256:a29ab580f0e38c66c39f51cc426bbdbb2a391b8cc0867df9dea748db2c961db2"},
+    {file = "django_celery_results-1.2.1.tar.gz", hash = "sha256:e390f70cc43bbc2cd7c8e4607dc29ab6211a2ab968f93677583f0160921f670c"},
 ]
 django-cors-headers = [
     {file = "django-cors-headers-3.4.0.tar.gz", hash = "sha256:f5218f2f0bb1210563ff87687afbf10786e080d8494a248e705507ebd92d7153"},
