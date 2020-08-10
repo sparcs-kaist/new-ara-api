@@ -38,9 +38,9 @@ def set_comment(request):
     )
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_board', 'set_articles')
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_articles')
 class TestNotification(TestCase, RequestSetting):
-    @pytest.mark.usefixtures('set_user_client2', 'set_comment')
+    @pytest.mark.usefixtures('set_comment')
     def test_notification_article_commented(self):
         notifications = self.http_request(self.user, 'get', 'notifications')
 
@@ -66,9 +66,9 @@ class TestNotification(TestCase, RequestSetting):
         assert notifications.data.get('num_items') == 1
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_board', 'set_articles')
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_articles')
 class TestNotificationReadLog(TestCase, RequestSetting):
-    @pytest.mark.usefixtures('set_user_client2', 'set_comment')
+    @pytest.mark.usefixtures('set_comment')
     def test_read(self):
         notification = Notification.objects.get(related_article=self.article)
         notification_read = self.http_request(self.user, 'post', f'notifications/{notification.id}/read')

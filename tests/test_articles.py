@@ -50,7 +50,7 @@ def set_article(request):
     )
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_board', 'set_topic', 'set_article')
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_topic', 'set_article')
 class TestArticle(TestCase, RequestSetting):
 
     # article 개수를 확인하는 테스트
@@ -151,7 +151,6 @@ class TestArticle(TestCase, RequestSetting):
         assert Article.objects.filter(title='article for test_create')
 
 
-    @pytest.mark.usefixtures('set_user_client2')
     def test_update_hitcounts(self):
         previous_hitcount = self.article.hit_count
         res = self.http_request(self.user2, 'get', f'articles/{self.article.id}').data
@@ -160,7 +159,6 @@ class TestArticle(TestCase, RequestSetting):
 
 
     # 글쓴이가 아닌 사람은 글을 지울 수 없음
-    @pytest.mark.usefixtures('set_user_client2')
     def test_delete_by_nonwriter(self):
         assert Article.objects.filter(id=self.article.id)
         self.http_request(self.user2, 'delete', f'articles/{self.article.id}')
@@ -175,7 +173,6 @@ class TestArticle(TestCase, RequestSetting):
 
 
     # user가 만든 set_article의 positive vote, negative vote 를 set_user_client2를 이용해서 바꿈 (투표 취소 가능한지, 둘다 중복투표 불가능한지 확인)
-    @pytest.mark.usefixtures('set_user_client2')
     def test_update_votes(self):
         # positive vote 확인
         self.http_request(self.user2, 'post', f'articles/{self.article.id}/vote_positive')

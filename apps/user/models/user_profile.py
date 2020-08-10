@@ -16,7 +16,7 @@ class UserProfile(MetaDataModel):
         unique_together = (
             ('uid', 'deleted_at'),
             ('sid', 'deleted_at'),
-            ('nickname', 'deleted_at'),
+            ('nickname', 'past_user', 'deleted_at'),
         )
 
     uid = models.CharField(
@@ -77,10 +77,22 @@ class UserProfile(MetaDataModel):
         primary_key=True,
     )
 
-    def can_change_nickname(self) -> bool:
-        if self.nickname_updated_at is None:
-            return True
-        return (timezone.now() - self.nickname_updated_at) >= timedelta(days=90)
+    past_user = models.BooleanField(
+        default=False,
+        verbose_name='이전 사용자',
+    )
+
+    ara_id = models.CharField(
+        blank=True,
+        default='',
+        max_length=128,
+        verbose_name='이전 아라 아이디',
+    )
 
     def __str__(self):
         return self.user.username
+
+    def can_change_nickname(self) -> bool:
+            if self.nickname_updated_at is None:
+                return True
+            return (timezone.now() - self.nickname_updated_at) >= timedelta(days=90)

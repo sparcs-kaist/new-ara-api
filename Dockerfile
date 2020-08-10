@@ -1,15 +1,16 @@
-FROM python:3.6
+FROM python:3.7
 
-LABEL Name=new-ara-api Version=0.0.1
-EXPOSE 8080
+RUN pip install --upgrade pip virtualenv awscli
+RUN virtualenv -p python3 /newara/www/venv
 
-WORKDIR /srv
-COPY . /srv
+RUN apt-get update && apt-get install netcat-openbsd supervisor vim -y
 
-RUN pip install -r requirements.txt
+ADD ./ /newara/www
 
-RUN python ara/manage.py migrate
-RUN python ara/manage.py collectstatic --no-input
+WORKDIR /newara/www
+RUN /newara/www/venv/bin/pip install poetry
+RUN /newara/www/venv/bin/poetry export -f requirements.txt | venv/bin/pip install -r /dev/stdin
 
-CMD ["uwsgi", "--http", "0.0.0.0:8080", "--chdir", "/srv/ara", "--module", "ara.wsgi:application"]
+RUN chmod +x /newara/www/entrypoint.sh
 
+EXPOSE 9000
