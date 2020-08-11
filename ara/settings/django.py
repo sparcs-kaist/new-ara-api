@@ -24,6 +24,8 @@ INSTALLED_APPS = [
     'rest_framework_filters',
     'django_extensions',
     'django_s3_storage',
+    'django_celery_beat',
+    'django_celery_results',
     'drf_yasg',
 
     'apps.core',
