@@ -29,7 +29,7 @@ class UserProfileUpdateActionSerializer(BaseUserProfileSerializer):
         nickname_changed = self.instance and value != self.instance.nickname
         if nickname_changed and not self.instance.can_change_nickname():
             next_change_date = self.instance.nickname_updated_at + relativedelta(months=3)
-            raise serializers.ValidationError('닉네임은 3개월마다 변경 가능합니다. (%s부터 가능)' % next_change_date.strftime("%Y/%m/%d"))
+            raise serializers.ValidationError(f'닉네임은 3개월마다 변경 가능합니다. ({next_change_date.strftime("%Y/%m/%d")}부터 가능)')
         return value
 
     def update(self, instance, validated_data):
@@ -38,7 +38,6 @@ class UserProfileUpdateActionSerializer(BaseUserProfileSerializer):
         if instance and new_nickname and old_nickname != new_nickname:
             validated_data['nickname_updated_at'] = timezone.now()
         return super(BaseUserProfileSerializer, self).update(instance, validated_data)
-
 
     extra_preferences = serializers.JSONField()
 
