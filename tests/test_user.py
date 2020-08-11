@@ -158,7 +158,7 @@ class TestUserNickname(TestCase, RequestSetting):
         assert r.status_code != 200
 
         # 3개월 이전일 경우 정상적으로 변경
-        self.user.profile.nickname_updated_at -= timedelta(days=31)
+        self.user.profile.nickname_updated_at -= timedelta(days=33)
         self.user.profile.save()
         r = self.http_request(self.user, 'put', f'user_profiles/{self.user.id}', data=update_data)
         assert r.status_code == 200

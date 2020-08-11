@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from dateutil.relativedelta import relativedelta
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
@@ -93,6 +94,5 @@ class UserProfile(MetaDataModel):
         return self.user.username
 
     def can_change_nickname(self) -> bool:
-            if self.nickname_updated_at is None:
-                return True
-            return (timezone.now() - self.nickname_updated_at) >= timedelta(days=90)
+        return self.nickname_updated_at is None or \
+               (timezone.now() - relativedelta(months=3)) >= self.nickname_updated_at

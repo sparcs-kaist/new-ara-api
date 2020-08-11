@@ -1,4 +1,5 @@
 from ara.classes.serializers import MetaDataModelSerializer
+from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -25,12 +26,16 @@ class UserProfileUpdateActionSerializer(BaseUserProfileSerializer):
         )
 
     def validate_nickname(self, value):
-        if self.instance and value != self.instance.nickname and not self.instance.can_change_nickname():
-            raise serializers.ValidationError('90 days must pass to change your nickname.')
+        nickname_changed = self.instance and value != self.instance.nickname
+        if nickname_changed and not self.instance.can_change_nickname():
+            next_change_date = self.instance.nickname_updated_at + relativedelta(months=3)
+            raise serializers.ValidationError('닉네임은 3개월마다 변경 가능합니다. (%s부터 가능)' % next_change_date.strftime("%Y/%m/%d"))
         return value
 
     def update(self, instance, validated_data):
-        if instance and 'nickname' in validated_data and instance.nickname != validated_data:
+        new_nickname = validated_data.get('nickname')
+        old_nickname = instance.nickname if instance else None
+        if instance and new_nickname and old_nickname != new_nickname:
             validated_data['nickname_updated_at'] = timezone.now()
         return super(BaseUserProfileSerializer, self).update(instance, validated_data)
 
