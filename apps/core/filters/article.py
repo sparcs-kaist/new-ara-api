@@ -49,19 +49,19 @@ class ArticleFilter(filters.FilterSet):
         }
 
     title_or_content__contains = filters.CharFilter(
-        name='title_or_content__contains',
+        field_name='title_or_content__contains',
         label='제목 or 본문 contains',
         method='get_title_or_content__contains',
     )
 
     title_or_content_text__contains = filters.CharFilter(
-        name='title_or_content_text__contains',
+        field_name='title_or_content_text__contains',
         label='제목 or 본문 contains',
         method='get_title_or_content_text__contains',
     )
 
     main_search = filters.CharFilter(
-        name='main_search',
+        field_name='main_search',
         label='메인 검색 (제목포함, 본문포함, 닉네임일치)',
         method='get_main_search'
     )
