@@ -229,12 +229,14 @@ class TestArticle(TestCase, RequestSetting):
         # 자신이 쓴 게시물은 좋아요 / 싫어요를 할 수 없음
         resp = self.http_request(self.user, 'post', f'articles/{self.article.id}/vote_positive')
         assert resp.status_code == 403
+        assert resp.data["message"] is not None
         article = Article.objects.get(id=self.article.id)
         assert article.positive_vote_count == 0
         assert article.negative_vote_count == 0
 
         resp = self.http_request(self.user, 'post', f'articles/{self.article.id}/vote_negative')
         assert resp.status_code == 403
+        assert resp.data["message"] is not None
         article = Article.objects.get(id=self.article.id)
         assert article.positive_vote_count == 0
         assert article.negative_vote_count == 0
