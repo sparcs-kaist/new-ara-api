@@ -27,3 +27,8 @@ DATABASES = {
         }
     }
 }
+
+REDIS_DATABASE = int(environ.get('VITALCARE_REDIS_DATABASE', 1))
+REDIS_URL = f'redis://{REDIS_HOST}:6379/{REDIS_DATABASE}'
+
+CELERY_TASK_ALWAYS_EAGER = True
