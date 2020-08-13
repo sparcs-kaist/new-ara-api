@@ -60,10 +60,10 @@ class ArticleFilter(filters.FilterSet):
         method='get_title_or_content_text__contains',
     )
 
-    main_search = filters.CharFilter(
+    main_search__contains = filters.CharFilter(
         field_name='main_search',
         label='메인 검색 (제목포함, 본문포함, 닉네임일치)',
-        method='get_main_search'
+        method='get_main_search__contains'
     )
 
     @staticmethod
@@ -81,9 +81,9 @@ class ArticleFilter(filters.FilterSet):
         ).distinct()
 
     @staticmethod
-    def get_main_search(queryset, name, value):
+    def get_main_search__contains(queryset, name, value):
         return queryset.filter(
             models.Q(title__contains=value) |
             models.Q(content_text__contains=value) |
-            models.Q(created_by__profile__nickname=value)
+            models.Q(created_by__profile__nickname__contains=value)
         ).distinct()

@@ -46,7 +46,7 @@ def set_posts(request):
         if i % 7 == 0:
             article_content += 'CCCC'
         new_article = Article.objects.create(
-            title=('게시물 %d' % (i+1)),
+            title=f'게시물 {i+1}',
             content=article_content,
             content_text=article_content,
             is_anonymous=False,
@@ -74,15 +74,13 @@ class TestArticleSearch(TestCase, RequestSetting):
 
     def test_main_search(self):
         # `main_search` 필터를 검사합니다. 개수 assertion 숫자들의 의미는 set_posts를 참고하세요.
-        response = self.http_request(self.user, 'get', 'articles', querystring='main_search=AAAA')
+        response = self.http_request(self.user, 'get', 'articles', querystring='main_search__contains=AAAA')
         assert response.data['num_items'] == 34
-        response = self.http_request(self.user, 'get', 'articles', querystring='main_search=BBBB')
+        response = self.http_request(self.user, 'get', 'articles', querystring='main_search__contains=BBBB')
         assert response.data['num_items'] == 20
-        response = self.http_request(self.user, 'get', 'articles', querystring='main_search=CCCC')
+        response = self.http_request(self.user, 'get', 'articles', querystring='main_search__contains=CCCC')
         assert response.data['num_items'] == 15
-        response = self.http_request(self.user, 'get', 'articles', querystring='main_search=테스트')
+        response = self.http_request(self.user, 'get', 'articles', querystring='main_search__contains=테스트')
         assert response.data['num_items'] == 100
-        response = self.http_request(self.user, 'get', 'articles', querystring='main_search=2')
-        assert response.data['num_items'] == 19  # *2, 2*: 총 19개
-        response = self.http_request(self.user, 'get', 'articles', querystring='main_search=User2')
+        response = self.http_request(self.user, 'get', 'articles', querystring='main_search__contains=User2')
         assert response.data['num_items'] == 25
