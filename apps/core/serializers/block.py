@@ -27,7 +27,6 @@ class BlockCreateActionSerializer(BaseBlockSerializer):
     def validate(self, data):
         blocked_by = data.get('blocked_by')
         user = data.get('user')
-        exist = Block.objects.filter(blocked_by=blocked_by, user=user)
-        if exist:
+        if Block.objects.filter(blocked_by=blocked_by, user=user).exists():
             raise serializers.ValidationError(f'이미 차단한 유저입니다.')
         return data
