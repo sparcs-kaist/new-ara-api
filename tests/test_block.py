@@ -113,6 +113,17 @@ class TestBlock(TestCase, RequestSetting):
         self.http_request(self.user2, 'post', 'blocks', block_data)
         assert Block.objects.filter(blocked_by=self.user2.id, user=self.user.id)
 
+    # GET으로 block 가져오기
+    def test_get_block(self):
+        block = Block.objects.create(
+            blocked_by=self.user,
+            user=self.user2,
+        )
+
+        res = self.http_request(self.user, 'get', f'blocks/{block.id}').data
+        assert res.get('blocked_by') == self.user.id
+        assert res.get('user').get('id') == self.user2.id
+
     # TODO: 현재 이미 차단된 유저를 다시 차단하면 Block이 새로 생성됩니다. 중복 차단을 방지하는 로직을 넣으면 좋을 것 같습니다.
     # 이미 차단된 유저를 중복 차단하는 경우 확인
     def test_cannot_block_already_blocked_user(self):
@@ -272,6 +283,7 @@ class TestBlock(TestCase, RequestSetting):
 
         # 차단 취소
         self.http_request(self.user, 'delete', f'blocks/{block.id}')
+        assert not Block.objects.filter(id=block.id)
 
         # user2의 글(article2)이 보이는지 확인
         res = self.http_request(self.user, 'get', f'articles/{self.article2.id}').data

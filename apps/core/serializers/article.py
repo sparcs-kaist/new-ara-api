@@ -144,7 +144,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return errors
 
-용
+
 class ArticleSerializer(BaseArticleSerializer):
     parent_topic = TopicSerializer(
         read_only=True,
