@@ -33,6 +33,12 @@ def set_user_client2(request):
 
 
 @pytest.fixture(scope='class')
+def set_user_client3(request):
+    request.cls.user3, _ = User.objects.get_or_create(username='User3', email='user3@sparcs.org')
+    request.cls.api_client = APIClient()
+
+
+@pytest.fixture(scope='class')
 def set_user_client_with_profile(request):
     request.cls.user, _ = User.objects.get_or_create(username='User', email='user@sparcs.org')
     if not hasattr(request.cls.user, 'profile'):
