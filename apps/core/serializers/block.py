@@ -1,3 +1,5 @@
+from rest_framework import serializers
+
 from ara.classes.serializers import MetaDataModelSerializer
 
 from apps.core.models import Block
@@ -22,4 +24,10 @@ class BlockSerializer(BaseBlockSerializer):
 
 
 class BlockCreateActionSerializer(BaseBlockSerializer):
-    pass
+    def validate(self, data):
+        blocked_by = data.get('blocked_by')
+        user = data.get('user')
+        exist = Block.objects.filter(blocked_by=blocked_by, user=user)
+        if exist:
+            raise serializers.ValidationError(f'이미 차단한 유저입니다.')
+        return data

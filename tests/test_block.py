@@ -124,7 +124,6 @@ class TestBlock(TestCase, RequestSetting):
         assert res.get('blocked_by') == self.user.id
         assert res.get('user').get('id') == self.user2.id
 
-    # TODO: 현재 이미 차단된 유저를 다시 차단하면 Block이 새로 생성됩니다. 중복 차단을 방지하는 로직을 넣으면 좋을 것 같습니다.
     # 이미 차단된 유저를 중복 차단하는 경우 확인
     def test_cannot_block_already_blocked_user(self):
         block_data = {
@@ -136,11 +135,8 @@ class TestBlock(TestCase, RequestSetting):
         self.http_request(self.user2, 'post', 'blocks', block_data)
         self.http_request(self.user2, 'post', 'blocks', block_data)
 
-        # 중복 차단이 허용되면 아래 테스트가 패스합니다
-        assert Block.objects.filter(blocked_by=self.user2.id, user=self.user.id).count() == 2
-
         # 중복 차단이 허용되지 않으면 아래 테스트가 패스해야 합니다
-        # assert Block.objects.filter(blocked_by=self.user2.id, user=self.user.id).count() == 1
+        assert Block.objects.filter(blocked_by=self.user2.id, user=self.user.id).count() == 1
 
     # 쌍방향 차단이 되는 것 확인 (user 둘이 서로 차단)
     def test_mutual_block(self):
