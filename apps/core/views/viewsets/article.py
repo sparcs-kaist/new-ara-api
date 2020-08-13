@@ -1,7 +1,10 @@
+import time
+
 from django.db import models
 
 from rest_framework import status, viewsets, response, decorators, serializers, permissions
 
+from ara import redis
 from ara.classes.viewset import ActionAPIViewSet
 
 from apps.core.models import (
@@ -150,18 +153,30 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         if created:
             article.update_hit_count()
 
+        pipe = redis.pipeline()
+        redis_key = 'articles:hit'
+        pipe.zadd(redis_key, {f'{article.id}:1:{self.request.user.id}:{time.time()}': time.time()})
+        pipe.execute(raise_on_error=True)
+
         return super().retrieve(request, *args, **kwargs)
 
     @decorators.action(detail=True, methods=['post'])
     def vote_cancel(self, request, *args, **kwargs):
         article = self.get_object()
 
-        Vote.objects.filter(
+        vote = Vote.objects.get(
             voted_by=request.user,
             parent_article=article,
-        ).delete()
+        )
+        vote.delete()
 
         article.update_vote_status()
+
+        if vote.is_positive:
+            pipe = redis.pipeline()
+            redis_key = 'articles:vote'
+            pipe.zadd(redis_key, {f'{article.id}:-1:{request.user.id}:{time.time()}': time.time()})
+            pipe.execute(raise_on_error=True)
 
         return response.Response(status=status.HTTP_200_OK)
 
@@ -181,6 +196,11 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         )
 
         article.update_vote_status()
+
+        pipe = redis.pipeline()
+        redis_key = 'articles:vote'
+        pipe.zadd(redis_key, {f'{article.id}:1:{request.user.id}:{time.time()}': time.time()})
+        pipe.execute(raise_on_error=True)
 
         return response.Response(status=status.HTTP_200_OK)
 
