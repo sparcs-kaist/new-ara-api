@@ -17,7 +17,6 @@ beautifulsoup4 = "^4.8"
 django-extensions = "^2.2"
 djangorestframework-filters = "^1.0.0.dev0"
 drf-yasg = "^1.17"
-mysqlclient = "^1.4"
 bleach = "^3.1"
 Pillow = "^6.2"
 django-environ = "^0.4.5"
@@ -31,11 +30,13 @@ redis = "^3.5.3"
 celery = {extras = ["redis"], version = "^4.4.7"}
 django-celery-beat = "^2.0.0"
 django-celery-results = "^1.2.1"
+mysqlclient = "^2.0.1"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
 autopep8 = "^1.4"
 pylint-django = "^2.0"
+django-silk = "^4.1.0"
 
 [build-system]
 requires = ["poetry>=0.12"]
