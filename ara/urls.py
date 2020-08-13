@@ -58,5 +58,11 @@ if settings.DEBUG:
     import debug_toolbar
     urlpatterns += [
         path('__debug__/', include(debug_toolbar.urls)),
-        path('silk/', include('silk.urls')),
+    ]
+
+# if DEBUG 조건문 안에 넣으면 Test시 에러남
+# https://github.com/jazzband/django-silk/issues/306 참고
+if 'silk' in settings.INSTALLED_APPS:
+    urlpatterns += [
+        path('silk/', include('silk.urls', namespace='silk')),
     ]
