@@ -27,7 +27,7 @@ from apps.core.serializers.article import (
 
 class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     queryset = Article.objects.all()
-    filter_class = ArticleFilter
+    filterset_class = ArticleFilter
     serializer_class = ArticleSerializer
     action_serializer_class = {
         'list': ArticleListActionSerializer,

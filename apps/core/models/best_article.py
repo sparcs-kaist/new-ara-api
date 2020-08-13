@@ -32,10 +32,10 @@ class BestArticle(MetaDataModel):
         verbose_name="베스트 문서 선정 기준"
     )
 
-    article = models.OneToOneField(
+    article = models.ForeignKey(
         on_delete=models.CASCADE,
         to='core.Article',
         db_index=True,
-        related_name='best',
+        related_name='best_set',
         verbose_name='문서',
     )

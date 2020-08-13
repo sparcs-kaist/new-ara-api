@@ -4,6 +4,7 @@ from .django import *
 from .djangorestframework import *
 from .s3 import *
 from .sso import *
+from .scheduler import *
 
 
 DEBUG = True

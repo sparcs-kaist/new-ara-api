@@ -26,6 +26,11 @@ pytest = "^5.4.2"
 pytest-django = "^3.9.0"
 pytest-cov = "^2.8.1"
 lxml = "^4.5.2"
+django-crontab = "^0.7.1"
+redis = "^3.5.3"
+celery = {extras = ["redis"], version = "^4.4.7"}
+django-celery-beat = "^2.0.0"
+django-celery-results = "^1.2.1"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
