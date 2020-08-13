@@ -140,11 +140,11 @@ class BaseArticleSerializer(MetaDataModelSerializer):
             errors.append(exceptions.ValidationError('성인/음란성 내용의 게시물입니다.'))
 
         if obj.is_content_social and not self.context['request'].user.profile.see_social:
-            errors.append(exceptions.ValidationError('정치/사회성 내뇽의 게시물입니다.'))
+            errors.append(exceptions.ValidationError('정치/사회성 내용의 게시물입니다.'))
 
         return errors
 
-
+용
 class ArticleSerializer(BaseArticleSerializer):
     parent_topic = TopicSerializer(
         read_only=True,
