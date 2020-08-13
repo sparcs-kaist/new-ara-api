@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'django_celery_results',
     'drf_yasg',
+    'silk',
 
     'apps.core',
     'apps.user',
@@ -43,6 +44,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
+    'silk.middleware.SilkyMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
