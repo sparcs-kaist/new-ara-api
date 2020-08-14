@@ -32,6 +32,7 @@ django-celery-beat = "^2.0.0"
 django-celery-results = "^1.2.1"
 mysqlclient = "^2.0.1"
 django-redis = "^4.12.1"
+bpython = "^0.19"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
