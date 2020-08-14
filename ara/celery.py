@@ -32,9 +32,9 @@ app.conf.beat_schedule = {
         'schedule': settings.SCHEDULERS['SAVE_DAILY_BEST']['CRONTAB'],
         'args': []
     },
-    'save_monthly_best': {
-        'task': 'apps.core.management.tasks.save_monthly_best',
-        'schedule': settings.SCHEDULERS['SAVE_MONTHLY_BEST']['CRONTAB'],
+    'save_weekly_best': {
+        'task': 'apps.core.management.tasks.save_weekly_best',
+        'schedule': settings.SCHEDULERS['SAVE_WEEKLY_BEST']['CRONTAB'],
         'args': []
     },
 }
