@@ -1,10 +1,6 @@
 from os import environ
 
-from .django import *
-from .djangorestframework import *
-from .s3 import *
-from .sso import *
-from .scheduler import *
+from ara.settings import *
 
 
 DEBUG = True

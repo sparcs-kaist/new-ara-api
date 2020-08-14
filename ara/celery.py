@@ -27,4 +27,14 @@ app.conf.beat_schedule = {
         'schedule': settings.SCHEDULERS['CRAWL_PORTAL']['CRONTAB'],
         'args': []
     },
+    'save_daily_best': {
+        'task': 'apps.core.management.tasks.save_daily_best',
+        'schedule': settings.SCHEDULERS['SAVE_DAILY_BEST']['CRONTAB'],
+        'args': []
+    },
+    'save_weekly_best': {
+        'task': 'apps.core.management.tasks.save_weekly_best',
+        'schedule': settings.SCHEDULERS['SAVE_WEEKLY_BEST']['CRONTAB'],
+        'args': []
+    },
 }

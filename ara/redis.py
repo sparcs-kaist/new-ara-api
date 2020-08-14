@@ -44,6 +44,13 @@ class PrefixedRedis(PyRedis):
     def zrangebyscore(self, name, min, max, **kwargs):
         return super().zrangebyscore(f'{self.key_prefix}{name}', min, max, **kwargs)
 
+    def get_objs(self, name, from_ts, to_ts):
+        objs = []
+        for row in self.zrangebyscore(name, from_ts, to_ts):
+            objs.append(row.decode())
+
+        return objs
+
     def zremrangebyscore(self, name, min, max):
         return super().zremrangebyscore(f'{self.key_prefix}{name}', min, max)
 
