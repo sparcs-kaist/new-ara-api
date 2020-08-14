@@ -1,8 +1,10 @@
 import pytest
+from django.contrib.auth.models import User
 from django.test import TestCase
 from django.utils import timezone
 
 from apps.core.models import Article, Topic, Board
+from apps.user.models import UserProfile
 from tests.conftest import RequestSetting
 
 
@@ -48,6 +50,44 @@ def set_article(request):
             parent_board=request.cls.board,
             commented_at=timezone.now()
     )
+
+
+@pytest.fixture(scope='function')
+def set_kaist_articles(request):
+    request.cls.non_kaist_user, _ = User.objects.get_or_create(username='NonKaistUser', email='non-kaist-user@sparcs.org')
+    if not hasattr(request.cls.non_kaist_user, 'profile'):
+        UserProfile.objects.get_or_create(user=request.cls.non_kaist_user, nickname='Not a KAIST User')
+    request.cls.kaist_user, _ = User.objects.get_or_create(username='KaistUser', email='kaist-user@sparcs.org')
+    if not hasattr(request.cls.kaist_user, 'profile'):
+        UserProfile.objects.get_or_create(user=request.cls.kaist_user, nickname='KAIST User')
+
+    request.cls.kaist_board, _ = Board.objects.get_or_create(
+        slug="kaist-only",
+        ko_name="KAIST Board",
+        en_name="KAIST Board",
+        ko_description="KAIST Board",
+        en_description="KAIST Board",
+        is_kaist=True
+    )
+    request.cls.kaist_article, _ = Article.objects.get_or_create(
+            title="example article",
+            content="example content",
+            content_text="example content text",
+            is_anonymous=False,
+            is_content_sexual=False,
+            is_content_social=False,
+            hit_count=0,
+            positive_vote_count=0,
+            negative_vote_count=0,
+            created_by=request.cls.user,
+            parent_board=request.cls.kaist_board,
+            commented_at=timezone.now()
+    )
+    yield None
+    request.cls.non_kaist_user.delete()
+    request.cls.kaist_user.delete()
+    request.cls.kaist_board.delete()
+    request.cls.kaist_article.delete()
 
 
 @pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_topic', 'set_article')
@@ -240,3 +280,25 @@ class TestArticle(TestCase, RequestSetting):
         article = Article.objects.get(id=self.article.id)
         assert article.positive_vote_count == 0
         assert article.negative_vote_count == 0
+
+    @pytest.mark.usefixtures('set_kaist_articles')
+    def test_kaist_permission(self):
+        # 카이스트 구성원만 볼 수 있는 게시판에 대한 테스트
+        def check_kaist_error(response):
+            assert response.status_code == 403
+            assert 'KAIST' in response.data['detail']  # 에러 메세지 체크
+        # 게시물 읽기 테스트
+        check_kaist_error(self.http_request(self.non_kaist_user, 'get', f'articles/{self.kaist_article.id}'))
+        # 투표 테스트
+        check_kaist_error(
+            self.http_request(self.non_kaist_user, 'post', f'articles/{self.kaist_article.id}/vote_positive')
+        )
+        check_kaist_error(
+            self.http_request(self.non_kaist_user, 'post', f'articles/{self.kaist_article.id}/vote_negative')
+        )
+        check_kaist_error(
+            self.http_request(self.non_kaist_user, 'post', f'articles/{self.kaist_article.id}/vote_cancel')
+        )
+
+
+

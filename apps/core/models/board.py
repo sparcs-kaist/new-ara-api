@@ -33,6 +33,11 @@ class Board(MetaDataModel):
     en_description = models.TextField(
         verbose_name='게시판 영문 소개',
     )
+    is_kaist = models.BooleanField(
+        verbose_name='카이스트 구성원 전용 게시판',
+        null=False,
+        default=False
+    )
 
     def __str__(self):
         return self.ko_name

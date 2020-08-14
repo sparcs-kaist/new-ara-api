@@ -130,7 +130,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return None
 
-    def validate_hidden(self, obj):
+    def validate_hidden(self, obj: Article):
         errors = []
 
         if obj.created_by.blocked_by_set.exists():
@@ -141,6 +141,9 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         if obj.is_content_social and not self.context['request'].user.profile.see_social:
             errors.append(exceptions.ValidationError('정치/사회성 내용의 게시물입니다.'))
+
+        if obj.parent_board.is_kaist and not self.context['request'].user.profile.is_kaist:
+            errors.append(exceptions.ValidationError('카이스트 구성원만 볼 수 있는 게시물입니다.'))
 
         return errors
 
