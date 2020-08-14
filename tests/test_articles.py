@@ -90,7 +90,21 @@ def set_kaist_articles(request):
     request.cls.kaist_article.delete()
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_topic', 'set_article')
+@pytest.fixture(scope='function')
+def set_readonly_board(request):
+    request.cls.readonly_board, _ = Board.objects.get_or_create(
+        slug="readonly",
+        ko_name="읽기전용 게시판",
+        en_name="Read Only Board",
+        ko_description="테스트 게시판입니다",
+        en_description="This is a board for testing",
+        is_readonly=True
+    )
+    yield None
+    request.cls.readonly_board.delete()
+
+
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_topic', 'set_article', 'set_admin_user')
 class TestArticle(TestCase, RequestSetting):
     def test_list(self):
         # article 개수를 확인하는 테스트
@@ -299,6 +313,21 @@ class TestArticle(TestCase, RequestSetting):
         check_kaist_error(
             self.http_request(self.non_kaist_user, 'post', f'articles/{self.kaist_article.id}/vote_cancel')
         )
+
+    @pytest.mark.usefixtures('set_readonly_board')
+    def test_readonly_board(self):
+        # self.http_request(self.admin, '', )
+        user_data = {
+            "title": "article for test_create",
+            "content": "content for test_create",
+            "content_text": "content_text for test_create",
+            "is_anonymous": True,
+            "is_content_sexual": False,
+            "is_content_social": False,
+            "parent_board": self.readonly_board.id
+        }
+        response = self.http_request(self.user, 'post', 'articles', user_data)
+        assert response.status_code == 400
 
 
 

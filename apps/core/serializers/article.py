@@ -1,8 +1,9 @@
+from django.contrib.auth.models import User
 from rest_framework import exceptions, serializers
 
 from ara.classes.serializers import MetaDataModelSerializer
 
-from apps.core.models import Article
+from apps.core.models import Article, Board
 from apps.core.serializers.article_log import ArticleUpdateLogSerializer
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
@@ -259,6 +260,13 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
             'created_by',
             'commented_at',
         )
+
+    def validate_parent_board(self, value: Board):
+        user_is_superuser = self.context['request'].user.is_superuser
+        board_is_readonly = value.is_readonly
+        if not user_is_superuser and board_is_readonly:
+            raise serializers.ValidationError('Cannot write to this board')
+        return value
 
 
 class ArticleUpdateActionSerializer(BaseArticleSerializer):

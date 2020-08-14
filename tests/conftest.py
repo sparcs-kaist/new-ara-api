@@ -50,6 +50,14 @@ def set_user_client_with_profile(request):
     request.cls.api_client = APIClient()
 
 
+@pytest.fixture(scope='class')
+def set_admin_user(request):
+    user, _ = User.objects.get_or_create(username='Admin', email='admin@sparcs.org', is_superuser=True)
+    if not hasattr(user, 'profile'):
+        UserProfile.objects.get_or_create(user=user, nickname='Admin')
+    request.cls.admin = user
+
+
 class RequestSetting:
     def http_request(self, user, method, path, data=None, querystring=''):
         self.api_client.force_authenticate(user=user)

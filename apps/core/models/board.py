@@ -38,6 +38,12 @@ class Board(MetaDataModel):
         null=False,
         default=False
     )
+    is_readonly = models.BooleanField(
+        verbose_name='읽기 전용 게시판',
+        help_text='활성화했을 때 관리자만 글을 쓸 수 있습니다. (ex. 포탈공지)',
+        null=False,
+        default=False
+    )
 
     def __str__(self):
         return self.ko_name
