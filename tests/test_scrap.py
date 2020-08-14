@@ -66,47 +66,28 @@ def set_block(request):
 @pytest.mark.usefixtures('set_user_client_with_profile', 'set_user_client2', 'set_board', 'set_articles')
 class TestScrap(TestCase, RequestSetting):
     def test_create(self):
-        Scrap.objects.create(
-            parent_article=self.article,
-            scrapped_by=self.user
-        )
-        scrap = self.http_request(self.user, 'get', 'scraps')
-        # user 게시글을 user이 scrap 했을 때
-        assert scrap.data.get('num_items') == 1
-        assert scrap.data.get('results')[0].get('scrapped_by')['username'] == self.user.username
+        scrap_data = {
+            'parent_article': self.article.id,
+            'scrapped_by': self.user.id
+        }
+        self.http_request(self.user, 'post', 'scraps', scrap_data)
 
-        Scrap.objects.create(
-            parent_article=self.article2,
-            scrapped_by=self.user
-        )
-        scrap2 = self.http_request(self.user, 'get', 'scraps')
-        # user, user2 게시글을 user이 scrap 했을 때
-        assert scrap2.data.get('num_items') == 2
+        print(Scrap.objects.filter(parent_article=self.article, scrapped_by=self.user))
+        scrap = Scrap.objects.filter(parent_article=self.article, scrapped_by=self.user).get()
 
-        Scrap.objects.create(
-            parent_article=self.article,
-            scrapped_by=self.user2
-        )
-        scrap3 = self.http_request(self.user2, 'get', 'scraps')
-        # user 게시글을 user2가 scrap 했을 때
-        assert scrap3.data.get('num_items') == 1
-        assert scrap3.data.get('results')[0].get('scrapped_by')['username'] == self.user2.username
+        assert scrap.scrapped_by == self.user
+        assert scrap.parent_article == self.article
 
     def test_scrap_same_article(self):
-        Scrap.objects.create(
-            parent_article=self.article,
-            scrapped_by=self.user
-        )
-
-        scrap = self.http_request(self.user, 'get', 'scraps')
-        assert scrap.data.get('num_items') == 1
+        scrap_data = {
+            'parent_article': self.article.id,
+            'scrapped_by': self.user.id
+        }
+        self.http_request(self.user, 'post', 'scraps', scrap_data)
 
         # 같은 게시글 scrap -> db 에서 integrity error 발생
         try:
-            Scrap.objects.create(
-                parent_article=self.article,
-                scrapped_by=self.user
-            )
+            self.http_request(self.user, 'post', 'scraps', scrap_data)
 
         except IntegrityError:
             assert True
@@ -116,10 +97,11 @@ class TestScrap(TestCase, RequestSetting):
 
     def test_scrap_sexual(self):
         # 성인글에 대한 profile 설정 했을 때
-        Scrap.objects.create(
-            parent_article=self.article_sexual,
-            scrapped_by=self.user
-        )
+        scrap_data = {
+            'parent_article': self.article_sexual.id,
+            'scrapped_by': self.user.id
+        }
+        self.http_request(self.user, 'post', 'scraps', scrap_data)
 
         self.user.profile.see_sexual = True
         scrap = self.http_request(self.user, 'get', 'scraps')
@@ -134,10 +116,11 @@ class TestScrap(TestCase, RequestSetting):
 
     def test_scrap_social(self):
         # 정치글에 대한 profile 설정 했을 때
-        Scrap.objects.create(
-            parent_article=self.article_social,
-            scrapped_by=self.user
-        )
+        scrap_data = {
+            'parent_article': self.article_social.id,
+            'scrapped_by': self.user.id
+        }
+        self.http_request(self.user, 'post', 'scraps', scrap_data)
 
         self.user.profile.see_social = True
         scrap = self.http_request(self.user, 'get', 'scraps')
@@ -155,10 +138,11 @@ class TestScrap(TestCase, RequestSetting):
     def test_scrap_block(self):
         # user2가 user을 차단했을 때 user2가 user의 article을 scrap 하는 경우 안 보이는지 확인
 
-        Scrap.objects.create(
-            parent_article=self.article,
-            scrapped_by=self.user2
-        )
+        scrap_data = {
+            'parent_article': self.article.id,
+            'scrapped_by': self.user2.id
+        }
+        self.http_request(self.user2, 'post', 'scraps', scrap_data)
 
         scrap = self.http_request(self.user2, 'get', 'scraps')
         assert scrap.data.get('num_items') == 1
