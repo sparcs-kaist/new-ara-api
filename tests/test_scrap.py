@@ -72,11 +72,9 @@ class TestScrap(TestCase, RequestSetting):
         }
         self.http_request(self.user, 'post', 'scraps', scrap_data)
 
-        print(Scrap.objects.filter(parent_article=self.article, scrapped_by=self.user))
         scrap = Scrap.objects.filter(parent_article=self.article, scrapped_by=self.user).get()
 
-        assert scrap.scrapped_by == self.user
-        assert scrap.parent_article == self.article
+        assert scrap.scrapped_by == self.user and scrap.parent_article == self.article
 
     def test_scrap_same_article(self):
         scrap_data = {
@@ -104,15 +102,17 @@ class TestScrap(TestCase, RequestSetting):
         self.http_request(self.user, 'post', 'scraps', scrap_data)
 
         self.user.profile.see_sexual = True
-        scrap = self.http_request(self.user, 'get', 'scraps')
+        scrap = self.http_request(self.user, 'get', 'scraps').data
+
         # 성인글 보도록 하면 scrap한 글이 보임
-        assert scrap.data.get('num_items') == 1
-        assert not scrap.data.get('results')[0].get('parent_article').get('is_hidden')
+        assert scrap.get('num_items') == 1
+        assert not scrap.get('results')[0].get('parent_article').get('is_hidden')
 
         self.user.profile.see_sexual = False
-        scrap2 = self.http_request(self.user, 'get', 'scraps')
+        scrap2 = self.http_request(self.user, 'get', 'scraps').data
+
         # 성인글 안보도록 바꾸면 scrap한 글이 안보임
-        assert scrap2.data.get('results')[0].get('parent_article').get('is_hidden')
+        assert scrap2.get('results')[0].get('parent_article').get('is_hidden')
 
     def test_scrap_social(self):
         # 정치글에 대한 profile 설정 했을 때
@@ -123,16 +123,17 @@ class TestScrap(TestCase, RequestSetting):
         self.http_request(self.user, 'post', 'scraps', scrap_data)
 
         self.user.profile.see_social = True
-        scrap = self.http_request(self.user, 'get', 'scraps')
+        scrap = self.http_request(self.user, 'get', 'scraps').data
 
         # 정치글 보도록 하면 scrap한 글이 보임
-        assert scrap.data.get('num_items') == 1
-        assert not scrap.data.get('results')[0].get('parent_article').get('is_hidden')
+        assert scrap.get('num_items') == 1
+        assert not scrap.get('results')[0].get('parent_article').get('is_hidden')
 
         self.user.profile.see_social = False
-        scrap2 = self.http_request(self.user, 'get', 'scraps')
+        scrap2 = self.http_request(self.user, 'get', 'scraps').data
+        
         # 정치글 안보도록 바꾸면 scrap한 글이 안보임
-        assert scrap2.data.get('results')[0].get('parent_article').get('is_hidden')
+        assert scrap2.get('results')[0].get('parent_article').get('is_hidden')
 
     @pytest.mark.usefixtures('set_block')
     def test_scrap_block(self):
@@ -144,7 +145,7 @@ class TestScrap(TestCase, RequestSetting):
         }
         self.http_request(self.user2, 'post', 'scraps', scrap_data)
 
-        scrap = self.http_request(self.user2, 'get', 'scraps')
-        assert scrap.data.get('num_items') == 1
-        assert scrap.data.get('results')[0].get('parent_article').get('is_hidden')
+        scrap = self.http_request(self.user2, 'get', 'scraps').data
+        assert scrap.get('num_items') == 1
+        assert scrap.get('results')[0].get('parent_article').get('is_hidden')
 
