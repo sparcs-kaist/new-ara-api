@@ -261,12 +261,14 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
             'commented_at',
         )
 
-    def validate_parent_board(self, value: Board):
+    def validate_parent_board(self, board: Board):
         user_is_superuser = self.context['request'].user.is_superuser
-        board_is_readonly = value.is_readonly
-        if not user_is_superuser and board_is_readonly:
-            raise serializers.ValidationError('Cannot write to this board')
-        return value
+        user_is_kaist = self.context['request'].user.profile.is_kaist
+        if not user_is_superuser and board.is_readonly:
+            raise serializers.ValidationError('쓰기가 금지된 게시판입니다.')
+        if not user_is_kaist and board.is_kaist:
+            raise serializers.ValidationError('카이스트 구성원만 사용할 수 있는 게시판입니다.')
+        return board
 
 
 class ArticleUpdateActionSerializer(BaseArticleSerializer):
