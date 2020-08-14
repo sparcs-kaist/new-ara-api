@@ -1,4 +1,5 @@
 from rest_framework import mixins
+from django.core.mail import send_mail
 
 from ara.classes.viewset import ActionAPIViewSet
 
@@ -59,3 +60,7 @@ class ReportViewSet(mixins.ListModelMixin,
         serializer.save(
             reported_by=self.request.user,
         )
+
+    def create(self, request, *args, **kwargs):
+        # send email
+        return super().create(request, *args, **kwargs)
