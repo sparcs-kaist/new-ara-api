@@ -13,7 +13,7 @@ from apps.user.models import UserProfile
 
 @pytest.fixture(scope='class')
 def set_admin_client(request):
-    request.cls.user, _ = User.objects.get_or_create(username='관리자', email='admin@sparcs.org', is_superuser=True)
+    request.cls.admin, _ = User.objects.get_or_create(username='관리자', email='admin@sparcs.org', is_superuser=True)
     if not hasattr(request.cls.user, 'profile'):
         UserProfile.objects.get_or_create(user=request.cls.user, nickname='관리자')
     client = APIClient()
@@ -42,22 +42,6 @@ def set_user_client2(request):
 def set_user_client3(request):
     request.cls.user3, _ = User.objects.get_or_create(username='User3', email='user3@sparcs.org')
     request.cls.api_client = APIClient()
-
-
-@pytest.fixture(scope='class')
-def set_user_client_with_profile(request):
-    request.cls.user, _ = User.objects.get_or_create(username='User', email='user@sparcs.org')
-    if not hasattr(request.cls.user, 'profile'):
-        UserProfile.objects.get_or_create(user=request.cls.user, nickname='TestUser')
-    request.cls.api_client = APIClient()
-
-
-@pytest.fixture(scope='class')
-def set_admin_user(request):
-    user, _ = User.objects.get_or_create(username='Admin', email='admin@sparcs.org', is_superuser=True)
-    if not hasattr(user, 'profile'):
-        UserProfile.objects.get_or_create(user=user, nickname='Admin')
-    request.cls.admin = user
 
 
 class RequestSetting:
