@@ -63,9 +63,9 @@ class ReportViewSet(mixins.ListModelMixin,
 
     def create(self, request, *args, **kwargs):
         # send email
-        is_article = request.data.get('parent_comment') is None
-        if is_article:
-            parent_id = request.data.get('parent_article')
+        article_id = request.data.get('parent_article')
+        if article_id:
+            parent_id = article_id
             article = Article.objects.get(id=parent_id)
             title = f"[신고 (게시글)] '{request.user}'님께서 Article {parent_id}을 신고하였습니다."
             message = f'''게시글 {parent_id}에 대하여 다음과 같은 신고가 접수되었습니다:
@@ -93,6 +93,6 @@ class ReportViewSet(mixins.ListModelMixin,
         send_mail(title,
                   message,
                   'new-ara@sparcs.org',
-                  ['new-ara@sparcs.org']
-                  )
+                  ['new-ara@sparcs.org'])
+
         return super().create(request, *args, **kwargs)
