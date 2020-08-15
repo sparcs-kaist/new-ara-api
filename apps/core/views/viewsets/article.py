@@ -19,7 +19,7 @@ from apps.core.models import (
     Scrap,
 )
 from apps.core.filters.article import ArticleFilter
-from apps.core.permissions.article import ArticlePermission
+from apps.core.permissions.article import ArticlePermission, ArticleKAISTPermission
 from apps.core.serializers.article import (
     ArticleSerializer,
     ArticleListActionSerializer,
@@ -42,16 +42,20 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     }
     permission_classes = (
         ArticlePermission,
+        ArticleKAISTPermission
     )
     action_permission_classes = {
         'vote_cancel': (
             permissions.IsAuthenticated,
+            ArticleKAISTPermission
         ),
         'vote_positive': (
             permissions.IsAuthenticated,
+            ArticleKAISTPermission
         ),
         'vote_negative': (
             permissions.IsAuthenticated,
+            ArticleKAISTPermission
         ),
     }
 

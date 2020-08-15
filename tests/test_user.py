@@ -66,7 +66,7 @@ def set_articles(request):
     request.cls.articles_meta[request.cls.article_sexual_and_social.id] = (True, True)
 
 
-@pytest.mark.usefixtures('set_user_client_with_profile', 'set_user_client2', 'set_board', 'set_articles')
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_articles')
 class TestUser(TestCase, RequestSetting):
     def test_profile_edit(self):
         # 프로필 (ie. 사용자 설정)이 잘 변경되는지 테스트합니다.
@@ -125,7 +125,7 @@ class TestUser(TestCase, RequestSetting):
     # TODO: home/ view에서 best_articles 에서 어떻게 나오는지 확인하는 함수도 필요
 
 
-@pytest.mark.usefixtures('set_user_client_with_profile')
+@pytest.mark.usefixtures('set_user_client')
 class TestUserNickname(TestCase, RequestSetting):
     def test_nickname_update(self):
         # 사용자가 처음 생성됨 -> 변경된 적이 없으므로 None

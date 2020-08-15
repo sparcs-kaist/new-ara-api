@@ -1,8 +1,9 @@
+from django.contrib.auth.models import User
 from rest_framework import exceptions, serializers
 
 from ara.classes.serializers import MetaDataModelSerializer
 
-from apps.core.models import Article
+from apps.core.models import Article, Board
 from apps.core.serializers.article_log import ArticleUpdateLogSerializer
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
@@ -130,7 +131,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return None
 
-    def validate_hidden(self, obj):
+    def validate_hidden(self, obj: Article):
         errors = []
 
         if obj.created_by.blocked_by_set.exists():
@@ -141,6 +142,9 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         if obj.is_content_social and not self.context['request'].user.profile.see_social:
             errors.append(exceptions.ValidationError('정치/사회성 내용의 게시물입니다.'))
+
+        if obj.parent_board.is_kaist and not self.context['request'].user.profile.is_kaist:
+            errors.append(exceptions.ValidationError('카이스트 구성원만 볼 수 있는 게시물입니다.'))
 
         return errors
 
@@ -256,6 +260,15 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
             'created_by',
             'commented_at',
         )
+
+    def validate_parent_board(self, board: Board):
+        user_is_superuser = self.context['request'].user.is_superuser
+        user_is_kaist = self.context['request'].user.profile.is_kaist
+        if not user_is_superuser and board.is_readonly:
+            raise serializers.ValidationError('쓰기가 금지된 게시판입니다.')
+        if not user_is_kaist and board.is_kaist:
+            raise serializers.ValidationError('카이스트 구성원만 사용할 수 있는 게시판입니다.')
+        return board
 
 
 class ArticleUpdateActionSerializer(BaseArticleSerializer):
