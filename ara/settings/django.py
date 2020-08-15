@@ -120,3 +120,7 @@ STATIC_URL = '/static/'
 INTERNAL_IPS = (
     '127.0.0.1',
 )
+
+EMAIL_BACKEND = 'django_ses.SESBackend'
+AWS_SES_REGION_NAME = 'ap-northeast-2'
+AWS_SES_REGION_ENDPOINT = 'email.ap-northeast-2.amazonaws.com'

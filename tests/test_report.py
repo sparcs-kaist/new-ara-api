@@ -106,13 +106,19 @@ class TestReport(TestCase, RequestSetting):
 
     # post로 리포트가 생성됨을 확인
     def test_create_report(self):
+
+        # send_mail('8/15 13:08 test email',
+        #           'hi this is test email',
+        #           'new-ara@sparcs.org',
+        #           ['new-ara@sparcs.org'])
+
         # 게시글 신고
         report_str1 = 'this is an article report'
         report_data1 = {
             'content': report_str1,
             'parent_article': self.article.id,
         }
-        self.http_request(self.user2, 'post', 'reports', report_data1)
+        response = self.http_request(self.user2, 'post', 'reports', report_data1)
         assert Report.objects.filter(content=report_str1)
 
         # 댓글 신고

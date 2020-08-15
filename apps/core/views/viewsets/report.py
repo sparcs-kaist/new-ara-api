@@ -1,6 +1,6 @@
 from rest_framework import mixins
 from django.core.mail import send_mail
-
+from apps.core.models import Article, Comment
 from ara.classes.viewset import ActionAPIViewSet
 
 from apps.core.models import (
@@ -63,4 +63,36 @@ class ReportViewSet(mixins.ListModelMixin,
 
     def create(self, request, *args, **kwargs):
         # send email
+        is_article = request.data.get('parent_comment') is None
+        if is_article:
+            parent_id = request.data.get('parent_article')
+            article = Article.objects.get(id=parent_id)
+            title = f"[신고 (게시글)] '{request.user}'님께서 Article {parent_id}을 신고하였습니다."
+            message = f'''게시글 {parent_id}에 대하여 다음과 같은 신고가 접수되었습니다:
+            신고자: {request.user}
+            신고 사유: {request.data.get('content')}
+
+            글 종류: 게시글
+            제목: {article.title}
+            작성자: {article.created_by}
+            내용: {article.content}
+            '''
+        else:
+            parent_id = request.data.get('parent_comment')
+            comment = Comment.objects.get(id=parent_id)
+            title = f"[신고 (댓글)] '{request.user}'님께서 Comment {parent_id}을 신고하였습니다."
+            message = f'''댓글 {parent_id}에 대하여 다음과 같은 신고가 접수되었습니다:
+                        신고자: {request.user}
+                        신고 사유: {request.data.get('content')}
+
+                        글 종류: 댓글
+                        작성자: {comment.created_by}
+                        내용: {comment.content}
+                        '''
+
+        send_mail(title,
+                  message,
+                  'new-ara@sparcs.org',
+                  ['new-ara@sparcs.org']
+                  )
         return super().create(request, *args, **kwargs)
