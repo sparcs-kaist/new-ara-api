@@ -33,6 +33,7 @@ django-celery-results = "^1.2.1"
 mysqlclient = "^2.0.1"
 django-redis = "^4.12.1"
 bpython = "^0.19"
+django-ses = "^1.0.2"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
