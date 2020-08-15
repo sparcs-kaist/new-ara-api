@@ -1,4 +1,5 @@
 from ara.settings import INSTALLED_APPS, MIDDLEWARE
+from ..djangorestframework import *
 
 DEBUG = True
 
@@ -17,3 +18,8 @@ MIDDLEWARE += [
     'silk.middleware.SilkyMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
+
+REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] = (
+    'rest_framework.authentication.SessionAuthentication',
+    'rest_framework.authentication.BasicAuthentication',
+)
