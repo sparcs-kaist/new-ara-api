@@ -120,3 +120,6 @@ STATIC_URL = '/static/'
 INTERNAL_IPS = (
     '127.0.0.1',
 )
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_HTTPONLY = True
