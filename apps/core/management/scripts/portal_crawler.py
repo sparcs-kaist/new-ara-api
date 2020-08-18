@@ -22,8 +22,8 @@ def get_article(url, session):
     soup = bs(article_req.text, 'lxml')
 
     writer_target = "작성자(소속)"
-
     writer = soup.find('th', text=writer_target).findNext('td').select('label')[0].contents[0].strip()
+
     title = soup.select('table > tbody > tr > td.req_first')[0].contents[0]
     raw = soup.select('table > tbody > tr:nth-child(4) > td')
 
@@ -160,7 +160,6 @@ def crawl_all():
 
             Article.objects.create(
                 parent_board_id=1,  # 포탈공지 게시판
-                created_at=info['dt'],
                 title=info['title'],
                 content=info['content'],
                 content_text=info['content_text'],
