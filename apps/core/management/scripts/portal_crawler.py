@@ -16,14 +16,35 @@ LOGIN_INFO = {
 
 BASE_URL = 'https://portal.kaist.ac.kr'
 
+def get_article(url, session):
+    article_req = session.get(url)
+    soup = bs(article_req.text, 'lxml')
+
+    writer_target = "작성자(소속)"
+
+    writer = soup.find('th', text=writer_target).findNext('td').select('label')[0].contents[0].strip()
+    title = soup.select('table > tbody > tr > td.req_first')[0].contents[0]
+    raw = soup.select('table > tbody > tr:nth-child(4) > td')
+
+    html = ''
+    for r in raw:
+        html += str(r)
+
+    content_text = ' '.join(bs(html, features='html5lib').find_all(text=True))
+
+    return {
+        'title': title,
+        'content_text': content_text,
+        'content': html,
+        'writer': writer,
+    }
+
 
 def crawl_hour():
-    with requests.Session() as session:
-        login_req = session.post('https://portalsso.kaist.ac.kr/ssoProcess.ps', data=LOGIN_INFO)
-        if login_req.status_code != 200:
-            raise Exception('login failed')
-
-        main_req = session.get(f'{BASE_URL}/ennotice/today_notice')
+    session = requests.Session()
+    login_req = session.post('https://portalsso.kaist.ac.kr/ssoProcess.ps', data=LOGIN_INFO)
+    if login_req.status_code != 200:
+        raise Exception('login failed')
 
     def get_board_today(page_num):
         today = True
@@ -39,52 +60,22 @@ def crawl_hour():
                 linklist.append({'link': link.attrs['href'], 'date': date.get_text()})
             else:
                 today = False
-                return [linklist, today]
+                return linklist, today
 
-        return [linklist, today]
-
-    def get_article(url):
-        article_req = session.get(url)
-        soup = bs(article_req.text, 'lxml')
-        dt = soup.select('table > tbody > tr:nth-child(2) > td:nth-child(4)')[0].contents[0]
-
-        written_at = datetime.datetime.strptime(dt[2:dt.index('(')], '%y.%m.%d %H:%M:%S')
-        now = datetime.datetime.now()
-        time_diff = (now - written_at).total_seconds()
-
-        if int(time_diff) > 3600:
-            return
-
-        title = soup.select('table > tbody > tr > td.req_first')[0].contents[0]
-        raw = soup.select('table > tbody > tr:nth-child(4) > td')
-        writer = soup.select('table > tbody > tr > td > label')[0].contents[0]
-
-        html = ''
-        for r in raw:
-            html += str(r)
-
-        content_text = ' '.join(bs(html, features='html5lib').find_all(text=True))
-
-        return {
-            'title': title,
-            'content_text': content_text,
-            'content': html,
-            'writer': writer,
-            'dt': dt,
-        }
+        return linklist, today
 
     links = []
-    i = 1
+    page_num = 1
 
     while True:
-        today_links, flag = get_board_today(i)
+        today_links, flag = get_board_today(page_num)
         links.extend(today_links)
         # Now Date of Post is no longer today!
         if not flag:
             break
 
         # Next page
-        i += 1
+        page_num += 1
 
     for link in links:
         link = link['link']
@@ -92,7 +83,7 @@ def crawl_hour():
         num = link.split('/')[-1]
         full_link = f'{BASE_URL}/board/read.brd?cmd=READ&boardId={board_id}&bltnNo={num}&lang_knd=ko'
 
-        info = get_article(full_link)
+        info = get_article(full_link, session)
 
         # Since it is time ordered, consequent ones have been posted more than 1 hour ago.
         if not info:
@@ -109,15 +100,17 @@ def crawl_hour():
                 nickname=info['writer'],
             )
 
-        Article.objects.create(
-            parent_board_id=1,  # 포탈공지 게시판
-            created_at=info['dt'],
-            title=info['title'],
-            content=info['content'],
-            content_text=info['content_text'],
-            created_by=user,
-            url=full_link,
+        Article.objects.get_or_create(
+            url= full_link,
+            defaults ={
+                'parent_board_id': 1,  # 포탈공지 게시판
+                'title': info['title'],
+                'content': info['content'],
+                'content_text': info['content_text'],
+                'created_by': user,
+            }
         )
+
 
 def crawl_all():
     # Session 생성, with 구문 안에서 유지
@@ -197,4 +190,3 @@ def crawl_all():
                 created_by=user,
                 url=full_link,
             )
-
