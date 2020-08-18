@@ -9,6 +9,7 @@ class Attachment(MetaDataModel):
         verbose_name_plural = '첨부파일 목록'
 
     file = models.FileField(
+        upload_to='files',
         verbose_name='링크',
     )
 
