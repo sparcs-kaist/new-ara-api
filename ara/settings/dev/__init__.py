@@ -19,7 +19,6 @@ MIDDLEWARE += [
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
-REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] = (
-    'rest_framework.authentication.SessionAuthentication',
+REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] += (
     'rest_framework.authentication.BasicAuthentication',
 )
