@@ -1,3 +1,5 @@
+from ara.settings import MIDDLEWARE
+
 DEBUG = False
 
 ALLOWED_HOSTS = [
@@ -8,3 +10,7 @@ ALLOWED_HOSTS = [
 CORS_ORIGIN_ALLOW_ALL = True
 
 SSO_IS_BETA = False
+
+MIDDLEWARE += [
+    'django.middleware.csrf.CsrfViewMiddleware',
+]
