@@ -67,6 +67,20 @@ $ make run
 
 `0` is abbreviation for `0.0.0.0` which refers to 'listening to every incoming hosts'. **Do not deploy with runserver command - use WSGI. This command is only for development.**
 
+### Internationalization (i18n)
+[xgettext](https://man7.org/linux/man-pages/man1/xgettext.1.html) is required in order to generate translation files.
+Detailed background on this can be found on [Django's documentations](https://docs.djangoproject.com/en/3.1/topics/i18n/translation/).
+To generate translation files, run:
+```bash
+$ make i18n_generate
+```
+Translation files are generated under `ara/locale/(Locale name)/LC_MESSAGES`.
+After writing translations, run the following command to apply the translations.
+```bash
+$ make i18n_compile
+```
+
+## Deployment
 ---
 
 ## Deployment with Docker

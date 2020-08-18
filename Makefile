@@ -47,3 +47,12 @@ celery_beat_run:
 
 kill_celery_processes:
 	ps auxww | grep 'celery' | awk '{print $$2}' | xargs kill -9
+
+i18n_generate:
+	mkdir -p ara/locale
+	python manage.py makemessages -l en -i env
+	python manage.py makemessages -l ko -i env
+
+i18n_compile:
+	python manage.py compilemessages
+
