@@ -18,7 +18,7 @@ from apps.user.models import UserProfile
 from apps.user.permissions.user import UserPermission
 
 
-def make_random_name() -> str:
+def _make_random_name() -> str:
     nouns = ['강아지', '고양이', '원숭이', '고양이', '낙타', '망아지', '시조새', '힙스터', '로봇', '감자', '고구마', '가마우지', '직박구리', '오리너구리', '보노보', '개미핥기', '치타', '사자', '구렁이', '도마뱀', '개구리', '올빼미', '부엉이']
     adjectives = ['가냘픈', '신나는', '귀여운', '기쁜', '귀찮은', '날랜', '바쁜', '듬직한', '사나운', '똑똑한', '더운', '추운', '징그러운', '젊은', '늙은']
     random.shuffle(nouns)
@@ -94,7 +94,7 @@ class UserViewSet(ActionAPIViewSet):
         #     'email': 'foo@bar.com'
         # }
 
-        is_kaist = True if user_info.get('kaist_id') else False
+        is_kaist = 'kaist_id' in user_info
 
         try:
             user_profile = UserProfile.objects.get(
@@ -102,10 +102,9 @@ class UserViewSet(ActionAPIViewSet):
             )
             user_profile.sso_user_info = user_info
             user_profile.is_kaist = is_kaist
-            user_profile.save()
 
         except UserProfile.DoesNotExist:
-            user_nickname = make_random_name()
+            user_nickname = _make_random_name()
             with transaction.atomic():
                 new_user = get_user_model().objects.create_user(
                     email=user_info['email'],

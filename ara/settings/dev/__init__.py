@@ -1,5 +1,5 @@
 from ara.settings import INSTALLED_APPS, MIDDLEWARE
-from ..djangorestframework import *
+from ..djangorestframework import REST_FRAMEWORK
 
 DEBUG = True
 
