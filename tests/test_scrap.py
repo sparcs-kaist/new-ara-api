@@ -1,10 +1,7 @@
 import pytest
 from django.test import TestCase
 from tests.conftest import RequestSetting
-from django.db.utils import IntegrityError
-
 from apps.core.models import Scrap, Board, Article, Block
-from apps.user.models import UserProfile
 
 
 @pytest.fixture(scope='class')
@@ -55,6 +52,7 @@ def set_articles(request):
         is_content_social=True
     )
 
+
 @pytest.fixture(scope='function')
 def set_block(request):
     request.cls.block = Block.objects.create(
@@ -67,37 +65,30 @@ def set_block(request):
 class TestScrap(TestCase, RequestSetting):
     def test_create(self):
         scrap_data = {
-            'parent_article': self.article.id,
-            'scrapped_by': self.user.id
+            'parent_article': self.article.id
         }
         self.http_request(self.user, 'post', 'scraps', scrap_data)
 
         scrap = Scrap.objects.filter(parent_article=self.article, scrapped_by=self.user).get()
-
         assert scrap.scrapped_by == self.user and scrap.parent_article == self.article
 
     def test_scrap_same_article(self):
         scrap_data = {
-            'parent_article': self.article.id,
-            'scrapped_by': self.user.id
+            'parent_article': self.article.id
         }
         self.http_request(self.user, 'post', 'scraps', scrap_data)
 
         # 같은 게시글 scrap -> db 에서 integrity error 발생
-        try:
-            self.http_request(self.user, 'post', 'scraps', scrap_data)
+        response = self.http_request(self.user, 'post', 'scraps', scrap_data)
+        assert response.status_code == 200
 
-        except IntegrityError:
-            assert True
-
-        else:
-            assert False
+        # 중복 스크랩 허용하지 않음
+        assert Scrap.objects.filter(parent_article=self.article, scrapped_by=self.user).count() == 1
 
     def test_scrap_sexual(self):
         # 성인글에 대한 profile 설정 했을 때
         scrap_data = {
-            'parent_article': self.article_sexual.id,
-            'scrapped_by': self.user.id
+            'parent_article': self.article_sexual.id
         }
         self.http_request(self.user, 'post', 'scraps', scrap_data)
 
@@ -117,8 +108,7 @@ class TestScrap(TestCase, RequestSetting):
     def test_scrap_social(self):
         # 정치글에 대한 profile 설정 했을 때
         scrap_data = {
-            'parent_article': self.article_social.id,
-            'scrapped_by': self.user.id
+            'parent_article': self.article_social.id
         }
         self.http_request(self.user, 'post', 'scraps', scrap_data)
 
@@ -131,7 +121,7 @@ class TestScrap(TestCase, RequestSetting):
 
         self.user.profile.see_social = False
         scrap2 = self.http_request(self.user, 'get', 'scraps').data
-        
+
         # 정치글 안보도록 바꾸면 scrap한 글이 안보임
         assert scrap2.get('results')[0].get('parent_article').get('is_hidden')
 
@@ -140,8 +130,7 @@ class TestScrap(TestCase, RequestSetting):
         # user2가 user을 차단했을 때 user2가 user의 article을 scrap 하는 경우 안 보이는지 확인
 
         scrap_data = {
-            'parent_article': self.article.id,
-            'scrapped_by': self.user2.id
+            'parent_article': self.article.id
         }
         self.http_request(self.user2, 'post', 'scraps', scrap_data)
 
@@ -149,3 +138,15 @@ class TestScrap(TestCase, RequestSetting):
         assert scrap.get('num_items') == 1
         assert scrap.get('results')[0].get('parent_article').get('is_hidden')
 
+    def test_wrong_request(self):
+        scrap_data = {
+            'parent_article': self.article.id + 100
+        }
+        response = self.http_request(self.user, 'post', 'scraps', scrap_data)
+        # 존재하지 않는 게시물에 대한 request 요청
+        assert response.status_code == 400
+
+        scrap_data2 = {}
+        response2 = self.http_request(self.user, 'post', 'scraps', scrap_data2)
+        # 잘못된 field로 post request 요청
+        assert response2.status_code == 400
