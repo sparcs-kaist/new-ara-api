@@ -1,5 +1,7 @@
 from rest_framework import permissions
 
+from apps.core.models import Article
+
 
 class ArticlePermission(permissions.IsAuthenticated):
     def has_object_permission(self, request, view, obj):
@@ -7,3 +9,10 @@ class ArticlePermission(permissions.IsAuthenticated):
             return request.user.is_staff or request.user == obj.created_by
 
         return super().has_object_permission(request, view, obj)
+
+
+class ArticleKAISTPermission(permissions.BasePermission):
+    message = 'KAIST 구성원만 읽을 수 있는 게시물입니다.'
+
+    def has_object_permission(self, request, view, obj: Article):
+        return request.user.profile.is_kaist or not obj.parent_board.is_kaist

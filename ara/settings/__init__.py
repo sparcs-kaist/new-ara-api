@@ -3,6 +3,7 @@ from .django import *
 from .djangorestframework import *
 from .s3 import *
 from .sso import *
+from .redis import *
 from .scheduler import *
 
 

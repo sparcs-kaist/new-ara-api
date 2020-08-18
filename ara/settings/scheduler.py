@@ -2,26 +2,8 @@ from datetime import timedelta
 from os import environ as os_environ
 from celery.schedules import crontab
 
+from ara.settings import TIME_ZONE, REDIS_URL
 
-# Redis
-from ara.settings import TIME_ZONE
-
-REDIS_HOST = os_environ.get('NEWARA_REDIS_ADDRESS', 'localhost')
-REDIS_DATABASE = int(os_environ.get('NEWARA_REDIS_DATABASE', 0))
-REDIS_URL = f'redis://{REDIS_HOST}:6379/{REDIS_DATABASE}'
-
-CACHES_TIMEOUT = timedelta(days=14)
-
-CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': REDIS_URL,
-        'TIMEOUT': CACHES_TIMEOUT,
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        }
-    }
-}
 
 # Celery
 CELERY_TIMEZONE = TIME_ZONE
@@ -45,6 +27,7 @@ def create_scheduler_config(name, period=None, crontab=None):
 
 
 SCHEDULERS = {
-    # 'CRAWL_PORTAL': create_scheduler_config('CRAWL_PORTAL', crontab=crontab(minute=0)),  # 매 0분 (1시간마다)
-    'CRAWL_PORTAL': create_scheduler_config('CRAWL_PORTAL', crontab=crontab()),
+    'CRAWL_PORTAL': create_scheduler_config('CRAWL_PORTAL', crontab=crontab(minute=0)),  # 매 0분 (1시간마다)
+    'SAVE_DAILY_BEST': create_scheduler_config('SAVE_DAILY_BEST', crontab=crontab(minute=0)),
+    'SAVE_WEEKLY_BEST': create_scheduler_config('SAVE_WEEKLY_BEST', crontab=crontab(minute=0)),
 }

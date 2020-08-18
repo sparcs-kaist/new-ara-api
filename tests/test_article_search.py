@@ -25,7 +25,7 @@ def set_authors(request):
     request.cls.authors = []
     for i in range(4):
         new_user, _ = User.objects.get_or_create(username=f'User{i+1}', email=f'user{i+1}@sparcs.org')
-        if not hasattr(request.cls.user, 'profile'):
+        if not hasattr(new_user, 'profile'):
             UserProfile.objects.get_or_create(user=new_user, nickname=f'User{i+1}')
         request.cls.authors.append(new_user)
 
@@ -73,6 +73,8 @@ class TestArticleSearch(TestCase, RequestSetting):
         assert response.data['num_items'] == 100
 
     def test_main_search(self):
+        for user in self.authors:
+            print(user.profile.nickname)
         # `main_search` 필터를 검사합니다. 개수 assertion 숫자들의 의미는 set_posts를 참고하세요.
         response = self.http_request(self.user, 'get', 'articles', querystring='main_search__contains=AAAA')
         assert response.data['num_items'] == 34
