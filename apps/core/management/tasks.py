@@ -1,13 +1,14 @@
 import time
 from collections import defaultdict
 
+from apps.core.management.scripts.portal_crawler import crawl_hour
 from apps.core.models import BestArticle
 from ara import celery_app, redis
 
 
 @celery_app.task
 def crawl_portal():
-    print('crawling!')
+    crawl_hour()
 
 
 def _get_redis_key(type_):
