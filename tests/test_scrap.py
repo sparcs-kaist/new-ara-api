@@ -1,4 +1,5 @@
 import pytest
+from django.db import IntegrityError, transaction
 from django.test import TestCase
 from tests.conftest import RequestSetting
 from apps.core.models import Scrap, Board, Article, Block
@@ -61,7 +62,7 @@ def set_block(request):
     )
 
 
-@pytest.mark.usefixtures('set_user_client_with_profile', 'set_user_client2', 'set_board', 'set_articles')
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_articles')
 class TestScrap(TestCase, RequestSetting):
     def test_create(self):
         scrap_data = {
@@ -76,11 +77,15 @@ class TestScrap(TestCase, RequestSetting):
         scrap_data = {
             'parent_article': self.article.id
         }
+        # 중복 스크랩
         self.http_request(self.user, 'post', 'scraps', scrap_data)
-
-        # 같은 게시글 scrap -> db 에서 integrity error 발생
-        response = self.http_request(self.user, 'post', 'scraps', scrap_data)
-        assert response.status_code == 200
+        # 같은 scrap을 한번 더 생성
+        # 어색해보이는 방법이지만, 링크 참고: https://stackoverflow.com/questions/21458387/transactionmanagementerror-you-cant-execute-queries-until-the-end-of-the-atom
+        try:
+            with transaction.atomic():
+                self.http_request(self.user, 'post', 'scraps', scrap_data)
+        except IntegrityError:
+            pass
 
         # 중복 스크랩 허용하지 않음
         assert Scrap.objects.filter(parent_article=self.article, scrapped_by=self.user).count() == 1
