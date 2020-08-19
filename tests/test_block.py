@@ -1,4 +1,5 @@
 import pytest
+from django.db import transaction
 from django.test import TestCase
 from django.utils import timezone
 from django.db.utils import IntegrityError
@@ -107,7 +108,6 @@ class TestBlock(TestCase, RequestSetting):
     def test_create_block(self):
         # user2가 user를 차단
         block_data = {
-            'blocked_by': self.user2.id,
             'user': self.user.id
         }
         self.http_request(self.user2, 'post', 'blocks', block_data)
@@ -127,13 +127,17 @@ class TestBlock(TestCase, RequestSetting):
     # 이미 차단된 유저를 중복 차단하는 경우 확인
     def test_cannot_block_already_blocked_user(self):
         block_data = {
-            'blocked_by': self.user2.id,
             'user': self.user.id
         }
 
-        # 같은 block을 2번 생성
         self.http_request(self.user2, 'post', 'blocks', block_data)
-        self.http_request(self.user2, 'post', 'blocks', block_data)
+        # 같은 block을 한번 더 생성
+        # 어색해보이는 방법이지만, 링크 참고: https://stackoverflow.com/questions/21458387/transactionmanagementerror-you-cant-execute-queries-until-the-end-of-the-atom
+        try:
+            with transaction.atomic():
+                self.http_request(self.user2, 'post', 'blocks', block_data)
+        except IntegrityError:
+            pass
 
         # 중복 차단이 허용되지 않으면 아래 테스트가 패스해야 합니다
         assert Block.objects.filter(blocked_by=self.user2.id, user=self.user.id).count() == 1
