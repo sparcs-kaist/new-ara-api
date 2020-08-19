@@ -27,7 +27,7 @@ For macOS, you may need to install `openssl` & `mysqlclient` and set `LDFLAGS=-L
 
 ### Fill Environment Configuration
 
-Refer to  `.env.example` file and write your own `.env` file with required informations filled-in. For SPARCS SSO, create a test service or ask SYSOP to deploy production server.
+Refer to  [.env.example file](https://github.com/sparcs-kaist/new-ara-api/blob/master/.env.example) and write your own `.env` file with required informations filled-in. For SPARCS SSO, create a test service or ask SYSOP to deploy production server.
 
 For the test service in [SPARCS SSO](https://sparcssso.kaist.ac.kr/) for local settings, fill in as below.
 - **Main URL**: (can be anything)
@@ -36,13 +36,13 @@ For the test service in [SPARCS SSO](https://sparcssso.kaist.ac.kr/) for local s
 
 After this, you should make the information in the `.env` file as environment variables for local run. (In development or porduction server, we do not use `.env` file. Rather, we use environment variables in `docker-compose.yml` file.)
 
-To make the make the information in the `.env` file as environment variables for local run, you can export each manually, or you can use the below command. Check the `Makefile`'s env command and revise it. The command is written assuming you are using `~/.bashrc`. You might want to revise it to `~/.bash_profile` or `~/.zshrc` according to your settings.
+To make the make the information in the `.env` file as environment variables for local run, you can export each manually, or you can use the below command. Check the `Makefile`'s [env command](https://github.com/sparcs-kaist/new-ara-api/blob/master/Makefile#L32) and revise it. The command is written assuming you are using `~/.bashrc`. You might want to revise it to `~/.bash_profile` or `~/.zshrc` according to your settings.
 ```bash
 $ make env
 ```
 
-### :heart:Useful Commands:heart:
-Most useful commands are already written in the `Makefile`.
+### :heart: Useful Commands:heart:
+Most useful commands are already written in the [Makefile](https://github.com/sparcs-kaist/new-ara-api/blob/master/Makefile).
 Refer to the `Makefile` and try to understand and use them.
 
 ### Create and Migrate Database
@@ -73,7 +73,7 @@ $ make run
 ## Deployment with Docker
 
 ### docker-compose.yml
-`docker-compose.yml` file is managed in S3 `sparcs-newara` bucket `docker-compose` directory. For simple local deployment, refer to `docker-compose.example.yml` file and fill in the information needed.
+`docker-compose.yml` file is managed in S3 `sparcs-newara` bucket `docker-compose` directory. For simple local deployment, refer to [docker-compose.example.yml file](https://github.com/sparcs-kaist/new-ara-api/blob/master/docker-compose.example.yml) and fill in the information needed.
 
 For [development server](newara.dev.sparcs.org), two docker containsers are up with the docker-compose file. Using AWS RDS for mysql, elastiCache for redis.
 - api container (used gunicorn for serving. celery-beat also here.)
