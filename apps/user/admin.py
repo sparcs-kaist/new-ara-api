@@ -11,7 +11,7 @@ class UserProfileAdmin(MetaDataModelAdmin):
         'see_sexual',
         'see_social',
         'is_kaist',
-        'is_past',
+        'is_newara',
     )
     list_display = (
         'uid',

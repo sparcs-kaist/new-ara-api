@@ -18,7 +18,7 @@ class UserProfile(MetaDataModel):
         unique_together = (
             ('uid', 'deleted_at'),
             ('sid', 'deleted_at'),
-            ('nickname', 'is_past', 'deleted_at'),
+            ('nickname', 'is_newara', 'deleted_at'),
         )
 
     uid = models.CharField(
@@ -82,9 +82,10 @@ class UserProfile(MetaDataModel):
         verbose_name='카이스트 인증된 사용자'
     )
 
-    is_past = models.BooleanField(
-        default=False,
-        verbose_name='이전 사용자',
+    # 포탈 공지에서 긁어온 작성자 or 이전한 아라 사용자는 is_newara=False
+    is_newara = models.BooleanField(
+        default=True,
+        verbose_name='뉴아라 사용자',
     )
 
     ara_id = models.CharField(
