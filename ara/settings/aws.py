@@ -24,3 +24,7 @@ AWS_S3_BUCKET_NAME_STATIC = env('AWS_BUCKET_NAME_STATIC')
 DEFAULT_FILE_STORAGE = 'django_s3_storage.storage.S3Storage'
 
 STATICFILES_STORAGE = 'django_s3_storage.storage.StaticS3Storage'
+
+AWS_SES_REGION_NAME = 'ap-northeast-2'
+
+AWS_SES_REGION_ENDPOINT = 'email.ap-northeast-2.amazonaws.com'

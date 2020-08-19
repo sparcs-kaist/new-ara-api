@@ -1,5 +1,9 @@
+from datetime import timedelta
+
+from dateutil.relativedelta import relativedelta
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 
 from django_mysql.models import JSONField
 
@@ -13,7 +17,7 @@ class UserProfile(MetaDataModel):
         unique_together = (
             ('uid', 'deleted_at'),
             ('sid', 'deleted_at'),
-            ('nickname', 'past_user', 'deleted_at'),
+            ('nickname', 'is_past', 'deleted_at'),
         )
 
     uid = models.CharField(
@@ -47,6 +51,12 @@ class UserProfile(MetaDataModel):
         max_length=128,
         verbose_name='닉네임',
     )
+    nickname_updated_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        default=None,
+        verbose_name='최근 닉네임 변경일시'
+    )
     see_sexual = models.BooleanField(
         default=False,
         verbose_name='성인/음란성 보기',
@@ -68,7 +78,12 @@ class UserProfile(MetaDataModel):
         primary_key=True,
     )
 
-    past_user = models.BooleanField(
+    is_kaist = models.BooleanField(
+        default=False,
+        verbose_name='카이스트 인증된 사용자'
+    )
+
+    is_past = models.BooleanField(
         default=False,
         verbose_name='이전 사용자',
     )
@@ -82,3 +97,7 @@ class UserProfile(MetaDataModel):
 
     def __str__(self):
         return self.user.username
+
+    def can_change_nickname(self) -> bool:
+        return self.nickname_updated_at is None or \
+               (timezone.now() - relativedelta(months=3)) >= self.nickname_updated_at

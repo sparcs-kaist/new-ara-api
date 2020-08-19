@@ -35,6 +35,7 @@ class MetaDataManager(models.Manager):
         return self.queryset_class(self.model).filter(deleted_at=datetime.datetime.min)
 
 
+# TODO: add redis to metadatamodel
 class MetaDataModel(models.Model):
     class Meta:
         abstract = True
@@ -45,7 +46,7 @@ class MetaDataModel(models.Model):
     objects = MetaDataManager()
 
     created_at = models.DateTimeField(
-        default=datetime.datetime.min,
+        auto_now_add=True,
         db_index=True,
         verbose_name='생성 시간',
     )
@@ -60,10 +61,7 @@ class MetaDataModel(models.Model):
     )
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        if self._state.adding:
-            self.created_at = datetime.datetime.now()
-
-        else:
+        if not self._state.adding:
             self.updated_at = datetime.datetime.now()
 
         super().save(force_insert, force_update, using, update_fields)

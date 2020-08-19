@@ -9,7 +9,7 @@ from apps.core.serializers.notification import NotificationSerializer
 
 class NotificationViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
     queryset = Notification.objects.all()
-    filter_class = NotificationFilter
+    filterset_class = NotificationFilter
     serializer_class = NotificationSerializer
     action_serializer_class = {
         'read': serializers.Serializer,

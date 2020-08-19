@@ -1,16 +1,22 @@
 from os import environ
 
-from .django import *
-from .djangorestframework import *
-from .s3 import *
-from .sso import *
+from ara.settings import *
 
 
 DEBUG = True
 TEST = True
 
 DATABASES = {
-    'default': { **env.db(),
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+        },
+        'NAME': os_environ.get('NEWARA_DB_NAME', 'new_ara'),
+        'USER': os_environ.get('NEWARA_DB_USER', 'root'),
+        'PASSWORD': os_environ.get('NEWARA_DB_PASSWORD', ''),
+        'HOST': os_environ.get('NEWARA_DB_HOST', 'localhost'),
+        'PORT': os_environ.get('NEWARA_DB_PORT', '3306'),
         'TEST': {
             'CHARSET': 'utf8mb4',
             'COLLATION': 'utf8mb4_general_ci',
@@ -18,7 +24,7 @@ DATABASES = {
     }
 }
 
-try:
-    from .local_settings import *
-except ImportError:
-    pass
+REDIS_DATABASE = int(environ.get('VITALCARE_REDIS_DATABASE', 1))
+REDIS_URL = f'redis://{REDIS_HOST}:6379/{REDIS_DATABASE}'
+
+CELERY_TASK_ALWAYS_EAGER = True

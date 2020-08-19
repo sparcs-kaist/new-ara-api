@@ -1,7 +1,10 @@
+import time
+
 from django.db import models
 
 from rest_framework import status, viewsets, response, decorators, serializers, permissions
 
+from ara import redis
 from ara.classes.viewset import ActionAPIViewSet
 
 from apps.core.models import (
@@ -16,7 +19,7 @@ from apps.core.models import (
     Scrap,
 )
 from apps.core.filters.article import ArticleFilter
-from apps.core.permissions.article import ArticlePermission
+from apps.core.permissions.article import ArticlePermission, ArticleKAISTPermission
 from apps.core.serializers.article import (
     ArticleSerializer,
     ArticleListActionSerializer,
@@ -27,7 +30,7 @@ from apps.core.serializers.article import (
 
 class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     queryset = Article.objects.all()
-    filter_class = ArticleFilter
+    filterset_class = ArticleFilter
     serializer_class = ArticleSerializer
     action_serializer_class = {
         'list': ArticleListActionSerializer,
@@ -39,16 +42,20 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     }
     permission_classes = (
         ArticlePermission,
+        ArticleKAISTPermission
     )
     action_permission_classes = {
         'vote_cancel': (
             permissions.IsAuthenticated,
+            ArticleKAISTPermission
         ),
         'vote_positive': (
             permissions.IsAuthenticated,
+            ArticleKAISTPermission
         ),
         'vote_negative': (
             permissions.IsAuthenticated,
+            ArticleKAISTPermission
         ),
     }
 
@@ -150,24 +157,39 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         if created:
             article.update_hit_count()
 
+        pipe = redis.pipeline()
+        redis_key = 'articles:hit'
+        pipe.zadd(redis_key, {f'{article.id}:1:{self.request.user.id}:{time.time()}': time.time()})
+        pipe.execute(raise_on_error=True)
+
         return super().retrieve(request, *args, **kwargs)
 
     @decorators.action(detail=True, methods=['post'])
     def vote_cancel(self, request, *args, **kwargs):
         article = self.get_object()
 
-        Vote.objects.filter(
+        vote = Vote.objects.get(
             voted_by=request.user,
             parent_article=article,
-        ).delete()
+        )
+        vote.delete()
 
         article.update_vote_status()
+
+        if vote.is_positive:
+            pipe = redis.pipeline()
+            redis_key = 'articles:vote'
+            pipe.zadd(redis_key, {f'{article.id}:-1:{request.user.id}:{time.time()}': time.time()})
+            pipe.execute(raise_on_error=True)
 
         return response.Response(status=status.HTTP_200_OK)
 
     @decorators.action(detail=True, methods=['post'])
     def vote_positive(self, request, *args, **kwargs):
         article = self.get_object()
+
+        if article.created_by_id == request.user.id:
+            return response.Response({'message': '본인 글에는 좋아요를 누를 수 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
 
         Vote.objects.update_or_create(
             voted_by=request.user,
@@ -179,11 +201,19 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         article.update_vote_status()
 
+        pipe = redis.pipeline()
+        redis_key = 'articles:vote'
+        pipe.zadd(redis_key, {f'{article.id}:1:{request.user.id}:{time.time()}': time.time()})
+        pipe.execute(raise_on_error=True)
+
         return response.Response(status=status.HTTP_200_OK)
 
     @decorators.action(detail=True, methods=['post'])
     def vote_negative(self, request, *args, **kwargs):
         article = self.get_object()
+
+        if article.created_by_id == request.user.id:
+            return response.Response({'message': '본인 글에는 싫어요를 누를 수 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
 
         Vote.objects.update_or_create(
             voted_by=request.user,
