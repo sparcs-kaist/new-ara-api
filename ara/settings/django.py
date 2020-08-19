@@ -18,12 +18,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'corsheaders',
-    'debug_toolbar',
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_filters',
     'django_extensions',
     'django_s3_storage',
+    'django_celery_beat',
+    'django_celery_results',
     'drf_yasg',
 
     'apps.core',
@@ -36,12 +37,9 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'ara.urls'
@@ -121,3 +119,9 @@ STATIC_URL = '/static/'
 INTERNAL_IPS = (
     '127.0.0.1',
 )
+
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_HTTPONLY = True
+
+EMAIL_BACKEND = 'django_ses.SESBackend'

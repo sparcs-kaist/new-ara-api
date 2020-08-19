@@ -6,51 +6,13 @@
 
 Restful API for NewAra @ SPARCS
 
-## Project Stack
-
-### Interpreter
-
-* `Python 3.7`
-* ~~`pip 19.2`~~
-* `poetry` is used as package manager
-
-### Framework
-
-* `Django 2.2`
-* `djangorestframework 3.10`
-
-### Database
-
-* MySQL (default)
-* `mysqlclient 1.4`
-* `django-mysql 3.2`
-
-Works with MySQL for Linux & macOS, not tested in Windows. Timezone is automatically adjusted. It is strongly recommended to set default charset of database or MySQL server to `utf8mb4`.
-
-### Storage
-
-* AWS S3
-* `django-s3-storage 0.12`
-
-Two buckets are used - one for storing static files, one for media files that users upload. Go to django-s3-storage documentation for required permissions.
-
-### Authentication
-
-* SPARCS SSO v2 API
-* `djangorestframework TokenAuthentication`
-
-### API Documentation
-
-* `drf-yasg 1.16`
-
-> Miscellaneous packages are listed in `requirements.txt`.
 
 ## Project Setup
 
 ### Create & Activate Virtual Environment
 
 ```bash
-$ python3 -m venv env
+$ python3 -m venv env  # should be python 3.8
 $ source env/bin/activate
 ```
 
@@ -65,15 +27,30 @@ For macOS, you may need to install `openssl` & `mysqlclient` and set `LDFLAGS=-L
 
 ### Fill Environment Configuration
 
-Copy `.env` file and fill required informations. informations. For SPARCS SSO, create a test service or ask SYSOP to deploy production server.
+Refer to  [.env.example file](https://github.com/sparcs-kaist/new-ara-api/blob/master/.env.example) and write your own `.env` file with required informations filled-in. For SPARCS SSO, create a test service or ask SYSOP to deploy production server.
 
-### Migrate Database
+For the test service in [SPARCS SSO](https://sparcssso.kaist.ac.kr/) for local settings, fill in as below.
+- **Main URL**: (can be anything)
+- **Login Callback URL**: http://127.0.0.1:9000/api/users/sso_login_callback/
+- **Unregister URL**: http://127.0.0.1:9000/api/users/sso_unregister/
 
+After this, you should make the information in the `.env` file as environment variables for local run. (In development or porduction server, we do not use `.env` file. Rather, we use environment variables in `docker-compose.yml` file.)
+
+To make the make the information in the `.env` file as environment variables for local run, you can export each manually, or you can use the below command. Check the `Makefile`'s [env command](https://github.com/sparcs-kaist/new-ara-api/blob/master/Makefile#L32) and revise it. The command is written assuming you are using `~/.bashrc`. You might want to revise it to `~/.bash_profile` or `~/.zshrc` according to your settings.
 ```bash
-$ python manage.py migrate
+$ make env
 ```
 
-`migrate` command creates required tables in the database. You also need to `makemigrations` & `migrate` if you changed the models - Django will alter tables for you.
+### :heart: Useful Commands:heart:
+Most useful commands are already written in the [Makefile](https://github.com/sparcs-kaist/new-ara-api/blob/master/Makefile).
+Refer to the `Makefile` and try to understand and use them.
+
+### Create and Migrate Database
+
+```bash
+$ mysql -u root -e 'CREATE DATABASE new_ara CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;'
+$ make init
+```
 
 ### Collect static files
 
@@ -86,20 +63,73 @@ $ python manage.py collectstatic
 ### Run lightweight server for development
 
 ```bash
-$ python manage.py runserver 0:<port>
+$ make run
 ```
 
 `0` is abbreviation for `0.0.0.0` which refers to 'listening to every incoming hosts'. **Do not deploy with runserver command - use WSGI. This command is only for development.**
 
-## Deployment
+---
 
-### uWSGI
+## Deployment with Docker
 
-~~WIP~~
+### docker-compose.yml
+`docker-compose.yml` file is managed in S3 `sparcs-newara` bucket `docker-compose` directory. For simple local deployment, refer to [docker-compose.example.yml file](https://github.com/sparcs-kaist/new-ara-api/blob/master/docker-compose.example.yml) and fill in the information needed.
 
-### Celery
+For [development server](newara.dev.sparcs.org), two docker containsers are up with the docker-compose file. Using AWS RDS for mysql, elastiCache for redis.
+- api container (used gunicorn for serving. celery-beat also here.)
+- celery-worker container
 
-~~WIP~~
+### docker image
+For managing docker images, we are using AWS ECR, `newara` repository.
+- Using tag `newara:dev` for development server.
+
+### other docker related files
+- **Dockerfile**: We use virtual environment also inside the docker container.
+- **.docker/run.sh**: api container's entrypoint.
+- **.docker/run-celery.sh**: celery worker container's entrypoint.
+- **.docker/supervisor-app.conf**
+- **.docker/supervisor-celery-worker.conf**
+
+---
+
+## Project Stack
+
+### Interpreter
+
+* `Python 3.8`
+* `poetry` is used as package manager
+  * When adding libraries to the virtual environment, you should not use `pip`. Rather, use `poetry add` command. Refer to [this link](https://python-poetry.org/docs/cli/) for poetry  commands.
+
+### Framework
+
+* `Django 2.2`
+* `djangorestframework 3.10`
+
+### Database
+
+* MySQL (default)
+* `mysqlclient 2.0`
+* `django-mysql 3.2`
+
+Works with MySQL for Linux & macOS, not tested in Windows. Timezone is automatically adjusted. It is strongly recommended to set default charset of database or MySQL server to `utf8mb4`.
+
+### Storage
+
+* AWS S3
+* `django-s3-storage 0.12`
+
+Two buckets are used - one for storing static files, one for media files that users upload. Go to django-s3-storage documentation for required permissions.
+
+### Authentication
+
+* SPARCS SSO v2 API
+* `djangorestframework SessionAuthentication`
+
+### API Documentation
+
+* `drf-yasg 1.17`
+
+---
 
 ## Contributors
 

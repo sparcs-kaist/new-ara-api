@@ -25,7 +25,7 @@ class CommentViewSet(mixins.CreateModelMixin,
         'attachment',
         'created_by',
     )
-    filter_class = CommentFilter
+    filterset_class = CommentFilter
     serializer_class = CommentSerializer
     action_serializer_class = {
         'create': CommentCreateActionSerializer,

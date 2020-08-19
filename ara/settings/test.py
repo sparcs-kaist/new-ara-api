@@ -1,9 +1,6 @@
 from os import environ
 
-from .django import *
-from .djangorestframework import *
-from .s3 import *
-from .sso import *
+from ara.settings import *
 
 
 DEBUG = True
@@ -26,3 +23,8 @@ DATABASES = {
         }
     }
 }
+
+REDIS_DATABASE = int(environ.get('VITALCARE_REDIS_DATABASE', 1))
+REDIS_URL = f'redis://{REDIS_HOST}:6379/{REDIS_DATABASE}'
+
+CELERY_TASK_ALWAYS_EAGER = True

@@ -11,6 +11,8 @@ WORKDIR /newara/www
 RUN /newara/www/venv/bin/pip install poetry
 RUN /newara/www/venv/bin/poetry export -f requirements.txt | venv/bin/pip install -r /dev/stdin
 
-RUN chmod +x /newara/www/entrypoint.sh
+RUN mkdir -p /var/log/newara/
+RUN chmod +x /newara/www/.docker/run.sh
+RUN chmod +x /newara/www/.docker/run-celery.sh
 
 EXPOSE 9000

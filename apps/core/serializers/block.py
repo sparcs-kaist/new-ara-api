@@ -1,3 +1,5 @@
+from rest_framework import serializers
+
 from ara.classes.serializers import MetaDataModelSerializer
 
 from apps.core.models import Block
@@ -22,4 +24,7 @@ class BlockSerializer(BaseBlockSerializer):
 
 
 class BlockCreateActionSerializer(BaseBlockSerializer):
-    pass
+    class Meta(BaseBlockSerializer.Meta):
+        read_only_fields = (
+            'blocked_by',
+        )

@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, IntegrityError
 from django.conf import settings
 
 from ara.db.models import MetaDataModel
@@ -16,7 +16,7 @@ class Scrap(MetaDataModel):
         on_delete=models.CASCADE,
         to='core.Article',
         related_name='scrap_set',
-        verbose_name='글',
+        verbose_name='스크랩한 글',
     )
     scrapped_by = models.ForeignKey(
         on_delete=models.CASCADE,

@@ -1,3 +1,4 @@
+import hashlib
 import hmac
 import time
 
@@ -53,7 +54,7 @@ class Client:
             payload.append(timestamp)
 
         msg = ''.join(list(map(str, payload))).encode()
-        sign = hmac.new(self.secret_key, msg).hexdigest()
+        sign = hmac.new(self.secret_key, msg, hashlib.md5).hexdigest()
         return sign, timestamp
 
     def _validate_sign(self, payload, timestamp, sign):

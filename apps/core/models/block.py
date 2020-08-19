@@ -8,6 +8,9 @@ class Block(MetaDataModel):
     class Meta(MetaDataModel.Meta):
         verbose_name = '차단'
         verbose_name_plural = '차단 목록'
+        unique_together = (
+            ('blocked_by', 'user', 'deleted_at'),
+        )
 
     blocked_by = models.ForeignKey(
         on_delete=models.CASCADE,

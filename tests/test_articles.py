@@ -1,8 +1,10 @@
 import pytest
+from django.contrib.auth.models import User
 from django.test import TestCase
 from django.utils import timezone
 
 from apps.core.models import Article, Topic, Board
+from apps.user.models import UserProfile
 from tests.conftest import RequestSetting
 
 
@@ -50,7 +52,59 @@ def set_article(request):
     )
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_topic', 'set_article')
+@pytest.fixture(scope='function')
+def set_kaist_articles(request):
+    request.cls.non_kaist_user, _ = User.objects.get_or_create(username='NonKaistUser', email='non-kaist-user@sparcs.org')
+    if not hasattr(request.cls.non_kaist_user, 'profile'):
+        UserProfile.objects.get_or_create(user=request.cls.non_kaist_user, nickname='Not a KAIST User')
+    request.cls.kaist_user, _ = User.objects.get_or_create(username='KaistUser', email='kaist-user@sparcs.org')
+    if not hasattr(request.cls.kaist_user, 'profile'):
+        UserProfile.objects.get_or_create(user=request.cls.kaist_user, nickname='KAIST User')
+
+    request.cls.kaist_board, _ = Board.objects.get_or_create(
+        slug="kaist-only",
+        ko_name="KAIST Board",
+        en_name="KAIST Board",
+        ko_description="KAIST Board",
+        en_description="KAIST Board",
+        is_kaist=True
+    )
+    request.cls.kaist_article, _ = Article.objects.get_or_create(
+            title="example article",
+            content="example content",
+            content_text="example content text",
+            is_anonymous=False,
+            is_content_sexual=False,
+            is_content_social=False,
+            hit_count=0,
+            positive_vote_count=0,
+            negative_vote_count=0,
+            created_by=request.cls.user,
+            parent_board=request.cls.kaist_board,
+            commented_at=timezone.now()
+    )
+    yield None
+    request.cls.non_kaist_user.delete()
+    request.cls.kaist_user.delete()
+    request.cls.kaist_board.delete()
+    request.cls.kaist_article.delete()
+
+
+@pytest.fixture(scope='function')
+def set_readonly_board(request):
+    request.cls.readonly_board, _ = Board.objects.get_or_create(
+        slug="readonly",
+        ko_name="읽기전용 게시판",
+        en_name="Read Only Board",
+        ko_description="테스트 게시판입니다",
+        en_description="This is a board for testing",
+        is_readonly=True
+    )
+    yield None
+    request.cls.readonly_board.delete()
+
+
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_topic', 'set_article', 'set_admin_client')
 class TestArticle(TestCase, RequestSetting):
     def test_list(self):
         # article 개수를 확인하는 테스트
@@ -240,3 +294,40 @@ class TestArticle(TestCase, RequestSetting):
         article = Article.objects.get(id=self.article.id)
         assert article.positive_vote_count == 0
         assert article.negative_vote_count == 0
+
+    @pytest.mark.usefixtures('set_kaist_articles')
+    def test_kaist_permission(self):
+        # 카이스트 구성원만 볼 수 있는 게시판에 대한 테스트
+        def check_kaist_error(response):
+            assert response.status_code == 403
+            assert 'KAIST' in response.data['detail']  # 에러 메세지 체크
+        # 게시물 읽기 테스트
+        check_kaist_error(self.http_request(self.non_kaist_user, 'get', f'articles/{self.kaist_article.id}'))
+        # 투표 테스트
+        check_kaist_error(
+            self.http_request(self.non_kaist_user, 'post', f'articles/{self.kaist_article.id}/vote_positive')
+        )
+        check_kaist_error(
+            self.http_request(self.non_kaist_user, 'post', f'articles/{self.kaist_article.id}/vote_negative')
+        )
+        check_kaist_error(
+            self.http_request(self.non_kaist_user, 'post', f'articles/{self.kaist_article.id}/vote_cancel')
+        )
+
+    @pytest.mark.usefixtures('set_readonly_board')
+    def test_readonly_board(self):
+        # self.http_request(self.admin, '', )
+        user_data = {
+            "title": "article for test_create",
+            "content": "content for test_create",
+            "content_text": "content_text for test_create",
+            "is_anonymous": True,
+            "is_content_sexual": False,
+            "is_content_social": False,
+            "parent_board": self.readonly_board.id
+        }
+        response = self.http_request(self.user, 'post', 'articles', user_data)
+        assert response.status_code == 400
+
+
+

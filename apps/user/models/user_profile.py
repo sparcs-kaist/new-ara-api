@@ -1,3 +1,4 @@
+import datetime
 from datetime import timedelta
 
 from dateutil.relativedelta import relativedelta
@@ -52,9 +53,7 @@ class UserProfile(MetaDataModel):
         verbose_name='닉네임',
     )
     nickname_updated_at = models.DateTimeField(
-        blank=True,
-        null=True,
-        default=None,
+        default=datetime.datetime.min,
         verbose_name='최근 닉네임 변경일시'
     )
     see_sexual = models.BooleanField(
@@ -99,5 +98,4 @@ class UserProfile(MetaDataModel):
         return self.user.username
 
     def can_change_nickname(self) -> bool:
-        return self.nickname_updated_at is None or \
-               (timezone.now() - relativedelta(months=3)) >= self.nickname_updated_at
+        return (timezone.now() - relativedelta(months=3)) >= self.nickname_updated_at
