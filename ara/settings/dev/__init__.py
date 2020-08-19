@@ -17,6 +17,7 @@ INSTALLED_APPS += [
 
 MIDDLEWARE += [
     'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'django_samesite_none.middleware.SameSiteNoneMiddleware',
 ]
 
 REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] += (

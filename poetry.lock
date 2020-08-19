@@ -424,6 +424,14 @@ boto3 = ">=1.4.4,<2"
 django = ">=1.11"
 
 [[package]]
+category = "dev"
+description = "Django middleware which sets SameSite flag to 'None' for cookies where it is None"
+name = "django-samesite-none"
+optional = false
+python-versions = "*"
+version = "0.0.2"
+
+[[package]]
 category = "main"
 description = "A Django email backend for Amazon's Simple Email Service"
 name = "django-ses"
@@ -1096,7 +1104,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "7d17e20464af0d80843e254541253734874408ac70400a992698cc464e0146f7"
+content-hash = "3e240d3d7a931fbfc75e20b94853d997a377fd822bd4c405e7ea8f98559187d4"
 lock-version = "1.0"
 python-versions = "^3.7"
 
@@ -1259,6 +1267,10 @@ django-redis = [
 ]
 django-s3-storage = [
     {file = "django-s3-storage-0.12.5.tar.gz", hash = "sha256:14b8670a0d32b364f76174675904deffedb10332ad3aa2df84e98a7f6479fae9"},
+]
+django-samesite-none = [
+    {file = "django-samesite-none-0.0.2.tar.gz", hash = "sha256:57863ff8e5ff081e93543dbf2b5382f4b26b8a7e1b6850909649f6701ef3a115"},
+    {file = "django_samesite_none-0.0.2-py3-none-any.whl", hash = "sha256:340fcc2ef83226896261a2f7b1d216124408bdad7959e166b3e697b33f61a709"},
 ]
 django-ses = [
     {file = "django-ses-1.0.2.tar.gz", hash = "sha256:fa9ee4d8e81aed720aab1884441cbbd99e41f15f0c7319d4a22599f276cba8ee"},
