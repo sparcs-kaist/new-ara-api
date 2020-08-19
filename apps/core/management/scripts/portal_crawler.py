@@ -17,11 +17,20 @@ LOGIN_INFO = {
 BASE_URL = 'https://portal.kaist.ac.kr'
 
 
-def get_article(url, session):
+def _login_kaist_portal():
+    session = requests.Session()
+    login_req = session.post('https://portalsso.kaist.ac.kr/ssoProcess.ps', data=LOGIN_INFO)
+    if login_req.status_code != 200:
+        raise Exception('login failed')
+
+    return session
+
+
+def _get_article(url, session):
     article_req = session.get(url)
     soup = bs(article_req.text, 'lxml')
 
-    writer_target = "작성자(소속)"
+    writer_target = '작성자(소속)'
     writer = soup.find('th', text=writer_target).findNext('td').select('label')[0].contents[0].strip()
 
     title = soup.select('table > tbody > tr > td.req_first')[0].contents[0]
@@ -42,12 +51,9 @@ def get_article(url, session):
 
 
 def crawl_hour():
-    session = requests.Session()
-    login_req = session.post('https://portalsso.kaist.ac.kr/ssoProcess.ps', data=LOGIN_INFO)
-    if login_req.status_code != 200:
-        raise Exception('login failed')
+    session = _login_kaist_portal()
 
-    def get_board_today(page_num):
+    def _get_board_today(page_num):
         today = True
         board_req = session.get(
             f'{BASE_URL}/board/list.brd?boardId=today_notice&lang_knd=ko&userAgent=Chrome&isMobile=false&page={page_num}&sortColumn=REG_DATIM&sortMethod=DESC')
@@ -69,10 +75,10 @@ def crawl_hour():
     page_num = 1
 
     while True:
-        today_links, flag = get_board_today(page_num)
+        today_links, is_today = _get_board_today(page_num)
         links.extend(today_links)
         # Now Date of Post is no longer today!
-        if not flag:
+        if not is_today:
             break
 
         # Next page
@@ -84,26 +90,24 @@ def crawl_hour():
         num = link.split('/')[-1]
         full_link = f'{BASE_URL}/board/read.brd?cmd=READ&boardId={board_id}&bltnNo={num}&lang_knd=ko'
 
-        info = get_article(full_link, session)
+        info = _get_article(full_link, session)
 
         # Since it is time ordered, consequent ones have been posted more than 1 hour ago.
-        if not info:
-            break
 
-        exist = UserProfile.objects.filter(nickname=info['writer'])
+        exist = UserProfile.objects.filter(nickname=info['writer'], is_newara=False)
         if exist:
-            user = exist[0].user
+            user = exist.first().user
         else:
             user = get_user_model().objects.create(username=str(uuid.uuid1()), is_active=False)
             user_profile = UserProfile.objects.create(
-                is_past=True,
+                is_newara=False,
                 user=user,
                 nickname=info['writer'],
             )
 
         Article.objects.get_or_create(
-            url= full_link,
-            defaults ={
+            url=full_link,
+            defaults={
                 'parent_board_id': 1,  # 포탈공지 게시판
                 'title': info['title'],
                 'content': info['content'],
@@ -114,55 +118,52 @@ def crawl_hour():
 
 
 def crawl_all():
-    # Session 생성, with 구문 안에서 유지
-    with requests.Session() as session:
-        login_req = session.post('https://portalsso.kaist.ac.kr/ssoProcess.ps', data=LOGIN_INFO)
-        if login_req.status_code != 200:
-            raise Exception('login failed')
+    session = _login_kaist_portal()
 
-        def get_board(page_num):
-            board_req = session.get(
-                f'{BASE_URL}/board/list.brd?boardId=today_notice&lang_knd=ko&userAgent=Chrome&isMobile=false&page={page_num}&sortColumn=REG_DATIM&sortMethod=DESC')
-            soup = bs(board_req.text, 'lxml')
-            link = []
-            titles = soup.select('table > tbody > tr > td > a')
-            for title in titles:
-                link.append(title.attrs['href'])
+    def _get_board(page_num):
+        board_req = session.get(
+            f'{BASE_URL}/board/list.brd?boardId=today_notice&lang_knd=ko&userAgent=Chrome&isMobile=false&page={page_num}&sortColumn=REG_DATIM&sortMethod=DESC')
+        soup = bs(board_req.text, 'lxml')
+        link = []
+        titles = soup.select('table > tbody > tr > td > a')
+        for title in titles:
+            link.append(title.attrs['href'])
 
-            return link
+        return link
 
-        links = []
-        page_num = 1
-        while True:
-            link = get_board(page_num)
-            if link:
-                links.extend(link)
-                page_num += 1
-            else:
-                break
+    links = []
+    page_num = 1
 
-        for link in links:
-            board_id = link.split('/')[-2]
-            num = link.split('/')[-1]
-            full_link = f'{BASE_URL}/board/read.brd?cmd=READ&boardId={board_id}&bltnNo={num}&lang_knd=ko'
-            info = get_article(full_link, session)
+    while True:
+        link = _get_board(page_num)
+        if link:
+            links.extend(link)
+            page_num += 1
+        else:
+            break
 
-            exist = UserProfile.objects.filter(nickname=info['writer'])
-            if exist:
-                user = exist[0].user
-            else:
-                user = get_user_model().objects.create(username=str(uuid.uuid1()), is_active=False)
-                user_profile = UserProfile.objects.create(
-                    is_past=True,
-                    user=user,
-                    nickname=info['writer'],
-                )
+    for link in links:
+        board_id = link.split('/')[-2]
+        num = link.split('/')[-1]
+        full_link = f'{BASE_URL}/board/read.brd?cmd=READ&boardId={board_id}&bltnNo={num}&lang_knd=ko'
+        info = _get_article(full_link, session)
 
-            Article.objects.create(
-                parent_board_id=1,  # 포탈공지 게시판
-                title=info['title'],
-                content=info['content'],
-                content_text=info['content_text'],
-                created_by=user,
-                url=full_link,
+        exist = UserProfile.objects.filter(nickname=info['writer'], is_newara=False)
+        if exist:
+            user = exist.first().user
+        else:
+            user = get_user_model().objects.create(username=str(uuid.uuid1()), is_active=False)
+            user_profile = UserProfile.objects.create(
+                is_newara=False,
+                user=user,
+                nickname=info['writer'],
             )
+
+        Article.objects.create(
+            parent_board_id=1,  # 포탈공지 게시판
+            title=info['title'],
+            content=info['content'],
+            content_text=info['content_text'],
+            created_by=user,
+            url=full_link,
+        )
