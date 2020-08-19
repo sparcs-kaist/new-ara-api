@@ -4,6 +4,7 @@ import datetime
 from bs4 import BeautifulSoup as bs
 
 from django.contrib.auth import get_user_model
+from tqdm import tqdm
 
 from apps.core.models import Article
 from apps.user.models import UserProfile
@@ -142,7 +143,7 @@ def crawl_all():
         else:
             break
 
-    for link in links:
+    for link in tqdm(links):
         board_id = link.split('/')[-2]
         num = link.split('/')[-1]
         full_link = f'{BASE_URL}/board/read.brd?cmd=READ&boardId={board_id}&bltnNo={num}&lang_knd=ko'
