@@ -73,6 +73,19 @@ class TestScrap(TestCase, RequestSetting):
         scrap = Scrap.objects.filter(parent_article=self.article, scrapped_by=self.user).get()
         assert scrap.scrapped_by == self.user and scrap.parent_article == self.article
 
+    def test_wrong_create(self):
+        scrap_data = {
+            'parent_article': self.article.id + 100
+        }
+        response = self.http_request(self.user, 'post', 'scraps', scrap_data)
+        # 존재하지 않는 게시물에 대한 request 요청
+        assert response.status_code == 400
+
+        scrap_data2 = {}
+        response2 = self.http_request(self.user, 'post', 'scraps', scrap_data2)
+        # 잘못된 field로 post request 요청
+        assert response2.status_code == 400
+
     def test_scrap_same_article(self):
         scrap_data = {
             'parent_article': self.article.id
@@ -92,10 +105,7 @@ class TestScrap(TestCase, RequestSetting):
 
     def test_scrap_sexual(self):
         # 성인글에 대한 profile 설정 했을 때
-        scrap_data = {
-            'parent_article': self.article_sexual.id
-        }
-        self.http_request(self.user, 'post', 'scraps', scrap_data)
+        Scrap.objects.create(parent_article=self.article_sexual, scrapped_by=self.user)
 
         self.user.profile.see_sexual = True
         scrap = self.http_request(self.user, 'get', 'scraps').data
@@ -112,10 +122,7 @@ class TestScrap(TestCase, RequestSetting):
 
     def test_scrap_social(self):
         # 정치글에 대한 profile 설정 했을 때
-        scrap_data = {
-            'parent_article': self.article_social.id
-        }
-        self.http_request(self.user, 'post', 'scraps', scrap_data)
+        Scrap.objects.create(parent_article=self.article_social, scrapped_by=self.user)
 
         self.user.profile.see_social = True
         scrap = self.http_request(self.user, 'get', 'scraps').data
@@ -133,25 +140,8 @@ class TestScrap(TestCase, RequestSetting):
     @pytest.mark.usefixtures('set_block')
     def test_scrap_block(self):
         # user2가 user을 차단했을 때 user2가 user의 article을 scrap 하는 경우 안 보이는지 확인
-
-        scrap_data = {
-            'parent_article': self.article.id
-        }
-        self.http_request(self.user2, 'post', 'scraps', scrap_data)
+        Scrap.objects.create(parent_article=self.article, scrapped_by=self.user2)
 
         scrap = self.http_request(self.user2, 'get', 'scraps').data
         assert scrap.get('num_items') == 1
         assert scrap.get('results')[0].get('parent_article').get('is_hidden')
-
-    def test_wrong_request(self):
-        scrap_data = {
-            'parent_article': self.article.id + 100
-        }
-        response = self.http_request(self.user, 'post', 'scraps', scrap_data)
-        # 존재하지 않는 게시물에 대한 request 요청
-        assert response.status_code == 400
-
-        scrap_data2 = {}
-        response2 = self.http_request(self.user, 'post', 'scraps', scrap_data2)
-        # 잘못된 field로 post request 요청
-        assert response2.status_code == 400
