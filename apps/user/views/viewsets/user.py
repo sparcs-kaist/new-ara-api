@@ -130,9 +130,7 @@ class UserViewSet(ActionAPIViewSet):
         user_profile.user.save()
 
         login(request, user_profile.user)
-        return Response({
-            'next_url': request.session.pop('next', '/')
-        })
+        return redirect(to=request.session.pop('next', '/'))
 
     @decorators.action(detail=True, methods=['post'])
     def sso_unregister(self, request, *args, **kwargs):
