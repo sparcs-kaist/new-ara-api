@@ -11,13 +11,14 @@ CORS_ALLOW_CREDENTIALS = True
 
 SSO_IS_BETA = False
 
+SESSION_COOKIE_SAMESITE = None
+
 INSTALLED_APPS += [
     'debug_toolbar',
 ]
 
 MIDDLEWARE += [
     'debug_toolbar.middleware.DebugToolbarMiddleware',
-    'django_samesite_none.middleware.SameSiteNoneMiddleware',
 ]
 
 REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] += (
