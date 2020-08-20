@@ -7,8 +7,6 @@ ALLOWED_HOSTS = [
     'ara-api.sparcs.org',
 ]
 
-CORS_ALLOW_CREDENTIALS = True
-
 SSO_IS_BETA = False
 
 MIDDLEWARE += [

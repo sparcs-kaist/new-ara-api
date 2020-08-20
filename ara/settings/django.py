@@ -40,6 +40,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_cookies_samesite.middleware.CookiesSameSite',
 ]
 
 ROOT_URLCONF = 'ara.urls'
@@ -125,3 +126,5 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_HTTPONLY = True
 
 EMAIL_BACKEND = 'django_ses.SESBackend'
+
+CORS_ALLOW_CREDENTIALS = True
