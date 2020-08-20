@@ -1,11 +1,12 @@
-from django.db.models import Case, When
-from rest_framework import views, response
-from apps.core.models import ArticleReadLog, Block, datetime
+from rest_framework import views, response, permissions
+from apps.core.models import ArticleReadLog, Block
 from apps.core.serializers.article import ArticleListActionSerializer
 from ara.classes.pagination import PageNumberPagination
 
 
 class RecentView(views.APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
     def get(self, request):
         return response.Response(data={
             'recently_read': recently_read_articles(request)
