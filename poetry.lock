@@ -429,7 +429,7 @@ description = "Django Amazon S3 file storage."
 name = "django-s3-storage"
 optional = false
 python-versions = "*"
-version = "0.12.5"
+version = "0.13.3"
 
 [package.dependencies]
 boto3 = ">=1.4.4,<2"
@@ -1119,7 +1119,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "e26c1e7b9db918eff0c237ff56cced1a103fc38fc56cacd59dd258b89ce7cb3a"
+content-hash = "e72273fdba6e0390ed61d48c5dc71bfbb50be5b3240a5cc088433bcf2e7357ca"
 lock-version = "1.0"
 python-versions = "^3.7"
 
@@ -1285,7 +1285,7 @@ django-redis = [
     {file = "django_redis-4.12.1-py3-none-any.whl", hash = "sha256:1133b26b75baa3664164c3f44b9d5d133d1b8de45d94d79f38d1adc5b1d502e5"},
 ]
 django-s3-storage = [
-    {file = "django-s3-storage-0.12.5.tar.gz", hash = "sha256:14b8670a0d32b364f76174675904deffedb10332ad3aa2df84e98a7f6479fae9"},
+    {file = "django-s3-storage-0.13.3.tar.gz", hash = "sha256:94fa108b272366f883355b108e6b67fc4f9e0e786523d44ac77c75505a511453"},
 ]
 django-ses = [
     {file = "django-ses-1.0.2.tar.gz", hash = "sha256:fa9ee4d8e81aed720aab1884441cbbd99e41f15f0c7319d4a22599f276cba8ee"},
