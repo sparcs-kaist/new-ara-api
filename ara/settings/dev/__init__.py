@@ -19,6 +19,7 @@ MIDDLEWARE += [
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
-REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] += (
+REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] = (
     'rest_framework.authentication.BasicAuthentication',
+    'ara.authentication.CsrfExemptSessionAuthentication',
 )
