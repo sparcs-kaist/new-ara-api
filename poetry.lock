@@ -10,6 +10,17 @@ version = "2.6.1"
 vine = ">=1.1.3,<5.0.0a1"
 
 [[package]]
+category = "main"
+description = "ASGI specs, helper code, and adapters"
+name = "asgiref"
+optional = false
+python-versions = ">=3.5"
+version = "3.2.10"
+
+[package.extras]
+tests = ["pytest", "pytest-asyncio"]
+
+[[package]]
 category = "dev"
 description = "An abstract syntax tree for Python with inference support."
 name = "astroid"
@@ -288,10 +299,11 @@ category = "main"
 description = "A high-level Python Web framework that encourages rapid development and clean, pragmatic design."
 name = "django"
 optional = false
-python-versions = ">=3.5"
-version = "2.2.15"
+python-versions = ">=3.6"
+version = "3.1"
 
 [package.dependencies]
+asgiref = ">=3.2.10,<3.3.0"
 pytz = "*"
 sqlparse = ">=0.2.2"
 
@@ -323,17 +335,6 @@ version = "1.2.1"
 
 [package.dependencies]
 celery = ">=4.4,<5.0"
-
-[[package]]
-category = "main"
-description = "Middleware which sets SameSite flag for session and csrf cookies in legacy versions of Django."
-name = "django-cookies-samesite"
-optional = false
-python-versions = "*"
-version = "0.6.6"
-
-[package.dependencies]
-ua-parser = "0.10.0"
 
 [[package]]
 category = "main"
@@ -1053,14 +1054,6 @@ version = "1.4.1"
 
 [[package]]
 category = "main"
-description = "Python port of Browserscope's user agent parser"
-name = "ua-parser"
-optional = false
-python-versions = "*"
-version = "0.10.0"
-
-[[package]]
-category = "main"
 description = "URI templates"
 name = "uritemplate"
 optional = false
@@ -1126,7 +1119,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "4888b3f4882d92b73f799dceec26174a21e6f87a5979b03cafbaae7cd4679dec"
+content-hash = "e26c1e7b9db918eff0c237ff56cced1a103fc38fc56cacd59dd258b89ce7cb3a"
 lock-version = "1.0"
 python-versions = "^3.7"
 
@@ -1134,6 +1127,10 @@ python-versions = "^3.7"
 amqp = [
     {file = "amqp-2.6.1-py2.py3-none-any.whl", hash = "sha256:aa7f313fb887c91f15474c1229907a04dac0b8135822d6603437803424c0aa59"},
     {file = "amqp-2.6.1.tar.gz", hash = "sha256:70cdb10628468ff14e57ec2f751c7aa9e48e7e3651cfd62d431213c0c4e58f21"},
+]
+asgiref = [
+    {file = "asgiref-3.2.10-py3-none-any.whl", hash = "sha256:9fc6fb5d39b8af147ba40765234fa822b39818b12cc80b35ad9b0cef3a476aed"},
+    {file = "asgiref-3.2.10.tar.gz", hash = "sha256:7e51911ee147dd685c3c8b805c0ad0cb58d360987b56953878f8c06d2d1c6f1a"},
 ]
 astroid = [
     {file = "astroid-2.4.2-py3-none-any.whl", hash = "sha256:bc58d83eb610252fd8de6363e39d4f1d0619c894b0ed24603b881c02e64c7386"},
@@ -1245,8 +1242,8 @@ curtsies = [
     {file = "curtsies-0.3.4.tar.gz", hash = "sha256:4ca543998d8bbba7185db099f8b7bb30baeb47426f7ac1a271e4d9ca8bbb2b05"},
 ]
 django = [
-    {file = "Django-2.2.15-py3-none-any.whl", hash = "sha256:91f540000227eace0504a24f508de26daa756353aa7376c6972d7920bc339a3a"},
-    {file = "Django-2.2.15.tar.gz", hash = "sha256:3e2f5d172215862abf2bac3138d8a04229d34dbd2d0dab42c6bf33876cc22323"},
+    {file = "Django-3.1-py3-none-any.whl", hash = "sha256:1a63f5bb6ff4d7c42f62a519edc2adbb37f9b78068a5a862beff858b68e3dc8b"},
+    {file = "Django-3.1.tar.gz", hash = "sha256:2d390268a13c655c97e0e2ede9d117007996db692c1bb93eabebd4fb7ea7012b"},
 ]
 django-celery-beat = [
     {file = "django-celery-beat-2.0.0.tar.gz", hash = "sha256:fdf1255eecfbeb770c6521fe3e69989dfc6373cd5a7f0fe62038d37f80f47e48"},
@@ -1255,9 +1252,6 @@ django-celery-beat = [
 django-celery-results = [
     {file = "django_celery_results-1.2.1-py2.py3-none-any.whl", hash = "sha256:a29ab580f0e38c66c39f51cc426bbdbb2a391b8cc0867df9dea748db2c961db2"},
     {file = "django_celery_results-1.2.1.tar.gz", hash = "sha256:e390f70cc43bbc2cd7c8e4607dc29ab6211a2ab968f93677583f0160921f670c"},
-]
-django-cookies-samesite = [
-    {file = "django-cookies-samesite-0.6.6.tar.gz", hash = "sha256:a26dc27bfc446279c981a301b053eff845b93d9ba62798e281c90584a7ccaa4a"},
 ]
 django-cors-headers = [
     {file = "django-cors-headers-3.4.0.tar.gz", hash = "sha256:f5218f2f0bb1210563ff87687afbf10786e080d8494a248e705507ebd92d7153"},
@@ -1653,10 +1647,6 @@ typed-ast = [
     {file = "typed_ast-1.4.1-cp38-cp38-win_amd64.whl", hash = "sha256:fc0fea399acb12edbf8a628ba8d2312f583bdbdb3335635db062fa98cf71fca4"},
     {file = "typed_ast-1.4.1-cp39-cp39-macosx_10_15_x86_64.whl", hash = "sha256:d43943ef777f9a1c42bf4e552ba23ac77a6351de620aa9acf64ad54933ad4d34"},
     {file = "typed_ast-1.4.1.tar.gz", hash = "sha256:8c8aaad94455178e3187ab22c8b01a3837f8ee50e09cf31f1ba129eb293ec30b"},
-]
-ua-parser = [
-    {file = "ua-parser-0.10.0.tar.gz", hash = "sha256:47b1782ed130d890018d983fac37c2a80799d9e0b9c532e734c67cf70f185033"},
-    {file = "ua_parser-0.10.0-py2.py3-none-any.whl", hash = "sha256:46ab2e383c01dbd2ab284991b87d624a26a08f72da4d7d413f5bfab8b9036f8a"},
 ]
 uritemplate = [
     {file = "uritemplate-3.0.1-py2.py3-none-any.whl", hash = "sha256:07620c3f3f8eed1f12600845892b0e036a2420acf513c53f7de0abd911a5894f"},

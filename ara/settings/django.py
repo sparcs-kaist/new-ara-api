@@ -40,7 +40,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django_cookies_samesite.middleware.CookiesSameSite',
 ]
 
 ROOT_URLCONF = 'ara.urls'
