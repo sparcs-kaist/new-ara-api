@@ -4,14 +4,6 @@ from django.db import models
 
 
 class MetaDataQuerySet(models.QuerySet):
-    def update(self, **kwargs):
-        if 'updated_at' not in kwargs.keys():
-            kwargs.update({
-                'updated_at': datetime.datetime.now(),
-            })
-
-        return super().update(**kwargs)
-
     def delete(self):
         return super().update(**{
             'deleted_at': datetime.datetime.now(),
@@ -51,7 +43,8 @@ class MetaDataModel(models.Model):
         verbose_name='생성 시간',
     )
     updated_at = models.DateTimeField(
-        default=datetime.datetime.min,
+        auto_now=True,
+        db_index=True,
         verbose_name='수정 시간',
     )
     deleted_at = models.DateTimeField(
@@ -60,13 +53,9 @@ class MetaDataModel(models.Model):
         verbose_name='삭제 시간',
     )
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        if not self._state.adding:
-            self.updated_at = datetime.datetime.now()
-
-        super().save(force_insert, force_update, using, update_fields)
-
     def delete(self, using=None, keep_parents=False):
         self.deleted_at = datetime.datetime.now()
-
         self.save()
+
+    def hard_delete(self):
+        super().delete()
