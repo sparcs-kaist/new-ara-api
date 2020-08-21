@@ -1,5 +1,4 @@
 import uuid
-import datetime
 import random
 
 from cached_property import cached_property
@@ -7,10 +6,8 @@ from django.conf import settings
 from django.contrib.auth import get_user_model, login, logout
 from django.db import transaction
 from django.shortcuts import redirect
-
+from django.utils import timezone
 from rest_framework import status, response, decorators, permissions
-from rest_framework.authtoken.models import Token
-from rest_framework.response import Response
 
 from ara.classes.viewset import ActionAPIViewSet
 from ara.classes.sparcssso import Client as SSOClient
@@ -127,7 +124,7 @@ class UserViewSet(ActionAPIViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        user_profile.user.last_login = datetime.datetime.now()
+        user_profile.user.last_login = timezone.now()
         user_profile.user.save()
 
         login(request, user_profile.user)
