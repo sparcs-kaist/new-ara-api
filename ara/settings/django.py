@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'django_celery_results',
     'drf_yasg',
+    'cacheops',
 
     'apps.core',
     'apps.user',

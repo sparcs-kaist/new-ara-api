@@ -5,6 +5,7 @@ from .aws import *
 from .sso import *
 from .redis import *
 from .scheduler import *
+from .cacheops import *
 
 
 if env('DJANGO_ENV') == 'development':
