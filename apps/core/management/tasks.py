@@ -33,7 +33,7 @@ def _get_best(days):
     article_hits = defaultdict(int)
     for obj in hit_objs:
         article_id, hit, _, _ = obj.split(':')
-        article_hits[article_id] += int(vote)
+        article_hits[article_id] += int(hit)
 
     hit_sorted = sorted(article_votes.items(), key=lambda x: article_hits[x[0]], reverse=True)
     articles = []
