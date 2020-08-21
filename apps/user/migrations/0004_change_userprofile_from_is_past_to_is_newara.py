@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('user', '0004_set_default_for_nickname_updated_at'),
+        ('user', '0003_created_at_to_auto_now_add'),
     ]
 
     operations = [
