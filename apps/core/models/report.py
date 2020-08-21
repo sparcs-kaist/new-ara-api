@@ -1,3 +1,4 @@
+from cached_property import cached_property
 from django.db import models, IntegrityError
 from django.conf import settings
 
@@ -50,7 +51,7 @@ class Report(MetaDataModel):
 
         super(Report, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
-    @property
+    @cached_property
     def parent(self):
         return self.parent_article if self.parent_article else self.parent_comment
 

@@ -2,6 +2,7 @@ import uuid
 import datetime
 import random
 
+from cached_property import cached_property
 from django.conf import settings
 from django.contrib.auth import get_user_model, login, logout
 from django.db import transaction
@@ -52,7 +53,7 @@ class UserViewSet(ActionAPIViewSet):
         ),
     }
 
-    @property
+    @cached_property
     def sso_client(self):
         return SSOClient(settings.SSO_CLIENT_ID, settings.SSO_SECRET_KEY, is_beta=settings.SSO_IS_BETA)
 

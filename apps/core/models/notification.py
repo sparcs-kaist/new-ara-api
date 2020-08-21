@@ -1,3 +1,4 @@
+from cached_property import cached_property
 from django.db import models
 
 from ara.db.models import MetaDataModel
@@ -46,7 +47,7 @@ class Notification(MetaDataModel):
         verbose_name='알림 관련 댓글',
     )
 
-    @property
+    @cached_property
     def data(self):
         return {
             'title': self.title,
