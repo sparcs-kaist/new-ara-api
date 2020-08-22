@@ -48,7 +48,6 @@ Refer to the `Makefile` and try to understand and use them.
 ### Create and Migrate Database
 
 ```bash
-$ mysql -u root -e 'CREATE DATABASE new_ara CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;'
 $ make init
 ```
 
@@ -75,7 +74,7 @@ $ make run
 ### docker-compose.yml
 `docker-compose.yml` file is managed in S3 `sparcs-newara` bucket `docker-compose` directory. For simple local deployment, refer to [docker-compose.example.yml file](https://github.com/sparcs-kaist/new-ara-api/blob/master/docker-compose.example.yml) and fill in the information needed.
 
-For [development server](newara.dev.sparcs.org), two docker containsers are up with the docker-compose file. Using AWS RDS for mysql, elastiCache for redis.
+For [development server](https://newara.dev.sparcs.org/), two docker containsers are up with the docker-compose file. Using AWS RDS for mysql, elastiCache for redis.
 - api container (used gunicorn for serving. celery-beat also here.)
 - celery-worker container
 
@@ -96,13 +95,13 @@ For managing docker images, we are using AWS ECR, `newara` repository.
 
 ### Interpreter
 
-* `Python 3.8`
+* `Python 3.7`
 * `poetry` is used as package manager
   * When adding libraries to the virtual environment, you should not use `pip`. Rather, use `poetry add` command. Refer to [this link](https://python-poetry.org/docs/cli/) for poetry  commands.
 
 ### Framework
 
-* `Django 2.2`
+* `Django 3.1`
 * `djangorestframework 3.10`
 
 ### Database

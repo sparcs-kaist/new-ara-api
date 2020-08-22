@@ -1,11 +1,12 @@
 init:
+	mysql -u root -e 'CREATE DATABASE new_ara CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;'
 	python manage.py migrate
 
 superuser:
 	python manage.py createsuperuser
 
 flush:
-	mysql -u root -e 'DROP DATABASE new_ara; CREATE DATABASE new_ara CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;'
+	mysql -u root -e 'DROP DATABASE new_ara;'
 
 reset: flush init
 
