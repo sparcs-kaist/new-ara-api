@@ -23,7 +23,9 @@ class BlockViewSet(mixins.ListModelMixin,
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
 
+        # cacheops 이용으로 select_related에서 prefetch_related로 옮김
         queryset = queryset.select_related(
+        ).prefetch_related(
             'user',
             'user__profile',
         )

@@ -36,6 +36,7 @@ bpython = "^0.19"
 django-ses = "^1.0.2"
 tqdm = "^4.48.2"
 cached-property = "^1.5.1"
+django-cacheops = "^5.0.1"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
