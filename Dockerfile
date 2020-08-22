@@ -3,7 +3,7 @@ FROM python:3.7
 RUN pip install --upgrade pip virtualenv awscli
 RUN virtualenv -p python3 /newara/www/venv
 
-RUN apt-get update && apt-get install netcat-openbsd supervisor vim -y
+RUN apt-get update && apt-get install netcat-openbsd supervisor vim gettext -y
 
 ADD ./ /newara/www
 
