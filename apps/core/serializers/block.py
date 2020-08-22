@@ -1,3 +1,4 @@
+from django.utils.translation import gettext
 from rest_framework import serializers
 
 from ara.classes.serializers import MetaDataModelSerializer
@@ -28,5 +29,5 @@ class BlockCreateActionSerializer(BaseBlockSerializer):
         blocked_by = data.get('blocked_by')
         user = data.get('user')
         if Block.objects.filter(blocked_by=blocked_by, user=user).exists():
-            raise serializers.ValidationError(f'이미 차단한 유저입니다.')
+            raise serializers.ValidationError(gettext('This user is already blocked.'))
         return data

@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.utils.translation import gettext
 from rest_framework import exceptions, serializers
 
 from ara.classes.serializers import MetaDataModelSerializer
@@ -265,9 +266,9 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
         user_is_superuser = self.context['request'].user.is_superuser
         user_is_kaist = self.context['request'].user.profile.is_kaist
         if not user_is_superuser and board.is_readonly:
-            raise serializers.ValidationError('쓰기가 금지된 게시판입니다.')
+            raise serializers.ValidationError(gettext('This board is read only.'))
         if not user_is_kaist and board.is_kaist:
-            raise serializers.ValidationError('카이스트 구성원만 사용할 수 있는 게시판입니다.')
+            raise serializers.ValidationError(gettext('This board is only for KAIST members.'))
         return board
 
 
