@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-08-18 21:35+0900\n"
+"POT-Creation-Date: 2020-08-22 23:12+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,6 +17,25 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+
+#: apps/core/serializers/article.py:269
+#, fuzzy
+#| msgid "This board is only for KAIST members."
+msgid "This board is read only."
+msgstr "카이스트 구성원만 이용할 수 있는 게시판입니다."
+
+#: apps/core/serializers/article.py:271
+msgid "This board is only for KAIST members."
+msgstr "카이스트 구성원만 이용할 수 있는 게시판입니다."
+
+#: apps/core/serializers/block.py:32
+msgid "This user is already blocked."
+msgstr "이미 차단된 사용자입니다."
+
+#: apps/user/serializers/user_profile.py:35
+#, python-format
+msgid "Nicknames can only be changed every 3 months. (can't change until %(date)s)"
+msgstr "닉네임은 3개월마다 변경할 수 있습니다. (%(date)s까지 변경 불가)"
 
 #: ara/settings/django.py:95
 msgid "Korean"

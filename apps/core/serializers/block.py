@@ -1,3 +1,4 @@
+from django.utils.translation import gettext
 from rest_framework import serializers
 
 from ara.classes.serializers import MetaDataModelSerializer
