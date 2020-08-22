@@ -15,18 +15,20 @@ class RecentView(views.APIView):
 
 def recently_read_articles(request):
     paginator = PageNumberPagination()
+    # cacheops 이용으로 select_related에서 prefetch_related로 옮김
     recent_articles = ArticleReadLog.objects.filter(
         read_by=request.user
     ).order_by('-updated_at'
-               ).select_related('article', 'article__created_by',
-                                'article__created_by__profile',
-                                'article__parent_topic',
-                                'article__parent_board',
-                                ).prefetch_related('article__comment_set',
-                                                   'article__comment_set__comment_set',
-                                                   'article__attachments',
-                                                   'article__article_update_log_set',
-                                                   Block.prefetch_my_block(request.user, prefix='article__'))
+    ).select_related(
+    ).prefetch_related('article', 'article__created_by',
+                       'article__created_by__profile',
+                       'article__parent_topic',
+                       'article__parent_board',
+                       'article__comment_set',
+                       'article__comment_set__comment_set',
+                       'article__attachments',
+                       'article__article_update_log_set',
+                       Block.prefetch_my_block(request.user, prefix='article__'))
 
     result_page = paginator.paginate_queryset(recent_articles, request)
 
