@@ -45,7 +45,7 @@ def set_user_client3(request):
 
 
 class RequestSetting:
-    def http_request(self, user, method, path, data=None, querystring=''):
+    def http_request(self, user, method, path, data=None, querystring='', **kwargs):
         self.api_client.force_authenticate(user=user)
 
         request_func = {
@@ -56,7 +56,7 @@ class RequestSetting:
             'delete': self.api_client.delete
         }
         url = f'/api/{path}/?{querystring}'
-        return request_func[method](url, data, format='json')
+        return request_func[method](url, data=data, format='json', **kwargs)
 
 
 class TestCase(DjangoTestCase):
