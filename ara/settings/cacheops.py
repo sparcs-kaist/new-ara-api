@@ -16,5 +16,4 @@ CACHEOPS = {
     'core.Topic': {'ops': {'get', 'fetch'}, 'timeout': 60*60},
 
     'auth.User': {'ops': {'get'}, 'timeout': 60*10},
-    'user.UserProfile': {'ops': {'get'}, 'timeout': 60*10},
 }
