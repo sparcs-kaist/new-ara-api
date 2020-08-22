@@ -59,14 +59,6 @@ $ python manage.py collectstatic
 
 `collectstatic` command collects all static files required to run installed apps to selected storage - for this project, static S3 bucket. You should open public access for the static bucket to get appropriate response.
 
-### Run lightweight server for development
-
-```bash
-$ make run
-```
-
-`0` is abbreviation for `0.0.0.0` which refers to 'listening to every incoming hosts'. **Do not deploy with runserver command - use WSGI. This command is only for development.**
-
 ### Internationalization (i18n)
 [xgettext](https://man7.org/linux/man-pages/man1/xgettext.1.html) is required in order to generate translation files.
 Detailed background on this can be found on [Django's documentations](https://docs.djangoproject.com/en/3.1/topics/i18n/translation/).
@@ -80,7 +72,14 @@ After writing translations, run the following command to apply the translations.
 $ make i18n_compile
 ```
 
-## Deployment
+### Run lightweight server for development
+
+```bash
+$ make run
+```
+
+`0` is abbreviation for `0.0.0.0` which refers to 'listening to every incoming hosts'. **Do not deploy with runserver command - use WSGI. This command is only for development.**
+
 ---
 
 ## Deployment with Docker
