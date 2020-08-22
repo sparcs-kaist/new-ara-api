@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'django_celery_results',
     'drf_yasg',
+    'cacheops',
 
     'apps.core',
     'apps.user',
@@ -106,7 +107,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = False
+USE_TZ = True
 
 SECRET_KEY = env('SECRET_KEY')
 
@@ -136,5 +137,8 @@ INTERNAL_IPS = (
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = True
 
 EMAIL_BACKEND = 'django_ses.SESBackend'
+
+CORS_ALLOW_CREDENTIALS = True

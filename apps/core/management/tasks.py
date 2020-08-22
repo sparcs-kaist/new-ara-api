@@ -1,13 +1,14 @@
 import time
 from collections import defaultdict
 
+from apps.core.management.scripts.portal_crawler import crawl_hour
 from apps.core.models import BestArticle
 from ara import celery_app, redis
 
 
 @celery_app.task
 def crawl_portal():
-    print('crawling!')
+    crawl_hour()
 
 
 def _get_redis_key(type_):
@@ -32,7 +33,7 @@ def _get_best(days):
     article_hits = defaultdict(int)
     for obj in hit_objs:
         article_id, hit, _, _ = obj.split(':')
-        article_hits[article_id] += int(vote)
+        article_hits[article_id] += int(hit)
 
     hit_sorted = sorted(article_votes.items(), key=lambda x: article_hits[x[0]], reverse=True)
     articles = []

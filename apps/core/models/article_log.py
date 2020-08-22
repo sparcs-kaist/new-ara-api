@@ -31,7 +31,7 @@ class ArticleReadLog(MetaDataModel):
 
     @property
     def last_read_at(self):
-        return self.updated_at if self.updated_at != datetime.datetime.min else self.created_at
+        return self.updated_at
 
     @classmethod
     def prefetch_my_article_read_log(cls, user, prefix=''):

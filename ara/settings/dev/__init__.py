@@ -9,16 +9,17 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 SSO_IS_BETA = False
 
+SESSION_COOKIE_SAMESITE = 'None'
+
 INSTALLED_APPS += [
-    'silk',
     'debug_toolbar',
 ]
 
 MIDDLEWARE += [
-    'silk.middleware.SilkyMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
-REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] += (
+REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] = (
     'rest_framework.authentication.BasicAuthentication',
+    'ara.authentication.CsrfExemptSessionAuthentication',
 )

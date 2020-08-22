@@ -198,6 +198,36 @@ class TestArticle(TestCase, RequestSetting):
         self.http_request(self.user, 'post', 'articles', user_data)
         assert Article.objects.filter(title='article for test_create')
 
+    def test_update_cache_sync(self):
+        new_title = 'title changed!'
+        new_content = 'content changed!'
+        article = Article.objects.create(
+            title="example article",
+            content="example content",
+            content_text="example content text",
+            is_anonymous=True,
+            is_content_sexual=False,
+            is_content_social=False,
+            hit_count=0,
+            positive_vote_count=0,
+            negative_vote_count=0,
+            created_by=self.user,
+            parent_topic=self.topic,
+            parent_board=self.board,
+            commented_at=timezone.now()
+        )
+        # 캐시 업데이트 확인을 위해 GET을 미리 한번 함
+        self.http_request(self.user, 'get', f'articles/{article.id}')
+        response = self.http_request(self.user, 'put', f'articles/{article.id}', {
+            'title': new_title,
+            'content': new_content
+        })
+        assert response.status_code == 200
+        response = self.http_request(self.user, 'get', f'articles/{article.id}')
+        assert response.status_code == 200
+        assert response.data.get('title') == new_title
+        assert response.data.get('content') == new_content
+
     def test_update_hit_counts(self):
         previous_hit_count = self.article.hit_count
         res = self.http_request(self.user2, 'get', f'articles/{self.article.id}').data

@@ -25,9 +25,8 @@ class BlockSerializer(BaseBlockSerializer):
 
 
 class BlockCreateActionSerializer(BaseBlockSerializer):
-    def validate(self, data):
-        blocked_by = data.get('blocked_by')
-        user = data.get('user')
-        if Block.objects.filter(blocked_by=blocked_by, user=user).exists():
-            raise serializers.ValidationError(gettext('This user is already blocked.'))
-        return data
+    class Meta(BaseBlockSerializer.Meta):
+        read_only_fields = (
+            'blocked_by',
+        )
+
