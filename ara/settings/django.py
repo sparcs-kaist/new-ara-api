@@ -115,6 +115,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'OPTIONS': {
             'charset': 'utf8mb4',
+            'init_command': 'SET sql_mode="STRICT_TRANS_TABLES"',
         },
         'NAME': os_environ.get('NEWARA_DB_NAME', 'new_ara'),
         'USER': os_environ.get('NEWARA_DB_USER', 'root'),
