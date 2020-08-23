@@ -4,7 +4,7 @@ from rest_framework import exceptions, serializers
 
 from ara.classes.serializers import MetaDataModelSerializer
 
-from apps.core.models import Article, Board
+from apps.core.models import Article, Board, Scrap, ArticleReadLog
 from apps.core.serializers.article_log import ArticleUpdateLogSerializer
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
@@ -153,18 +153,67 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 class ArticleSerializer(BaseArticleSerializer):
     def get_side_articles(self, obj):
         request = self.context['request']
-        from_all = request.query_params.get('from_all', False)
-        if from_all:
-            before = Article.objects.exclude(id=obj.id).filter(created_at__lte=obj.created_at).first()
-            after = Article.objects.exclude(id=obj.id).filter(created_at__gte=obj.created_at).last()
+        from_view = request.query_params.get('from_view')
+        if not from_view:
+            return {
+                'before': None,
+                'after': None
+            }
+
+        if from_view == 'all':
+            articles = Article.objects.exclude(id=obj.id)
+            before = articles.filter(created_at__lte=obj.created_at).first()
+            after = articles.filter(created_at__gte=obj.created_at).last()
+
+        elif from_view == 'board':
+            articles = Article.objects.filter(parent_board=obj.parent_board).exclude(id=obj.id)
+            before = articles.filter(created_at__lte=obj.created_at).first()
+            after = articles.filter(created_at__gte=obj.created_at).last()
+
+        elif from_view == 'mine':
+            articles = Article.objects.filter(created_by=request.user).exclude(id=obj.id)
+            before = articles.filter(created_at__lte=obj.created_at).first()
+            after = articles.filter(created_at__gte=obj.created_at).last()
+
+        elif from_view == 'scrap':
+            scraps = Scrap.objects.filter(scrapped_by=request.user)
+
+            try:
+                s = scraps.get(parent_article=obj)
+            except Scrap.DoesNotExist:
+                raise serializers.ValidationError(gettext("This article is not in user's scrap list."))
+
+            before = scraps.filter(created_at__lte=s.created_at).first()
+            if before:
+                before = before.parent_article
+
+            after = scraps.filter(created_at__gte=s.created_at).last()
+            if after:
+                after = after.parent_article
+
+        elif from_view == 'recent':
+            reads = ArticleReadLog.objects.filter(read_by=request.user)
+
+            try:
+                r = reads.get(article=obj)
+            except ArticleReadLog.DoesNotExist:
+                raise serializers.ValidationError(gettext('This article is never read by user.'))
+
+            before = reads.filter(updated_at__lte=r.updated_at).first()
+            if before:
+                before = before.article
+
+            after = reads.filter(created_at__gte=r.updated_at).last()
+            if after:
+                after = after.article
 
         else:
-            before = Article.objects.exclude(id=obj.id).filter(parent_board=obj.parent_board,
-                                                               created_at__lte=obj.created_at).first()
-            after = Article.objects.exclude(id=obj.id).filter(parent_board=obj.parent_board,
-                                                              created_at__gte=obj.created_at).last()
-        return {'before': BaseArticleSerializer(before).data,
-                'after': BaseArticleSerializer(after).data}
+            raise serializers.ValidationError(gettext("Wrong value for parameter 'from_view'."))
+
+        return {
+            'before': BaseArticleSerializer(before).data if before else None,
+            'after': BaseArticleSerializer(after).data if after else None,
+        }
 
     parent_topic = TopicSerializer(
         read_only=True,
