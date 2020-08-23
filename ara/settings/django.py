@@ -1,3 +1,7 @@
+import os
+
+from django.utils.translation import ugettext_lazy
+
 from .env import env, root
 from os import environ as os_environ
 
@@ -38,6 +42,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -87,6 +92,13 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
 LANGUAGE_CODE = 'ko-kr'
+LANGUAGES = [
+    ('ko', ugettext_lazy('Korean')),
+    ('en', ugettext_lazy('English'))
+]
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'ara/locale')
+]
 
 TIME_ZONE = 'Asia/Seoul'
 

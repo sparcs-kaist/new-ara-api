@@ -59,6 +59,19 @@ $ python manage.py collectstatic
 
 `collectstatic` command collects all static files required to run installed apps to selected storage - for this project, static S3 bucket. You should open public access for the static bucket to get appropriate response.
 
+### Internationalization (i18n)
+[xgettext](https://man7.org/linux/man-pages/man1/xgettext.1.html) is required in order to generate translation files.
+Detailed background on this can be found on [Django's documentations](https://docs.djangoproject.com/en/3.1/topics/i18n/translation/).
+To generate translation files, run:
+```bash
+$ make i18n_generate
+```
+Translation files are generated under `ara/locale/(Locale name)/LC_MESSAGES`.
+After writing translations, run the following command to apply the translations.
+```bash
+$ make i18n_compile
+```
+
 ### Run lightweight server for development
 
 ```bash
