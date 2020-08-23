@@ -151,6 +151,21 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
 
 class ArticleSerializer(BaseArticleSerializer):
+    def get_side_articles(self, obj):
+        request = self.context['request']
+        from_all = request.query_params.get('from_all', False)
+        if from_all:
+            before = Article.objects.exclude(id=obj.id).filter(created_at__lte=obj.created_at).first()
+            after = Article.objects.exclude(id=obj.id).filter(created_at__gte=obj.created_at).last()
+
+        else:
+            before = Article.objects.exclude(id=obj.id).filter(parent_board=obj.parent_board,
+                                                               created_at__lte=obj.created_at).first()
+            after = Article.objects.exclude(id=obj.id).filter(parent_board=obj.parent_board,
+                                                              created_at__gte=obj.created_at).last()
+        return {'before': BaseArticleSerializer(before).data,
+                'after': BaseArticleSerializer(after).data}
+
     parent_topic = TopicSerializer(
         read_only=True,
     )
@@ -207,6 +222,9 @@ class ArticleSerializer(BaseArticleSerializer):
         read_only=True,
     )
     article_current_page = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    side_articles = serializers.SerializerMethodField(
         read_only=True,
     )
 
