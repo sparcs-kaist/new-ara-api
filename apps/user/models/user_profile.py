@@ -1,8 +1,8 @@
+from cached_property import cached_property
 from dateutil.relativedelta import relativedelta
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
-
 from django_mysql.models import JSONField
 
 from ara.db.models import MetaDataModel
@@ -97,3 +97,7 @@ class UserProfile(MetaDataModel):
 
     def can_change_nickname(self) -> bool:
         return (timezone.now() - relativedelta(months=3)) >= self.nickname_updated_at
+
+    @cached_property
+    def email(self):
+        return self.user.email
