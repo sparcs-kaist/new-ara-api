@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from django.utils.translation import gettext
-from django.utils import timezone
+from rest_framework import serializers
 
 from ara.classes.serializers import MetaDataModelSerializer
 
@@ -37,11 +38,7 @@ class BlockCreateActionSerializer(BaseBlockSerializer):
         )
 
     def create(self, validated_data):
-        # 이미 차단 기록이 존재할 경우 IntegrityError 를 띄우지 않고 생성 시간만 변경하도록 함
-        block, _ = Block.objects.update_or_create(
-            **validated_data,
-            defaults={
-                'created_at': timezone.now()
-            }
-        )
-        return block
+        try:
+            return super().create(validated_data)
+        except IntegrityError:
+            raise serializers.ValidationError(gettext("This user is already blocked."))
