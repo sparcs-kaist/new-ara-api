@@ -15,6 +15,7 @@ class BlockViewSet(mixins.ListModelMixin,
                    mixins.DestroyModelMixin,
                    ActionAPIViewSet):
     queryset = Block.objects.all()
+    filterset_fields = ['blocked_by']
     serializer_class = BlockSerializer
     action_serializer_class = {
         'create': BlockCreateActionSerializer,
