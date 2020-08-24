@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-08-23 14:22+0900\n"
+"POT-Creation-Date: 2020-08-25 01:02+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,17 +18,27 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: apps/core/serializers/article.py:269
-#, fuzzy
-#| msgid "This board is only for KAIST members."
-msgid "This board is read only."
-msgstr "카이스트 구성원만 이용할 수 있는 게시판입니다."
+#: apps/core/serializers/article.py:184
+msgid "This article is not in user's scrap list."
+msgstr "스크랩한 적이 없는 게시물입니다."
 
-#: apps/core/serializers/article.py:271
+#: apps/core/serializers/article.py:200
+msgid "This article is never read by user."
+msgstr "사용자가 읽은 적이 없는 게시물입니다."
+
+#: apps/core/serializers/article.py:211
+msgid "Wrong value for parameter 'from_view'."
+msgstr ""
+
+#: apps/core/serializers/article.py:336
+msgid "This board is read only."
+msgstr "읽기 전용 게시판입니다."
+
+#: apps/core/serializers/article.py:338
 msgid "This board is only for KAIST members."
 msgstr "카이스트 구성원만 이용할 수 있는 게시판입니다."
 
-#: apps/user/serializers/user_profile.py:35
+#: apps/user/serializers/user_profile.py:43
 #, python-format
 msgid ""
 "Nicknames can only be changed every 3 months. (can't change until %(date)s)"
