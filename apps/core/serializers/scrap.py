@@ -1,5 +1,6 @@
-from ara.classes.serializers import MetaDataModelSerializer
+from django.utils import timezone
 
+from ara.classes.serializers import MetaDataModelSerializer
 from apps.core.models import Scrap
 
 
@@ -26,3 +27,13 @@ class ScrapCreateActionSerializer(MetaDataModelSerializer):
         read_only_fields = (
             'scrapped_by',
         )
+
+    def create(self, validated_data):
+        # 이미 스크랩이 존재할 경우 IntegrityError 를 띄우지 않고 생성 시간만 변경하도록 함
+        scrap, _ = Scrap.objects.update_or_create(
+            **validated_data,
+            defaults={
+                'created_at': timezone.now()
+            }
+        )
+        return scrap
