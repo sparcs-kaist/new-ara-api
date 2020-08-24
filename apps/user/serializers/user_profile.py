@@ -7,9 +7,14 @@ from apps.user.models import UserProfile
 
 
 class BaseUserProfileSerializer(MetaDataModelSerializer):
+    email = serializers.SerializerMethodField()
+
     class Meta:
         model = UserProfile
         fields = '__all__'
+
+    def get_email(self, obj):
+        return obj.user.email
 
 
 class UserProfileSerializer(BaseUserProfileSerializer):
