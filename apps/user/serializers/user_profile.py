@@ -13,8 +13,9 @@ class BaseUserProfileSerializer(MetaDataModelSerializer):
         model = UserProfile
         fields = '__all__'
 
-    def get_email(self, obj):
-        return obj.user.email
+    @staticmethod
+    def get_email(obj):
+        return obj.email
 
 
 class UserProfileSerializer(BaseUserProfileSerializer):
