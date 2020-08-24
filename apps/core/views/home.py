@@ -8,14 +8,8 @@ from apps.core.serializers.board import BoardRecentArticleActionSerializer
 class HomeView(views.APIView):
     def get(self, request):
         return response.Response(data={
-            'daily_bests': {
-                'positive_vote_count': _best_articles('daily', 'positive_vote_count', request),
-                'hit_count': _best_articles('daily', 'hit_count', request),
-            },
-            'weekly_bests': {
-                'positive_vote_count': _best_articles('weekly', 'positive_vote_count', request),
-                'hit_count': _best_articles('weekly', 'hit_count', request),
-            },
+            'daily_bests': _best_articles('daily', 'positive_vote_count', request),
+            'weekly_bests': _best_articles('weekly', 'positive_vote_count', request),
         })
 
 

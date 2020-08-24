@@ -15,7 +15,7 @@ def _get_redis_key(type_):
     return f'articles:{type_}'
 
 
-def _get_best(days):
+def _get_best(days, period):
     type_ = 'vote'
     to_ts = time.time()
     from_ts = to_ts - 24*60*60*days
@@ -38,7 +38,7 @@ def _get_best(days):
     hit_sorted = sorted(article_votes.items(), key=lambda x: article_hits[x[0]], reverse=True)
     articles = []
     for key, _ in sorted(hit_sorted, key=lambda x: x[1], reverse=True)[:5]:
-        articles.append(BestArticle(period=BestArticle.PERIOD_CHOICES_DAILY,
+        articles.append(BestArticle(period=period,
                                     best_by=BestArticle.BEST_BY_CHOICES_POSITIVE_VOTES,
                                     article_id=key))
 
@@ -47,9 +47,9 @@ def _get_best(days):
 
 @celery_app.task
 def save_daily_best():
-    return _get_best(1)
+    return _get_best(1, BestArticle.PERIOD_CHOICES_DAILY)
 
 
 @celery_app.task
 def save_weekly_best():
-    return _get_best(7)
+    return _get_best(7, BestArticle.PERIOD_CHOICES_WEEKLY)
