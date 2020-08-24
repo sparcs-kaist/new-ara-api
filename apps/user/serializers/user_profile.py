@@ -17,6 +17,8 @@ class BaseUserProfileSerializer(MetaDataModelSerializer):
 
     @staticmethod
     def get_email(obj):
+        if obj.email.endswith('@sso.sparcs.org'):
+            return None
         return obj.email
 
 
