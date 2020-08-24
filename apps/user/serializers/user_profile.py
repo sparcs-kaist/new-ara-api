@@ -9,9 +9,17 @@ from apps.user.models import UserProfile
 
 
 class BaseUserProfileSerializer(MetaDataModelSerializer):
+    email = serializers.SerializerMethodField()
+
     class Meta:
         model = UserProfile
         fields = '__all__'
+
+    @staticmethod
+    def get_email(obj):
+        if obj.email.endswith('@sso.sparcs.org'):
+            return None
+        return obj.email
 
 
 class UserProfileSerializer(BaseUserProfileSerializer):

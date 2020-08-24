@@ -1,6 +1,5 @@
 from rest_framework import viewsets, permissions
 
-from apps.core.filters.board import BoardFilter
 from ara.classes.viewset import ActionAPIViewSet
 
 from apps.core.models import Board
@@ -12,7 +11,7 @@ from apps.core.serializers.board import (
 
 class BoardViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
     queryset = Board.objects.all()
-    filterset_class = BoardFilter
+    filterset_fields = ['is_readonly']
     serializer_class = BoardSerializer
     permission_classes = (
         permissions.IsAuthenticated,
