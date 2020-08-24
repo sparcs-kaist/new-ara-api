@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-08-23 14:22+0900\n"
+"POT-Creation-Date: 2020-08-24 22:03+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,15 +18,33 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: apps/core/serializers/article.py:269
+#: apps/core/serializers/article.py:184
+msgid "This article is not in user's scrap list."
+msgstr ""
+
+#: apps/core/serializers/article.py:200
+#, fuzzy
+#| msgid "This board is only for KAIST members."
+msgid "This article is never read by user."
+msgstr "카이스트 구성원만 이용할 수 있는 게시판입니다."
+
+#: apps/core/serializers/article.py:211
+msgid "Wrong value for parameter 'from_view'."
+msgstr ""
+
+#: apps/core/serializers/article.py:336
 #, fuzzy
 #| msgid "This board is only for KAIST members."
 msgid "This board is read only."
 msgstr "카이스트 구성원만 이용할 수 있는 게시판입니다."
 
-#: apps/core/serializers/article.py:271
+#: apps/core/serializers/article.py:338
 msgid "This board is only for KAIST members."
 msgstr "카이스트 구성원만 이용할 수 있는 게시판입니다."
+
+#: apps/core/serializers/block.py:13
+msgid "Cannot block yourself"
+msgstr "스스로를 차단할 수 없습니다."
 
 #: apps/user/serializers/user_profile.py:35
 #, python-format
