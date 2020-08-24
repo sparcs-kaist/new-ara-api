@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-08-25 01:02+0900\n"
+"POT-Creation-Date: 2020-08-25 01:54+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,6 +36,18 @@ msgstr ""
 
 #: apps/core/serializers/article.py:338
 msgid "This board is only for KAIST members."
+msgstr ""
+
+#: apps/core/serializers/block.py:14
+msgid "Cannot block yourself"
+msgstr ""
+
+#: apps/core/serializers/block.py:44
+msgid "This user is already blocked."
+msgstr ""
+
+#: apps/core/serializers/scrap.py:37
+msgid "This article is already scrapped."
 msgstr ""
 
 #: apps/user/serializers/user_profile.py:43
