@@ -1,4 +1,3 @@
-import datetime
 from datetime import timedelta
 
 import pytest
@@ -130,7 +129,7 @@ class TestUser(TestCase, RequestSetting):
 class TestUserNickname(TestCase, RequestSetting):
     def test_nickname_update(self):
         # 사용자가 처음 생성됨 -> 변경된 적이 없으므로 None
-        assert self.user.profile.nickname_updated_at == datetime.datetime.min
+        assert self.user.profile.nickname_updated_at == timezone.datetime.min.replace(tzinfo=timezone.utc)
 
         # 닉네임 변경시 nickname_updated_at 변경
         update_data = {

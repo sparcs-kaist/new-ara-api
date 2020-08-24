@@ -74,16 +74,19 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         if self.action != 'list':
             # optimizing queryset for create, update, retrieve actions
+            # cacheops 이용으로 select_related에서 prefetch_related로 옮김
             queryset = queryset.select_related(
+            ).prefetch_related(
                 'created_by',
                 'created_by__profile',
                 'parent_topic',
                 'parent_board',
-            ).prefetch_related(
+                'attachments',
                 Scrap.prefetch_my_scrap(self.request.user),
+                Block.prefetch_my_block(self.request.user),
                 models.Prefetch(
                     'comment_set',
-                    queryset=Comment.objects.order_by('created_at').select_related(
+                    queryset=Comment.objects.reverse().select_related(
                         'attachment',
                     ).prefetch_related(
                         'comment_update_log_set',
@@ -92,7 +95,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                         Report.prefetch_my_report(self.request.user),
                         models.Prefetch(
                             'comment_set',
-                            queryset=Comment.objects.order_by('created_at').select_related(
+                            queryset=Comment.objects.reverse().select_related(
                                 'attachment',
                             ).prefetch_related(
                                 'comment_update_log_set',
@@ -109,12 +112,13 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
     def paginate_queryset(self, queryset):
         # optimizing queryset for list action
+        # cacheops 이용으로 select_related에서 prefetch_related로 옮김
         queryset = queryset.select_related(
+        ).prefetch_related(
             'created_by',
             'created_by__profile',
             'parent_topic',
             'parent_board',
-        ).prefetch_related(
             'attachments',
             'article_update_log_set',
             Block.prefetch_my_block(self.request.user),

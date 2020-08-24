@@ -1,11 +1,12 @@
 init:
+	mysql -u root -e 'CREATE DATABASE new_ara CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;'
 	python manage.py migrate
 
 superuser:
 	python manage.py createsuperuser
 
 flush:
-	mysql -u root -e 'DROP DATABASE new_ara; CREATE DATABASE new_ara CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;'
+	mysql -u root -e 'DROP DATABASE new_ara;'
 
 reset: flush init
 
@@ -46,3 +47,12 @@ celery_beat_run:
 
 kill_celery_processes:
 	ps auxww | grep 'celery' | awk '{print $$2}' | xargs kill -9
+
+i18n_generate:
+	mkdir -p ara/locale
+	python manage.py makemessages -l en -i env
+	python manage.py makemessages -l ko -i env
+
+i18n_compile:
+	python manage.py compilemessages
+

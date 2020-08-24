@@ -1,12 +1,8 @@
-import datetime
-from datetime import timedelta
-
 from cached_property import cached_property
 from dateutil.relativedelta import relativedelta
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
-
 from django_mysql.models import JSONField
 
 from ara.db.models import MetaDataModel
@@ -54,7 +50,7 @@ class UserProfile(MetaDataModel):
         verbose_name='닉네임',
     )
     nickname_updated_at = models.DateTimeField(
-        default=datetime.datetime.min,
+        default=timezone.datetime.min.replace(tzinfo=timezone.utc),
         verbose_name='최근 닉네임 변경일시'
     )
     see_sexual = models.BooleanField(

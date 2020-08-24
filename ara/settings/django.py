@@ -1,3 +1,7 @@
+import os
+
+from django.utils.translation import ugettext_lazy
+
 from .env import env, root
 from os import environ as os_environ
 
@@ -26,6 +30,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'django_celery_results',
     'drf_yasg',
+    'cacheops',
 
     'apps.core',
     'apps.user',
@@ -37,6 +42,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -86,6 +92,13 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
 LANGUAGE_CODE = 'ko-kr'
+LANGUAGES = [
+    ('ko', ugettext_lazy('Korean')),
+    ('en', ugettext_lazy('English'))
+]
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'ara/locale')
+]
 
 TIME_ZONE = 'Asia/Seoul'
 
@@ -93,7 +106,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = False
+USE_TZ = True
 
 SECRET_KEY = env('SECRET_KEY')
 
@@ -102,6 +115,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'OPTIONS': {
             'charset': 'utf8mb4',
+            'init_command': 'SET sql_mode="STRICT_TRANS_TABLES"',
         },
         'NAME': os_environ.get('NEWARA_DB_NAME', 'new_ara'),
         'USER': os_environ.get('NEWARA_DB_USER', 'root'),
