@@ -3,6 +3,7 @@ from dateutil.relativedelta import relativedelta
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from django.utils.translation import gettext
 from django_mysql.models import JSONField
 
 from ara.db.models import MetaDataModel
@@ -17,6 +18,12 @@ class UserProfile(MetaDataModel):
             ('sid', 'deleted_at'),
             ('nickname', 'is_newara', 'deleted_at'),
         )
+
+    class UserGroup(models.IntegerChoices):
+        UNAUTHORIZED = 0, gettext('Unauthorized user')
+        KAIST_MEMBER = 1, gettext('KAIST member')
+        FOOD_EMPLOYEE = 2, gettext('Restaurant employee')
+        OTHER_EMPLOYEE = 3, gettext('Other employee')
 
     uid = models.CharField(
         null=True,
@@ -66,17 +73,17 @@ class UserProfile(MetaDataModel):
         verbose_name='기타 설정',
     )
 
+    group = models.IntegerField(
+        choices=UserGroup.choices,
+        default=UserGroup.UNAUTHORIZED
+    )
+
     user = models.OneToOneField(
         on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
         related_name='profile',
         verbose_name='사용자',
         primary_key=True,
-    )
-
-    is_kaist = models.BooleanField(
-        default=False,
-        verbose_name='카이스트 인증된 사용자'
     )
 
     # 포탈 공지에서 긁어온 작성자 or 이전한 아라 사용자는 is_newara=False
@@ -101,3 +108,4 @@ class UserProfile(MetaDataModel):
     @cached_property
     def email(self):
         return self.user.email
+

@@ -99,7 +99,8 @@ class UserViewSet(ActionAPIViewSet):
                 sid=user_info['sid'],
             )
             user_profile.sso_user_info = user_info
-            user_profile.is_kaist = is_kaist
+            if is_kaist:
+                user_profile.group = UserProfile.UserGroup.KAIST_MEMBER
 
         except UserProfile.DoesNotExist:
             user_nickname = _make_random_name()
@@ -110,13 +111,16 @@ class UserViewSet(ActionAPIViewSet):
                     password=str(uuid.uuid4()),
                     is_active=is_kaist,
                 )
+                user_group = UserProfile.UserGroup.UNAUTHORIZED
+                if is_kaist:
+                    user_group = UserProfile.UserGroup.KAIST_MEMBER
                 user_profile = UserProfile.objects.create(
                     uid=user_info['uid'],
                     sid=user_info['sid'],
                     nickname=user_nickname,
-                    is_kaist=is_kaist,
                     sso_user_info=user_info,
                     user=new_user,
+                    group=user_group
                 )
 
         if not user_profile.user.is_active:
