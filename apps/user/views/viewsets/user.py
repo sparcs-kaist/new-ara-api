@@ -35,19 +35,20 @@ def _make_random_name() -> str:
         pass
     return temp_nickname
 
+
 def _make_random_profile_picture() -> str:
-    colors = ["blue", "red", "gray"]
+    colors = ['blue', 'red', 'gray']
     random.shuffle(colors)
-    numbers = ["1", "2", "3"]
+    numbers = ['1', '2', '3']
     random.shuffle(numbers)
 
     temp_color = colors[0]
     temp_num = numbers[0]
-    default_picture = f"user_profiles/default_pictures/{temp_color}-default{temp_num}.png"
+    default_picture = f'user_profiles/default_pictures/{temp_color}-default{temp_num}.png'
 
     return default_picture
 
-    
+
 class UserViewSet(ActionAPIViewSet):
     queryset = get_user_model().objects.all()
     permission_classes = (
