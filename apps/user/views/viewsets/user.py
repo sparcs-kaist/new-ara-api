@@ -36,6 +36,19 @@ def _make_random_name() -> str:
     return temp_nickname
 
 
+def _make_random_profile_picture() -> str:
+    colors = ['blue', 'red', 'gray']
+    random.shuffle(colors)
+    numbers = ['1', '2', '3']
+    random.shuffle(numbers)
+
+    temp_color = colors[0]
+    temp_num = numbers[0]
+    default_picture = f'user_profiles/default_pictures/{temp_color}-default{temp_num}.png'
+
+    return default_picture
+
+
 class UserViewSet(ActionAPIViewSet):
     queryset = get_user_model().objects.all()
     permission_classes = (
@@ -103,6 +116,7 @@ class UserViewSet(ActionAPIViewSet):
 
         except UserProfile.DoesNotExist:
             user_nickname = _make_random_name()
+            user_profile_picture = _make_random_profile_picture()
             with transaction.atomic():
                 new_user = get_user_model().objects.create_user(
                     email=user_info['email'],
@@ -117,6 +131,7 @@ class UserViewSet(ActionAPIViewSet):
                     is_kaist=is_kaist,
                     sso_user_info=user_info,
                     user=new_user,
+                    picture=user_profile_picture,
                 )
 
         if not user_profile.user.is_active:
