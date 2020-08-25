@@ -1,5 +1,6 @@
 from rest_framework import mixins
 
+from apps.core.permissions.block import BlockPermission
 from ara.classes.viewset import ActionAPIViewSet
 
 from apps.core.models import Block
@@ -19,6 +20,7 @@ class BlockViewSet(mixins.ListModelMixin,
     action_serializer_class = {
         'create': BlockCreateActionSerializer,
     }
+    permission_classes = (BlockPermission,)
 
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
