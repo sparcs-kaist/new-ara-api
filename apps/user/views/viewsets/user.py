@@ -84,7 +84,7 @@ class UserViewSet(ActionAPIViewSet):
 
             temp_color = colors[0]
             temp_num = numbers[0]
-            default_picture = f"user_profiles/default_pictures/{temp_color}-default{temp_num}.png"
+            default_picture = f"user_profiles/default_pictures/{temp_color}-default{temp_num}.pngitg"
 
             try:
                 duplicate_user_profile = UserProfile.objects.get(
@@ -97,7 +97,6 @@ class UserViewSet(ActionAPIViewSet):
                     temp_nickname += ' 1'
             except UserProfile.DoesNotExist:
                 pass
-
 
             with transaction.atomic():
                 user_profile = UserProfile.objects.create(
