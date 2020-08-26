@@ -560,6 +560,14 @@ validation = ["swagger-spec-validator (>=2.1.0)"]
 
 [[package]]
 category = "main"
+description = "Up to date simple useragent faker with real world database"
+name = "fake-useragent"
+optional = false
+python-versions = "*"
+version = "0.1.11"
+
+[[package]]
+category = "main"
 description = "A fancy and practical functional tools"
 name = "funcy"
 optional = false
@@ -1149,7 +1157,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "d4b307493ca54bf7bbc7dfcfe7da0edc6dc10d5b57f1c1b074a9eadc8a1c0560"
+content-hash = "f25a8c1c208b18633b18a438f8275ad71b777faec4dac1624b6fb3f50a970c85"
 lock-version = "1.0"
 python-versions = "^3.7"
 
@@ -1352,6 +1360,9 @@ docutils = [
 drf-yasg = [
     {file = "drf-yasg-1.17.1.tar.gz", hash = "sha256:5572e9d5baab9f6b49318169df9789f7399d0e3c7bdac8fdb8dfccf1d5d2b1ca"},
     {file = "drf_yasg-1.17.1-py2.py3-none-any.whl", hash = "sha256:7d7af27ad16e18507e9392b2afd6b218fbffc432ec8dbea053099a2241e184ff"},
+]
+fake-useragent = [
+    {file = "fake-useragent-0.1.11.tar.gz", hash = "sha256:c104998b750eb097eefc28ae28e92d66397598d2cf41a31aa45d5559ef1adf35"},
 ]
 funcy = [
     {file = "funcy-1.14.tar.gz", hash = "sha256:75ee84c3b446f92e68a857c2267b15a1b49c631c9d5a87a5f063cd2d6761a5c4"},

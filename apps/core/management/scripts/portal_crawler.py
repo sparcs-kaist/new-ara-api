@@ -1,28 +1,48 @@
 import uuid
 import requests
-import datetime
 from bs4 import BeautifulSoup as bs
 
 from django.contrib.auth import get_user_model
+from django.utils import timezone
+from fake_useragent import UserAgent
 from tqdm import tqdm
 
 from apps.core.models import Article
 from apps.user.models import UserProfile
 from ara.settings import PORTAL_ID, PORTAL_PASSWORD
 
-LOGIN_INFO = {
+LOGIN_INFO_SSO2 = {
     'userid': PORTAL_ID,
-    'password': PORTAL_PASSWORD
+    'password': PORTAL_PASSWORD,
+    'saveid': 'on',
+    'phase': 'pass1',
 }
+
+
+LOGIN_INFO_SSO = {
+    'userid': PORTAL_ID,
+    'password': PORTAL_PASSWORD,
+    'saveid': 'on',
+    'phase': 'pass2',
+}
+
 
 BASE_URL = 'https://portal.kaist.ac.kr'
 
 
 def _login_kaist_portal():
     session = requests.Session()
-    login_req = session.post('https://portalsso.kaist.ac.kr/ssoProcess.ps', data=LOGIN_INFO)
-    if login_req.status_code != 200:
-        raise Exception('login failed')
+    user_agent = UserAgent()
+    login_req1 = session.post('https://portalsso.kaist.ac.kr/ssoProcess2.ps', data=LOGIN_INFO_SSO2,
+                              headers={
+                                  'User-Agent': user_agent.random,
+                              })
+    login_req2 = session.post('https://portalsso.kaist.ac.kr/ssoProcess.ps', data=LOGIN_INFO_SSO,
+                              headers={
+                                  'User-Agent': user_agent.random,
+                              })
+
+    print(f'sso2: {login_req1.status_code} & sso: {login_req2.status_code}')
 
     return session
 
@@ -57,14 +77,19 @@ def crawl_hour():
     def _get_board_today(page_num):
         today = True
         board_req = session.get(
-            f'{BASE_URL}/board/list.brd?boardId=today_notice&lang_knd=ko&userAgent=Chrome&isMobile=false&page={page_num}&sortColumn=REG_DATIM&sortMethod=DESC')
+            f'{BASE_URL}/board/list.brd?boardId=today_notice&lang_knd=ko&userAgent=Chrome&isMobile=false&page={page_num}&userAgent=Chrome&isMobile=False&sortColumn=REG_DATIM&sortMethod=DESC')
         soup = bs(board_req.text, 'lxml')
         linklist = []
         links = soup.select('table > tbody > tr > td > a')
         dates = soup.select('table > tbody > tr > td:nth-child(5)')
 
+        if links:
+            print('------- portal login success!')
+        else:
+            print('------- portal login failed!')
+
         for link, date in zip(links, dates):
-            if date.get_text() == str(datetime.date.today()).replace('-', '.'):
+            if date.get_text() == str(timezone.datetime.today().date()).replace('-', '.'):
                 linklist.append({'link': link.attrs['href'], 'date': date.get_text()})
             else:
                 today = False
@@ -106,7 +131,7 @@ def crawl_hour():
                 nickname=info['writer'],
             )
 
-        Article.objects.get_or_create(
+        a, created = Article.objects.get_or_create(
             url=full_link,
             defaults={
                 'parent_board_id': 1,  # 포탈공지 게시판
@@ -116,6 +141,9 @@ def crawl_hour():
                 'created_by': user,
             }
         )
+
+        if created:
+            print(f'crawled id: {a.id} - {a.title}')
 
 
 def crawl_all():
