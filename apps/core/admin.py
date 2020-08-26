@@ -25,12 +25,16 @@ class TopicAdmin(MetaDataModelAdmin):
     list_display = (
         'ko_name',
         'en_name',
+        'parent_board',
     )
     search_fields = (
         'ko_name',
         'en_name',
         'ko_description',
         'en_description',
+    )
+    list_filter = (
+        'parent_board',
     )
 
 

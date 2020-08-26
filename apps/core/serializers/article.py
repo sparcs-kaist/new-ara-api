@@ -150,6 +150,9 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return errors
 
+
+class SideArticleSerializer(BaseArticleSerializer):
+    nested_comments_count = serializers.ReadOnlyField()
     created_by = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -191,8 +194,8 @@ class ArticleSerializer(BaseArticleSerializer):
             after = articles.filter(created_at__gte=obj.created_at).last()
 
             return {
-                'before': BaseArticleSerializer(before).data if before else None,
-                'after': BaseArticleSerializer(after).data if after else None,
+                'before': SideArticleSerializer(before).data if before else None,
+                'after': SideArticleSerializer(after).data if after else None,
             }
 
         else:
@@ -232,8 +235,8 @@ class ArticleSerializer(BaseArticleSerializer):
                 raise serializers.ValidationError(gettext("Wrong value for parameter 'from_view'."))
 
             return {
-                'before': BaseArticleSerializer(before).data if before else None,
-                'after': BaseArticleSerializer(after).data if after else None,
+                'before': SideArticleSerializer(before).data if before else None,
+                'after': SideArticleSerializer(after).data if after else None,
             }
 
     parent_topic = TopicSerializer(
