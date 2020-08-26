@@ -10,7 +10,7 @@ class UserProfileAdmin(MetaDataModelAdmin):
     list_filter = (
         'see_sexual',
         'see_social',
-        'is_kaist',
+        'group',
         'is_newara',
     )
     list_display = (
@@ -18,7 +18,7 @@ class UserProfileAdmin(MetaDataModelAdmin):
         'sid',
         'nickname',
         'user',
-        'is_kaist',
+        'group',
     )
     search_fields = (
         'uid',

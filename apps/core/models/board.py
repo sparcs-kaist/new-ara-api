@@ -33,9 +33,14 @@ class Board(MetaDataModel):
     en_description = models.TextField(
         verbose_name='게시판 영문 소개',
     )
-    is_kaist = models.BooleanField(
-        verbose_name='카이스트 구성원 전용 게시판',
-        default=False
+
+    # 사용자 그룹에 대해 접근 권한을 제어하는 bit mask 입니다.
+    # access_mask & (1<<user.group) > 0 일 때 접근이 가능합니다.
+    # 사용자 그룹의 값들은 `UserGroup`을 참고하세요.
+    access_mask = models.IntegerField(
+        default=2,  # 카이스트 구성원만 사용 가능
+        null=False,
+        verbose_name='접근 권한 값'
     )
     is_readonly = models.BooleanField(
         verbose_name='읽기 전용 게시판',
@@ -45,3 +50,6 @@ class Board(MetaDataModel):
 
     def __str__(self):
         return self.ko_name
+
+    def group_has_access(self, group: int) -> bool:
+        return (self.access_mask & (1 << group)) > 0

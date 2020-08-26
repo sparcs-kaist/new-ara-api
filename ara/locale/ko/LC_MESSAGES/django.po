@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-08-25 01:54+0900\n"
+"POT-Creation-Date: 2020-08-25 20:31+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,23 +18,23 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: apps/core/serializers/article.py:184
+#: apps/core/serializers/article.py:205
 msgid "This article is not in user's scrap list."
 msgstr ""
 
-#: apps/core/serializers/article.py:200
+#: apps/core/serializers/article.py:221
 msgid "This article is never read by user."
 msgstr "카이스트 구성원만 이용할 수 있는 게시판입니다."
 
-#: apps/core/serializers/article.py:211
+#: apps/core/serializers/article.py:232
 msgid "Wrong value for parameter 'from_view'."
 msgstr ""
 
-#: apps/core/serializers/article.py:336
+#: apps/core/serializers/article.py:357
 msgid "This board is read only."
 msgstr "카이스트 구성원만 이용할 수 있는 게시판입니다."
 
-#: apps/core/serializers/article.py:338
+#: apps/core/serializers/article.py:359
 msgid "This board is only for KAIST members."
 msgstr "카이스트 구성원만 이용할 수 있는 게시판입니다."
 
@@ -49,6 +49,22 @@ msgstr "이미 차단된 사용자입니다."
 #: apps/core/serializers/scrap.py:37
 msgid "This article is already scrapped."
 msgstr "카이스트 구성원만 이용할 수 있는 게시판입니다."
+
+#: apps/user/models/user_profile.py:23
+msgid "Unauthorized user"
+msgstr "미인증된 사용자"
+
+#: apps/user/models/user_profile.py:24
+msgid "KAIST member"
+msgstr "카이스트 구성원"
+
+#: apps/user/models/user_profile.py:25
+msgid "Restaurant employee"
+msgstr "식당 직원"
+
+#: apps/user/models/user_profile.py:26
+msgid "Other employee"
+msgstr "기타 직원"
 
 #: apps/user/serializers/user_profile.py:43
 #, python-format

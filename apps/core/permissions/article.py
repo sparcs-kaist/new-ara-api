@@ -15,4 +15,4 @@ class ArticleKAISTPermission(permissions.BasePermission):
     message = 'KAIST 구성원만 읽을 수 있는 게시물입니다.'
 
     def has_object_permission(self, request, view, obj: Article):
-        return request.user.profile.is_kaist or not obj.parent_board.is_kaist
+        return obj.parent_board.group_has_access(request.user.profile.group)

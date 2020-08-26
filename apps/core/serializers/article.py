@@ -145,8 +145,8 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         if obj.is_content_social and not self.context['request'].user.profile.see_social:
             errors.append(exceptions.ValidationError('정치/사회성 내용의 게시물입니다.'))
 
-        if obj.parent_board.is_kaist and not self.context['request'].user.profile.is_kaist:
-            errors.append(exceptions.ValidationError('카이스트 구성원만 볼 수 있는 게시물입니다.'))
+        if not obj.parent_board.group_has_access(self.context['request'].user.profile.group):
+            errors.append(exceptions.ValidationError('접근 권한이 없는 게시판입니다.'))
 
         return errors
 
@@ -355,10 +355,10 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
 
     def validate_parent_board(self, board: Board):
         user_is_superuser = self.context['request'].user.is_superuser
-        user_is_kaist = self.context['request'].user.profile.is_kaist
+        user_has_perm = board.group_has_access(self.context['request'].user.profile.group)
         if not user_is_superuser and board.is_readonly:
             raise serializers.ValidationError(gettext('This board is read only.'))
-        if not user_is_kaist and board.is_kaist:
+        if not user_has_perm:
             raise serializers.ValidationError(gettext('This board is only for KAIST members.'))
         return board
 
