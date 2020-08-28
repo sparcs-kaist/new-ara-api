@@ -17,5 +17,5 @@ class BoardViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
         permissions.IsAuthenticated,
     )
     action_serializer_class = {
-        'retrieve': BoardDetailActionSerializer,
+        'list': BoardDetailActionSerializer,
     }

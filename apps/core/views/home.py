@@ -1,8 +1,7 @@
 from rest_framework import views, response
 
-from apps.core.models import BestArticle, Board, PERIOD_CHOICES, BEST_BY_CHOICES
+from apps.core.models import BestArticle, PERIOD_CHOICES, BEST_BY_CHOICES
 from apps.core.serializers.article import ArticleListActionSerializer
-from apps.core.serializers.board import BoardRecentArticleActionSerializer
 
 
 class HomeView(views.APIView):
