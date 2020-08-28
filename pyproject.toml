@@ -38,6 +38,7 @@ tqdm = "^4.48.2"
 cached-property = "^1.5.1"
 django-cacheops = "^5.0.1"
 fake-useragent = "^0.1.11"
+sentry-sdk = "^0.17.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
