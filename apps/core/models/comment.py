@@ -4,6 +4,7 @@ from django.db import models, IntegrityError
 from django.conf import settings
 
 from ara.db.models import MetaDataModel
+from ara.sanitizer import sanitize
 
 
 class Comment(MetaDataModel):
@@ -88,7 +89,7 @@ class Comment(MetaDataModel):
         except AssertionError:
             raise IntegrityError('self.content and self.attachment should exist.')
 
-        self.content = self.sanitize(self.content)
+        self.content = sanitize(self.content)
 
         super(Comment, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
@@ -98,7 +99,3 @@ class Comment(MetaDataModel):
         self.negative_vote_count = self.vote_set.filter(is_positive=False).count()
 
         self.save()
-
-    @staticmethod
-    def sanitize(content):
-        return bleach.linkify(bleach.clean(content))

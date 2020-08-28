@@ -1,10 +1,10 @@
 import bs4
-import bleach
 
 from django.db import models, IntegrityError
 from django.conf import settings
 
 from ara.db.models import MetaDataModel
+from ara.sanitizer import sanitize
 
 
 class Article(MetaDataModel):
@@ -105,7 +105,7 @@ class Article(MetaDataModel):
         except AssertionError:
             raise IntegrityError('self.parent_board should be parent_board of self.parent_topic')
 
-        self.content = self.sanitize(self.content)
+        self.content = sanitize(self.content)
 
         self.content_text = ' '.join(bs4.BeautifulSoup(self.content, features='html5lib').find_all(text=True))
 
@@ -138,9 +138,3 @@ class Article(MetaDataModel):
             models.Q(parent_article=self) |
             models.Q(parent_comment__parent_article=self)
         ).count()
-
-    @staticmethod
-    def sanitize(content):
-        #allowed_tags = bleach.ALLOWED_TAGS + [u'p', u'pre', u'span', u'h1', u'h2', u'br']
-
-        return content #bleach.linkify(bleach.clean(content, tags=allowed_tags))
