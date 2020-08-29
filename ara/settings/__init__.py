@@ -6,6 +6,7 @@ from .sso import *
 from .redis import *
 from .scheduler import *
 from .cacheops import *
+from .sentry import *
 
 
 if env('DJANGO_ENV') == 'development':

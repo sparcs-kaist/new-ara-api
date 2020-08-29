@@ -21,6 +21,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=
       - SSO_CLIENT_ID=
       - SSO_SECRET_KEY=
+      - SENTRY_DSN=
       - NEWARA_DB_HOST=db
       - NEWARA_DB_PORT=3306
       - NEWARA_DB_USER=root
@@ -44,6 +45,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=
       - SSO_CLIENT_ID=
       - SSO_SECRET_KEY=
+      - SENTRY_DSN=
       - NEWARA_DB_HOST=db
       - NEWARA_DB_PORT=3306
       - NEWARA_DB_USER=root
