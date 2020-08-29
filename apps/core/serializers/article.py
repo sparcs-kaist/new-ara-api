@@ -14,7 +14,7 @@ from ara.db import models
 class BaseArticleSerializer(MetaDataModelSerializer):
     class Meta:
         model = Article
-        fields = '__all__'
+        exclude = ('content', 'content_text',)
 
     @staticmethod
     def get_my_vote(obj):
@@ -159,6 +159,9 @@ class SideArticleSerializer(BaseArticleSerializer):
 
 
 class ArticleSerializer(BaseArticleSerializer):
+    class Meta(BaseArticleSerializer.Meta):
+        exclude = ()
+
     def get_side_articles(self, obj):
         request = self.context['request']
         from_view = request.query_params.get('from_view')
@@ -309,14 +312,9 @@ class ArticleListActionSerializer(BaseArticleSerializer):
     parent_board = BoardSerializer(
         read_only=True,
     )
-
-    comments_count = serializers.ReadOnlyField(
-        read_only=True,
-    )
     nested_comments_count = serializers.ReadOnlyField(
         read_only=True,
     )
-
     is_hidden = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -329,12 +327,6 @@ class ArticleListActionSerializer(BaseArticleSerializer):
     hidden_title = serializers.SerializerMethodField(
         read_only=True,
     )
-    content = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    hidden_content = serializers.SerializerMethodField(
-        read_only=True,
-    )
     created_by = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -345,6 +337,7 @@ class ArticleListActionSerializer(BaseArticleSerializer):
 
 class ArticleCreateActionSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
+        exclude = ()
         read_only_fields = (
             'hit_count',
             'positive_vote_count',
