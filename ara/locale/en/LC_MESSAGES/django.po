@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-08-25 20:31+0900\n"
+"POT-Creation-Date: 2020-09-01 01:30+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,23 +18,23 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: apps/core/serializers/article.py:205
+#: apps/core/serializers/article.py:239
 msgid "This article is not in user's scrap list."
 msgstr ""
 
-#: apps/core/serializers/article.py:221
+#: apps/core/serializers/article.py:261
 msgid "This article is never read by user."
 msgstr ""
 
-#: apps/core/serializers/article.py:232
+#: apps/core/serializers/article.py:272
 msgid "Wrong value for parameter 'from_view'."
 msgstr ""
 
-#: apps/core/serializers/article.py:357
+#: apps/core/serializers/article.py:382
 msgid "This board is read only."
 msgstr ""
 
-#: apps/core/serializers/article.py:359
+#: apps/core/serializers/article.py:384
 msgid "This board is only for KAIST members."
 msgstr ""
 
@@ -44,6 +44,10 @@ msgstr ""
 
 #: apps/core/serializers/block.py:44
 msgid "This user is already blocked."
+msgstr ""
+
+#: apps/core/serializers/report.py:43
+msgid "You already reported this article."
 msgstr ""
 
 #: apps/core/serializers/scrap.py:37
@@ -72,10 +76,10 @@ msgid ""
 "Nicknames can only be changed every 3 months. (can't change until %(date)s)"
 msgstr ""
 
-#: ara/settings/django.py:96
+#: ara/settings/django.py:93
 msgid "Korean"
 msgstr "Korean"
 
-#: ara/settings/django.py:97
+#: ara/settings/django.py:94
 msgid "English"
 msgstr "English"
