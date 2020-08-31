@@ -12,7 +12,7 @@ if [ "$1" = "test" ]; then
 else
     venv/bin/python manage.py collectstatic --noinput
     venv/bin/python manage.py migrate --no-input
-    venv/bin/python manage.py compilemessages
+    venv/bin/python manage.py compilemessages -l en -l ko
     ln -s /newara/www/.docker/supervisor-app.conf /etc/supervisor/conf.d/ || true
     exec supervisord -n
 fi

@@ -54,5 +54,5 @@ i18n_generate:
 	python manage.py makemessages -l ko -i env
 
 i18n_compile:
-	python manage.py compilemessages
+	python manage.py compilemessages -l en -l ko
 
