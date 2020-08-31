@@ -42,3 +42,7 @@ class BlockCreateActionSerializer(BaseBlockSerializer):
             return super().create(validated_data)
         except IntegrityError:
             raise serializers.ValidationError(gettext("This user is already blocked."))
+
+
+class BlockDestroyWithoutIdSerializer(serializers.Serializer):
+    blocked = serializers.IntegerField(required=True)
