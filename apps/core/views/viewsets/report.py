@@ -67,26 +67,26 @@ class ReportViewSet(mixins.ListModelMixin,
         if article_id:
             parent_id = article_id
             article = Article.objects.get(id=parent_id)
-            title = f"[신고 (게시글)] '{request.user}'님께서 Article {parent_id}을 신고하였습니다."
+            title = f"[신고 (게시글)] '{request.user.profile}'님께서 Article {parent_id}을 신고하였습니다."
             message = f'''게시글 {parent_id}에 대하여 다음과 같은 신고가 접수되었습니다:
-            신고자: {request.user}
+            신고자: {request.user.profile}
             신고 사유: {request.data.get('content')}
 
             글 종류: 게시글
             제목: {article.title}
-            작성자: {article.created_by}
+            작성자: {article.created_by.profile}
             내용: {article.content}
             '''
         else:
             parent_id = request.data.get('parent_comment')
             comment = Comment.objects.get(id=parent_id)
-            title = f"[신고 (댓글)] '{request.user}'님께서 Comment {parent_id}을 신고하였습니다."
+            title = f"[신고 (댓글)] '{request.user.profile}'님께서 Comment {parent_id}을 신고하였습니다."
             message = f'''댓글 {parent_id}에 대하여 다음과 같은 신고가 접수되었습니다:
-                        신고자: {request.user}
+                        신고자: {request.user.profile}
                         신고 사유: {request.data.get('content')}
 
                         글 종류: 댓글
-                        작성자: {comment.created_by}
+                        작성자: {comment.created_by.profile}
                         내용: {comment.content}
                         '''
 
