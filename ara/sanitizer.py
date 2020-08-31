@@ -21,6 +21,7 @@ def sanitize(content):
 
     allowed_tags = bleach.ALLOWED_TAGS \
                    + ['p', 'pre', 'span', 'h1', 'h2', 'br'] \
-                   + ['img', 'iframe', 'video', 'audio', 'source']
+                   + ['img', 'iframe', 'video', 'audio', 'source'] \
+                   + ['sub', 'sup', 'table', 'tbody', 'td', 'tfoot', 'th', 'thead', 'tr', 'tt', 'u', 'ul']
 
     return bleach.linkify(bleach.clean(content, tags=allowed_tags, attributes=_allowed_attributes))
