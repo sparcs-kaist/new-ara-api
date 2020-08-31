@@ -12,10 +12,12 @@ SSO_IS_BETA = False
 SESSION_COOKIE_SAMESITE = 'None'
 
 INSTALLED_APPS += [
+    'corsheaders',
     'debug_toolbar',
 ]
 
 MIDDLEWARE += [
+    'corsheaders.middleware.CorsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
