@@ -241,6 +241,7 @@ class ArticleSerializer(BaseArticleSerializer):
                 except Scrap.DoesNotExist:
                     raise serializers.ValidationError(gettext("This article is not in user's scrap list."))
 
+                scraps = scraps.exclude(parent_article=obj)
                 before = scraps.filter(created_at__lte=s.created_at).first()
                 if before:
                     before = before.parent_article
@@ -263,6 +264,7 @@ class ArticleSerializer(BaseArticleSerializer):
                 except ArticleReadLog.DoesNotExist:
                     raise serializers.ValidationError(gettext('This article is never read by user.'))
 
+                reads = reads.exclude(article=obj)
                 before = reads.filter(updated_at__lte=r.updated_at).first()
                 if before:
                     before = before.article
