@@ -152,8 +152,29 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
 
 class SideArticleSerializer(BaseArticleSerializer):
+    class Meta(BaseArticleSerializer.Meta):
+        exclude = ()
+
     nested_comments_count = serializers.ReadOnlyField()
     created_by = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    is_hidden = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    why_hidden = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    title = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    hidden_title = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    content = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    hidden_content = serializers.SerializerMethodField(
         read_only=True,
     )
 
@@ -162,9 +183,11 @@ class ArticleSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
         exclude = ()
 
+    # TODO: refactoring
     def get_side_articles(self, obj):
         request = self.context['request']
         from_view = request.query_params.get('from_view')
+        search_query = request.query_params.get('main_search__contains')
         if from_view is None:
             return {
                 'before': None,
@@ -176,7 +199,7 @@ class ArticleSerializer(BaseArticleSerializer):
                 articles = Article.objects.all()
 
             elif from_view == 'board':
-                articles = Article.objects.filter(parent_board=obj.parent_board)
+                articles = obj.parent_board.article_set
 
             elif from_view == 'user':
                 created_by_id = request.query_params.get('created_by')
@@ -184,9 +207,8 @@ class ArticleSerializer(BaseArticleSerializer):
                     created_by_id = request.user.id
                 articles = Article.objects.filter(created_by_id=created_by_id)
 
-            search_query = request.query_params.get('main_search__contains')
             if search_query:
-                articles.filter(
+                articles = articles.filter(
                     models.Q(title__contains=search_query) |
                     models.Q(content_text__contains=search_query) |
                     models.Q(created_by__profile__nickname__contains=search_query)
@@ -197,13 +219,19 @@ class ArticleSerializer(BaseArticleSerializer):
             after = articles.filter(created_at__gte=obj.created_at).last()
 
             return {
-                'before': SideArticleSerializer(before).data if before else None,
-                'after': SideArticleSerializer(after).data if after else None,
+                'before': SideArticleSerializer(before, context=self.context).data if before else None,
+                'after': SideArticleSerializer(after, context=self.context).data if after else None,
             }
 
         else:
             if from_view == 'scrap':
-                scraps = Scrap.objects.filter(scrapped_by=request.user)
+                scraps = request.user.scrap_set
+                if search_query:
+                    scraps = scraps.filter(
+                        models.Q(parent_article__title__contains=search_query) |
+                        models.Q(parent_article__content_text__contains=search_query) |
+                        models.Q(parent_article__created_by__profile__nickname__contains=search_query)
+                    )
 
                 try:
                     s = scraps.get(parent_article=obj)
@@ -219,7 +247,13 @@ class ArticleSerializer(BaseArticleSerializer):
                     after = after.parent_article
 
             elif from_view == 'recent':
-                reads = ArticleReadLog.objects.filter(read_by=request.user)
+                reads = request.user.article_read_log_set
+                if search_query:
+                    reads = reads.filter(
+                        models.Q(article__title__contains=search_query) |
+                        models.Q(article__content_text__contains=search_query) |
+                        models.Q(article__created_by__profile__nickname__contains=search_query)
+                    )
 
                 try:
                     r = reads.get(article=obj)
@@ -238,8 +272,8 @@ class ArticleSerializer(BaseArticleSerializer):
                 raise serializers.ValidationError(gettext("Wrong value for parameter 'from_view'."))
 
             return {
-                'before': SideArticleSerializer(before).data if before else None,
-                'after': SideArticleSerializer(after).data if after else None,
+                'before': SideArticleSerializer(before, context=self.context).data if before else None,
+                'after': SideArticleSerializer(after, context=self.context).data if after else None,
             }
 
     parent_topic = TopicSerializer(
@@ -254,11 +288,6 @@ class ArticleSerializer(BaseArticleSerializer):
         many=True,
         read_only=True,
         source='comment_set',
-    )
-    article_update_logs = ArticleUpdateLogSerializer(
-        many=True,
-        read_only=True,
-        source='article_update_log_set',
     )
 
     comments_count = serializers.ReadOnlyField()
