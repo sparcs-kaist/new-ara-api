@@ -97,7 +97,10 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         if obj.is_anonymous:
             return '익명'
 
-        return PublicUserSerializer(obj.created_by).data
+        data = PublicUserSerializer(obj.created_by).data
+        data['is_blocked'] = obj.created_by.blocked_by_set.exists()
+
+        return data
 
     @staticmethod
     def get_read_status(obj):
