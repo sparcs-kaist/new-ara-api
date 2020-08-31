@@ -105,7 +105,8 @@ class Article(MetaDataModel):
         except AssertionError:
             raise IntegrityError('self.parent_board should be parent_board of self.parent_topic')
 
-        self.content = sanitize(self.content)
+        if not self.parent_board.is_readonly:
+            self.content = sanitize(self.content)
 
         self.content_text = ' '.join(bs4.BeautifulSoup(self.content, features='html5lib').find_all(text=True))
 
