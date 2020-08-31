@@ -202,7 +202,7 @@ class ArticleSerializer(BaseArticleSerializer):
                 articles = Article.objects.all()
 
             elif from_view == 'board':
-                articles = obj.parent_board.article_set
+                articles = obj.parent_board.article_set.all()
 
             elif from_view == 'user':
                 created_by_id = request.query_params.get('created_by')
@@ -228,7 +228,7 @@ class ArticleSerializer(BaseArticleSerializer):
 
         else:
             if from_view == 'scrap':
-                scraps = request.user.scrap_set
+                scraps = request.user.scrap_set.all()
                 if search_query:
                     scraps = scraps.filter(
                         models.Q(parent_article__title__contains=search_query) |
@@ -241,7 +241,7 @@ class ArticleSerializer(BaseArticleSerializer):
                 except Scrap.DoesNotExist:
                     raise serializers.ValidationError(gettext("This article is not in user's scrap list."))
 
-                scraps = scraps.exclude(parent_article=obj)
+                scraps = scraps.exclude(parent_article_id=obj.id)
                 before = scraps.filter(created_at__lte=s.created_at).first()
                 if before:
                     before = before.parent_article
@@ -251,7 +251,7 @@ class ArticleSerializer(BaseArticleSerializer):
                     after = after.parent_article
 
             elif from_view == 'recent':
-                reads = request.user.article_read_log_set
+                reads = request.user.article_read_log_set.all()
                 if search_query:
                     reads = reads.filter(
                         models.Q(article__title__contains=search_query) |
@@ -264,7 +264,7 @@ class ArticleSerializer(BaseArticleSerializer):
                 except ArticleReadLog.DoesNotExist:
                     raise serializers.ValidationError(gettext('This article is never read by user.'))
 
-                reads = reads.exclude(article=obj)
+                reads = reads.exclude(article_id=obj.id)
                 before = reads.filter(updated_at__lte=r.updated_at).first()
                 if before:
                     before = before.article
