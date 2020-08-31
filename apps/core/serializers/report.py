@@ -1,3 +1,7 @@
+from django.db import IntegrityError
+from django.utils.translation import gettext
+from rest_framework import serializers
+
 from ara.classes.serializers import MetaDataModelSerializer
 
 from apps.core.models import Report
@@ -31,3 +35,9 @@ class ReportCreateActionSerializer(BaseReportSerializer):
         read_only_fields = (
             'reported_by',
         )
+
+    def create(self, validated_data):
+        try:
+            return super().create(validated_data)
+        except IntegrityError:
+            raise serializers.ValidationError(gettext("You already reported this article."))
