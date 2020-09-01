@@ -168,6 +168,9 @@ class SideArticleSerializer(BaseArticleSerializer):
     why_hidden = serializers.SerializerMethodField(
         read_only=True,
     )
+    parent_topic = TopicSerializer(
+        read_only=True,
+    )
     title = serializers.SerializerMethodField(
         read_only=True,
     )
