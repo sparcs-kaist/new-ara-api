@@ -22,11 +22,11 @@ app.conf.timezone = 'Asia/Seoul'
 
 # Task 등록시 이름은 동사로 시작하도록 합시다
 app.conf.beat_schedule = {
-    'crawl_portal': {
-        'task': 'apps.core.management.tasks.crawl_portal',
-        'schedule': settings.SCHEDULERS['CRAWL_PORTAL']['CRONTAB'],
-        'args': []
-    },
+    # 'crawl_portal': {
+    #     'task': 'apps.core.management.tasks.crawl_portal',
+    #     'schedule': settings.SCHEDULERS['CRAWL_PORTAL']['CRONTAB'],
+    #     'args': []
+    # },
     'save_daily_best': {
         'task': 'apps.core.management.tasks.save_daily_best',
         'schedule': settings.SCHEDULERS['SAVE_DAILY_BEST']['CRONTAB'],
