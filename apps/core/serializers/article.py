@@ -395,6 +395,7 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
 
 class ArticleUpdateActionSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
+        exclude = ()
         read_only_fields = (
             'is_anonymous',
             'hit_count',
