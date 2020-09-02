@@ -1,6 +1,6 @@
 import pytest
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 
 from apps.core.models import Board, Article
 from apps.user.models import UserProfile
@@ -58,31 +58,18 @@ def set_posts(request):
         request.cls.posts.append(new_article)
 
 @pytest.mark.usefixtures('set_user_client', 'set_board', 'set_authors', 'set_posts')
-class TestArticleSearch(TestCase, RequestSetting):
-    def test_title_or_content(self):
-        # `title_or_content__contains` 필터를 검사합니다. 개수 assertion 숫자들의 의미는 set_posts를 참고하세요.
-        response = self.http_request(self.user, 'get', 'articles', querystring='title_or_content__contains=AAAA')
-        assert response.data['num_items'] == 34
-        response = self.http_request(self.user, 'get', 'articles', querystring='title_or_content__contains=BBBB')
-        assert response.data['num_items'] == 20
-        response = self.http_request(self.user, 'get', 'articles', querystring='title_or_content__contains=CCCC')
-        assert response.data['num_items'] == 15
-        response = self.http_request(self.user, 'get', 'articles', querystring='title_or_content__contains=2')
-        assert response.data['num_items'] == 19  # *2, 2*: 총 19개
-        response = self.http_request(self.user, 'get', 'articles', querystring='title_or_content__contains=테스트')
-        assert response.data['num_items'] == 100
-
+class TestArticleSearch(TransactionTestCase, RequestSetting):
     def test_main_search(self):
         for user in self.authors:
             print(user.profile.nickname)
         # `main_search` 필터를 검사합니다. 개수 assertion 숫자들의 의미는 set_posts를 참고하세요.
         response = self.http_request(self.user, 'get', 'articles', querystring='main_search__contains=AAAA')
-        assert response.data['num_items'] == 34
+        assert 34 * 0.5 < response.data['num_items'] <= 34
         response = self.http_request(self.user, 'get', 'articles', querystring='main_search__contains=BBBB')
-        assert response.data['num_items'] == 20
+        assert 20 * 0.5 < response.data['num_items'] <= 20
         response = self.http_request(self.user, 'get', 'articles', querystring='main_search__contains=CCCC')
-        assert response.data['num_items'] == 15
+        assert 15 * 0.5 < response.data['num_items'] <= 15
         response = self.http_request(self.user, 'get', 'articles', querystring='main_search__contains=테스트')
-        assert response.data['num_items'] == 100
+        assert 100 * 0.5 < response.data['num_items'] <= 100
         response = self.http_request(self.user, 'get', 'articles', querystring='main_search__contains=User2')
-        assert response.data['num_items'] == 25
+        assert 25 * 0.5 < response.data['num_items'] <= 25
