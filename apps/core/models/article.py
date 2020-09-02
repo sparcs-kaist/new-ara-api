@@ -155,3 +155,10 @@ class Article(MetaDataModel):
             models.Q(parent_article=self) |
             models.Q(parent_comment__parent_article=self)
         ).count()
+
+    @property
+    def created_by_nickname(self):
+        """Convert the type field to its string representation
+        (the boneheaded way).
+        """
+        return self.created_by.profile.nickname
