@@ -215,9 +215,9 @@ class ArticleSerializer(BaseArticleSerializer):
 
             if search_query:
                 articles = articles.filter(
-                    models.Q(title__contains=search_query) |
-                    models.Q(content_text__contains=search_query) |
-                    models.Q(created_by__profile__nickname__contains=search_query)
+                    models.Q(title__search=search_query) |
+                    models.Q(content_text__search=search_query) |
+                    models.Q(created_by__profile__nickname__search=search_query)
                 ).distinct()
 
             articles = articles.exclude(id=obj.id)
@@ -234,9 +234,9 @@ class ArticleSerializer(BaseArticleSerializer):
                 scraps = request.user.scrap_set.all()
                 if search_query:
                     scraps = scraps.filter(
-                        models.Q(parent_article__title__contains=search_query) |
-                        models.Q(parent_article__content_text__contains=search_query) |
-                        models.Q(parent_article__created_by__profile__nickname__contains=search_query)
+                        models.Q(parent_article__title__search=search_query) |
+                        models.Q(parent_article__content_text__search=search_query) |
+                        models.Q(parent_article__created_by__profile__nickname__search=search_query)
                     )
 
                 try:
@@ -257,9 +257,9 @@ class ArticleSerializer(BaseArticleSerializer):
                 reads = request.user.article_read_log_set.all()
                 if search_query:
                     reads = reads.filter(
-                        models.Q(article__title__contains=search_query) |
-                        models.Q(article__content_text__contains=search_query) |
-                        models.Q(article__created_by__profile__nickname__contains=search_query)
+                        models.Q(article__title__search=search_query) |
+                        models.Q(article__content_text__search=search_query) |
+                        models.Q(article__created_by__profile__nickname__search=search_query)
                     )
 
                 try:
