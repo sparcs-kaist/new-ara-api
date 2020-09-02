@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.db import models
 from django.utils.translation import gettext
 from rest_framework import exceptions, serializers
 
@@ -8,7 +9,6 @@ from apps.core.models import Article, Board, Scrap, ArticleReadLog
 from apps.core.serializers.article_log import ArticleUpdateLogSerializer
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
-from ara.db import models
 
 
 class BaseArticleSerializer(MetaDataModelSerializer):
@@ -193,7 +193,7 @@ class ArticleSerializer(BaseArticleSerializer):
     def get_side_articles(self, obj):
         request = self.context['request']
         from_view = request.query_params.get('from_view')
-        search_query = request.query_params.get('main_search__contains')
+        search_query = request.query_params.get('search_query')
         if from_view is None:
             return {
                 'before': None,
@@ -214,10 +214,10 @@ class ArticleSerializer(BaseArticleSerializer):
                 articles = Article.objects.filter(created_by_id=created_by_id)
 
             if search_query:
-                articles = articles.filter(
-                    models.Q(title__contains=search_query) |
-                    models.Q(content_text__contains=search_query) |
-                    models.Q(created_by__profile__nickname__contains=search_query)
+                articles = articles.prefetch_related('created_by__profile').filter(
+                    models.Q(title__search=search_query) |
+                    models.Q(content_text__search=search_query) |
+                    models.Q(created_by__profile__nickname__search=search_query)
                 ).distinct()
 
             articles = articles.exclude(id=obj.id)
@@ -233,10 +233,10 @@ class ArticleSerializer(BaseArticleSerializer):
             if from_view == 'scrap':
                 scraps = request.user.scrap_set.all()
                 if search_query:
-                    scraps = scraps.filter(
-                        models.Q(parent_article__title__contains=search_query) |
-                        models.Q(parent_article__content_text__contains=search_query) |
-                        models.Q(parent_article__created_by__profile__nickname__contains=search_query)
+                    scraps = scraps.prefetch_related('parent_article__created_by__profile').filter(
+                        models.Q(parent_article__title__search=search_query) |
+                        models.Q(parent_article__content_text__search=search_query) |
+                        models.Q(parent_article__created_by__profile__nickname__search=search_query)
                     )
 
                 try:
@@ -256,10 +256,10 @@ class ArticleSerializer(BaseArticleSerializer):
             elif from_view == 'recent':
                 reads = request.user.article_read_log_set.all()
                 if search_query:
-                    reads = reads.filter(
-                        models.Q(article__title__contains=search_query) |
-                        models.Q(article__content_text__contains=search_query) |
-                        models.Q(article__created_by__profile__nickname__contains=search_query)
+                    reads = reads.prefetch_related('article__created_by__profile').filter(
+                        models.Q(article__title__search=search_query) |
+                        models.Q(article__content_text__search=search_query) |
+                        models.Q(article__created_by__profile__nickname__search=search_query)
                     )
 
                 try:

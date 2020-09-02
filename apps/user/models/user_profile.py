@@ -100,7 +100,7 @@ class UserProfile(MetaDataModel):
     )
 
     def __str__(self):
-        return self.user.username
+        return self.nickname
 
     def can_change_nickname(self) -> bool:
         return (timezone.now() - relativedelta(months=3)) >= self.nickname_updated_at
