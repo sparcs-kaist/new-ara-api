@@ -214,7 +214,7 @@ class ArticleSerializer(BaseArticleSerializer):
                 articles = Article.objects.filter(created_by_id=created_by_id)
 
             if search_query:
-                articles = articles.filter(
+                articles = articles.prefetch_related('created_by__profile').filter(
                     models.Q(title__search=search_query) |
                     models.Q(content_text__search=search_query) |
                     models.Q(created_by__profile__nickname__search=search_query)
@@ -233,7 +233,7 @@ class ArticleSerializer(BaseArticleSerializer):
             if from_view == 'scrap':
                 scraps = request.user.scrap_set.all()
                 if search_query:
-                    scraps = scraps.filter(
+                    scraps = scraps.prefetch_related('parent_article__created_by__profile').filter(
                         models.Q(parent_article__title__search=search_query) |
                         models.Q(parent_article__content_text__search=search_query) |
                         models.Q(parent_article__created_by__profile__nickname__search=search_query)
@@ -256,7 +256,7 @@ class ArticleSerializer(BaseArticleSerializer):
             elif from_view == 'recent':
                 reads = request.user.article_read_log_set.all()
                 if search_query:
-                    reads = reads.filter(
+                    reads = reads.prefetch_related('article__created_by__profile').filter(
                         models.Q(article__title__search=search_query) |
                         models.Q(article__content_text__search=search_query) |
                         models.Q(article__created_by__profile__nickname__search=search_query)

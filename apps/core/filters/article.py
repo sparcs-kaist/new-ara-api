@@ -56,7 +56,7 @@ class ArticleFilter(filters.FilterSet):
 
     @staticmethod
     def get_main_search__contains(queryset, name, value):
-        return queryset.filter(
+        return queryset.prefetch_related('created_by__profile').filter(
             models.Q(title__search=value) |
             models.Q(content_text__search=value) |
             models.Q(created_by__profile__nickname__search=value)
