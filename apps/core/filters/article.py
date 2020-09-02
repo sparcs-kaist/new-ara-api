@@ -2,6 +2,7 @@ from django.db import models
 
 import rest_framework_filters as filters
 
+from apps.core.documents import ArticleDocument
 from apps.core.models import Article
 
 
@@ -56,8 +57,9 @@ class ArticleFilter(filters.FilterSet):
 
     @staticmethod
     def get_main_search__contains(queryset, name, value):
-        return queryset.prefetch_related('created_by__profile').filter(
-            models.Q(title__search=value) |
-            models.Q(content_text__search=value) |
-            models.Q(created_by__profile__nickname__search=value)
-        ).distinct()
+        title_articles = ArticleDocument.search().filter('match', title=value).to_queryset()
+        content_articles = ArticleDocument.search().filter('match', content_text=value).to_queryset()
+        nickname_articles = ArticleDocument.search().filter('match', created_by_nickname=value).to_queryset()
+        qs = title_articles | content_articles | nickname_articles
+
+        return qs
