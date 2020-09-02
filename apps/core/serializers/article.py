@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.db import models
 from django.utils.translation import gettext
 from rest_framework import exceptions, serializers
 
@@ -8,7 +9,6 @@ from apps.core.models import Article, Board, Scrap, ArticleReadLog
 from apps.core.serializers.article_log import ArticleUpdateLogSerializer
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
-from ara.db import models
 
 
 class BaseArticleSerializer(MetaDataModelSerializer):
@@ -193,7 +193,7 @@ class ArticleSerializer(BaseArticleSerializer):
     def get_side_articles(self, obj):
         request = self.context['request']
         from_view = request.query_params.get('from_view')
-        search_query = request.query_params.get('main_search__contains')
+        search_query = request.query_params.get('search_query')
         if from_view is None:
             return {
                 'before': None,
