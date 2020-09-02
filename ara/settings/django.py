@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'django_celery_results',
     'drf_yasg',
     'cacheops',
+    'django_elasticsearch_dsl',
 
     'apps.core',
     'apps.user',
