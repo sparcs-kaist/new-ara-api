@@ -1,0 +1,67 @@
+# 테스트 환경에서만 사용
+version: "3"
+services:
+  api:
+    image: newara
+    depends_on:
+      - db
+      - redis
+      - celery_worker
+    environment:
+      - DJANGO_SETTINGS_MODULE=ara.settings.test
+      - DJANGO_ENV=development
+      - SECRET_KEY=djangosecretkeyforenewara
+      - AWS_BUCKET_NAME=sparcs-newara
+      - AWS_BUCKET_NAME_STATIC=sparcs-kaist-ara-beta-static
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - SSO_CLIENT_ID=${SSO_CLIENT_ID}
+      - SSO_SECRET_KEY=${SSO_SECRET_KEY}
+      - NEWARA_DB_HOST=db
+      - NEWARA_DB_PORT=3306
+      - NEWARA_DB_USER=root
+      - NEWARA_DB_PASSWORD=root-password
+      - NEWARA_DB_NAME=new_ara
+      - NEWARA_REDIS_ADDRESS=redis
+    entrypoint: /newara/www/.docker/run.sh
+
+  celery_worker:
+    image: newara
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DJANGO_SETTINGS_MODULE=main.settings.test
+      - DJANGO_ENV=development
+      - SECRET_KEY=djangosecretkeyforenewara
+      - AWS_BUCKET_NAME=sparcs-newara
+      - AWS_BUCKET_NAME_STATIC=sparcs-kaist-ara-beta-static
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - SSO_CLIENT_ID=${SSO_CLIENT_ID}
+      - SSO_SECRET_KEY=${SSO_SECRET_KEY}
+      - NEWARA_DB_HOST=db
+      - NEWARA_DB_PORT=3306
+      - NEWARA_DB_USER=root
+      - NEWARA_DB_PASSWORD=root-password
+      - NEWARA_DB_NAME=new_ara
+      - NEWARA_REDIS_ADDRESS=redis
+      - C_FORCE_ROOT=true
+    entrypoint: /newara/www/.docker/run-celery.sh
+
+  db:
+    container_name: db
+    image: mysql:5.7
+    expose:
+      - 3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=root-password
+      - MYSQL_DATABASE=new_ara
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+
+  redis:
+    image: redis:5
+    expose:
+      - 6379
