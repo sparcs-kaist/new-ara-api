@@ -47,7 +47,7 @@ def _get_best(days, period):
         keys.append(key)
 
     if length < 5:
-        for key, _ in sorted(article_hits, key=lambda x: x[1], reverse=True):
+        for key, _ in sorted(article_hits.items(), key=lambda x: x[1], reverse=True):
             if key not in keys:
                 articles.append(BestArticle(period=period,
                                             best_by=BestArticle.BEST_BY_CHOICES_POSITIVE_VOTES,
