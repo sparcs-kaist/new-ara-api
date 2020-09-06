@@ -87,7 +87,7 @@ class UserViewSet(ActionAPIViewSet):
         # Security Issues
         if request.GET.get('state') != request.session.get('state'):
             return response.Response(
-                status=status.HTTP_400_BAD_REQUEST,
+                status=status.HTTP_401_UNAUTHORIZED,
             )
 
         user_info = self.sso_client.get_user_info(request.GET['code'])
