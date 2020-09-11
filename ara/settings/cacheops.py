@@ -8,10 +8,8 @@ CACHEOPS_REDIS = {
 }
 
 CACHEOPS = {
-    'core.Article': {'ops': {'get', 'fetch'}, 'timeout': 60*10},
     'core.ArticleUpdateLog': {'ops': {'get', 'fetch'}, 'timeout': 60*10},
     'core.Board': {'ops': {'get', 'fetch'}, 'timeout': 60*60},
-    'core.Comment': {'ops': {'count'}, 'timeout': 60*10},
     'core.CommentUpdateLog': {'ops': {'get', 'fetch'}, 'timeout': 60*10},
     'core.Topic': {'ops': {'get', 'fetch'}, 'timeout': 60*60},
 
