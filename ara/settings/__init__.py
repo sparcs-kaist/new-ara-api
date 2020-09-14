@@ -5,6 +5,7 @@ from .aws import *
 from .sso import *
 from .redis import *
 from .scheduler import *
+from .log import *
 from .cacheops import *
 from .sentry import *
 
