@@ -375,6 +375,15 @@ class ArticleListActionSerializer(BaseArticleSerializer):
     )
 
 
+class BestArticleListActionSerializer(BaseArticleSerializer):
+    title = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    created_by = serializers.SerializerMethodField(
+        read_only=True,
+    )
+
+
 class ArticleCreateActionSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
         exclude = ()
