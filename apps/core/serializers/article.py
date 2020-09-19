@@ -202,7 +202,7 @@ class ArticleSerializer(BaseArticleSerializer):
                 'after': None
             }
 
-        if from_view in ['all', 'board', 'user', 'scrap']:
+        if from_view in ['all', 'board', 'user', 'scrap', 'recent']:
             if from_view == 'all':
                 articles = Article.objects.all()
 
@@ -223,6 +223,14 @@ class ArticleSerializer(BaseArticleSerializer):
                 if not articles.filter(id=obj.id).exists():
                     raise serializers.ValidationError(gettext("This article is not in user's scrap list."))
 
+            elif from_view == 'recent':
+                articles = Article.objects.filter(
+                    article_read_log_set__read_by=request.user
+                ).order_by('-article_read_log_set__created_at')
+
+                if not articles.filter(id=obj.id).exists():
+                    raise serializers.ValidationError(gettext('This article is never read by user.'))
+
             if search_query:
                 articles = self.search(articles, search_query)
 
@@ -236,39 +244,7 @@ class ArticleSerializer(BaseArticleSerializer):
             }
 
         else:
-            elif from_view == 'recent':
-                # TODO: 글을 누르는 순간 최근본글 리스트가 바뀌어서 이전글다음글이 변경됨. 수정 필요.
-                before = None
-                after = None
-                # reads = request.user.article_read_log_set.all()
-                # if search_query:
-                #     reads = reads.prefetch_related('article__created_by__profile').filter(
-                #         models.Q(article__title__search=search_query) |
-                #         models.Q(article__content_text__search=search_query) |
-                #         models.Q(article__created_by__profile__nickname__search=search_query)
-                #     )
-                #
-                # try:
-                #     r = reads.get(article=obj)
-                # except ArticleReadLog.DoesNotExist:
-                #     raise serializers.ValidationError(gettext('This article is never read by user.'))
-                #
-                # reads = reads.exclude(article_id=obj.id)
-                # before = reads.filter(updated_at__lte=r.updated_at).first()
-                # if before:
-                #     before = before.article
-                #
-                # after = reads.filter(created_at__gte=r.updated_at).last()
-                # if after:
-                #     after = after.article
-
-            else:
-                raise serializers.ValidationError(gettext("Wrong value for parameter 'from_view'."))
-
-            return {
-                'before': SideArticleSerializer(before, context=self.context).data if before else None,
-                'after': SideArticleSerializer(after, context=self.context).data if after else None,
-            }
+            raise serializers.ValidationError(gettext("Wrong value for parameter 'from_view'."))
 
     parent_topic = TopicSerializer(
         read_only=True,
