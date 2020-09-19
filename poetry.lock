@@ -393,6 +393,18 @@ sqlparse = ">=0.2.0"
 
 [[package]]
 category = "main"
+description = "Force debugging of partial- or non-HTML views in django-debug-toolbar."
+name = "django-debug-toolbar-force"
+optional = false
+python-versions = "*"
+version = "0.1.8"
+
+[package.dependencies]
+django-nine = ">=0.2.3"
+six = ">=1.4.1"
+
+[[package]]
+category = "main"
 description = "Django-environ allows you to utilize 12factor inspired environment variables to configure your Django application."
 name = "django-environ"
 optional = false
@@ -431,6 +443,14 @@ version = "3.8.1"
 
 [package.dependencies]
 Django = ">=2.2"
+
+[[package]]
+category = "main"
+description = "Version checking library."
+name = "django-nine"
+optional = false
+python-versions = "*"
+version = "0.2.3"
 
 [[package]]
 category = "main"
@@ -1182,7 +1202,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "617acc36b7a07a22603e11e579e7ae6018ab0af1ffde6900a59ec6e9e839a040"
+content-hash = "bbe1f2d17e7fcf3639d928852ac7fd8d689a20e34e7e400cec6967c7217ae6a2"
 lock-version = "1.0"
 python-versions = "^3.7"
 
@@ -1335,6 +1355,10 @@ django-debug-toolbar = [
     {file = "django-debug-toolbar-2.2.tar.gz", hash = "sha256:eabbefe89881bbe4ca7c980ff102e3c35c8e8ad6eb725041f538988f2f39a943"},
     {file = "django_debug_toolbar-2.2-py3-none-any.whl", hash = "sha256:ff94725e7aae74b133d0599b9bf89bd4eb8f5d2c964106e61d11750228c8774c"},
 ]
+django-debug-toolbar-force = [
+    {file = "django-debug-toolbar-force-0.1.8.tar.gz", hash = "sha256:10f0ec9ebbc0dd872ac810eb7d2033abb78c385fc90d8cf45c3adcc21dce23fb"},
+    {file = "django_debug_toolbar_force-0.1.8-py2.py3-none-any.whl", hash = "sha256:0a47451d910ec248c154d4efdf86ff001a04530f5b64daef73280b317364d09a"},
+]
 django-environ = [
     {file = "django-environ-0.4.5.tar.gz", hash = "sha256:6c9d87660142608f63ec7d5ce5564c49b603ea8ff25da595fd6098f6dc82afde"},
     {file = "django_environ-0.4.5-py2.py3-none-any.whl", hash = "sha256:c57b3c11ec1f319d9474e3e5a79134f40174b17c7cc024bbb2fad84646b120c4"},
@@ -1350,6 +1374,10 @@ django-filter = [
 django-mysql = [
     {file = "django-mysql-3.8.1.tar.gz", hash = "sha256:c47065b347a59ef1e1e4b7330f32a17ac37b5fc286f31409551ee9581047f22b"},
     {file = "django_mysql-3.8.1-py3-none-any.whl", hash = "sha256:473e3b01acbc14a85b65e8a8d628ab6957dff0409cf782dde4830726b3731df3"},
+]
+django-nine = [
+    {file = "django-nine-0.2.3.tar.gz", hash = "sha256:f09fa5870ea2b0d86c03249c9c574c9b14c7e81b05dd860e9ef9c656740892cc"},
+    {file = "django_nine-0.2.3-py2.py3-none-any.whl", hash = "sha256:394c043668f820f50d1f7b27009b4957f9f480a7ecf74f55a6699b80ac6e1f69"},
 ]
 django-redis = [
     {file = "django-redis-4.12.1.tar.gz", hash = "sha256:306589c7021e6468b2656edc89f62b8ba67e8d5a1c8877e2688042263daa7a63"},
