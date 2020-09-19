@@ -1,3 +1,6 @@
+from .env import env
+
+
 # http://www.django-rest-framework.org/
 
 REST_FRAMEWORK = {
@@ -13,3 +16,8 @@ REST_FRAMEWORK = {
         'AUTO_OPTIMIZE': True,
     },
 }
+
+if env('DJANGO_ENV') == 'production':
+    REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = (
+        'rest_framework.renderers.JSONRenderer',
+    )
