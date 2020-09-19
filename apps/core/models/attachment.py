@@ -11,6 +11,7 @@ class Attachment(MetaDataModel):
     file = models.FileField(
         upload_to='files',
         verbose_name='링크',
+        max_length=200,
     )
 
     size = models.BigIntegerField(
