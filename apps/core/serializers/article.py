@@ -202,7 +202,7 @@ class ArticleSerializer(BaseArticleSerializer):
                 'after': None
             }
 
-        if from_view in ['all', 'board', 'user']:
+        if from_view in ['all', 'board', 'user', 'scrap']:
             if from_view == 'all':
                 articles = Article.objects.all()
 
@@ -214,6 +214,14 @@ class ArticleSerializer(BaseArticleSerializer):
                 if created_by_id is None:
                     created_by_id = request.user.id
                 articles = Article.objects.filter(created_by_id=created_by_id)
+
+            elif from_view == 'scrap':
+                articles = Article.objects.filter(
+                    scrap_set__scrapped_by=request.user
+                ).order_by('-scrap_set__created_at')
+
+                if not articles.filter(id=obj.id).exists():
+                    raise serializers.ValidationError(gettext("This article is not in user's scrap list."))
 
             if search_query:
                 articles = self.search(articles, search_query)
@@ -228,29 +236,6 @@ class ArticleSerializer(BaseArticleSerializer):
             }
 
         else:
-            if from_view == 'scrap':
-                scraps = request.user.scrap_set.all()
-                if search_query:
-                    scraps = scraps.prefetch_related('parent_article__created_by__profile').filter(
-                        models.Q(parent_article__title__search=search_query) |
-                        models.Q(parent_article__content_text__search=search_query) |
-                        models.Q(parent_article__created_by__profile__nickname__search=search_query)
-                    )
-
-                try:
-                    s = scraps.get(parent_article=obj)
-                except Scrap.DoesNotExist:
-                    raise serializers.ValidationError(gettext("This article is not in user's scrap list."))
-
-                scraps = scraps.exclude(parent_article_id=obj.id)
-                before = scraps.filter(created_at__lte=s.created_at).first()
-                if before:
-                    before = before.parent_article
-
-                after = scraps.filter(created_at__gte=s.created_at).last()
-                if after:
-                    after = after.parent_article
-
             elif from_view == 'recent':
                 # TODO: 글을 누르는 순간 최근본글 리스트가 바뀌어서 이전글다음글이 변경됨. 수정 필요.
                 before = None
