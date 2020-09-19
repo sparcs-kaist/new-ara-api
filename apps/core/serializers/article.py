@@ -183,6 +183,14 @@ class ArticleSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
         exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
 
+    @staticmethod
+    def search(queryset, search):
+        return queryset.prefetch_related('created_by__profile').filter(
+            models.Q(title__search=search) |
+            models.Q(content_text__search=search) |
+            models.Q(created_by__profile__nickname__search=search)
+        ).distinct()
+
     # TODO: refactoring
     def get_side_articles(self, obj):
         request = self.context['request']
@@ -208,11 +216,7 @@ class ArticleSerializer(BaseArticleSerializer):
                 articles = Article.objects.filter(created_by_id=created_by_id)
 
             if search_query:
-                articles = articles.prefetch_related('created_by__profile').filter(
-                    models.Q(title__search=search_query) |
-                    models.Q(content_text__search=search_query) |
-                    models.Q(created_by__profile__nickname__search=search_query)
-                ).distinct()
+                articles = self.search(articles, search_query)
 
             articles = articles.exclude(id=obj.id)
             before = articles.filter(created_at__lte=obj.created_at).first()
