@@ -11,11 +11,6 @@ class BestArticle(MetaDataModel):
         (PERIOD_CHOICES_WEEKLY, PERIOD_CHOICES_WEEKLY),
     )
 
-    BEST_BY_CHOICES_POSITIVE_VOTES = 'positive_vote_count'
-    BEST_BY_CHOICES = (
-        (BEST_BY_CHOICES_POSITIVE_VOTES, BEST_BY_CHOICES_POSITIVE_VOTES),
-    )
-
     class Meta(MetaDataModel.Meta):
         verbose_name = '베스트 문서'
         verbose_name_plural = '베스트 문서 목록'
@@ -23,14 +18,9 @@ class BestArticle(MetaDataModel):
     period = models.CharField(
         choices=PERIOD_CHOICES,
         default='daily',
+        db_index=True,
         max_length=32,
         verbose_name='베스트 문서 종류',
-    )
-    best_by = models.CharField(
-        choices=BEST_BY_CHOICES,
-        default='positive_vote_count',
-        max_length=32,
-        verbose_name="베스트 문서 선정 기준"
     )
 
     article = models.ForeignKey(
@@ -39,4 +29,10 @@ class BestArticle(MetaDataModel):
         db_index=True,
         related_name='best_set',
         verbose_name='문서',
+    )
+
+    latest = models.BooleanField(
+        default=True,
+        db_index=True,
+        verbose_name='최신 베스트 문서',
     )
