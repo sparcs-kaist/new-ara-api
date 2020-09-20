@@ -16,6 +16,8 @@ def _get_redis_key(type_):
 
 
 def _get_best(days, period):
+    BestArticle.objects.filter(latest=True, period=period).update(latest=False)
+
     type_ = 'vote'
     to_ts = time.time()
     from_ts = to_ts - 24*60*60*days
@@ -41,17 +43,13 @@ def _get_best(days, period):
 
     length = len(article_votes)
     for key, _ in sorted(hit_sorted, key=lambda x: x[1], reverse=True)[:5]:
-        articles.append(BestArticle(period=period,
-                                    best_by=BestArticle.BEST_BY_CHOICES_POSITIVE_VOTES,
-                                    article_id=key))
+        articles.append(BestArticle(period=period, article_id=key, latest=True))
         keys.append(key)
 
     if length < 5:
         for key, _ in sorted(article_hits.items(), key=lambda x: x[1], reverse=True):
             if key not in keys:
-                articles.append(BestArticle(period=period,
-                                            best_by=BestArticle.BEST_BY_CHOICES_POSITIVE_VOTES,
-                                            article_id=key))
+                articles.append(BestArticle(period=period, article_id=key, latest=True))
                 keys.append(key)
 
             if len(articles) >= 5:
