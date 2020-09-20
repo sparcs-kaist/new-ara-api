@@ -19,6 +19,7 @@ INSTALLED_APPS += [
 MIDDLEWARE += [
     'corsheaders.middleware.CorsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'debug_toolbar_force.middleware.ForceDebugToolbarMiddleware',
 ]
 
 REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] = (
