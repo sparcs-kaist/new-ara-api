@@ -21,9 +21,7 @@ class CommentViewSet(mixins.CreateModelMixin,
                      mixins.UpdateModelMixin,
                      mixins.DestroyModelMixin,
                      ActionAPIViewSet):
-    # cacheops 이용으로 select_related에서 prefetch_related로 옮김
     queryset = Comment.objects.select_related(
-    ).prefetch_related(
         'attachment',
         'created_by',
     )
