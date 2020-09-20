@@ -38,14 +38,14 @@ cached-property = "^1.5.1"
 django-cacheops = "^5.0.1"
 fake-useragent = "^0.1.11"
 sentry-sdk = "^0.17.0"
-django-debug-toolbar = "^2.2"
-django-debug-toolbar-force = "^0.1.8"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
 autopep8 = "^1.4"
 pylint-django = "^2.0"
 django-silk = "^4.1.0"
+django-debug-toolbar = "2.2"
+django-debug-toolbar-force = "0.1.8"
 
 [build-system]
 requires = ["poetry>=0.12"]
