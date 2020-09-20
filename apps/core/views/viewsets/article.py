@@ -76,6 +76,9 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 ArticleReadLog.prefetch_my_article_read_log(self.request.user),
                 'comment_set',
                 'comment_set__comment_set',
+            ).annotate(
+                comment_set__count=models.Count('comment_set'),
+                comment_set__comment_set__count=models.Count('comment_set__comment_set'),
             )
 
         else:
