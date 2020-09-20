@@ -1,7 +1,7 @@
 from rest_framework import views, response
 
 from apps.core.models import BestArticle, PERIOD_CHOICES, BEST_BY_CHOICES
-from apps.core.serializers.article import ArticleListActionSerializer
+from apps.core.serializers.article import BestArticleListActionSerializer
 
 
 class HomeView(views.APIView):
@@ -20,7 +20,7 @@ def _best_articles(period, best_by, request):
         raise ValueError(
             'Wrong period or best_by: {} / {}'.format(period, best_by))
 
-    return ArticleListActionSerializer(
+    return BestArticleListActionSerializer(
         instance=[
             best_article.article for best_article
             in BestArticle.objects.filter(period=period, best_by=best_by).all()[:5]
