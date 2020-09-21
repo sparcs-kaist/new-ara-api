@@ -1,12 +1,10 @@
-from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import gettext
 from rest_framework import exceptions, serializers
 
 from ara.classes.serializers import MetaDataModelSerializer
 
-from apps.core.models import Article, Board, Scrap, ArticleReadLog
-from apps.core.serializers.article_log import ArticleUpdateLogSerializer
+from apps.core.models import Article, Board
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
 
