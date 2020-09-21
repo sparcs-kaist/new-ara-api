@@ -50,6 +50,19 @@ class Article(MetaDataModel):
         verbose_name='싫어요 수',
     )
 
+    migrated_hit_count = models.IntegerField(
+        default=0,
+        verbose_name='이전된 조회수',
+    )
+    migrated_positive_vote_count = models.IntegerField(
+        default=0,
+        verbose_name='이전된 좋아요 수',
+    )
+    migrated_negative_vote_count = models.IntegerField(
+        default=0,
+        verbose_name='이전된 좋아요 수',
+    )
+
     created_by = models.ForeignKey(
         on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
