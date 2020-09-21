@@ -60,7 +60,7 @@ class Article(MetaDataModel):
     )
     migrated_negative_vote_count = models.IntegerField(
         default=0,
-        verbose_name='이전된 좋아요 수',
+        verbose_name='이전된 싫어요 수',
     )
 
     created_by = models.ForeignKey(
