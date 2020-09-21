@@ -50,6 +50,19 @@ class Article(MetaDataModel):
         verbose_name='싫어요 수',
     )
 
+    migrated_hit_count = models.IntegerField(
+        default=0,
+        verbose_name='이전된 조회수',
+    )
+    migrated_positive_vote_count = models.IntegerField(
+        default=0,
+        verbose_name='이전된 좋아요 수',
+    )
+    migrated_negative_vote_count = models.IntegerField(
+        default=0,
+        verbose_name='이전된 싫어요 수',
+    )
+
     created_by = models.ForeignKey(
         on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
@@ -114,14 +127,14 @@ class Article(MetaDataModel):
 
     # TODO: hit_count property should be cached
     def update_hit_count(self):
-        self.hit_count = self.article_read_log_set.count()
+        self.hit_count = self.article_read_log_set.count() + self.migrated_hit_count
 
         self.save()
 
     # TODO: positive_vote_count, negative_vote_count properties should be cached
     def update_vote_status(self):
-        self.positive_vote_count = self.vote_set.filter(is_positive=True).count()
-        self.negative_vote_count = self.vote_set.filter(is_positive=False).count()
+        self.positive_vote_count = self.vote_set.filter(is_positive=True).count() + self.migrated_positive_vote_count
+        self.negative_vote_count = self.vote_set.filter(is_positive=False).count() + self.migrated_negative_vote_count
 
         self.save()
 

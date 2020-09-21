@@ -14,7 +14,7 @@ from apps.core.serializers.topic import TopicSerializer
 class BaseArticleSerializer(MetaDataModelSerializer):
     class Meta:
         model = Article
-        exclude = ('content', 'content_text',)
+        exclude = ('content', 'content_text', 'migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
 
     @staticmethod
     def get_my_vote(obj):
@@ -156,7 +156,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
 class SideArticleSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
-        exclude = ()
+        pass
 
     nested_comments_count = serializers.ReadOnlyField()
     created_by = serializers.SerializerMethodField(
@@ -177,17 +177,11 @@ class SideArticleSerializer(BaseArticleSerializer):
     hidden_title = serializers.SerializerMethodField(
         read_only=True,
     )
-    content = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    hidden_content = serializers.SerializerMethodField(
-        read_only=True,
-    )
 
 
 class ArticleSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
-        exclude = ()
+        exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
 
     # TODO: refactoring
     def get_side_articles(self, obj):
@@ -386,7 +380,7 @@ class BestArticleListActionSerializer(BaseArticleSerializer):
 
 class ArticleCreateActionSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
-        exclude = ()
+        exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
         read_only_fields = (
             'hit_count',
             'positive_vote_count',
@@ -407,7 +401,7 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
 
 class ArticleUpdateActionSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
-        exclude = ()
+        exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
         read_only_fields = (
             'is_anonymous',
             'hit_count',
