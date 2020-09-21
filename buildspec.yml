@@ -21,6 +21,6 @@ phases:
   post_build:
     commands:
       - docker-compose -f docker-compose.test.yml run api test
-      - docker-compose down
+      - docker-compose -f docker-compose.test.yml down
       - if [ $PUSH = true ]; then docker tag $PROJECT_NAME $ECR/$PROJECT_NAME:$DOCKER_TAG && docker push $ECR/$PROJECT_NAME:$DOCKER_TAG ; fi
 
