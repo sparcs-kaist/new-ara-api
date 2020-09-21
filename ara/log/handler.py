@@ -1,43 +1,55 @@
 import os
 import time
 import logging
+import uuid
 import json
+from collections import OrderedDict
 
 from logging import handlers
 
 from ara.log.log_object import ErrorLogObject
 
 
-def message_from_record(record):
-    if isinstance(record.msg, dict) or isinstance(record.msg, str):
-        message = {'raw': record.msg}
-    elif isinstance(record.msg, Exception):
-        message = ErrorLogObject.format_exception(record.msg)
-    else:
-        message = record.msg.format()
-    return message
+class LogMiddlewareHandler(logging.Handler):
+    @staticmethod
+    def message_from_record(record):
+        if isinstance(record.msg, dict) or isinstance(record.msg, str):
+            message = {'raw': record.msg}
+        elif isinstance(record.msg, Exception):
+            message = ErrorLogObject.format_exception(record.msg)
+        else:
+            message = record.msg.format()
+        return message
 
-
-class ConsoleHandler(logging.StreamHandler):
     def format(self, record):
-        message = message_from_record(record)
-        message['level'] = record.levelname
-        message['time'] = record.created
-        return json.dumps(message)
+        message = self.message_from_record(record)
+        return json.dumps(OrderedDict([
+            ('id', str(uuid.uuid4())),
+            ('level', record.levelname),
+            ('time', record.created),
+            *message.items()
+        ]))
 
 
-class SizedTimedRotatingFileHandler(handlers.TimedRotatingFileHandler):
+class ConsoleHandler(logging.StreamHandler, LogMiddlewareHandler):
+    pass
+
+
+class FileHandler(handlers.TimedRotatingFileHandler, LogMiddlewareHandler):
+    pass
+
+
+class SizedTimedRotatingFileHandler(handlers.TimedRotatingFileHandler, LogMiddlewareHandler):
     """
     Handler for logging to a set of files, which switches from one file
     to the next when the current file reaches a certain size, or at certain
     timed intervals
     """
 
-    def __init__(self, filename, maxBytes=0, backupCount=0, encoding=None,
+    def __init__(self, filename, max_bytes=0, backup_count=0, encoding=None,
                  delay=0, when='h', interval=1, utc=False):
-        handlers.TimedRotatingFileHandler.__init__(
-            self, filename, when, interval, backupCount, encoding, delay, utc)
-        self.maxBytes = maxBytes
+        handlers.TimedRotatingFileHandler.__init__(self, filename, when, interval, backup_count, encoding, delay, utc)
+        self.maxBytes = max_bytes
 
     def shouldRollover(self, record):
         """

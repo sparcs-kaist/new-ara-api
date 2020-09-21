@@ -24,6 +24,13 @@ LOGGING = {
             'level': 'INFO',
             'class': 'ara.log.handler.ConsoleHandler',
             'stream': sys.stdout
+        },
+        'rotating_file': {
+            'level': 'INFO',
+            'class': 'ara.log.handler.FileHandler',
+            'filename': '/tmp/ara.log',
+            'when': 'midnight',
+            'backupCount': 10,
         }
     },
     'loggers': {
@@ -33,7 +40,7 @@ LOGGING = {
             'propagate': True
         },
         'ara_logger': {
-            'handlers': ['console'],
+            'handlers': ['rotating_file'],
             'level': 'DEBUG',
             'propagate': False
         }
