@@ -192,8 +192,8 @@ class ArticleSerializer(BaseArticleSerializer):
     # TODO: refactoring
     def get_side_articles(self, obj):
         request = self.context['request']
+
         from_view = request.query_params.get('from_view')
-        search_query = request.query_params.get('search_query')
         if from_view is None:
             return {
                 'before': None,
@@ -207,12 +207,11 @@ class ArticleSerializer(BaseArticleSerializer):
             articles = Article.objects.all()
 
         elif from_view == 'board':
-            articles = obj.parent_board.article_set.all()
+            parent_board = obj.parent_board
+            articles = Article.objects.filter(parent_board=parent_board)
 
         elif from_view == 'user':
-            created_by_id = request.query_params.get('created_by')
-            if created_by_id is None:
-                created_by_id = request.user.id
+            created_by_id = request.query_params.get('created_by', request.user.id)
             articles = Article.objects.filter(created_by_id=created_by_id)
 
         elif from_view == 'scrap':
@@ -231,8 +230,8 @@ class ArticleSerializer(BaseArticleSerializer):
             if not articles.filter(id=obj.id).exists():
                 raise serializers.ValidationError(gettext('This article is never read by user.'))
 
-        if search_query:
-            articles = self.search(articles, search_query)
+        if request.query_params.get('search_query'):
+            articles = self.search(articles, request.query_params.get('search_query'))
 
         articles = articles.exclude(id=obj.id)
         before = articles.filter(created_at__lte=obj.created_at).first()
