@@ -8,7 +8,8 @@ while ! nc -vz $NEWARA_DB_HOST $NEWARA_DB_PORT; do
 done
 
 if [ "$1" = "test" ]; then
-    /newara/www/venv/bin/pytest tests --verbose
+    venv/bin/python manage.py compilemessages -l en -l ko
+    venv/bin/pytest tests --verbose
 else
     venv/bin/python manage.py collectstatic --noinput
     venv/bin/python manage.py migrate --no-input
