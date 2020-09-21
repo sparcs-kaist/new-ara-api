@@ -189,6 +189,44 @@ class ArticleSerializer(BaseArticleSerializer):
             models.Q(created_by__profile__nickname__search=search)
         ).distinct()
 
+    @staticmethod
+    def filter_articles(obj, request):
+        from_view = request.query_params.get('from_view')
+
+        if from_view == 'user':
+            created_by_id = request.query_params.get('created_by', request.user.id)
+            return Article.objects.filter(created_by_id=created_by_id)
+
+        elif from_view == 'board':
+            parent_board = obj.parent_board
+            return Article.objects.filter(parent_board=parent_board)
+
+        elif from_view == 'topic':
+            parent_topic = obj.parent_topic
+            return Article.objects.filter(parent_topic=parent_topic)
+
+        elif from_view == 'scrap':
+            articles = Article.objects.filter(
+                scrap_set__scrapped_by=request.user
+            ).order_by('-scrap_set__created_at')
+
+            if not articles.filter(id=obj.id).exists():
+                raise serializers.ValidationError(gettext("This article is not in user's scrap list."))
+
+            return articles
+
+        elif from_view == 'recent':
+            articles = Article.objects.filter(
+                article_read_log_set__read_by=request.user
+            ).order_by('-article_read_log_set__created_at')
+
+            if not articles.filter(id=obj.id).exists():
+                raise serializers.ValidationError(gettext('This article is never read by user.'))
+
+            return articles
+
+        return Article.objects.all()
+
     # TODO: refactoring
     def get_side_articles(self, obj):
         request = self.context['request']
@@ -203,32 +241,7 @@ class ArticleSerializer(BaseArticleSerializer):
         if from_view not in ['all', 'board', 'user', 'scrap', 'recent']:
             raise serializers.ValidationError(gettext("Wrong value for parameter 'from_view'."))
 
-        if from_view == 'all':
-            articles = Article.objects.all()
-
-        elif from_view == 'board':
-            parent_board = obj.parent_board
-            articles = Article.objects.filter(parent_board=parent_board)
-
-        elif from_view == 'user':
-            created_by_id = request.query_params.get('created_by', request.user.id)
-            articles = Article.objects.filter(created_by_id=created_by_id)
-
-        elif from_view == 'scrap':
-            articles = Article.objects.filter(
-                scrap_set__scrapped_by=request.user
-            ).order_by('-scrap_set__created_at')
-
-            if not articles.filter(id=obj.id).exists():
-                raise serializers.ValidationError(gettext("This article is not in user's scrap list."))
-
-        elif from_view == 'recent':
-            articles = Article.objects.filter(
-                article_read_log_set__read_by=request.user
-            ).order_by('-article_read_log_set__created_at')
-
-            if not articles.filter(id=obj.id).exists():
-                raise serializers.ValidationError(gettext('This article is never read by user.'))
+        articles = self.filter_articles(obj, request)
 
         if request.query_params.get('search_query'):
             articles = self.search_articles(articles, request.query_params.get('search_query'))
