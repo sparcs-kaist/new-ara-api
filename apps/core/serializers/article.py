@@ -200,49 +200,48 @@ class ArticleSerializer(BaseArticleSerializer):
                 'after': None
             }
 
-        if from_view in ['all', 'board', 'user', 'scrap', 'recent']:
-            if from_view == 'all':
-                articles = Article.objects.all()
-
-            elif from_view == 'board':
-                articles = obj.parent_board.article_set.all()
-
-            elif from_view == 'user':
-                created_by_id = request.query_params.get('created_by')
-                if created_by_id is None:
-                    created_by_id = request.user.id
-                articles = Article.objects.filter(created_by_id=created_by_id)
-
-            elif from_view == 'scrap':
-                articles = Article.objects.filter(
-                    scrap_set__scrapped_by=request.user
-                ).order_by('-scrap_set__created_at')
-
-                if not articles.filter(id=obj.id).exists():
-                    raise serializers.ValidationError(gettext("This article is not in user's scrap list."))
-
-            elif from_view == 'recent':
-                articles = Article.objects.filter(
-                    article_read_log_set__read_by=request.user
-                ).order_by('-article_read_log_set__created_at')
-
-                if not articles.filter(id=obj.id).exists():
-                    raise serializers.ValidationError(gettext('This article is never read by user.'))
-
-            if search_query:
-                articles = self.search(articles, search_query)
-
-            articles = articles.exclude(id=obj.id)
-            before = articles.filter(created_at__lte=obj.created_at).first()
-            after = articles.filter(created_at__gte=obj.created_at).last()
-
-            return {
-                'before': SideArticleSerializer(before, context=self.context).data if before else None,
-                'after': SideArticleSerializer(after, context=self.context).data if after else None,
-            }
-
-        else:
+        if from_view not in ['all', 'board', 'user', 'scrap', 'recent']:
             raise serializers.ValidationError(gettext("Wrong value for parameter 'from_view'."))
+
+        if from_view == 'all':
+            articles = Article.objects.all()
+
+        elif from_view == 'board':
+            articles = obj.parent_board.article_set.all()
+
+        elif from_view == 'user':
+            created_by_id = request.query_params.get('created_by')
+            if created_by_id is None:
+                created_by_id = request.user.id
+            articles = Article.objects.filter(created_by_id=created_by_id)
+
+        elif from_view == 'scrap':
+            articles = Article.objects.filter(
+                scrap_set__scrapped_by=request.user
+            ).order_by('-scrap_set__created_at')
+
+            if not articles.filter(id=obj.id).exists():
+                raise serializers.ValidationError(gettext("This article is not in user's scrap list."))
+
+        elif from_view == 'recent':
+            articles = Article.objects.filter(
+                article_read_log_set__read_by=request.user
+            ).order_by('-article_read_log_set__created_at')
+
+            if not articles.filter(id=obj.id).exists():
+                raise serializers.ValidationError(gettext('This article is never read by user.'))
+
+        if search_query:
+            articles = self.search(articles, search_query)
+
+        articles = articles.exclude(id=obj.id)
+        before = articles.filter(created_at__lte=obj.created_at).first()
+        after = articles.filter(created_at__gte=obj.created_at).last()
+
+        return {
+            'before': SideArticleSerializer(before, context=self.context).data if before else None,
+            'after': SideArticleSerializer(after, context=self.context).data if after else None,
+        }
 
     parent_topic = TopicSerializer(
         read_only=True,
