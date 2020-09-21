@@ -227,7 +227,6 @@ class ArticleSerializer(BaseArticleSerializer):
 
         return Article.objects.all()
 
-    # TODO: refactoring
     def get_side_articles(self, obj):
         request = self.context['request']
 
