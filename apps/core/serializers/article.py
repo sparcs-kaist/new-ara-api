@@ -182,7 +182,7 @@ class ArticleSerializer(BaseArticleSerializer):
         exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
 
     @staticmethod
-    def search(queryset, search):
+    def search_articles(queryset, search):
         return queryset.prefetch_related('created_by__profile').filter(
             models.Q(title__search=search) |
             models.Q(content_text__search=search) |
@@ -231,7 +231,7 @@ class ArticleSerializer(BaseArticleSerializer):
                 raise serializers.ValidationError(gettext('This article is never read by user.'))
 
         if request.query_params.get('search_query'):
-            articles = self.search(articles, request.query_params.get('search_query'))
+            articles = self.search_articles(articles, request.query_params.get('search_query'))
 
         articles = articles.exclude(id=obj.id)
         before = articles.filter(created_at__lte=obj.created_at).first()
