@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-09-01 01:30+0900\n"
+"POT-Creation-Date: 2020-09-22 00:35+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,19 +22,15 @@ msgstr ""
 msgid "This article is not in user's scrap list."
 msgstr "사용자가 스크랩하지 않은 글입니다."
 
-#: apps/core/serializers/article.py:261
-msgid "This article is never read by user."
-msgstr "카이스트 구성원만 이용할 수 있는 게시판입니다."
-
-#: apps/core/serializers/article.py:272
+#: apps/core/serializers/article.py:277
 msgid "Wrong value for parameter 'from_view'."
-msgstr ""
+msgstr "from_view 쿼리 파라미터 value값이 틀렸습니다."
 
-#: apps/core/serializers/article.py:382
+#: apps/core/serializers/article.py:396
 msgid "This board is read only."
 msgstr "카이스트 구성원만 이용할 수 있는 게시판입니다."
 
-#: apps/core/serializers/article.py:384
+#: apps/core/serializers/article.py:398
 msgid "This board is only for KAIST members."
 msgstr "카이스트 구성원만 이용할 수 있는 게시판입니다."
 
@@ -83,3 +79,6 @@ msgstr "한국어"
 #: ara/settings/django.py:94
 msgid "English"
 msgstr "영어"
+
+#~ msgid "This article is never read by user."
+#~ msgstr "읽은적이 없는 게시물입니다."

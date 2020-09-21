@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-09-01 01:30+0900\n"
+"POT-Creation-Date: 2020-09-22 00:35+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,19 +22,15 @@ msgstr ""
 msgid "This article is not in user's scrap list."
 msgstr ""
 
-#: apps/core/serializers/article.py:261
-msgid "This article is never read by user."
-msgstr ""
-
-#: apps/core/serializers/article.py:272
+#: apps/core/serializers/article.py:277
 msgid "Wrong value for parameter 'from_view'."
 msgstr ""
 
-#: apps/core/serializers/article.py:382
+#: apps/core/serializers/article.py:396
 msgid "This board is read only."
 msgstr ""
 
-#: apps/core/serializers/article.py:384
+#: apps/core/serializers/article.py:398
 msgid "This board is only for KAIST members."
 msgstr ""
 
