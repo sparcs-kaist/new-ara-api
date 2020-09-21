@@ -10,8 +10,8 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=ara.settings.test
       - DJANGO_ENV=development
-      - SECRET_KEY=djangosecretkeyforenewara
-      - AWS_BUCKET_NAME=sparcs-newara
+      - SECRET_KEY=${SECRET_KEY}
+      - AWS_BUCKET_NAME=sparcs-newara-dev
       - AWS_BUCKET_NAME_STATIC=sparcs-kaist-ara-beta-static
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
@@ -33,8 +33,8 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=main.settings.test
       - DJANGO_ENV=development
-      - SECRET_KEY=djangosecretkeyforenewara
-      - AWS_BUCKET_NAME=sparcs-newara
+      - SECRET_KEY=${SECRET_KEY}
+      - AWS_BUCKET_NAME=sparcs-newara-dev
       - AWS_BUCKET_NAME_STATIC=sparcs-kaist-ara-beta-static
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
