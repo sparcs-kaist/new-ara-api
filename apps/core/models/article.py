@@ -127,14 +127,14 @@ class Article(MetaDataModel):
 
     # TODO: hit_count property should be cached
     def update_hit_count(self):
-        self.hit_count = self.article_read_log_set.count()
+        self.hit_count = self.article_read_log_set.count() + self.migrated_hit_count
 
         self.save()
 
     # TODO: positive_vote_count, negative_vote_count properties should be cached
     def update_vote_status(self):
-        self.positive_vote_count = self.vote_set.filter(is_positive=True).count()
-        self.negative_vote_count = self.vote_set.filter(is_positive=False).count()
+        self.positive_vote_count = self.vote_set.filter(is_positive=True).count() + self.migrated_positive_vote_count
+        self.negative_vote_count = self.vote_set.filter(is_positive=False).count() + self.migrated_negative_vote_count
 
         self.save()
 

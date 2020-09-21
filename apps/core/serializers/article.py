@@ -393,6 +393,9 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
             'negative_vote_count',
             'created_by',
             'commented_at',
+            'migrated_hit_count',
+            'migrated_positive_vote_count',
+            'migrated_negative_vote_count',
         )
 
     def validate_parent_board(self, board: Board):
@@ -417,4 +420,7 @@ class ArticleUpdateActionSerializer(BaseArticleSerializer):
             'parent_topic',
             'parent_board',
             'commented_at',
+            'migrated_hit_count',
+            'migrated_positive_vote_count',
+            'migrated_negative_vote_count',
         )
