@@ -9,32 +9,33 @@ LOGGING = {
             '()': 'django.utils.log.RequireDebugFalse'
         }
     },
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+        }
+    },
     'handlers': {
+        'default': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'standard'
+        },
         'console': {
             'level': 'INFO',
-            'class': 'logging.StreamHandler',
+            'class': 'ara.log.handler.ConsoleHandler',
             'stream': sys.stdout
         }
     },
     'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        'django.server': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
         'default': {
-            'handlers': ['console'],
+            'handlers': ['default'],
             'level': 'DEBUG',
             'propagate': True
         },
-        'root': {
+        'ara_logger': {
             'handlers': ['console'],
-            'level': 'INFO'
+            'level': 'DEBUG',
+            'propagate': False
         }
     }
 }

@@ -1,4 +1,4 @@
-from ara.settings import INSTALLED_APPS, MIDDLEWARE
+from ara.settings import INSTALLED_APPS, MIDDLEWARE, LOGGING
 from ..djangorestframework import REST_FRAMEWORK
 
 DEBUG = True
@@ -27,6 +27,7 @@ REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] = (
     'ara.authentication.CsrfExemptSessionAuthentication',
 )
 
+LOGGING['disable_existing_loggers'] = False
 
 try:
     from .local_settings import *

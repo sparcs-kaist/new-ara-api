@@ -1,8 +1,29 @@
 import os
 import time
 import logging
+import json
 
 from logging import handlers
+
+from ara.log.log_object import ErrorLogObject
+
+
+def message_from_record(record):
+    if isinstance(record.msg, dict) or isinstance(record.msg, str):
+        message = {'raw': record.msg}
+    elif isinstance(record.msg, Exception):
+        message = ErrorLogObject.format_exception(record.msg)
+    else:
+        message = record.msg.format()
+    return message
+
+
+class ConsoleHandler(logging.StreamHandler):
+    def format(self, record):
+        message = message_from_record(record)
+        message['level'] = record.levelname
+        message['time'] = record.created
+        return json.dumps(message)
 
 
 class SizedTimedRotatingFileHandler(handlers.TimedRotatingFileHandler):
