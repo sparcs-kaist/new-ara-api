@@ -72,6 +72,12 @@ After writing translations, run the following command to apply the translations.
 $ make i18n_compile
 ```
 
+### Create log directory
+```bash
+$ sudo mkdir -p /var/log/newara
+$ sudo chown $(whoami) /var/log/newara
+```
+
 ### Run lightweight server for development
 
 ```bash

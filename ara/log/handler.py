@@ -3,6 +3,7 @@ import time
 import logging
 import uuid
 import json
+from datetime import datetime
 from collections import OrderedDict
 
 from logging import handlers
@@ -26,7 +27,7 @@ class LogMiddlewareHandler(logging.Handler):
         return json.dumps(OrderedDict([
             ('id', str(uuid.uuid4())),
             ('level', record.levelname),
-            ('time', record.created),
+            ('time', datetime.fromtimestamp(record.created).isoformat()),
             *message.items()
         ]))
 

@@ -1,5 +1,9 @@
 import sys
+import os
 
+LOG_FILE_PATH = os.environ.get('LOG_FILE_PATH', '/var/log/newara/http_access.log')
+LOG_MAX_BYTES = int(os.environ.get('LOG_MAX_BYTES', 1024 * 1024 * 10))
+LOG_BACKUP_COUNT = int(os.environ.get('LOG_BACKUP_COUNT', 100))
 
 LOGGING = {
     'version': 1,
@@ -27,10 +31,11 @@ LOGGING = {
         },
         'rotating_file': {
             'level': 'INFO',
-            'class': 'ara.log.handler.FileHandler',
-            'filename': '/tmp/ara.log',
+            'class': 'ara.log.handler.SizedTimedRotatingFileHandler',
+            'filename': LOG_FILE_PATH,
+            'max_bytes': LOG_MAX_BYTES,
+            'backup_count': LOG_BACKUP_COUNT,
             'when': 'midnight',
-            'backupCount': 10,
         }
     },
     'loggers': {
@@ -46,8 +51,3 @@ LOGGING = {
         }
     }
 }
-
-LOG_ACCESS_FILE_PATH = '/var/log/newara/http_access.log'
-LOG_ERROR_FILE_PATH = '/var/log/newara/http_error.log'
-LOG_MAX_BYTE = 1024*1024*10
-LOG_BACKUP_COUNT = 100
