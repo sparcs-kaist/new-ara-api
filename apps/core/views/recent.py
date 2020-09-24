@@ -11,7 +11,7 @@ class RecentView(views.APIView):
         paginator = PageNumberPagination()
         # cacheops 이용으로 select_related에서 prefetch_related로 옮김
         recent_articles = ArticleReadLog.objects.filter(read_by=request.user) \
-            .order_by('-created_at') \
+            .order_by('-updated_at') \
             .prefetch_related(
                 'article',
                 'article__created_by',
