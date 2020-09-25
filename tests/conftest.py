@@ -14,8 +14,8 @@ from apps.user.models import UserProfile
 @pytest.fixture(scope='class')
 def set_admin_client(request):
     request.cls.admin, _ = User.objects.get_or_create(username='관리자', email='admin@sparcs.org', is_superuser=True)
-    if not hasattr(request.cls.user, 'profile'):
-        UserProfile.objects.get_or_create(user=request.cls.user, nickname='관리자')
+    if not hasattr(request.cls.admin, 'profile'):
+        UserProfile.objects.get_or_create(user=request.cls.admin, nickname='관리자')
     client = APIClient()
     client.force_authenticate(user=request.cls.user)
     request.cls.api_client = client
