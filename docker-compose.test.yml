@@ -1,55 +1,49 @@
-# Check S3 'sparcs-newara' bucket for the complete file
-version: '3'
-
+# 테스트 환경에서만 사용
+version: "3"
 services:
   api:
-    container_name: newara
-    image: newara:local
-    tty: false
+    image: newara
     depends_on:
       - db
       - redis
       - celery_worker
-    ports:
-      - 9000:9000
     environment:
+      - DJANGO_SETTINGS_MODULE=ara.settings.test
       - DJANGO_ENV=development
-      - SECRET_KEY=
-      - AWS_BUCKET_NAME=sparcs-newara
+      - SECRET_KEY=${SECRET_KEY}
+      - AWS_BUCKET_NAME=sparcs-newara-dev
       - AWS_BUCKET_NAME_STATIC=sparcs-kaist-ara-beta-static
-      - AWS_ACCESS_KEY_ID=
-      - AWS_SECRET_ACCESS_KEY=
-      - SSO_CLIENT_ID=
-      - SSO_SECRET_KEY=
-      - SENTRY_DSN=
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - SSO_CLIENT_ID=${SSO_CLIENT_ID}
+      - SSO_SECRET_KEY=${SSO_SECRET_KEY}
       - NEWARA_DB_HOST=db
       - NEWARA_DB_PORT=3306
       - NEWARA_DB_USER=root
-      - NEWARA_DB_PASSWORD=
+      - NEWARA_DB_PASSWORD=root-password
       - NEWARA_DB_NAME=new_ara
       - NEWARA_REDIS_ADDRESS=redis
     entrypoint: /newara/www/.docker/run.sh
 
   celery_worker:
-    image: newara:local
-    restart: always
+    image: newara
     depends_on:
       - db
       - redis
     environment:
+      - DJANGO_SETTINGS_MODULE=main.settings.test
       - DJANGO_ENV=development
-      - SECRET_KEY=
-      - AWS_BUCKET_NAME=sparcs-newara
+      - SECRET_KEY=${SECRET_KEY}
+      - AWS_BUCKET_NAME=sparcs-newara-dev
       - AWS_BUCKET_NAME_STATIC=sparcs-kaist-ara-beta-static
-      - AWS_ACCESS_KEY_ID=
-      - AWS_SECRET_ACCESS_KEY=
-      - SSO_CLIENT_ID=
-      - SSO_SECRET_KEY=
-      - SENTRY_DSN=
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - SSO_CLIENT_ID=${SSO_CLIENT_ID}
+      - SSO_SECRET_KEY=${SSO_SECRET_KEY}
       - NEWARA_DB_HOST=db
       - NEWARA_DB_PORT=3306
       - NEWARA_DB_USER=root
-      - NEWARA_DB_PASSWORD=
+      - NEWARA_DB_PASSWORD=root-password
       - NEWARA_DB_NAME=new_ara
       - NEWARA_REDIS_ADDRESS=redis
       - C_FORCE_ROOT=true
@@ -60,14 +54,12 @@ services:
     image: mysql:5.7
     expose:
       - 3306
-    ports:
-      - 3306:3306
     environment:
-      - MYSQL_ROOT_PASSWORD=
+      - MYSQL_ROOT_PASSWORD=root-password
       - MYSQL_DATABASE=new_ara
     command:
       - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_general_ci
+      - --collation-server=utf8mb4_unicode_ci
 
   redis:
     image: redis:6

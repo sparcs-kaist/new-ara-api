@@ -1,0 +1,26 @@
+version: 0.2
+
+env:
+  variables:
+    ECR: 666583083672.dkr.ecr.ap-northeast-2.amazonaws.com
+    PROJECT_NAME: newara
+
+phases:
+  install:
+    commands:
+      - chmod +x ./.docker/codebuild.sh
+      - . ./.docker/codebuild.sh
+      - $(aws ecr get-login --region ap-northeast-2 --no-include-email)
+      - docker pull $ECR/$PROJECT_NAME:$CACHE_DOCKER_TAG || true
+
+  build:
+    commands:
+      - echo $CODEBUILD_SOURCE_VERSION > version
+      - docker build --build-arg AWS_ACCESS_KEY_ID=$(echo $AWS_ACCESS_KEY_ID) --build-arg AWS_SECRET_ACCESS_KEY=$(echo $AWS_SECRET_ACCESS_KEY) --cache-from $ECR/$PROJECT_NAME:$CACHE_DOCKER_TAG  -t $PROJECT_NAME .
+
+  post_build:
+    commands:
+      - docker-compose -f docker-compose.test.yml run api test
+      - docker-compose -f docker-compose.test.yml down
+      - if [ $PUSH = true ]; then docker tag $PROJECT_NAME $ECR/$PROJECT_NAME:$DOCKER_TAG && docker push $ECR/$PROJECT_NAME:$DOCKER_TAG ; fi
+
