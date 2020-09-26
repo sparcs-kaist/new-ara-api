@@ -70,6 +70,6 @@ services:
       - --collation-server=utf8mb4_general_ci
 
   redis:
-    image: redis:5
+    image: redis:6
     expose:
       - 6379
