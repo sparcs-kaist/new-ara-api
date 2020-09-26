@@ -257,3 +257,4 @@ config.cnf
 
 # End of https://www.gitignore.io/api/visualstudiocode
 
+docker-compose.yml
