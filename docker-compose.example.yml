@@ -12,6 +12,8 @@ services:
       - celery_worker
     ports:
       - 9000:9000
+    volumes:
+      - /var/log/newara_api:/var/log/newara
     environment:
       - DJANGO_ENV=development
       - SECRET_KEY=
@@ -36,6 +38,8 @@ services:
     depends_on:
       - db
       - redis
+    volumes:
+      - /var/log/newara_celery:/var/log/newara
     environment:
       - DJANGO_ENV=development
       - SECRET_KEY=
