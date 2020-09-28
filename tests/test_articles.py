@@ -104,7 +104,7 @@ def set_readonly_board(request):
     request.cls.readonly_board.delete()
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_topic', 'set_article', 'set_admin_client')
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_topic', 'set_article')
 class TestArticle(TestCase, RequestSetting):
     def test_list(self):
         # article 개수를 확인하는 테스트
@@ -346,7 +346,6 @@ class TestArticle(TestCase, RequestSetting):
 
     @pytest.mark.usefixtures('set_readonly_board')
     def test_readonly_board(self):
-        # self.http_request(self.admin, '', )
         user_data = {
             "title": "article for test_create",
             "content": "content for test_create",
