@@ -64,10 +64,11 @@ class ArticleDocument(Document):
 
         related_models = [settings.AUTH_USER_MODEL, UserProfile]
 
-    def get_instances_from_related(self, related_instance):
+    def get_queryset(self):
+        return super(ArticleDocument, self).get_queryset().prefetch_related('created_by').prefetch_related('created_by__profile')
 
-        # I know this is a terrible hack, but there is no better way to get the auth model class
-        if isinstance(related_instance, apps.get_model( *settings.AUTH_USER_MODEL.split('.') )):
+    def get_instances_from_related(self, related_instance):
+        if isinstance(related_instance, apps.get_model(settings.AUTH_USER_MODEL)):
             return related_instance.article_set.all()
         elif isinstance(related_instance, UserProfile):
             return related_instance.user.article_set.all()
