@@ -3,32 +3,39 @@ from django_elasticsearch_dsl import Document, fields
 from django_elasticsearch_dsl.registries import registry
 from django.apps import apps
 from elasticsearch_dsl import analyzer, tokenizer
+from elasticsearch_dsl.analysis import token_filter
 
 from apps.core.models import Article
 from apps.user.models import UserProfile
 
 
-# _nori = 'nori'
-
-_nori = analyzer(
-    'nori_custom',
+custom_analyzer = analyzer(
+    'nori_user_dict',
+    type = 'custom',
     tokenizer = tokenizer(
-        'nori_tokenizer',
-        # decompound_mode = 'mixed',
-        # user_dictionary_rules = [
-        #     '카이스트',
-        #     '데구 데이타구조',
-        # ] 
+        'nori_user_dict_tkn',
+        type = 'nori_tokenizer',
+        decompound_mode = 'mixed',
+        user_dictionary = 'analysis/userdict_ko.txt'
     ),
-    filter = ['nori_number']
+    filter = [
+        'nori_number',
+        'nori_readingform',
+        token_filter(
+            'synonym',
+            type = 'synonym',
+            expand = True,
+            synonyms_path = 'analysis/synonym.txt'
+        )
+    ]
 )
 
 
 @registry.register_document
 class ArticleDocument(Document):
 
-    title = fields.TextField(attr='title', analyzer=_nori)
-    content_text = fields.TextField(attr='content_text', analyzer=_nori)
+    title = fields.TextField(attr='title', analyzer=custom_analyzer)
+    content_text = fields.TextField(attr='content_text', analyzer=custom_analyzer)
 
     created_by = fields.ObjectField(
         properties={
