@@ -7,3 +7,4 @@ from .attachment import *
 from .notification import *
 from .scrap import *
 from .faq import *
+from .best_search import *
