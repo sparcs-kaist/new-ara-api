@@ -12,8 +12,6 @@ services:
       - celery_worker
     ports:
       - 9000:9000
-    volumes:
-      - /var/log/newara_api:/var/log/newara
     environment:
       - DJANGO_ENV=development
       - SECRET_KEY=
@@ -30,7 +28,11 @@ services:
       - NEWARA_DB_PASSWORD=
       - NEWARA_DB_NAME=new_ara
       - NEWARA_REDIS_ADDRESS=redis
+      - NEWARA_ELASTICSEARCH_HOST=elasticsearch
     entrypoint: /newara/www/.docker/run.sh
+    volumes:
+      - /var/log/newara_api:/var/log/newara
+      - nori:/newara/www/ara/db/elasticsearch
 
   celery_worker:
     image: newara:local
@@ -38,8 +40,6 @@ services:
     depends_on:
       - db
       - redis
-    volumes:
-      - /var/log/newara_celery:/var/log/newara
     environment:
       - DJANGO_ENV=development
       - SECRET_KEY=
@@ -56,8 +56,11 @@ services:
       - NEWARA_DB_PASSWORD=
       - NEWARA_DB_NAME=new_ara
       - NEWARA_REDIS_ADDRESS=redis
+      - NEWARA_ELASTICSEARCH_HOST=elasticsearch
       - C_FORCE_ROOT=true
     entrypoint: /newara/www/.docker/run-celery.sh
+    volumes:
+      - ~/log/celery/:/var/log/newara/
 
   db:
     container_name: db
@@ -77,3 +80,20 @@ services:
     image: redis:6
     expose:
       - 6379
+
+  elasticsearch:
+    image: elasticsearch:7.9.2
+    expose:
+      - 9200
+      - 9300
+    environment:
+      - discovery.type=single-node
+    command: bash -c "
+      bin/elasticsearch-plugin list | grep -q analysis-nori || bin/elasticsearch-plugin install --batch analysis-nori
+      && /usr/local/bin/docker-entrypoint.sh
+      "
+    volumes:
+      - nori:/usr/share/elasticsearch/config/analysis
+
+volumes:
+  nori:
