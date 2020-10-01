@@ -6,6 +6,7 @@ from .best_article import *
 from .comment import *
 from .comment_log import *
 from .best_comment import *
+from .best_search import *
 from .attachment import *
 from .notification import *
 from .notification_log import *
