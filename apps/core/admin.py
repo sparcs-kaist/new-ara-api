@@ -11,6 +11,8 @@ class BoardAdmin(MetaDataModelAdmin):
     list_display = (
         'ko_name',
         'en_name',
+        'is_readonly',
+        'is_hidden',
     )
     search_fields = (
         'ko_name',
