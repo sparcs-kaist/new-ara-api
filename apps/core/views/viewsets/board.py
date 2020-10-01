@@ -11,7 +11,7 @@ from apps.core.serializers.board import (
 
 class BoardViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
     queryset = Board.objects.all().reverse()
-    filterset_fields = ['is_readonly']
+    filterset_fields = ['is_readonly', 'is_hidden']
     serializer_class = BoardSerializer
     permission_classes = (
         permissions.IsAuthenticated,
