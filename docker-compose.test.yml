@@ -7,6 +7,7 @@ services:
       - db
       - redis
       - celery_worker
+      - elasticsearch
     environment:
       - DJANGO_SETTINGS_MODULE=ara.settings.test
       - DJANGO_ENV=development
@@ -23,13 +24,17 @@ services:
       - NEWARA_DB_PASSWORD=root-password
       - NEWARA_DB_NAME=new_ara
       - NEWARA_REDIS_ADDRESS=redis
+      - ELASTICSEARCH_HOST=elasticsearch
     entrypoint: /newara/www/.docker/run.sh
+    volumes:
+      - ~/elasticsearch:/newara/www/ara/db/elasticsearch
 
   celery_worker:
     image: newara
     depends_on:
       - db
       - redis
+      - elasticsearch
     environment:
       - DJANGO_SETTINGS_MODULE=main.settings.test
       - DJANGO_ENV=development
@@ -65,3 +70,13 @@ services:
     image: redis:6
     expose:
       - 6379
+
+  elasticsearch:
+    image: elasticsearch:7.9.2
+    expose:
+      - 9200
+      - 9300
+    environment:
+      - discovery.type=single-node
+    volumes:
+      - ~/elasticsearch:/usr/share/elasticsearch/analysis
