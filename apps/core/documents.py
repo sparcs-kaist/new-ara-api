@@ -11,21 +11,21 @@ from apps.user.models import UserProfile
 
 custom_analyzer = analyzer(
     'nori_user_dict',
-    type = 'custom',
-    tokenizer = tokenizer(
+    type='custom',
+    tokenizer=tokenizer(
         'nori_user_dict_tkn',
-        type = 'nori_tokenizer',
-        decompound_mode = 'mixed',
-        user_dictionary = 'analysis/userdict_ko.txt'
+        type='nori_tokenizer',
+        decompound_mode='mixed',
+        user_dictionary='analysis/userdict_ko.txt'
     ),
-    filter = [
+    filter=[
         'nori_number',
         'nori_readingform',
         token_filter(
             'synonym',
-            type = 'synonym',
-            expand = True,
-            synonyms_path = 'analysis/synonym.txt'
+            type='synonym',
+            expand=True,
+            synonyms_path='analysis/synonym.txt'
         )
     ]
 )
@@ -41,7 +41,7 @@ class ArticleDocument(Document):
         properties={
             'id': fields.IntegerField(),
             'profile': fields.NestedField(
-                properties = {
+                properties={
                     'nickname': fields.TextField()
                 }
             )
@@ -67,7 +67,8 @@ class ArticleDocument(Document):
     def get_queryset(self):
         return super(ArticleDocument, self).get_queryset().prefetch_related('created_by').prefetch_related('created_by__profile')
 
-    def get_instances_from_related(self, related_instance):
+    @staticmethod
+    def get_instances_from_related(related_instance):
         if isinstance(related_instance, apps.get_model(settings.AUTH_USER_MODEL)):
             return related_instance.article_set.all()
         elif isinstance(related_instance, UserProfile):
