@@ -27,7 +27,7 @@ services:
       - ELASTICSEARCH_HOST=elasticsearch
     entrypoint: /newara/www/.docker/run.sh
     volumes:
-      - ~/elasticsearch:/newara/www/ara/db/elasticsearch
+      - nori:/newara/www/ara/db/elasticsearch
 
   celery_worker:
     image: newara
@@ -78,5 +78,12 @@ services:
       - 9300
     environment:
       - discovery.type=single-node
+    command: bash -c "
+      bin/elasticsearch-plugin list | grep -q analysis-nori || bin/elasticsearch-plugin install --batch analysis-nori
+      && /usr/local/bin/docker-entrypoint.sh
+      "
     volumes:
-      - ~/elasticsearch:/usr/share/elasticsearch/analysis
+      - nori:/usr/share/elasticsearch/config/analysis
+
+volumes:
+  nori:
