@@ -7,6 +7,17 @@ while ! nc -vz $NEWARA_DB_HOST $NEWARA_DB_PORT; do
   sleep 1
 done
 
+while ! nc -vz $NEWARA_REDIS_ADDRESS 6379; do
+  >&2 echo "Redis is unavailable - sleeping"
+  sleep 1
+done
+
+while ! nc -vz $ELASTICSEARCH_HOST 9200; do
+  >&2 echo "Elasticsearch is unavailable - sleeping"
+  sleep 1
+done
+
+
 if [ "$1" = "test" ]; then
     venv/bin/python manage.py compilemessages -l en -l ko
     venv/bin/pytest tests --verbose
