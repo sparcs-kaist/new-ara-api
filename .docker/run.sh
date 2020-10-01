@@ -12,7 +12,7 @@ while ! nc -vz $NEWARA_REDIS_ADDRESS 6379; do
   sleep 1
 done
 
-while ! nc -vz $ELASTICSEARCH_HOST 9200; do
+while ! nc -vz $NEWARA_ELASTICSEARCH_HOST 9200; do
   >&2 echo "Elasticsearch is unavailable - sleeping"
   sleep 1
 done

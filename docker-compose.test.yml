@@ -24,7 +24,7 @@ services:
       - NEWARA_DB_PASSWORD=root-password
       - NEWARA_DB_NAME=new_ara
       - NEWARA_REDIS_ADDRESS=redis
-      - ELASTICSEARCH_HOST=elasticsearch
+      - NEWARA_ELASTICSEARCH_HOST=elasticsearch
     entrypoint: /newara/www/.docker/run.sh
     volumes:
       - nori:/newara/www/ara/db/elasticsearch
@@ -51,6 +51,7 @@ services:
       - NEWARA_DB_PASSWORD=root-password
       - NEWARA_DB_NAME=new_ara
       - NEWARA_REDIS_ADDRESS=redis
+      - NEWARA_ELASTICSEARCH_HOST=elasticsearch
       - C_FORCE_ROOT=true
     entrypoint: /newara/www/.docker/run-celery.sh
 
