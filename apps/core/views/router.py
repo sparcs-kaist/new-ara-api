@@ -58,3 +58,10 @@ router.register(
     prefix=r'faqs',
     viewset=viewsets.FAQViewSet,
 )
+
+
+# BestSearchViewSet
+router.register(
+    prefix=f'best_searches',
+    viewset=viewsets.BestSearchViewSet,
+)
