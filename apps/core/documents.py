@@ -36,17 +36,7 @@ class ArticleDocument(Document):
 
     title = fields.TextField(attr='title', analyzer=custom_analyzer)
     content_text = fields.TextField(attr='content_text', analyzer=custom_analyzer)
-
-    created_by = fields.ObjectField(
-        properties={
-            'id': fields.IntegerField(),
-            'profile': fields.NestedField(
-                properties={
-                    'nickname': fields.TextField()
-                }
-            )
-        }
-    )
+    created_by_nickname = fields.KeywordField(attr='created_by_nickname')
 
     class Index:
         name = 'articles'
