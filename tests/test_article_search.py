@@ -68,13 +68,36 @@ def set_index(request):
 class TestArticleSearch(TransactionTestCase, RequestSetting):
     def test_main_search(self):
         # `main_search` 필터를 검사합니다. 개수 assertion 숫자들의 의미는 set_posts를 참고하세요.
-        response = self.http_request(self.user, 'get', 'articles', querystring='main_search__contains=AAAA')
-        assert 0 <= response.data['num_items'] <= 34
-        response = self.http_request(self.user, 'get', 'articles', querystring='main_search__contains=BBBB')
-        assert 0 <= response.data['num_items'] <= 20
-        response = self.http_request(self.user, 'get', 'articles', querystring='main_search__contains=CCCC')
-        assert 0 <= response.data['num_items'] <= 15
-        response = self.http_request(self.user, 'get', 'articles', querystring='main_search__contains=테스트')
-        assert 0 <= response.data['num_items'] <= 100
-        response = self.http_request(self.user, 'get', 'articles', querystring='main_search__contains=User2')
-        assert 0 <= response.data['num_items'] <= 25
+
+        def get_searched_article_number(q): 
+            return self.http_request(
+                self.user,
+                'get',
+                'articles',
+                querystring=f'main_search__contains={q}'
+            ).data['num_items']
+
+        wanted_min_proportion = 0.0
+        # wanted_min_proportion = 0.5
+        
+        queries = [
+            ('AAAA', 34),
+            ('BBBB', 20),
+            ('CCCC', 15),
+            ('테스트', 100),
+            ('User2', 25),
+        ]
+
+        results = [
+            (
+                get_searched_article_number(query[0]),
+                query[1]
+            ) for query in queries
+        ]
+
+        # Silly assert to check the results
+        # assert False, str(results)
+
+        for searched, expected in results:
+            assert expected * wanted_min_proportion <= searched <= expected
+
