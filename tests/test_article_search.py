@@ -77,8 +77,7 @@ class TestArticleSearch(TransactionTestCase, RequestSetting):
                 querystring=f'main_search__contains={q}'
             ).data['num_items']
 
-        wanted_min_proportion = 0.0
-        # wanted_min_proportion = 0.5
+        wanted_min_proportion = 0.5
         
         queries = [
             ('AAAA', 34),
