@@ -10,6 +10,7 @@ services:
       - db
       - redis
       - celery_worker
+      - elasticsearch
     ports:
       - 9000:9000
     environment:
@@ -60,7 +61,7 @@ services:
       - C_FORCE_ROOT=true
     entrypoint: /newara/www/.docker/run-celery.sh
     volumes:
-      - ~/log/celery/:/var/log/newara/
+      - /var/log/newara_celery:/var/log/newara
 
   db:
     container_name: db
