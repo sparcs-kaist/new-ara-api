@@ -19,14 +19,29 @@ custom_analyzer = analyzer(
         user_dictionary='analysis/userdict_ko.txt'
     ),
     filter=[
-        'nori_number',
         'nori_readingform',
         token_filter(
             'synonym',
             type='synonym',
             expand=True,
             synonyms_path='analysis/synonym.txt'
-        )
+        ),
+        *[
+            token_filter(
+                f'extend_{x}_to_4',
+                type='pattern_replace',
+                pattern='(^.{%d}$)'%x,
+                replacement=('$1'+' '*(4-x)),
+                all=False
+            ) for x in range(1,4)
+        ],
+        token_filter(
+            '4_5_grams',
+            type='ngram',
+            min_gram=4,
+            max_gram=5
+        ),
+        'lowercase',
     ]
 )
 
@@ -43,6 +58,7 @@ class ArticleDocument(Document):
         settings = {
             'number_of_shards': 3,
             'number_of_replicas': 1,
+            # 'max_ngram_diff': 50,
         }
 
     class Django:
