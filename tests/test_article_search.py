@@ -65,7 +65,7 @@ def set_index(request):
     call_command('search_index', '--create')
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_board', 'set_authors', 'set_index', 'set_posts')
+@pytest.mark.usefixtures('set_user_client', 'set_index', 'set_board', 'set_authors', 'set_posts')
 class TestArticleSearch(TransactionTestCase, RequestSetting):
     def test_main_search(self):
         # `main_search` 필터를 검사합니다. 개수 assertion 숫자들의 의미는 set_posts를 참고하세요.
