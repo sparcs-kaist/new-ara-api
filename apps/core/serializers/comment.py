@@ -11,7 +11,7 @@ class BaseCommentSerializer(MetaDataModelSerializer):
         fields = '__all__'
 
     @staticmethod
-    def get_my_vote(obj):
+    def get_my_vote(obj) -> bool:
         if not obj.vote_set.exists():
             return None
 
@@ -20,7 +20,7 @@ class BaseCommentSerializer(MetaDataModelSerializer):
         return my_vote.is_positive
 
     @staticmethod
-    def get_my_report(obj):
+    def get_my_report(obj) -> dict:
         from apps.core.serializers.report import BaseReportSerializer
 
         if not obj.report_set.exists():
@@ -30,13 +30,13 @@ class BaseCommentSerializer(MetaDataModelSerializer):
 
         return BaseReportSerializer(my_report).data
 
-    def get_is_hidden(self, obj):
+    def get_is_hidden(self, obj) -> bool:
         if self.validate_hidden(obj):
             return True
 
         return False
 
-    def get_why_hidden(self, obj):
+    def get_why_hidden(self, obj) -> dict:
         errors = self.validate_hidden(obj)
 
         return [
@@ -45,7 +45,7 @@ class BaseCommentSerializer(MetaDataModelSerializer):
             } for error in errors
         ]
 
-    def get_content(self, obj):
+    def get_content(self, obj) -> str:
         errors = self.validate_hidden(obj)
 
         if errors:
@@ -53,14 +53,14 @@ class BaseCommentSerializer(MetaDataModelSerializer):
 
         return obj.content
 
-    def get_hidden_content(self, obj):
+    def get_hidden_content(self, obj) -> str:
         if self.validate_hidden(obj):
             return obj.content
 
         return ''
 
     @staticmethod
-    def get_created_by(obj):
+    def get_created_by(obj) -> str:
         from apps.user.serializers.user import PublicUserSerializer
 
         if obj.is_anonymous:
@@ -68,7 +68,7 @@ class BaseCommentSerializer(MetaDataModelSerializer):
 
         return PublicUserSerializer(obj.created_by).data
 
-    def validate_hidden(self, obj):
+    def validate_hidden(self, obj) -> dict:
         errors = []
 
         if obj.created_by.blocked_by_set.exists():
