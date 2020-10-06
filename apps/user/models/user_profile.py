@@ -99,13 +99,13 @@ class UserProfile(MetaDataModel):
         verbose_name='이전 아라 아이디',
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.nickname
 
     def can_change_nickname(self) -> bool:
         return (timezone.now() - relativedelta(months=3)) >= self.nickname_updated_at
 
     @cached_property
-    def email(self):
+    def email(self) -> str:
         return self.user.email
 
