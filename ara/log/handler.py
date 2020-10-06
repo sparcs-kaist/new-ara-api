@@ -52,7 +52,7 @@ class SizedTimedRotatingFileHandler(handlers.TimedRotatingFileHandler, LogMiddle
         handlers.TimedRotatingFileHandler.__init__(self, filename, when, interval, backup_count, encoding, delay, utc)
         self.maxBytes = max_bytes
 
-    def shouldRollover(self, record):
+    def shouldRollover(self, record) -> int:
         """
         Determine if rollover should occur.
 
