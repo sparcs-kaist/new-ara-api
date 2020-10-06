@@ -48,7 +48,7 @@ class Notification(MetaDataModel):
     )
 
     @cached_property
-    def data(self):
+    def data(self) -> dict:
         return {
             'title': self.title,
             'body': self.content,

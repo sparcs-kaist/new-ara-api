@@ -54,7 +54,7 @@ class Board(MetaDataModel):
         db_index=True,
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.ko_name
 
     def group_has_access(self, group: int) -> bool:

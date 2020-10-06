@@ -67,7 +67,7 @@ class Comment(MetaDataModel):
         verbose_name='댓글',
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.content
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
