@@ -57,7 +57,7 @@ class Client:
         sign = hmac.new(self.secret_key, msg, hashlib.md5).hexdigest()
         return sign, timestamp
 
-    def _validate_sign(self, payload, timestamp, sign):
+    def _validate_sign(self, payload, timestamp, sign) -> bool:
         sign_client, time_client = self._sign_payload(payload, False)
         if abs(time_client - int(timestamp)) > 10:
             return False
@@ -108,7 +108,7 @@ class Client:
         }
         return self._post_data(self.URLS['token_info'], params)
 
-    def get_logout_url(self, sid, redirect_uri):
+    def get_logout_url(self, sid, redirect_uri) -> str:
         """
         Get a logout url to sign out a user
         :param sid: the user's service id
