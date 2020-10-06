@@ -107,7 +107,7 @@ class Article(MetaDataModel):
         verbose_name='링크',
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.title
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
@@ -139,13 +139,13 @@ class Article(MetaDataModel):
         self.save()
 
     @property
-    def comments_count(self):
+    def comments_count(self) -> int:
         from apps.core.models import Comment
 
         return Comment.objects.filter(parent_article=self).count()
 
     @property
-    def nested_comments_count(self):
+    def nested_comments_count(self) -> int:
         from apps.core.models import Comment
 
         if hasattr(self, 'comment_set__count') and hasattr(self, 'comment_set__comment_set__count'):
