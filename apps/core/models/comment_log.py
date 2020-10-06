@@ -43,7 +43,7 @@ class CommentUpdateLog(MetaDataModel):
         verbose_name='변경된 댓글',
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.updated_by) + "/" + str(self.comment)
 
 
@@ -65,5 +65,5 @@ class CommentDeleteLog(MetaDataModel):
         verbose_name='삭제된 댓글',
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.deleted_by) + "/" + str(self.comment)
