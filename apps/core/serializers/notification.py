@@ -10,7 +10,7 @@ class BaseNotificationSerializer(MetaDataModelSerializer):
         model = Notification
         fields = '__all__'
 
-    def get_is_read(self, obj):
+    def get_is_read(self, obj) -> bool:
         if not obj.notification_read_log_set.exists():
             return None
 
