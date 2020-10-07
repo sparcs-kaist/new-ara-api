@@ -144,7 +144,6 @@ class SideArticleSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
         pass
 
-    nested_comments_count = serializers.ReadOnlyField()
     created_by = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -302,9 +301,6 @@ class ArticleSerializer(BaseArticleSerializer):
         source='comment_set',
     )
 
-    comments_count = serializers.ReadOnlyField()
-    nested_comments_count = serializers.ReadOnlyField()
-
     is_hidden = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -347,9 +343,6 @@ class ArticleListActionSerializer(BaseArticleSerializer):
     parent_board = BoardSerializer(
         read_only=True,
     )
-    nested_comments_count = serializers.ReadOnlyField(
-        read_only=True,
-    )
     is_hidden = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -384,6 +377,7 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
         exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
         read_only_fields = (
             'hit_count',
+            'comment_count',
             'positive_vote_count',
             'negative_vote_count',
             'created_by',
@@ -406,6 +400,7 @@ class ArticleUpdateActionSerializer(BaseArticleSerializer):
         read_only_fields = (
             'is_anonymous',
             'hit_count',
+            'comment_count',
             'positive_vote_count',
             'negative_vote_count',
             'created_by',
