@@ -4,7 +4,7 @@ from rest_framework import exceptions, serializers
 
 from ara.classes.serializers import MetaDataModelSerializer
 
-from apps.core.models import Article, Board
+from apps.core.models import Article, Board, ArticleReadLog
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
 
@@ -216,14 +216,57 @@ class ArticleSerializer(BaseArticleSerializer):
             return articles
 
         elif from_view == 'recent':
+            # 사용자의 마지막(현재 request) 조회 기록
+            my_last_article_read_log = request.user.article_read_log_set.order_by('created_at').last()
+
+            # 사용자가 마지막으로 읽은 글의 바로 직전 조회 기록
+            second_last_article_read_log_of_last_read_article = ArticleReadLog.objects.filter(
+                article=obj,
+                read_by=request.user,
+            ).order_by('-created_at')[1]
+
+            # 특정 글의 마지막 article read log 를 찾는 subquery
+            last_article_read_log_of_article = ArticleReadLog.objects.filter(
+                article=models.OuterRef('pk')
+            ).exclude(
+                id=my_last_article_read_log.id,  # 무한루프 방지를 위해서 마지막(현재 request) 조회 기록은 제외한다.
+            ).order_by('-created_at')
+
+            # 특정 글의 마지막 article read log created_at 을 last_read_at 으로 annotate 하고, last_read_at 기준으로 정렬
             articles = Article.objects.filter(
-                article_read_log_set__read_by=request.user
-            ).order_by('-article_read_log_set__created_at')
+                article_read_log_set__read_by=request.user,
+            ).annotate(
+                last_read_at=models.Subquery(last_article_read_log_of_article.values('created_at')[:1]),
+            ).order_by(
+                '-last_read_at'
+            ).distinct()
 
             if not articles.filter(id=obj.id).exists():
                 raise serializers.ValidationError(gettext('This article is never read by user.'))
 
-            return articles
+            articles = articles.exclude(
+                id=my_last_article_read_log.article.id,  # 자기 자신 제거
+            )
+
+            # for article in articles:
+            #     print(article.id, article.last_read_at)
+
+            # 사용자가 마지막으로 읽은 글의 바로 직전 조회 기록보다 먼저 읽은 것 중 첫 번째(시간 감속하게 정렬)
+            after = articles.filter(
+                last_read_at__lte=second_last_article_read_log_of_last_read_article.created_at,
+            ).order_by('-last_read_at').first()
+
+            # 사용자가 마지막으로 읽은 글의 바로 직전 조회 기록보다 늦게 읽은 것 중 첫 번째(시간증가하게 정렬)
+            before = articles.filter(
+                last_read_at__gte=second_last_article_read_log_of_last_read_article.created_at,
+            ).order_by('last_read_at').first()
+
+            # print('after', after.id if after else 'n/a', 'before', before.id if before else 'n/a')
+
+            return {
+                'after': after,
+                'before': before,
+            }
 
         return Article.objects.all()
 
@@ -242,12 +285,20 @@ class ArticleSerializer(BaseArticleSerializer):
 
         articles = self.filter_articles(obj, request)
 
-        if request.query_params.get('search_query'):
-            articles = self.search_articles(articles, request.query_params.get('search_query'))
+        if from_view == 'recent':
+            before = articles['before'],
+            after = articles['after'],
 
-        articles = articles.exclude(id=obj.id)
-        before = articles.filter(created_at__lte=obj.created_at).first()
-        after = articles.filter(created_at__gte=obj.created_at).last()
+        else:
+            if request.query_params.get('search_query'):
+                articles = self.search_articles(articles, request.query_params.get('search_query'))
+
+            articles = articles.exclude(id=obj.id)
+
+            before = articles.filter(created_at__lte=obj.created_at).first()
+            after = articles.filter(created_at__gte=obj.created_at).last()
+
+        print('before', before.id if before else 'N/A', 'after', after.id if after else 'N/A')
 
         return {
             'before': SideArticleSerializer(before, context=self.context).data if before else None,
