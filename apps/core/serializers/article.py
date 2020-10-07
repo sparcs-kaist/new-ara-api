@@ -105,18 +105,18 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         if not obj.article_read_log_set.exists():
             return 'N'
 
-        my_article_read_log = obj.article_read_log_set.all()[0]
+        my_last_article_read_log = obj.article_read_log_set.all()[0]
 
         # compare with article's last commented datetime
         if obj.commented_at:
-            if obj.commented_at > my_article_read_log.last_read_at:
+            if obj.commented_at > my_last_article_read_log.created_at:
                 return 'U'
 
         # compare with article's last updated datetime
         if obj.article_update_log_set.exists():
             last_article_update_log = obj.article_update_log_set.all()[0]
 
-            if last_article_update_log.created_at > my_article_read_log.last_read_at:
+            if last_article_update_log.created_at > my_last_article_read_log.created_at:
                 return 'U'
 
         return '-'
