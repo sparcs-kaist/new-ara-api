@@ -87,9 +87,17 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             )
 
             if self.action == 'recent':
+                last_article_read_log_of_article = ArticleReadLog.objects.filter(
+                    article=models.OuterRef('pk')
+                ).order_by('-created_at')
+
                 queryset = queryset.filter(
                     article_read_log_set__read_by=self.request.user,
-                )
+                ).annotate(
+                    last_read_at=models.Subquery(last_article_read_log_of_article.values('created_at')[:1]),
+                ).order_by(
+                    '-last_read_at'
+                ).distinct()
 
         else:
             # optimizing queryset for create, update, retrieve actions
