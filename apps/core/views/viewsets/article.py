@@ -62,22 +62,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
 
-        if self.action == 'list':
-            # optimizing queryset for list action
-            # cacheops 이용으로 select_related에서 prefetch_related로 옮김
-            queryset = queryset.select_related(
-            ).prefetch_related(
-                'created_by',
-                'created_by__profile',
-                'parent_topic',
-                'parent_board',
-                'attachments',
-                'article_update_log_set',
-                Block.prefetch_my_block(self.request.user),
-                ArticleReadLog.prefetch_my_article_read_log(self.request.user),
-            )
-
-        else:
+        if self.action != 'list':
             # optimizing queryset for create, update, retrieve actions
             # cacheops 이용으로 select_related에서 prefetch_related로 옮김
             queryset = queryset.select_related(
@@ -114,6 +99,23 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             )
 
         return queryset
+
+    def paginate_queryset(self, queryset):
+        # optimizing queryset for list action
+        # cacheops 이용으로 select_related에서 prefetch_related로 옮김
+        queryset = queryset.select_related(
+        ).prefetch_related(
+            'created_by',
+            'created_by__profile',
+            'parent_topic',
+            'parent_board',
+            'attachments',
+            'article_update_log_set',
+            Block.prefetch_my_block(self.request.user),
+            ArticleReadLog.prefetch_my_article_read_log(self.request.user),
+        )
+
+        return super().paginate_queryset(queryset)
 
     def perform_create(self, serializer):
         serializer.save(
