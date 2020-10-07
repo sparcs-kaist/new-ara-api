@@ -45,8 +45,6 @@ class ReportViewSet(mixins.ListModelMixin,
             'parent_comment__created_by',
             'parent_comment__created_by__profile',
         ).prefetch_related(
-            'parent_article__comment_set',
-            'parent_article__comment_set__comment_set',
             'parent_article__attachments',
             ArticleReadLog.prefetch_my_article_read_log(self.request.user, prefix='parent_article__'),
         )
