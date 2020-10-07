@@ -72,7 +72,26 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
 
-        if self.action != 'list':
+        if self.action in ['list', 'recent']:
+            # optimizing queryset for list action
+            queryset = queryset.select_related(
+                'created_by',
+                'created_by__profile',
+                'parent_topic',
+                'parent_board',
+            ).prefetch_related(
+                'attachments',
+                'article_update_log_set',
+                Block.prefetch_my_block(self.request.user),
+                ArticleReadLog.prefetch_my_article_read_log(self.request.user),
+            )
+
+            if self.action == 'recent':
+                queryset = queryset.filter(
+                    article_read_log_set__read_by=self.request.user,
+                )
+
+        else:
             # optimizing queryset for create, update, retrieve actions
             queryset = queryset.select_related(
                 'created_by',
@@ -108,22 +127,6 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             )
 
         return queryset
-
-    def paginate_queryset(self, queryset):
-        # optimizing queryset for list action
-        queryset = queryset.select_related(
-            'created_by',
-            'created_by__profile',
-            'parent_topic',
-            'parent_board',
-        ).prefetch_related(
-            'attachments',
-            'article_update_log_set',
-            Block.prefetch_my_block(self.request.user),
-            ArticleReadLog.prefetch_my_article_read_log(self.request.user),
-        )
-
-        return super().paginate_queryset(queryset)
 
     def perform_create(self, serializer):
         serializer.save(
@@ -228,3 +231,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         article.update_vote_status()
 
         return response.Response(status=status.HTTP_200_OK)
+
+    @decorators.action(detail=False, methods=['get'])
+    def recent(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
