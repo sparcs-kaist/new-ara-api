@@ -59,6 +59,16 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         ),
     }
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        if self.action == 'best':
+            queryset = queryset.filter(
+                best__isnull=False,
+            )
+
+        return queryset
+
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
 
