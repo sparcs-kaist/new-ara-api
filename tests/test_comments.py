@@ -65,7 +65,7 @@ class TestComments(TestCase, RequestSetting):
     def test_comment_list(self):
         # number of comments is initially 0
         res = self.http_request(self.user, 'get', f'articles/{self.article.id}')
-        assert res.data.get('comments_count') == 1
+        assert res.data.get('comment_count') == 1
 
         comment2 = Comment.objects.create(
                         content='Test comment 2',
@@ -81,7 +81,7 @@ class TestComments(TestCase, RequestSetting):
                     )
 
         res = self.http_request(self.user, 'get', f'articles/{self.article.id}')
-        assert res.data.get('comments_count') == 3
+        assert res.data.get('comment_count') == 3
 
     # post로 댓글 생성됨을 확인
     def test_create_comment(self):
@@ -103,15 +103,15 @@ class TestComments(TestCase, RequestSetting):
         self.http_request(self.user, 'post', 'comments', subcomment_data)
         assert Comment.objects.filter(content=subcomment_str, parent_comment=self.comment.id)
 
-    # 댓글의 생성과 삭제에 따라서 article의 comments_count가 맞게 바뀌는지 확인
-    def test_article_comments_count(self):
+    # 댓글의 생성과 삭제에 따라서 article의 comment_count가 맞게 바뀌는지 확인
+    def test_article_comment_count(self):
         article = Article.objects.get(id=self.article.id)
-        assert article.comments_count == 1
+        assert article.comment_count == 1
         Comment.objects.filter(id=self.comment.id).delete()
-        assert article.comments_count == 0
+        assert article.comment_count == 0
 
-    # 대댓글의 생성과 삭제에 따라서 article의 nested_comments_count가 맞게 바뀌는지 확인
-    def test_article_comments_count_with_subcomments(self):
+    # 대댓글의 생성과 삭제에 따라서 article의 comment_count가 맞게 바뀌는지 확인
+    def test_article_comment_count_with_subcomments(self):
         subcomment1 = Comment.objects.create(
             content='Test comment 3',
             is_anonymous=False,
@@ -125,14 +125,14 @@ class TestComments(TestCase, RequestSetting):
             parent_comment=self.comment
         )
         article = Article.objects.get(id=self.article.id)
-        assert article.nested_comments_count == 3
+        assert article.comment_count == 3
 
-        # 대댓글, 댓글을 지우면 nested_comments_count 1씩 감소
+        # 대댓글, 댓글을 지우면 comment_count 1씩 감소
         Comment.objects.filter(id=subcomment2.id).delete()
-        assert article.nested_comments_count == 2
+        assert article.comment_count == 2
 
         Comment.objects.filter(id=self.comment.id).delete()
-        assert article.nested_comments_count == 1
+        assert article.comment_count == 1
 
     # get으로 comment가 잘 retrieve 되는지 확인
     def test_retrieve_comment(self):
