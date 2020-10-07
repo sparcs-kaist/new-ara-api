@@ -41,6 +41,10 @@ class Article(MetaDataModel):
         default=0,
         verbose_name='조회수',
     )
+    comment_count = models.IntegerField(
+        default=0,
+        verbose_name='댓글 수',
+    )
     positive_vote_count = models.IntegerField(
         default=0,
         verbose_name='좋아요 수',
