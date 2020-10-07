@@ -99,3 +99,9 @@ class Comment(MetaDataModel):
         self.negative_vote_count = self.vote_set.filter(is_positive=False).count()
 
         self.save()
+
+    def get_parent_article(self):
+        if self.parent_article:
+            return self.parent_article
+
+        return self.parent_comment.parent_article

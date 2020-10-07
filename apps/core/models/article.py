@@ -142,27 +142,23 @@ class Article(MetaDataModel):
 
         self.save()
 
+    # TODO: hit_count property should be cached
+    def update_comment_count(self):
+        from apps.core.models import Comment
+
+        self.comment_count = Comment.objects.filter(
+            models.Q(parent_article=self) |
+            models.Q(parent_comment__parent_article=self)
+        ).count()
+
+        self.save()
+
     # TODO: positive_vote_count, negative_vote_count properties should be cached
     def update_vote_status(self):
         self.positive_vote_count = self.vote_set.filter(is_positive=True).count() + self.migrated_positive_vote_count
         self.negative_vote_count = self.vote_set.filter(is_positive=False).count() + self.migrated_negative_vote_count
 
         self.save()
-
-    @property
-    def comments_count(self):
-        from apps.core.models import Comment
-
-        return Comment.objects.filter(parent_article=self).count()
-
-    @property
-    def nested_comments_count(self):
-        from apps.core.models import Comment
-
-        return Comment.objects.filter(
-            models.Q(parent_article=self) |
-            models.Q(parent_comment__parent_article=self)
-        ).count()
 
     @property
     def created_by_nickname(self):
