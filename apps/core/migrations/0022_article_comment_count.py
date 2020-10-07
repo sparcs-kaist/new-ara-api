@@ -3,6 +3,24 @@
 from django.db import migrations, models
 
 
+def forwards_func(apps, schema_editor):
+    article_model = apps.get_model("core", "Article")
+
+    articles = article_model.objects.using(schema_editor.connection.alias).annotate(
+        comment_set__count=models.Count('comment_set'),
+        comment_set__comment_set__count=models.Count('comment_set__comment_set'),
+    )
+
+    for article in articles:
+        article.comment_count = article.comment_set__count + article.comment_set__comment_set__count
+
+    article_model.objects.using(schema_editor.connection.alias).bulk_update(articles, ['comment_count'], batch_size=1000)
+
+
+def reverse_func(apps, schema_editor):
+    pass
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -15,4 +33,5 @@ class Migration(migrations.Migration):
             name='comment_count',
             field=models.IntegerField(default=0, verbose_name='댓글 수'),
         ),
+        migrations.RunPython(forwards_func, reverse_func),
     ]
