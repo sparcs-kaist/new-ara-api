@@ -64,12 +64,12 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         if self.action == 'list':
             # optimizing queryset for list action
-            queryset = queryset.select_related(
+            # cacheops 이용으로 select_related에서 prefetch_related로 옮김
+            queryset = queryset.prefetch_related(
                 'created_by',
                 'created_by__profile',
                 'parent_topic',
                 'parent_board',
-            ).prefetch_related(
                 'attachments',
                 'article_update_log_set',
                 Block.prefetch_my_block(self.request.user),
@@ -83,12 +83,12 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         else:
             # optimizing queryset for create, update, retrieve actions
-            queryset = queryset.select_related(
+            # cacheops 이용으로 select_related에서 prefetch_related로 옮김
+            queryset = queryset.prefetch_related(
                 'created_by',
                 'created_by__profile',
                 'parent_topic',
                 'parent_board',
-            ).prefetch_related(
                 'attachments',
                 Scrap.prefetch_my_scrap(self.request.user),
                 Block.prefetch_my_block(self.request.user),
