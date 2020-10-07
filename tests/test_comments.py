@@ -107,7 +107,8 @@ class TestComments(TestCase, RequestSetting):
     def test_article_comment_count(self):
         article = Article.objects.get(id=self.article.id)
         assert article.comment_count == 1
-        Comment.objects.filter(id=self.comment.id).delete()
+        comment = Comment.objects.get(id=self.comment.id)
+        comment.delete()
         assert article.comment_count == 0
 
     # 대댓글의 생성과 삭제에 따라서 article의 comment_count가 맞게 바뀌는지 확인
@@ -128,10 +129,12 @@ class TestComments(TestCase, RequestSetting):
         assert article.comment_count == 3
 
         # 대댓글, 댓글을 지우면 comment_count 1씩 감소
-        Comment.objects.filter(id=subcomment2.id).delete()
+        comment = Comment.objects.get(id=subcomment2.id)
+        comment.delete()
         assert article.comment_count == 2
 
-        Comment.objects.filter(id=self.comment.id).delete()
+        comment = Comment.objects.get(id=self.comment.id)
+        comment.delete()
         assert article.comment_count == 1
 
     # get으로 comment가 잘 retrieve 되는지 확인
