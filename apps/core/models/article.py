@@ -146,4 +146,9 @@ class Article(MetaDataModel):
 
     @property
     def nested_comments_count(self):
-        return sum([self.comment_set.count(), self.comment_set__comment_set.count()])
+        from apps.core.models import Comment
+
+        return Comment.objects.filter(
+            models.Q(parent_article=self) |
+            models.Q(parent_comment__parent_article=self)
+        ).count()
