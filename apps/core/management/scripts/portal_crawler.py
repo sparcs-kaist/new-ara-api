@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup as bs
 
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.utils.translation import gettext
 from fake_useragent import UserAgent
 from tqdm import tqdm
 
@@ -56,11 +57,17 @@ def _get_article(url, session):
     writer = soup.find('th', text=writer_target).findNext('td').select('label')[0].contents[0].strip()
 
     title = soup.select('table > tbody > tr > td.req_first')[0].contents[0]
-    raw = soup.select('table > tbody > tr:nth-child(4) > td')
 
-    html = ''
-    for r in raw:
-        html += str(r)
+    trs = soup.select('table > tbody > tr')
+    html = None
+
+    for tr in trs:
+        if len(list(tr.children)) == 3:
+            html = tr.find('td').prettify()
+            break
+
+    if html is None:
+        raise RuntimeError(gettext('No content for portal article'))
 
     content_text = ' '.join(bs(html, features='html5lib').find_all(text=True))
 
