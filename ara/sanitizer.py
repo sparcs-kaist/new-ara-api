@@ -7,7 +7,8 @@ def sanitize(content):
     def _allowed_attributes(tag, name, value):
         if name in ['src']:
             p = urlparse(value)
-            return (not p.netloc) or p.netloc.endswith(('sparcs.org', 'kaist.ac.kr', 'sparcs-newara.s3.amazonaws.com'))
+            return (not p.netloc) or p.netloc.endswith(('sparcs.org', 'kaist.ac.kr',
+                                                        'sparcs-newara.s3.amazonaws.com', 'sparcs-newara-dev.s3.amazonaws.com'))
 
         if tag == 'a': return name in ['href', 'title']
         if tag == 'abbr': return name in ['title'],
