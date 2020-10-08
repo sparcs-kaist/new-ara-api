@@ -3,7 +3,7 @@ from dateutil.relativedelta import relativedelta
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
-from django.utils.translation import gettext
+from django.utils.translation import ugettext_lazy
 from django_mysql.models import JSONField
 
 from ara.db.models import MetaDataModel
@@ -20,10 +20,10 @@ class UserProfile(MetaDataModel):
         )
 
     class UserGroup(models.IntegerChoices):
-        UNAUTHORIZED = 0, gettext('Unauthorized user')
-        KAIST_MEMBER = 1, gettext('KAIST member')
-        FOOD_EMPLOYEE = 2, gettext('Restaurant employee')
-        OTHER_EMPLOYEE = 3, gettext('Other employee')
+        UNAUTHORIZED = 0, ugettext_lazy('Unauthorized user')
+        KAIST_MEMBER = 1, ugettext_lazy('KAIST member')
+        FOOD_EMPLOYEE = 2, ugettext_lazy('Restaurant employee')
+        OTHER_EMPLOYEE = 3, ugettext_lazy('Other employee')
 
     uid = models.CharField(
         null=True,

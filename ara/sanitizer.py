@@ -5,7 +5,7 @@ import bleach
 
 def sanitize(content):
     def _allowed_attributes(tag, name, value):
-        if name in ['src', 'href']:
+        if name in ['src']:
             p = urlparse(value)
             return (not p.netloc) or p.netloc.endswith(('sparcs.org', 'kaist.ac.kr', 'sparcs-newara.s3.amazonaws.com'))
 

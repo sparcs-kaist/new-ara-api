@@ -59,29 +59,20 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         ),
     }
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        if self.action == 'best':
+            queryset = queryset.filter(
+                best__isnull=False,
+            )
+
+        return queryset
+
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
 
-        if self.action == 'list':
-            # optimizing queryset for list action
-            queryset = queryset.select_related(
-                'created_by',
-                'created_by__profile',
-                'parent_topic',
-                'parent_board',
-            ).prefetch_related(
-                'attachments',
-                'article_update_log_set',
-                Block.prefetch_my_block(self.request.user),
-                ArticleReadLog.prefetch_my_article_read_log(self.request.user),
-                'comment_set',
-                'comment_set__comment_set',
-            ).annotate(
-                comment_set__count=models.Count('comment_set'),
-                comment_set__comment_set__count=models.Count('comment_set__comment_set'),
-            )
-
-        else:
+        if self.action != 'list':
             # optimizing queryset for create, update, retrieve actions
             queryset = queryset.select_related(
                 'created_by',
@@ -117,6 +108,22 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             )
 
         return queryset
+
+    def paginate_queryset(self, queryset):
+        # optimizing queryset for list action
+        queryset = queryset.select_related(
+            'created_by',
+            'created_by__profile',
+            'parent_topic',
+            'parent_board',
+        ).prefetch_related(
+            'attachments',
+            'article_update_log_set',
+            Block.prefetch_my_block(self.request.user),
+            ArticleReadLog.prefetch_my_article_read_log(self.request.user),
+        )
+
+        return super().paginate_queryset(queryset)
 
     def perform_create(self, serializer):
         serializer.save(

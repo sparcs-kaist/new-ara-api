@@ -47,6 +47,12 @@ class Board(MetaDataModel):
         help_text='활성화했을 때 관리자만 글을 쓸 수 있습니다. (ex. 포탈공지)',
         default=False
     )
+    is_hidden = models.BooleanField(
+        verbose_name='리스트 숨김 게시판',
+        help_text='활성화했을 때 메인페이지 상단바 리스트에 나타나지 않습니다. (ex. 뉴아라공지)',
+        default=False,
+        db_index=True,
+    )
 
     def __str__(self):
         return self.ko_name
