@@ -237,7 +237,7 @@ class ArticleSerializer(BaseArticleSerializer):
                 'after': None
             }
 
-        if from_view not in ['all', 'board', 'user', 'scrap', 'recent']:
+        if from_view not in ['all', 'board', 'topic', 'user', 'scrap', 'recent']:
             raise serializers.ValidationError(gettext("Wrong value for parameter 'from_view'."))
 
         articles = self.filter_articles(obj, request)
