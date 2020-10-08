@@ -10,11 +10,11 @@ def sanitize(content):
             return (not p.netloc) or p.netloc.endswith(('sparcs.org', 'kaist.ac.kr',
                                                         'sparcs-newara.s3.amazonaws.com', 'sparcs-newara-dev.s3.amazonaws.com'))
 
-        if tag == 'a': return name in ['href', 'title']
+        if tag == 'a': return name in ['href', 'title', 'data-bookmark']
         if tag == 'abbr': return name in ['title'],
         if tag == 'acronym': return name in ['title'],
         if tag == 'ol': return name in ['start']
-        if tag == 'img': return name in ['width', 'height', 'alt']
+        if tag == 'img': return name in ['width', 'height', 'alt', 'title', 'data-attachment']
         if tag == 'iframe': return name in ['width', 'height', 'allowfullscreen']
         if tag == 'video': return name in ['controls', 'width', 'height', 'allowfullscreen', 'preload', 'poster']
         if tag == 'audio': return name in ['controls', 'preload']
