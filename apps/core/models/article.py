@@ -103,6 +103,7 @@ class Article(MetaDataModel):
 
     url = models.TextField(
         null=True,
+        blank=True,
         default=None,
         verbose_name='링크',
     )
