@@ -58,19 +58,9 @@ class ArticleFilter(filters.FilterSet):
     @staticmethod
     def get_main_search__contains(queryset, name, value):
 
-        def get_id_set(field_name, search_value):
-            return [
-                x.meta.id
-                for x
-                in ArticleDocument.search().filter('match', **{field_name: search_value}).scan()
-            ]
-
-        def get_queryset(id_set):
-            return Article.objects.filter(pk__in=id_set)
-
-        title_articles = get_queryset(get_id_set('title', value))
-        content_articles = get_queryset(get_id_set('content_text', value))
-        nickname_articles = get_queryset(get_id_set('created_by_nickname', value))
+        title_articles = Article.objects.filter(id__in=ArticleDocument.get_id_set('title', value))
+        content_articles = Article.objects.filter(id__in=ArticleDocument.get_id_set('content_text', value))
+        nickname_articles = Article.objects.filter(id__in=ArticleDocument.get_id_set('created_by_nickname', value))
         qs = title_articles | content_articles | nickname_articles
 
-        return qs
+        return qs.distinct()

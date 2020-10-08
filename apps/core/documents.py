@@ -74,6 +74,14 @@ class ArticleDocument(Document):
         return super(ArticleDocument, self).get_queryset().prefetch_related('created_by').prefetch_related('created_by__profile')
 
     @staticmethod
+    def get_id_set(field_name, search_value):
+        return [
+            x.meta.id
+            for x
+            in ArticleDocument.search().filter('match', **{field_name: search_value}).scan()
+        ]
+
+    @staticmethod
     def get_instances_from_related(related_instance):
         if isinstance(related_instance, apps.get_model(settings.AUTH_USER_MODEL)):
             return related_instance.article_set.all()
