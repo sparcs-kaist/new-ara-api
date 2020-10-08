@@ -62,7 +62,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
 
-        if self.action == 'list':
+        if self.action in ['list', 'recent']:
             # optimizing queryset for list action
             queryset = queryset.select_related(
                 'created_by',
@@ -215,3 +215,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         article.update_vote_status()
 
         return response.Response(status=status.HTTP_200_OK)
+
+    @decorators.action(detail=False, methods=['get'])
+    def recent(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
