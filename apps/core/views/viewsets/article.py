@@ -62,8 +62,8 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
 
+        # optimizing queryset for list action
         if self.action in ['list', 'recent']:
-            # optimizing queryset for list action
             queryset = queryset.select_related(
                 'created_by',
                 'created_by__profile',
@@ -76,8 +76,24 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 ArticleReadLog.prefetch_my_article_read_log(self.request.user),
             )
 
+            # optimizing queryset for recent action
+            if self.action == 'recent':
+                last_read_log_of_the_article = ArticleReadLog.objects.filter(
+                    article=models.OuterRef('pk')
+                ).order_by('-created_at')
+
+                queryset = queryset.filter(
+                    article_read_log_set__read_by=self.request.user,
+                ).annotate(
+                    my_last_read_at=models.Subquery(last_read_log_of_the_article.filter(
+                        read_by=self.request.user,
+                    ).values('created_at')[:1]),
+                ).order_by(
+                    '-my_last_read_at'
+                ).distinct()
+
+        # optimizing queryset for create, update, retrieve actions
         else:
-            # optimizing queryset for create, update, retrieve actions
             queryset = queryset.select_related(
                 'created_by',
                 'created_by__profile',
