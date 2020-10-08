@@ -127,7 +127,7 @@ class Article(MetaDataModel):
 
     # TODO: hit_count property should be cached
     def update_hit_count(self):
-        self.hit_count = self.article_read_log_set.count() + self.migrated_hit_count
+        self.hit_count = self.article_read_log_set.values('read_by').annotate(models.Count('read_by')).order_by('read_by__count',).count() + self.migrated_hit_count
 
         self.save()
 
