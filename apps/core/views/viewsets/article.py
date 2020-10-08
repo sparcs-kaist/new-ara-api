@@ -151,13 +151,12 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def retrieve(self, request, *args, **kwargs):
         article = self.get_object()
 
-        created = ArticleReadLog.objects.update_or_create(
+        ArticleReadLog.objects.create(
             read_by=self.request.user,
             article=article,
-        )[1]
+        )
 
-        if created:
-            article.update_hit_count()
+        article.update_hit_count()
 
         pipe = redis.pipeline()
         redis_key = 'articles:hit'
