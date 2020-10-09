@@ -358,5 +358,26 @@ class TestArticle(TestCase, RequestSetting):
         response = self.http_request(self.user, 'post', 'articles', user_data)
         assert response.status_code == 400
 
+    def test_read_status(self):
+        # user1, user2 모두 아직 안읽음
+        res1 = self.http_request(self.user, 'get', 'articles')
+        res2 = self.http_request(self.user2, 'get', 'articles')
+        assert res1.data['results'][0]['read_status'] == 'N'
+        assert res2.data['results'][0]['read_status'] == 'N'
 
+        # user2만 읽음
+        self.http_request(self.user2, 'get', f'articles/{self.article.id}')
+        res1 = self.http_request(self.user, 'get', 'articles')
+        res2 = self.http_request(self.user2, 'get', 'articles')
+        assert res1.data['results'][0]['read_status'] == 'N'
+        assert res2.data['results'][0]['read_status'] == '-'
 
+        # user1이 업데이트 (user2은 아직 변경사항 확인못함)
+        self.http_request(self.user, 'get', f'articles/{self.article.id}')
+        self.http_request(self.user, 'patch', f'articles/{self.article.id}', {'content': 'update!'})
+        # TODO: 한번 더 retrieve 없이도 작동하도록 하면 좋을 듯
+        self.http_request(self.user, 'get', f'articles/{self.article.id}')  # 프론트 구현상 한번 더 retrieve
+        res1 = self.http_request(self.user, 'get', 'articles')
+        res2 = self.http_request(self.user2, 'get', 'articles')
+        assert res1.data['results'][0]['read_status'] == '-'
+        assert res2.data['results'][0]['read_status'] == 'U'
