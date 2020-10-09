@@ -288,12 +288,12 @@ class ArticleSerializer(BaseArticleSerializer):
         )
 
         # 사용자가 현재 읽고 있는 글의 바로 직전 조회 기록보다 먼저 읽은 것 중 첫 번째
-        after = recent_articles.filter(
+        before = recent_articles.filter(
             last_read_at__lte=last_read_log_of_obj.created_at,
         ).order_by('-last_read_at').first()
 
         # 사용자가 현재 읽고 있는 글의 바로 직전 조회 기록보다 늦게 읽은 것 중 첫 번째
-        before = recent_articles.filter(
+        after = recent_articles.filter(
             last_read_at__gte=last_read_log_of_obj.created_at,
         ).order_by('last_read_at').first()
 
