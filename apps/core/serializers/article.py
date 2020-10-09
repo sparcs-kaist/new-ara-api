@@ -100,8 +100,8 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return data
 
-    @staticmethod
-    def get_read_status(obj):
+    def get_read_status(self, obj):
+        request = self.context['request']
         if not obj.article_read_log_set.exists():
             return 'N'
 
@@ -113,7 +113,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
                 return 'U'
 
         # compare with article's last updated datetime
-        if obj.article_update_log_set.exists():
+        if obj.created_by != request.user and obj.article_update_log_set.exists():
             last_article_update_log = obj.article_update_log_set.all()[0]
 
             if last_article_update_log.created_at > my_article_read_log.created_at:
