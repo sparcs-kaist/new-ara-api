@@ -109,14 +109,14 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         # compare with article's last commented datetime
         if obj.commented_at:
-            if obj.commented_at > my_article_read_log.last_read_at:
+            if obj.commented_at > my_article_read_log.created_at:
                 return 'U'
 
         # compare with article's last updated datetime
         if obj.article_update_log_set.exists():
             last_article_update_log = obj.article_update_log_set.all()[0]
 
-            if last_article_update_log.created_at > my_article_read_log.last_read_at:
+            if last_article_update_log.created_at > my_article_read_log.created_at:
                 return 'U'
 
         return '-'
@@ -344,9 +344,6 @@ class ArticleSerializer(BaseArticleSerializer):
         read_only=True,
     )
     created_by = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    read_status = serializers.SerializerMethodField(
         read_only=True,
     )
     article_current_page = serializers.SerializerMethodField(
