@@ -4,7 +4,7 @@ from rest_framework import exceptions, serializers
 
 from ara.classes.serializers import MetaDataModelSerializer
 
-from apps.core.models import Article, Board
+from apps.core.models import Article, ArticleReadLog, Board
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
 
@@ -100,8 +100,8 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return data
 
-    @staticmethod
-    def get_read_status(obj):
+    def get_read_status(self, obj):
+        request = self.context['request']
         if not obj.article_read_log_set.exists():
             return 'N'
 
@@ -109,14 +109,14 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         # compare with article's last commented datetime
         if obj.commented_at:
-            if obj.commented_at > my_article_read_log.last_read_at:
+            if obj.commented_at > my_article_read_log.created_at:
                 return 'U'
 
         # compare with article's last updated datetime
-        if obj.article_update_log_set.exists():
+        if obj.created_by != request.user and obj.article_update_log_set.exists():
             last_article_update_log = obj.article_update_log_set.all()[0]
 
-            if last_article_update_log.created_at > my_article_read_log.last_read_at:
+            if last_article_update_log.created_at > my_article_read_log.created_at:
                 return 'U'
 
         return '-'
@@ -215,16 +215,6 @@ class ArticleSerializer(BaseArticleSerializer):
 
             return articles
 
-        elif from_view == 'recent':
-            articles = Article.objects.filter(
-                article_read_log_set__read_by=request.user
-            ).order_by('-article_read_log_set__created_at')
-
-            if not articles.filter(id=obj.id).exists():
-                raise serializers.ValidationError(gettext('This article is never read by user.'))
-
-            return articles
-
         return Article.objects.all()
 
     def get_side_articles(self, obj):
@@ -240,19 +230,74 @@ class ArticleSerializer(BaseArticleSerializer):
         if from_view not in ['all', 'board', 'topic', 'user', 'scrap', 'recent']:
             raise serializers.ValidationError(gettext("Wrong value for parameter 'from_view'."))
 
-        articles = self.filter_articles(obj, request)
+        if from_view == 'recent':
+            after, before = self.get_side_articles_of_recent_article(obj, request)
 
-        if request.query_params.get('search_query'):
-            articles = self.search_articles(articles, request.query_params.get('search_query'))
+        else:
+            articles = self.filter_articles(obj, request)
 
-        articles = articles.exclude(id=obj.id)
-        before = articles.filter(created_at__lte=obj.created_at).first()
-        after = articles.filter(created_at__gte=obj.created_at).last()
+            if request.query_params.get('search_query'):
+                articles = self.search_articles(articles, request.query_params.get('search_query'))
+
+            articles = articles.exclude(id=obj.id)
+            before = articles.filter(created_at__lte=obj.created_at).first()
+            after = articles.filter(created_at__gte=obj.created_at).last()
 
         return {
             'before': SideArticleSerializer(before, context=self.context).data if before else None,
             'after': SideArticleSerializer(after, context=self.context).data if after else None,
         }
+
+    @staticmethod
+    def get_side_articles_of_recent_article(obj, request):
+        article_read_log_set = obj.article_read_log_set.all()
+
+        # 현재 ArticleReadLog
+        curr_read_log_of_obj = article_read_log_set.filter(
+            read_by=request.user,
+        ).order_by('-created_at')[0]
+
+        # 직전 ArticleReadLog
+        last_read_log_of_obj = article_read_log_set.filter(
+            read_by=request.user,
+        ).order_by('-created_at')[1]
+
+        # 특정 글의 마지막 ArticleReadLog 를 찾기 위한 Subquery
+        last_read_log_of_article = ArticleReadLog.objects.filter(
+            article=models.OuterRef('pk')
+        ).order_by('-created_at')
+
+        # 특정 글의 마지막 Article created_at 을 last_read_at 으로 annotate 하고, last_read_at 기준으로 정렬
+        recent_articles = Article.objects.filter(
+            article_read_log_set__read_by=request.user,
+        ).annotate(
+            last_read_at=models.Subquery(
+                queryset=last_read_log_of_article.exclude(
+                    id=curr_read_log_of_obj.id,  # 무한루프 방지를 위해서 마지막(현재 request) 조회 기록은 제외한다.
+                ).values('created_at')[:1],
+            ),
+        ).order_by(
+            '-last_read_at'
+        ).distinct()
+
+        if not recent_articles.filter(id=obj.id).exists():
+            raise serializers.ValidationError(gettext('This article is never read by user.'))
+
+        recent_articles = recent_articles.exclude(
+            id=obj.id,  # 자기 자신 제거
+        )
+
+        # 사용자가 현재 읽고 있는 글의 바로 직전 조회 기록보다 먼저 읽은 것 중 첫 번째
+        before = recent_articles.filter(
+            last_read_at__lte=last_read_log_of_obj.created_at,
+        ).order_by('-last_read_at').first()
+
+        # 사용자가 현재 읽고 있는 글의 바로 직전 조회 기록보다 늦게 읽은 것 중 첫 번째
+        after = recent_articles.filter(
+            last_read_at__gte=last_read_log_of_obj.created_at,
+        ).order_by('last_read_at').first()
+
+        return after, before
 
     parent_topic = TopicSerializer(
         read_only=True,
@@ -299,9 +344,6 @@ class ArticleSerializer(BaseArticleSerializer):
         read_only=True,
     )
     created_by = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    read_status = serializers.SerializerMethodField(
         read_only=True,
     )
     article_current_page = serializers.SerializerMethodField(

@@ -59,21 +59,41 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         ),
     }
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-
-        if self.action == 'best':
-            queryset = queryset.filter(
-                best__isnull=False,
-            )
-
-        return queryset
-
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
 
-        if self.action != 'list':
-            # optimizing queryset for create, update, retrieve actions
+        # optimizing queryset for list action
+        if self.action in ['list', 'recent']:
+            queryset = queryset.select_related(
+                'created_by',
+                'created_by__profile',
+                'parent_topic',
+                'parent_board',
+            ).prefetch_related(
+                'attachments',
+                'article_update_log_set',
+                Block.prefetch_my_block(self.request.user),
+                ArticleReadLog.prefetch_my_article_read_log(self.request.user),
+            )
+
+            # optimizing queryset for recent action
+            if self.action == 'recent':
+                last_read_log_of_the_article = ArticleReadLog.objects.filter(
+                    article=models.OuterRef('pk')
+                ).order_by('-created_at')
+
+                queryset = queryset.filter(
+                    article_read_log_set__read_by=self.request.user,
+                ).annotate(
+                    my_last_read_at=models.Subquery(last_read_log_of_the_article.filter(
+                        read_by=self.request.user,
+                    ).values('created_at')[:1]),
+                ).order_by(
+                    '-my_last_read_at'
+                ).distinct()
+
+        # optimizing queryset for create, update, retrieve actions
+        else:
             queryset = queryset.select_related(
                 'created_by',
                 'created_by__profile',
@@ -109,22 +129,6 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         return queryset
 
-    def paginate_queryset(self, queryset):
-        # optimizing queryset for list action
-        queryset = queryset.select_related(
-            'created_by',
-            'created_by__profile',
-            'parent_topic',
-            'parent_board',
-        ).prefetch_related(
-            'attachments',
-            'article_update_log_set',
-            Block.prefetch_my_block(self.request.user),
-            ArticleReadLog.prefetch_my_article_read_log(self.request.user),
-        )
-
-        return super().paginate_queryset(queryset)
-
     def perform_create(self, serializer):
         serializer.save(
             created_by=self.request.user,
@@ -151,13 +155,12 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def retrieve(self, request, *args, **kwargs):
         article = self.get_object()
 
-        created = ArticleReadLog.objects.update_or_create(
+        ArticleReadLog.objects.create(
             read_by=self.request.user,
             article=article,
-        )[1]
+        )
 
-        if created:
-            article.update_hit_count()
+        article.update_hit_count()
 
         pipe = redis.pipeline()
         redis_key = 'articles:hit'
@@ -228,3 +231,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         article.update_vote_status()
 
         return response.Response(status=status.HTTP_200_OK)
+
+    @decorators.action(detail=False, methods=['get'])
+    def recent(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)

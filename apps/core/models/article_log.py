@@ -29,10 +29,6 @@ class ArticleReadLog(MetaDataModel):
     def __str__(self):
         return str(self.read_by) + "/" + str(self.article)
 
-    @property
-    def last_read_at(self):
-        return self.updated_at
-
     @classmethod
     def prefetch_my_article_read_log(cls, user, prefix=''):
         return models.Prefetch(
