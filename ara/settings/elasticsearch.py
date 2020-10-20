@@ -1,5 +1,4 @@
 from os import environ as os_environ
-from elasticsearch_dsl import connections
 
 
 ELASTICSEARCH_HOST = os_environ.get('NEWARA_ELASTICSEARCH_HOST', 'localhost')

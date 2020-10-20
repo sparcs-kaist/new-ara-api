@@ -95,9 +95,6 @@ class TestArticleSearch(TransactionTestCase, RequestSetting):
             ) for query in queries
         ]
 
-        # Silly assert to check the results
-        # assert False, str(results)
-
         for searched, expected in results:
             assert expected * wanted_min_proportion <= searched <= expected
 
