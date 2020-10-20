@@ -25,6 +25,7 @@ services:
       - NEWARA_DB_NAME=new_ara
       - NEWARA_REDIS_ADDRESS=redis
       - NEWARA_ELASTICSEARCH_HOST=elasticsearch
+      - NEWARA_ELASTICSEARCH_PORT=9200
     entrypoint: /newara/www/.docker/run.sh
     volumes:
       - nori:/newara/www/ara/db/elasticsearch
@@ -52,6 +53,7 @@ services:
       - NEWARA_DB_NAME=new_ara
       - NEWARA_REDIS_ADDRESS=redis
       - NEWARA_ELASTICSEARCH_HOST=elasticsearch
+      - NEWARA_ELASTICSEARCH_PORT=9200
       - C_FORCE_ROOT=true
     entrypoint: /newara/www/.docker/run-celery.sh
 
