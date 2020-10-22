@@ -1,3 +1,4 @@
+import re
 import uuid
 from datetime import datetime
 
@@ -13,7 +14,7 @@ from tqdm import tqdm
 
 from apps.core.models import Article
 from apps.user.models import UserProfile
-from apps.user.views.viewsets.user import _make_random_profile_picture
+from apps.user.views.viewsets.user import make_random_profile_picture
 from ara.settings import PORTAL_ID, PORTAL_PASSWORD
 
 LOGIN_INFO_SSO2 = {
@@ -53,6 +54,45 @@ def _login_kaist_portal():
 
 
 def _get_article(url, session):
+
+    def _already_hyperlinked(html, link):
+        soup = bs(html, 'lxml')
+        a_tags = soup.findAll('a')
+        images = soup.findAll('img')
+        followed_links = []
+        for a in a_tags:
+            href = a.attrs.get('href')
+            if href:
+                followed_links.append(href)
+        for img in images:
+            src = img.attrs.get('src')
+            if src:
+                followed_links.append(src)
+        return link in followed_links
+
+    def _enable_hyperlink(s):
+        regex = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
+        url = re.findall(regex, s)
+        links = [x[0] for x in url]
+
+        start_index = 0
+        new_string = ''
+        for link in links:
+            start = start_index + s[start_index:].find(link)
+            end = start + len(link)
+
+            if _already_hyperlinked(s, link):
+                new_string += s[start_index:end]
+            else:
+                new_string += s[start_index:start]
+                new_string += f'<a href="{link}">{link}</a>'
+
+            start_index = end
+
+        new_string += s[start_index:]
+
+        return new_string
+
     article_req = session.get(url)
     soup = bs(article_req.text, 'lxml')
 
@@ -68,6 +108,8 @@ def _get_article(url, session):
         if len(list(tr.children)) == 3:
             html = tr.find('td').prettify()
             break
+
+    html = _enable_hyperlink(html)
 
     if html is None:
         raise RuntimeError(gettext('No content for portal article'))
@@ -141,7 +183,7 @@ def crawl_hour():
                 is_newara=False,
                 user=user,
                 nickname=info['writer'],
-                picture=_make_random_profile_picture(),
+                picture=make_random_profile_picture(),
             )
 
         a, created = Article.objects.get_or_create(
@@ -199,7 +241,7 @@ def crawl_all():
                             is_newara=False,
                             user=user,
                             nickname=info['writer'],
-                            picture=_make_random_profile_picture(),
+                            picture=make_random_profile_picture(),
                         )
 
                     a = Article.objects.create(
