@@ -46,6 +46,7 @@ class UserProfile(MetaDataModel):
 
     picture = models.ImageField(
         null=True,
+        blank=True,
         default=None,
         upload_to='user_profiles/pictures',
         verbose_name='프로필',
