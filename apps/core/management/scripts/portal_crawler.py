@@ -55,20 +55,17 @@ def _login_kaist_portal():
 
 def _get_article(url, session):
 
-    def _already_hyperlinked(html, link):
+    def _already_hyperlinked(html):
         soup = bs(html, 'lxml')
-        a_tags = soup.findAll('a')
-        images = soup.findAll('img')
-        followed_links = []
-        for a in a_tags:
-            href = a.attrs.get('href')
-            if href:
-                followed_links.append(href)
-        for img in images:
-            src = img.attrs.get('src')
-            if src:
-                followed_links.append(src)
-        return link in followed_links
+        tagged_links = []
+        for child in soup.descendants:
+            name = getattr(child, 'name', None)
+            if name:
+                linked = child.attrs.get('src') or child.attrs.get('href')
+                if linked:
+                    tagged_links.append(linked)
+
+        return tagged_links
 
     def _enable_hyperlink(s):
         regex = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
@@ -77,11 +74,12 @@ def _get_article(url, session):
 
         start_index = 0
         new_string = ''
+        already_hyperlinked = _already_hyperlinked(s)
         for link in links:
             start = start_index + s[start_index:].find(link)
             end = start + len(link)
 
-            if _already_hyperlinked(s, link):
+            if link in already_hyperlinked:
                 new_string += s[start_index:end]
             else:
                 new_string += s[start_index:start]
@@ -220,6 +218,7 @@ def crawl_all():
     page_num = 1
 
     while True:
+        print('page_num:', page_num)
         links = []
         link = _get_board(page_num)
         if link:
