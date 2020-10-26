@@ -9,6 +9,7 @@ from django.shortcuts import redirect
 from django.utils import timezone
 from rest_framework import status, response, decorators, permissions
 
+from apps.user.models.user.manual import ManualUser
 from ara.classes.viewset import ActionAPIViewSet
 from ara.classes.sparcssso import Client as SSOClient
 
@@ -106,16 +107,15 @@ class UserViewSet(ActionAPIViewSet):
         # }
 
         is_kaist = 'kaist_id' in user_info
+        is_manual = user_info['email'] in list(ManualUser.objects.values_list('sso_email', flat=True))
 
-        try:
+        try:  # 로그인
             user_profile = UserProfile.objects.get(
                 sid=user_info['sid'],
             )
             user_profile.sso_user_info = user_info
-            if is_kaist:
-                user_profile.group = UserProfile.UserGroup.KAIST_MEMBER
 
-        except UserProfile.DoesNotExist:
+        except UserProfile.DoesNotExist:  # 회원가입
             user_nickname = _make_random_name()
             user_profile_picture = _make_random_profile_picture()
             with transaction.atomic():
@@ -123,11 +123,13 @@ class UserViewSet(ActionAPIViewSet):
                     email=user_info['email'],
                     username=str(uuid.uuid4()),
                     password=str(uuid.uuid4()),
-                    is_active=is_kaist,
+                    is_active=is_kaist or is_manual,
                 )
                 user_group = UserProfile.UserGroup.UNAUTHORIZED
                 if is_kaist:
                     user_group = UserProfile.UserGroup.KAIST_MEMBER
+                elif is_manual:
+                    user_group = ManualUser.objects.get(sso_email=user_info['email']).org_type
                 user_profile = UserProfile.objects.create(
                     uid=user_info['uid'],
                     sid=user_info['sid'],
