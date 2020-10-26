@@ -1,8 +1,8 @@
 from django.contrib import admin
 
-from ara.classes.admin import MetaDataModelAdmin
-
 from apps.user.models import UserProfile
+from apps.user.models.user.manual import ManualUser
+from ara.classes.admin import MetaDataModelAdmin
 
 
 @admin.register(UserProfile)
@@ -26,3 +26,14 @@ class UserProfileAdmin(MetaDataModelAdmin):
         'nickname',
         'user',
     )
+
+
+@admin.register(ManualUser)
+class ManualUserAdmin(MetaDataModelAdmin):
+     list_display = (
+         'user',
+         'org_name',
+         'org_type',
+         'applicant_name',
+         'sso_email',
+     )
