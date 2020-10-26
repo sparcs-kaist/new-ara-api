@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.translation import gettext
 from rest_framework import exceptions, serializers
 
+from apps.core.documents import ArticleDocument
 from ara.classes.serializers import MetaDataModelSerializer
 
 from apps.core.models import Article, ArticleReadLog, Board
@@ -183,11 +184,12 @@ class ArticleSerializer(BaseArticleSerializer):
 
     @staticmethod
     def search_articles(queryset, search):
-        return queryset.prefetch_related('created_by__profile').filter(
-            models.Q(title__search=search) |
-            models.Q(content_text__search=search) |
-            models.Q(created_by__profile__nickname__search=search)
-        ).distinct()
+        title_articles = queryset.filter(id__in=ArticleDocument.get_id_set('title', search))
+        content_articles = queryset.filter(id__in=ArticleDocument.get_id_set('content_text', search))
+        nickname_articles = queryset.filter(id__in=ArticleDocument.get_id_set('created_by_nickname', search))
+        qs = title_articles | content_articles | nickname_articles
+
+        return qs.distinct()
 
     @staticmethod
     def filter_articles(obj, request):
