@@ -34,7 +34,6 @@ class PublicUserSerializer(BaseUserSerializer):
     class Meta(BaseUserSerializer.Meta):
         fields = (
             'id',
-            'email',
             'username',
             'profile',
         )
