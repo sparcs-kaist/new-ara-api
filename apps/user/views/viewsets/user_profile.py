@@ -1,4 +1,6 @@
-from rest_framework import mixins, response
+from django.utils import timezone
+
+from rest_framework import decorators, mixins, response, status
 
 from ara.classes.viewset import ActionAPIViewSet
 
@@ -30,3 +32,18 @@ class UserProfileViewSet(mixins.RetrieveModelMixin,
             return super().retrieve(request, *args, **kwargs)
         else:
             return response.Response(PublicUserProfileSerializer(profile).data)
+
+    @decorators.action(detail=True, methods=['patch'])
+    def agree_terms_of_service(self, request, *args, **kwargs):
+        # BAD_REQUEST if user already agree with the terms of service
+        if request.user.profile.agree_terms_of_service_at is not None:
+            return response.Response(
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        request.user.profile.agree_terms_of_service_at = timezone.now()
+        request.user.profile.save()
+
+        return response.Response(
+            status=status.HTTP_200_OK,
+        )
