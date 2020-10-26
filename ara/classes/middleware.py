@@ -7,6 +7,7 @@ class CheckTermsOfServiceMiddleware:
         'me',
         'user-sso-login',
         'user-sso-login-callback',
+        'userprofile-agree-terms-of-service'
     ]
 
     def __init__(self, get_response):
