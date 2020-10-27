@@ -106,7 +106,7 @@ class UserViewSet(ActionAPIViewSet):
         #     'email': 'foo@bar.com'
         # }
 
-        is_kaist = 'kaist_id' in user_info
+        is_kaist = user_info.get('kaist_id') is not None
         is_manual = user_info['email'] in list(ManualUser.objects.values_list('sso_email', flat=True))
 
         try:  # 로그인
@@ -126,10 +126,17 @@ class UserViewSet(ActionAPIViewSet):
                     is_active=is_kaist or is_manual,
                 )
                 user_group = UserProfile.UserGroup.UNAUTHORIZED
-                if is_kaist:
+
+                if is_manual:
+                    manual_user = ManualUser.objects.get(sso_email=user_info['email'])
+                    manual_user.user = new_user
+                    manual_user.save()
+
+                    user_group = manual_user.org_type
+
+                elif is_kaist:
                     user_group = UserProfile.UserGroup.KAIST_MEMBER
-                elif is_manual:
-                    user_group = ManualUser.objects.get(sso_email=user_info['email']).org_type
+
                 user_profile = UserProfile.objects.create(
                     uid=user_info['uid'],
                     sid=user_info['sid'],
