@@ -5,7 +5,7 @@ from rest_framework import exceptions, serializers
 from apps.core.documents import ArticleDocument
 from ara.classes.serializers import MetaDataModelSerializer
 
-from apps.core.models import Article, ArticleReadLog, Board
+from apps.core.models import Article, ArticleReadLog, Board, Block
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
 
@@ -241,7 +241,7 @@ class ArticleSerializer(BaseArticleSerializer):
             if request.query_params.get('search_query'):
                 articles = self.search_articles(articles, request.query_params.get('search_query'))
 
-            articles = articles.exclude(id=obj.id)
+            articles = articles.exclude(id=obj.id).prefetch_related(Block.prefetch_my_block(request.user))
             before = articles.filter(created_at__lte=obj.created_at).first()
             after = articles.filter(created_at__gte=obj.created_at).last()
 
@@ -287,7 +287,7 @@ class ArticleSerializer(BaseArticleSerializer):
 
         recent_articles = recent_articles.exclude(
             id=obj.id,  # 자기 자신 제거
-        )
+        ).prefetch_related(Block.prefetch_my_block(request.user))
 
         # 사용자가 현재 읽고 있는 글의 바로 직전 조회 기록보다 먼저 읽은 것 중 첫 번째
         before = recent_articles.filter(
