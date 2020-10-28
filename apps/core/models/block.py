@@ -68,5 +68,5 @@ class Block(MetaDataModel):
 
     @staticmethod
     def is_blocked(blocked_by, user):
-        block_objs = redis.get_objs_by_values(f'blocks:{blocked_by.id}', 0, -1, (lambda x: int(x)))  # all blocks
+        block_objs = redis.get_objs_by_indexes(f'blocks:{blocked_by.id}', 0, -1, (lambda x: int(x)))  # all blocks
         return user.id in block_objs
