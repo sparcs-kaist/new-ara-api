@@ -71,7 +71,6 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 'parent_board',
             ).prefetch_related(
                 'article_update_log_set',
-                Block.prefetch_my_block(self.request.user),
                 ArticleReadLog.prefetch_my_article_read_log(self.request.user),
             )
 
@@ -101,20 +100,17 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             ).prefetch_related(
                 'attachments',
                 Scrap.prefetch_my_scrap(self.request.user),
-                Block.prefetch_my_block(self.request.user),
                 models.Prefetch(
                     'comment_set',
                     queryset=Comment.objects.reverse().prefetch_related(
                         'comment_update_log_set',
                         Vote.prefetch_my_vote(self.request.user),
-                        Block.prefetch_my_block(self.request.user),
                         Report.prefetch_my_report(self.request.user),
                         models.Prefetch(
                             'comment_set',
                             queryset=Comment.objects.reverse().prefetch_related(
                                 'comment_update_log_set',
                                 Vote.prefetch_my_vote(self.request.user),
-                                Block.prefetch_my_block(self.request.user),
                                 Report.prefetch_my_report(self.request.user),
                             ),
                         ),
