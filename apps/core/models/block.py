@@ -1,5 +1,3 @@
-import time
-
 from django.db import models, IntegrityError
 from django.conf import settings
 
@@ -39,23 +37,6 @@ class Block(MetaDataModel):
             raise IntegrityError('self.user must not be self.blocked_by.')
 
         super(Block, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
-
-        created = force_insert
-        if created:
-            pipe = redis.pipeline()
-            redis_key = f'blocks:{self.blocked_by_id}'
-
-            pipe.zadd(redis_key, {f'{self.user_id}': time.time()})
-            pipe.execute(raise_on_error=True)
-
-    def delete(self, **kwargs):
-        super().delete(**kwargs)
-
-        pipe = redis.pipeline()
-        redis_key = f'blocks:{self.blocked_by_id}'
-        pipe.zrem(redis_key, f'{self.user_id}')
-
-        pipe.execute(raise_on_error=True)
 
     @classmethod
     def prefetch_my_block(cls, user, prefix=''):
