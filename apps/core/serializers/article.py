@@ -5,7 +5,7 @@ from rest_framework import exceptions, serializers
 from apps.core.documents import ArticleDocument
 from ara.classes.serializers import MetaDataModelSerializer
 
-from apps.core.models import Article, ArticleReadLog, Board
+from apps.core.models import Article, ArticleReadLog, Board, Block
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
 
@@ -90,15 +90,14 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return ''
 
-    @staticmethod
-    def get_created_by(obj):
+    def get_created_by(self, obj):
         from apps.user.serializers.user import PublicUserSerializer
 
         if obj.is_anonymous:
             return '익명'
 
         data = PublicUserSerializer(obj.created_by).data
-        data['is_blocked'] = obj.created_by.blocked_by_set.exists()
+        data['is_blocked'] = Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by)
 
         return data
 
@@ -138,17 +137,18 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
     def validate_hidden(self, obj: Article):
         errors = []
+        request = self.context['request']
 
-        if obj.created_by.blocked_by_set.exists():
+        if Block.is_blocked(blocked_by=request.user, user=obj.created_by):
             errors.append(exceptions.ValidationError('차단한 사용자의 게시물입니다.'))
 
-        if obj.is_content_sexual and not self.context['request'].user.profile.see_sexual:
+        if obj.is_content_sexual and not request.user.profile.see_sexual:
             errors.append(exceptions.ValidationError('성인/음란성 내용의 게시물입니다.'))
 
-        if obj.is_content_social and not self.context['request'].user.profile.see_social:
+        if obj.is_content_social and not request.user.profile.see_social:
             errors.append(exceptions.ValidationError('정치/사회성 내용의 게시물입니다.'))
 
-        if not obj.parent_board.group_has_access(self.context['request'].user.profile.group):
+        if not obj.parent_board.group_has_access(request.user.profile.group):
             errors.append(exceptions.ValidationError('접근 권한이 없는 게시판입니다.'))
 
         return errors
