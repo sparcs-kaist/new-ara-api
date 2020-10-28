@@ -13,7 +13,8 @@ from apps.core.serializers.topic import TopicSerializer
 class BaseArticleSerializer(MetaDataModelSerializer):
     class Meta:
         model = Article
-        exclude = ('content', 'content_text', 'migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
+        exclude = ('content', 'content_text', 'attachments',
+                   'migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
 
     @staticmethod
     def get_my_vote(obj):

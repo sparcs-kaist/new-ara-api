@@ -8,7 +8,7 @@ from apps.core.models import Comment
 class BaseCommentSerializer(MetaDataModelSerializer):
     class Meta:
         model = Comment
-        fields = '__all__'
+        exclude = ('attachment', )
 
     @staticmethod
     def get_my_vote(obj):
