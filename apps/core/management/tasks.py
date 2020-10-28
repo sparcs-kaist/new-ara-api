@@ -22,7 +22,7 @@ def _get_best(days, period):
     to_ts = time.time()
     from_ts = to_ts - 24*60*60*days
 
-    vote_objs = redis.get_objs(_get_redis_key(type_), f'({from_ts}', to_ts)
+    vote_objs = redis.get_objs_by_values(_get_redis_key(type_), f'({from_ts}', to_ts)
 
     article_votes = defaultdict(int)
     for obj in vote_objs:
@@ -30,7 +30,7 @@ def _get_best(days, period):
         article_votes[article_id] += int(vote)
 
     type_ = 'hit'
-    hit_objs = redis.get_objs(_get_redis_key(type_), f'({from_ts}', to_ts)
+    hit_objs = redis.get_objs_by_values(_get_redis_key(type_), f'({from_ts}', to_ts)
 
     article_hits = defaultdict(int)
     for obj in hit_objs:
