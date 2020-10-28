@@ -9,6 +9,7 @@ from django.test import TestCase as DjangoTestCase
 from rest_framework.test import APIClient
 
 from apps.user.models import UserProfile
+from ara import redis
 
 
 @pytest.fixture(scope='class')
@@ -62,7 +63,9 @@ class RequestSetting:
 class TestCase(DjangoTestCase):
     @classmethod
     def setUpClass(cls):
+        redis.flushall()
         super().setUpClass()
 
     def tearDown(self):
+        redis.flushall()
         super().tearDown()
