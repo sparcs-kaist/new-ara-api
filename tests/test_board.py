@@ -1,8 +1,6 @@
 import pytest
-from django.test import TestCase
-
 from apps.core.models import Board
-from tests.conftest import RequestSetting
+from tests.conftest import RequestSetting, TestCase
 
 
 @pytest.mark.usefixtures('set_user_client')

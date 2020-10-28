@@ -1,7 +1,6 @@
 import pytest
-from django.test import TestCase
 from apps.core.models import Article, Topic, Board, Comment, Report
-from tests.conftest import RequestSetting
+from tests.conftest import RequestSetting, TestCase
 from django.utils import timezone
 
 

@@ -1,7 +1,6 @@
 import pytest
 from django.db import IntegrityError, transaction
-from django.test import TestCase
-from tests.conftest import RequestSetting
+from tests.conftest import RequestSetting, TestCase
 from apps.core.models import Scrap, Board, Article, Block
 
 

@@ -1,11 +1,10 @@
 import pytest
 from django.contrib.auth.models import User
-from django.test import TestCase
 from django.utils import timezone
 
 from apps.core.models import Article, Topic, Board
 from apps.user.models import UserProfile
-from tests.conftest import RequestSetting
+from tests.conftest import RequestSetting, TestCase
 
 
 @pytest.fixture(scope='class')
