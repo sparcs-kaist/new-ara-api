@@ -1,11 +1,10 @@
 from datetime import timedelta
 
 import pytest
-from django.test import TestCase
 from django.utils import timezone
 
 from apps.core.models import Board, Article
-from tests.conftest import RequestSetting
+from tests.conftest import RequestSetting, TestCase
 
 
 @pytest.fixture(scope='class')

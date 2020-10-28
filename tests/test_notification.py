@@ -1,6 +1,5 @@
 import pytest
-from django.test import TestCase
-from tests.conftest import RequestSetting
+from tests.conftest import RequestSetting, TestCase
 
 from apps.core.models import Notification, NotificationReadLog, Article, Board, Comment
 

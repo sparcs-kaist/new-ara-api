@@ -1,11 +1,11 @@
 import pytest
 from django.contrib.auth.models import User
 from django.core.management import call_command
-from django.test import TestCase, TransactionTestCase
 
 from apps.core.models import Board, Article
 from apps.user.models import UserProfile
-from tests.conftest import RequestSetting
+from tests.conftest import RequestSetting, TestCase
+
 
 # TODO: test_articles fixture와 중복되는 코드 합치기
 
@@ -66,11 +66,11 @@ def set_index(request):
 
 
 @pytest.mark.usefixtures('set_user_client', 'set_index', 'set_board', 'set_authors', 'set_posts')
-class TestArticleSearch(TransactionTestCase, RequestSetting):
+class TestArticleSearch(TestCase, RequestSetting):
     def test_main_search(self):
         # `main_search` 필터를 검사합니다. 개수 assertion 숫자들의 의미는 set_posts를 참고하세요.
 
-        def get_searched_article_number(q): 
+        def get_searched_article_number(q):
             return self.http_request(
                 self.user,
                 'get',
@@ -79,7 +79,7 @@ class TestArticleSearch(TransactionTestCase, RequestSetting):
             ).data['num_items']
 
         wanted_min_proportion = 0.9
-        
+
         queries = [
             ('AAAA', 34),
             ('BBBB', 20),
