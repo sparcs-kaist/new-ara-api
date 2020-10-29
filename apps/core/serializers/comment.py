@@ -19,17 +19,6 @@ class BaseCommentSerializer(MetaDataModelSerializer):
 
         return my_vote.is_positive
 
-    @staticmethod
-    def get_my_report(obj):
-        from apps.core.serializers.report import BaseReportSerializer
-
-        if not obj.report_set.exists():
-            return None
-
-        my_report = obj.report_set.all()[0]
-
-        return BaseReportSerializer(my_report).data
-
     def get_is_hidden(self, obj):
         if self.validate_hidden(obj):
             return True
@@ -93,9 +82,6 @@ class CommentSerializer(BaseCommentSerializer):
     my_vote = serializers.SerializerMethodField(
         read_only=True,
     )
-    my_report = serializers.SerializerMethodField(
-        read_only=True,
-    )
     is_hidden = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -127,9 +113,6 @@ class CommentListActionSerializer(BaseCommentSerializer):
     )
 
     my_vote = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    my_report = serializers.SerializerMethodField(
         read_only=True,
     )
     is_hidden = serializers.SerializerMethodField(
