@@ -1,6 +1,6 @@
 from rest_framework import views, response
 
-from apps.core.models import BestArticle, PERIOD_CHOICES
+from apps.core.models import BestArticle, PERIOD_CHOICES, Article, Block
 from apps.core.serializers.article import BestArticleListActionSerializer
 
 
@@ -18,11 +18,15 @@ def _best_articles(period, request):
     except AssertionError:
         raise ValueError(f'Wrong period: {period}')
 
+    best_ids = [
+        best_article.article.id for best_article
+        in BestArticle.objects.filter(period=period, latest=True)
+    ]
+
+    bests = Article.objects.filter(id__in=best_ids).prefetch_related(Block.prefetch_my_block(request.user))
+
     return BestArticleListActionSerializer(
-        instance=[
-            best_article.article for best_article
-            in BestArticle.objects.filter(period=period, latest=True)
-        ],
+        instance=bests,
         many=True,
         **{'context': {'request': request}},
     ).data
