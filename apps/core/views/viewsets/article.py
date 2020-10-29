@@ -127,9 +127,13 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def perform_update(self, serializer):
         instance = serializer.instance
 
-        ArticleUpdateLog.objects.create(
+        update_log = ArticleUpdateLog.objects.create(
             updated_by=self.request.user,
             article=instance,
+        )
+
+        serializer.save(
+            content_updated_at=update_log.created_at,
         )
 
         return super().perform_update(serializer)
