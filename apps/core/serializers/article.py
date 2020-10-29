@@ -35,14 +35,15 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return BaseScrapSerializer(my_scrap).data
 
-    @staticmethod
-    def get_my_report(obj):
+    def get_my_report(self, obj):
         from apps.core.serializers.report import BaseReportSerializer
 
-        if not obj.report_set.exists():
+        report_set = obj.report_set.filter(reported_by=self.context['request'].user)
+
+        if not report_set.exists():
             return None
 
-        my_report = obj.report_set.all()[0]
+        my_report = report_set.all()[0]
 
         return BaseReportSerializer(my_report).data
 
