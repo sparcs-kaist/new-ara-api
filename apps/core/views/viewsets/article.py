@@ -102,11 +102,17 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 Scrap.prefetch_my_scrap(self.request.user),
                 models.Prefetch(
                     'comment_set',
-                    queryset=Comment.objects.reverse().prefetch_related(
+                    queryset=Comment.objects.reverse().select_related(
+                        'created_by',
+                        'created_by__profile',
+                    ).prefetch_related(
                         Vote.prefetch_my_vote(self.request.user),
                         models.Prefetch(
                             'comment_set',
-                            queryset=Comment.objects.reverse().prefetch_related(
+                            queryset=Comment.objects.reverse().select_related(
+                                'created_by',
+                                'created_by__profile',
+                            ).prefetch_related(
                                 Vote.prefetch_my_vote(self.request.user),
                             ),
                         ),
