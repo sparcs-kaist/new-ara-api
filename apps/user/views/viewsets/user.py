@@ -1,5 +1,6 @@
 import uuid
 import random
+from urllib.parse import urlparse
 
 from cached_property import cached_property
 from django.conf import settings
@@ -157,7 +158,15 @@ class UserViewSet(ActionAPIViewSet):
         user_profile.user.save()
 
         login(request, user_profile.user)
-        return redirect(to=request.session.pop('next', '/'))
+
+        _next = request.session.get('next', '/')
+
+        # redirect to frontend's terms of service agreement page if user did not agree it yet
+        if request.user.is_authenticated and request.user.profile.agree_terms_of_service_at is None:
+            _next = urlparse(_next)
+            return redirect(to=f'{_next.scheme}://{_next.netloc}/tos')
+
+        return redirect(to=_next)
 
     @decorators.action(detail=True, methods=['post'])
     def sso_unregister(self, request, *args, **kwargs):

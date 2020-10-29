@@ -100,6 +100,12 @@ class UserProfile(MetaDataModel):
         verbose_name='이전 아라 아이디',
     )
 
+    agree_terms_of_service_at = models.DateTimeField(
+        null=True,
+        default=None,
+        verbose_name='약관 동의 일시',
+    )
+
     def __str__(self):
         return self.nickname
 
