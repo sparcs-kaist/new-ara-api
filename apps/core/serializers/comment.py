@@ -2,7 +2,7 @@ from rest_framework import serializers, exceptions
 
 from ara.classes.serializers import MetaDataModelSerializer
 
-from apps.core.models import Comment
+from apps.core.models import Comment, Block
 
 
 class BaseCommentSerializer(MetaDataModelSerializer):
@@ -71,7 +71,7 @@ class BaseCommentSerializer(MetaDataModelSerializer):
     def validate_hidden(self, obj):
         errors = []
 
-        if obj.created_by.blocked_by_set.exists():
+        if Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by):
             errors.append(exceptions.ValidationError('차단한 사용자의 게시물입니다.'))
 
         return errors
