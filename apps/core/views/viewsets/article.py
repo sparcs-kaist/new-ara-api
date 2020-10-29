@@ -12,9 +12,7 @@ from apps.core.models import (
     ArticleReadLog,
     ArticleUpdateLog,
     ArticleDeleteLog,
-    Block,
     Comment,
-    Report,
     Vote,
     Scrap,
 )
@@ -70,7 +68,6 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 'parent_topic',
                 'parent_board',
             ).prefetch_related(
-                'article_update_log_set',
                 ArticleReadLog.prefetch_my_article_read_log(self.request.user),
             )
 
