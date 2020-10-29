@@ -103,11 +103,8 @@ class BaseArticleSerializer(MetaDataModelSerializer):
                 return 'U'
 
         # compare with article's last updated datetime
-        if obj.created_by != request.user and obj.article_update_log_set.exists():
-            last_article_update_log = obj.article_update_log_set.all()[0]
-
-            if last_article_update_log.created_at > my_article_read_log.created_at:
-                return 'U'
+        if obj.content_updated_at and obj.content_updated_at > my_article_read_log.created_at:
+            return 'U'
 
         return '-'
 
