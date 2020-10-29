@@ -71,14 +71,6 @@ class CommentSerializer(BaseCommentSerializer):
     created_by = PublicUserSerializer(
         read_only=True,
     )
-
-    from apps.core.serializers.comment_log import CommentUpdateLogSerializer
-    comment_update_logs = CommentUpdateLogSerializer(
-        many=True,
-        read_only=True,
-        source='comment_update_log_set',
-    )
-
     my_vote = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -104,14 +96,6 @@ class CommentListActionSerializer(BaseCommentSerializer):
     created_by = PublicUserSerializer(
         read_only=True,
     )
-
-    from apps.core.serializers.comment_log import CommentUpdateLogSerializer
-    comment_update_logs = CommentUpdateLogSerializer(
-        many=True,
-        read_only=True,
-        source='comment_update_log_set',
-    )
-
     my_vote = serializers.SerializerMethodField(
         read_only=True,
     )
