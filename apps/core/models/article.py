@@ -136,13 +136,11 @@ class Article(MetaDataModel):
 
         super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
-    # TODO: hit_count property should be cached
     def update_hit_count(self):
         self.hit_count = self.article_read_log_set.values('read_by').annotate(models.Count('read_by')).order_by('read_by__count',).count() + self.migrated_hit_count
 
         self.save()
 
-    # TODO: hit_count property should be cached
     def update_comment_count(self):
         from apps.core.models import Comment
 
@@ -153,7 +151,6 @@ class Article(MetaDataModel):
 
         self.save()
 
-    # TODO: positive_vote_count, negative_vote_count properties should be cached
     def update_vote_status(self):
         self.positive_vote_count = self.vote_set.filter(is_positive=True).count() + self.migrated_positive_vote_count
         self.negative_vote_count = self.vote_set.filter(is_positive=False).count() + self.migrated_negative_vote_count
