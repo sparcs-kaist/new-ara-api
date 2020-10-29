@@ -44,7 +44,6 @@ class ScrapViewSet(mixins.ListModelMixin,
             'parent_article__comment_set',
             'parent_article__comment_set__comment_set',
             'parent_article__attachments',
-            'parent_article__article_update_log_set',
             ArticleReadLog.prefetch_my_article_read_log(self.request.user, prefix='parent_article__'),
         )
 
