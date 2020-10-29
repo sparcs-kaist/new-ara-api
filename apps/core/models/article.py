@@ -108,6 +108,12 @@ class Article(MetaDataModel):
         verbose_name='링크',
     )
 
+    content_updated_at = models.DateTimeField(
+        null=True,
+        default=None,
+        verbose_name='제목/본문/첨부파일 수정 시간',
+    )
+
     def __str__(self):
         return self.title
 
