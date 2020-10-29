@@ -149,13 +149,12 @@ class UserViewSet(ActionAPIViewSet):
 
         login(request, user_profile.user)
 
-        _next = urlparse(request.session.get('next', '/'))
+        _next = request.session.get('next', '/')
 
         # redirect to frontend's terms of service agreement page if user did not agree it yet
         if request.user.is_authenticated and request.user.profile.agree_terms_of_service_at is None:
-            scheme = _next[0]
-            netloc = _next[1]
-            return redirect(to=f'{scheme}://{netloc}/tos')
+            _next = urlparse(_next)
+            return redirect(to=f'{_next.scheme}://{_next.netloc}/tos')
 
         return redirect(to=_next)
 
