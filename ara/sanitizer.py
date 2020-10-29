@@ -22,7 +22,7 @@ def sanitize(content):
         return False
 
     allowed_tags = bleach.ALLOWED_TAGS \
-                   + ['p', 'pre', 'span', 'h1', 'h2', 'h3', 'br', 's', 'u', 'ol'] \
+                   + ['p', 'pre', 'span', 'h1', 'h2', 'h3', 'br', 'hr', 's', 'u', 'ol'] \
                    + ['img', 'iframe', 'video', 'audio', 'source'] \
                    + ['sub', 'sup', 'table', 'tbody', 'td', 'tfoot', 'th', 'thead', 'tr', 'tt', 'u', 'ul']
 
