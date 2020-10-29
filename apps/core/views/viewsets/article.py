@@ -105,13 +105,11 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                     queryset=Comment.objects.reverse().prefetch_related(
                         'comment_update_log_set',
                         Vote.prefetch_my_vote(self.request.user),
-                        Report.prefetch_my_report(self.request.user),
                         models.Prefetch(
                             'comment_set',
                             queryset=Comment.objects.reverse().prefetch_related(
                                 'comment_update_log_set',
                                 Vote.prefetch_my_vote(self.request.user),
-                                Report.prefetch_my_report(self.request.user),
                             ),
                         ),
                     ),
