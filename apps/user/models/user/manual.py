@@ -37,5 +37,6 @@ class ManualUser(MetaDataModel):
 
     sso_email = models.EmailField(
         max_length=160,
+        unique=True,
         verbose_name="sso 이메일",
     )
