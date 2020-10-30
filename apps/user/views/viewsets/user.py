@@ -190,12 +190,13 @@ class UserViewSet(ActionAPIViewSet):
 
     @decorators.action(detail=True, methods=['delete'])
     def sso_logout(self, request, *args, **kwargs):
-        logout(request)
-        # In case of user who isn't logged in with Sparcs SSO
-        if not request.user.profile.sid:
-            return response.Response(
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        if request.user.is_authenticated:
+            logout(request)
+            # In case of user who isn't logged in with Sparcs SSO
+            if not request.user.profile.sid:
+                return response.Response(
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         return self.sso_client.get_logout_url(
             sid=request.user.profile.sid,
