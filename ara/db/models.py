@@ -56,8 +56,10 @@ class MetaDataModel(models.Model):
         self.deleted_at = timezone.now()
         self.save()
 
-    def hard_delete(self):
-        super().delete()
+    def hard_delete(self, using=None, keep_parents=False):
+        return super().delete(using=using, keep_parents=keep_parents)
+
+    hard_delete.alters_data = True
 
 
 class Search(models.Lookup):
