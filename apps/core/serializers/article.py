@@ -236,8 +236,7 @@ class ArticleSerializer(BaseArticleSerializer):
             'after': SideArticleSerializer(after, context=self.context).data if after else None,
         }
 
-    @staticmethod
-    def get_side_articles_of_recent_article(obj, request):
+    def get_side_articles_of_recent_article(self, obj, request):
         article_read_log_set = obj.article_read_log_set.all()
 
         # 현재 ArticleReadLog
@@ -270,6 +269,9 @@ class ArticleSerializer(BaseArticleSerializer):
 
         if not recent_articles.filter(id=obj.id).exists():
             raise serializers.ValidationError(gettext('This article is never read by user.'))
+
+        if request.query_params.get('search_query'):
+            recent_articles = self.search_articles(recent_articles, request.query_params.get('search_query'))
 
         recent_articles = recent_articles.exclude(
             id=obj.id,  # 자기 자신 제거
