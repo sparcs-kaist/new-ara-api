@@ -78,7 +78,7 @@ class ArticleDocument(Document):
         return [
             x.meta.id
             for x
-            in ArticleDocument.search().filter('match', **{field_name: search_value}).scan()
+            in ArticleDocument.search().filter('match', **{field_name: search_value})[0:200].execute()
         ]
 
     @staticmethod
