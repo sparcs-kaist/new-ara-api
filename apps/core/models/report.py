@@ -35,6 +35,7 @@ class Report(MetaDataModel):
     reported_by = models.ForeignKey(
         on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
+        related_name='report_set',
         verbose_name='신고자',
     )
     content = models.TextField(
