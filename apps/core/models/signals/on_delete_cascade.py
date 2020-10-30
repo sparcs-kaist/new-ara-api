@@ -68,25 +68,3 @@ def cascade_soft_deletion_topic(instance, **kwargs):
 
     if deleted:
         instance.article_set.all().update(deleted_at=instance.deleted_at)
-
-
-# User
-
-
-@receiver(models.signals.post_delete, sender=get_user_model())
-def cascade_soft_deletion_user(instance, **kwargs):
-    now = timezone.now()
-
-    instance.article_set.all().update(deleted_at=now)
-    instance.article_read_log_set.all().update(deleted_at=now)
-    instance.article_update_log_set.all().update(deleted_at=now)
-    instance.article_delete_log_set.all().update(deleted_at=now)
-    instance.block_set.all().update(deleted_at=now)
-    instance.blocked_by_set.all().update(deleted_at=now)
-    instance.comment_set.all().update(deleted_at=now)
-    instance.comment_update_log_set.all().update(deleted_at=now)
-    instance.comment_delete_log_set.all().update(deleted_at=now)
-    instance.notification_read_log_set.all().update(deleted_at=now)
-    instance.report_set.all().update(deleted_at=now)
-    instance.scrap_set.all().update(deleted_at=now)
-    instance.vote_set.all().update(deleted_at=now)
