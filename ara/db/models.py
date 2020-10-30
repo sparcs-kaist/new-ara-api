@@ -26,6 +26,11 @@ class MetaDataManager(models.Manager):
         return self.queryset_class(self.model).filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc))
 
 
+class MetaDataCollector(models.deletion.Collector):
+    def hard_delete(self):
+        return super().delete()
+
+
 # TODO: add redis to metadatamodel
 class MetaDataModel(models.Model):
     class Meta:
