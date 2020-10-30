@@ -133,6 +133,7 @@ class UserViewSet(ActionAPIViewSet):
                 if is_manual:
                     manual_user.user = new_user
                     manual_user.save()
+                    user_nickname = manual_user.org_name
 
                     user_group = manual_user.org_type
 
