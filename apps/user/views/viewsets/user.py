@@ -38,7 +38,7 @@ def _make_random_name() -> str:
     return temp_nickname
 
 
-def _make_random_profile_picture() -> str:
+def make_random_profile_picture() -> str:
     colors = ['blue', 'red', 'gray']
     random.shuffle(colors)
     numbers = ['1', '2', '3']
@@ -120,7 +120,7 @@ class UserViewSet(ActionAPIViewSet):
 
         except UserProfile.DoesNotExist:  # 회원가입
             user_nickname = _make_random_name()
-            user_profile_picture = _make_random_profile_picture()
+            user_profile_picture = make_random_profile_picture()
             with transaction.atomic():
                 new_user = get_user_model().objects.create_user(
                     email=user_info['email'],
