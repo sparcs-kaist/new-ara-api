@@ -2,7 +2,8 @@ from django.conf import settings
 from django_elasticsearch_dsl import Document, fields
 from django_elasticsearch_dsl.registries import registry
 from django.apps import apps
-from elasticsearch_dsl import analyzer, tokenizer
+from elasticsearch_dsl import analyzer, tokenizer, Q
+from elasticsearch_dsl.query import Query
 from elasticsearch_dsl.analysis import token_filter
 
 from apps.core.models import Article
@@ -74,12 +75,18 @@ class ArticleDocument(Document):
         return super(ArticleDocument, self).get_queryset().prefetch_related('created_by').prefetch_related('created_by__profile')
 
     @staticmethod
-    def get_id_set(field_name, search_value):
+    def get_id_set(q_object : Query):
         return [
             x.meta.id
             for x
-            in ArticleDocument.search().filter('match', **{field_name: search_value}).scan()
+            in ArticleDocument.search().query(q_object).sort('-created_at')[0:500].execute()
         ]
+
+    @staticmethod
+    def get_main_search_id_set(value):
+        return ArticleDocument.get_id_set(
+            Q('match', title=value) | Q('match', content_text=value) | Q('match', created_by_nickname=value)
+        )
 
     @staticmethod
     def get_instances_from_related(related_instance):

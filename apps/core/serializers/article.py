@@ -170,12 +170,7 @@ class ArticleSerializer(BaseArticleSerializer):
 
     @staticmethod
     def search_articles(queryset, search):
-        title_articles = queryset.filter(id__in=ArticleDocument.get_id_set('title', search))
-        content_articles = queryset.filter(id__in=ArticleDocument.get_id_set('content_text', search))
-        nickname_articles = queryset.filter(id__in=ArticleDocument.get_id_set('created_by_nickname', search))
-        qs = title_articles | content_articles | nickname_articles
-
-        return qs.distinct()
+        return queryset.filter(id__in=ArticleDocument.get_main_search_id_set(search))
 
     @staticmethod
     def filter_articles(obj, request):
