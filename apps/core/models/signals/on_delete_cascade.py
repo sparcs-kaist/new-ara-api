@@ -49,6 +49,10 @@ def cascade_soft_deletion_article(instance, **kwargs):
             vote.deleted_at = instance.deleted_at
             vote.save()
 
+        for attachment in instance.attachments.all():
+            attachment.deleted_at = instance.deleted_at
+            attachment.save()
+
 
 @receiver(models.signals.post_save, sender=Attachment)
 def cascade_soft_deletion_attachment(instance, **kwargs):
@@ -102,6 +106,9 @@ def cascade_soft_deletion_comment(instance, **kwargs):
         for vote in instance.vote_set.all():
             vote.deleted_at = instance.deleted_at
             vote.save()
+
+        instance.attachment.deleted_at = instance.deleted_at
+        instance.attachment.save()
 
 
 @receiver(models.signals.post_save, sender=Notification)
