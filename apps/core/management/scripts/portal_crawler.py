@@ -1,8 +1,11 @@
 import uuid
+from datetime import datetime
+
 import requests
 from bs4 import BeautifulSoup as bs
 
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext
 from fake_useragent import UserAgent
@@ -53,9 +56,9 @@ def _get_article(url, session):
     article_req = session.get(url)
     soup = bs(article_req.text, 'lxml')
 
-    writer_target = '작성자(소속)'
-    writer = soup.find('th', text=writer_target).findNext('td').select('label')[0].contents[0].strip()
-
+    writer = soup.find('th', text='작성자(소속)').findNext('td').select('label')[0].contents[0].strip()
+    created_at_str = soup.find('th', text='작성일(조회수)').findNext('td').contents[0].strip().split('(')[0]
+    created_at = timezone.get_current_timezone().localize(datetime.strptime(created_at_str, '%Y.%m.%d %H:%M:%S'))
     title = soup.select('table > tbody > tr > td.req_first')[0].contents[0]
 
     trs = soup.select('table > tbody > tr')
@@ -76,6 +79,7 @@ def _get_article(url, session):
         'content_text': content_text,
         'content': html,
         'writer': writer,
+        'created_at': created_at,
     }
 
 
@@ -152,6 +156,8 @@ def crawl_hour():
         )
 
         if created:
+            a.created_at = info['created_at']
+            a.save()
             print(f'crawled id: {a.id} - {a.title}')
 
 
@@ -169,40 +175,46 @@ def crawl_all():
 
         return link
 
-    links = []
     page_num = 1
 
     while True:
+        links = []
         link = _get_board(page_num)
         if link:
             links.extend(link)
+
+            with transaction.atomic():
+                for link in tqdm(links):
+                    board_id = link.split('/')[-2]
+                    num = link.split('/')[-1]
+                    full_link = f'{BASE_URL}/board/read.brd?cmd=READ&boardId={board_id}&bltnNo={num}&lang_knd=ko'
+                    info = _get_article(full_link, session)
+
+                    exist = UserProfile.objects.filter(nickname=info['writer'], is_newara=False)
+                    if exist:
+                        user = exist.first().user
+                    else:
+                        user = get_user_model().objects.create(username=str(uuid.uuid1()), is_active=False)
+                        user_profile = UserProfile.objects.create(
+                            is_newara=False,
+                            user=user,
+                            nickname=info['writer'],
+                            picture=_make_random_profile_picture(),
+                        )
+
+                    a = Article.objects.create(
+                        parent_board_id=1,  # 포탈공지 게시판
+                        title=info['title'],
+                        content=info['content'],
+                        content_text=info['content_text'],
+                        created_by=user,
+                        url=full_link,
+                    )
+
+                    a.created_at = info['created_at']
+                    a.save()
+
             page_num += 1
+
         else:
             break
-
-    for link in tqdm(links):
-        board_id = link.split('/')[-2]
-        num = link.split('/')[-1]
-        full_link = f'{BASE_URL}/board/read.brd?cmd=READ&boardId={board_id}&bltnNo={num}&lang_knd=ko'
-        info = _get_article(full_link, session)
-
-        exist = UserProfile.objects.filter(nickname=info['writer'], is_newara=False)
-        if exist:
-            user = exist.first().user
-        else:
-            user = get_user_model().objects.create(username=str(uuid.uuid1()), is_active=False)
-            user_profile = UserProfile.objects.create(
-                is_newara=False,
-                user=user,
-                nickname=info['writer'],
-                picture=_make_random_profile_picture(),
-            )
-
-        Article.objects.create(
-            parent_board_id=1,  # 포탈공지 게시판
-            title=info['title'],
-            content=info['content'],
-            content_text=info['content_text'],
-            created_by=user,
-            url=full_link,
-        )
