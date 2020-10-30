@@ -56,10 +56,11 @@ def set_article(request):
 def set_kaist_articles(request):
     request.cls.non_kaist_user, _ = User.objects.get_or_create(username='NonKaistUser', email='non-kaist-user@sparcs.org')
     if not hasattr(request.cls.non_kaist_user, 'profile'):
-        UserProfile.objects.get_or_create(user=request.cls.non_kaist_user, nickname='Not a KAIST User')
+        UserProfile.objects.get_or_create(user=request.cls.non_kaist_user, nickname='Not a KAIST User', agree_terms_of_service_at=timezone.now())
     request.cls.kaist_user, _ = User.objects.get_or_create(username='KaistUser', email='kaist-user@sparcs.org')
     if not hasattr(request.cls.kaist_user, 'profile'):
-        UserProfile.objects.get_or_create(user=request.cls.kaist_user, nickname='KAIST User', group=UserProfile.UserGroup.KAIST_MEMBER)
+        UserProfile.objects.get_or_create(user=request.cls.kaist_user, nickname='KAIST User',
+                                          group=UserProfile.UserGroup.KAIST_MEMBER, agree_terms_of_service_at=timezone.now())
 
     request.cls.kaist_board, _ = Board.objects.get_or_create(
         slug="kaist-only",

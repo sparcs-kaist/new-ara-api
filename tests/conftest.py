@@ -6,6 +6,7 @@
 import pytest
 from django.contrib.auth.models import User
 from django.test import TestCase as DjangoTestCase
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.user.models import UserProfile
@@ -15,7 +16,7 @@ from apps.user.models import UserProfile
 def set_admin_client(request):
     request.cls.admin, _ = User.objects.get_or_create(username='관리자', email='admin@sparcs.org', is_superuser=True)
     if not hasattr(request.cls.admin, 'profile'):
-        UserProfile.objects.get_or_create(user=request.cls.admin, nickname='관리자')
+        UserProfile.objects.get_or_create(user=request.cls.admin, nickname='관리자', agree_terms_of_service_at=timezone.now())
     client = APIClient()
     client.force_authenticate(user=request.cls.user)
     request.cls.api_client = client
@@ -25,7 +26,8 @@ def set_admin_client(request):
 def set_user_client(request):
     request.cls.user, _ = User.objects.get_or_create(username='User', email='user@sparcs.org')
     if not hasattr(request.cls.user, 'profile'):
-        UserProfile.objects.get_or_create(user=request.cls.user, nickname='User', group=UserProfile.UserGroup.KAIST_MEMBER)
+        UserProfile.objects.get_or_create(user=request.cls.user, nickname='User',
+                                          group=UserProfile.UserGroup.KAIST_MEMBER, agree_terms_of_service_at=timezone.now())
     client = APIClient()
     request.cls.api_client = client
 
@@ -34,7 +36,8 @@ def set_user_client(request):
 def set_user_client2(request):
     request.cls.user2, _ = User.objects.get_or_create(username='User2', email='user2@sparcs.org')
     if not hasattr(request.cls.user2, 'profile'):
-        UserProfile.objects.get_or_create(user=request.cls.user2, nickname='User2', group=UserProfile.UserGroup.KAIST_MEMBER)
+        UserProfile.objects.get_or_create(user=request.cls.user2, nickname='User2',
+                                          group=UserProfile.UserGroup.KAIST_MEMBER, agree_terms_of_service_at=timezone.now())
     request.cls.api_client = APIClient()
 
 
