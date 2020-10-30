@@ -5,9 +5,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^https://\w+\.netlify\.app",
-]
+CORS_ORIGIN_ALLOW_ALL = True
 
 SSO_IS_BETA = False
 
