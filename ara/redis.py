@@ -38,16 +38,26 @@ class PrefixedRedis(PyRedis):
     def zadd(self, name, mapping, **kwargs):
         return super().zadd(f'{self.key_prefix}{name}', mapping, **kwargs)
 
+    def zrem(self, name, value, **kwargs):
+        return super().zrem(f'{self.key_prefix}{name}', name, value)
+
     def zrange(self, name, start, end, **kwargs):
         return super().zrange(f'{self.key_prefix}{name}', start, end, **kwargs)
 
     def zrangebyscore(self, name, min, max, **kwargs):
         return super().zrangebyscore(f'{self.key_prefix}{name}', min, max, **kwargs)
 
-    def get_objs(self, name, from_ts, to_ts):
+    def get_objs_by_values(self, name, from_value, to_value, preprocess=(lambda x: x)):
         objs = []
-        for row in self.zrangebyscore(name, from_ts, to_ts):
-            objs.append(row.decode())
+        for row in self.zrangebyscore(name, from_value, to_value):
+            objs.append(preprocess(row.decode()))
+
+        return objs
+
+    def get_objs_by_indexes(self, name, from_index, to_index, preprocess=(lambda x: x)):
+        objs = []
+        for row in self.zrange(name, from_index, to_index):
+            objs.append(preprocess(row.decode()))
 
         return objs
 

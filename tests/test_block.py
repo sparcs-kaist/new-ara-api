@@ -1,10 +1,9 @@
 import pytest
 from django.db import transaction
-from django.test import TestCase
 from django.utils import timezone
 from django.db.utils import IntegrityError
 from apps.core.models import Article, Topic, Board, Comment, Block
-from tests.conftest import RequestSetting
+from tests.conftest import RequestSetting, TestCase
 
 
 @pytest.fixture(scope='class')

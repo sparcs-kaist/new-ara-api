@@ -1,11 +1,10 @@
 import pytest
 from django.contrib.auth.models import User
-from django.test import TestCase
 from django.utils import timezone
 
 from apps.core.models import Article, Topic, Board
 from apps.user.models import UserProfile
-from tests.conftest import RequestSetting
+from tests.conftest import RequestSetting, TestCase
 
 
 @pytest.fixture(scope='class')
@@ -376,7 +375,12 @@ class TestArticle(TestCase, RequestSetting):
         # user1이 업데이트 (user2은 아직 변경사항 확인못함)
         self.http_request(self.user, 'get', f'articles/{self.article.id}')
         self.http_request(self.user, 'patch', f'articles/{self.article.id}', {'content': 'update!'})
+
+        # TODO: 현재는 프론트 구현상 게시물을 수정하면 바로 다시 GET을 호출하기 때문에 '-' 로 나옴.
+        #       추후 websocket 등으로 게시물 수정이 실시간으로 이루어진다면, 'U'로 나오기 때문에 수정 필요.
+        self.http_request(self.user, 'get', f'articles/{self.article.id}')
         res1 = self.http_request(self.user, 'get', 'articles')
-        res2 = self.http_request(self.user2, 'get', 'articles')
         assert res1.data['results'][0]['read_status'] == '-'
+
+        res2 = self.http_request(self.user2, 'get', 'articles')
         assert res2.data['results'][0]['read_status'] == 'U'

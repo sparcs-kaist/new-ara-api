@@ -5,7 +5,7 @@ from rest_framework import exceptions, serializers
 from apps.core.documents import ArticleDocument
 from ara.classes.serializers import MetaDataModelSerializer
 
-from apps.core.models import Article, ArticleReadLog, Board
+from apps.core.models import Article, ArticleReadLog, Board, Block
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
 
@@ -13,7 +13,8 @@ from apps.core.serializers.topic import TopicSerializer
 class BaseArticleSerializer(MetaDataModelSerializer):
     class Meta:
         model = Article
-        exclude = ('content', 'content_text', 'migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
+        exclude = ('content', 'content_text', 'attachments',
+                   'migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
 
     @staticmethod
     def get_my_vote(obj):
@@ -34,17 +35,6 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         my_scrap = obj.scrap_set.all()[0]
 
         return BaseScrapSerializer(my_scrap).data
-
-    @staticmethod
-    def get_my_report(obj):
-        from apps.core.serializers.report import BaseReportSerializer
-
-        if not obj.report_set.exists():
-            return None
-
-        my_report = obj.report_set.all()[0]
-
-        return BaseReportSerializer(my_report).data
 
     def get_is_hidden(self, obj):
         if self.validate_hidden(obj):
@@ -89,15 +79,14 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return ''
 
-    @staticmethod
-    def get_created_by(obj):
+    def get_created_by(self, obj):
         from apps.user.serializers.user import PublicUserSerializer
 
         if obj.is_anonymous:
             return '익명'
 
         data = PublicUserSerializer(obj.created_by).data
-        data['is_blocked'] = obj.created_by.blocked_by_set.exists()
+        data['is_blocked'] = Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by)
 
         return data
 
@@ -114,11 +103,8 @@ class BaseArticleSerializer(MetaDataModelSerializer):
                 return 'U'
 
         # compare with article's last updated datetime
-        if obj.created_by != request.user and obj.article_update_log_set.exists():
-            last_article_update_log = obj.article_update_log_set.all()[0]
-
-            if last_article_update_log.created_at > my_article_read_log.created_at:
-                return 'U'
+        if obj.content_updated_at and obj.content_updated_at > my_article_read_log.created_at:
+            return 'U'
 
         return '-'
 
@@ -137,17 +123,18 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
     def validate_hidden(self, obj: Article):
         errors = []
+        request = self.context['request']
 
-        if obj.created_by.blocked_by_set.exists():
+        if Block.is_blocked(blocked_by=request.user, user=obj.created_by):
             errors.append(exceptions.ValidationError('차단한 사용자의 게시물입니다.'))
 
-        if obj.is_content_sexual and not self.context['request'].user.profile.see_sexual:
+        if obj.is_content_sexual and not request.user.profile.see_sexual:
             errors.append(exceptions.ValidationError('성인/음란성 내용의 게시물입니다.'))
 
-        if obj.is_content_social and not self.context['request'].user.profile.see_social:
+        if obj.is_content_social and not request.user.profile.see_social:
             errors.append(exceptions.ValidationError('정치/사회성 내용의 게시물입니다.'))
 
-        if not obj.parent_board.group_has_access(self.context['request'].user.profile.group):
+        if not obj.parent_board.group_has_access(request.user.profile.group):
             errors.append(exceptions.ValidationError('접근 권한이 없는 게시판입니다.'))
 
         return errors
@@ -157,7 +144,6 @@ class SideArticleSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
         pass
 
-    nested_comments_count = serializers.ReadOnlyField()
     created_by = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -250,8 +236,7 @@ class ArticleSerializer(BaseArticleSerializer):
             'after': SideArticleSerializer(after, context=self.context).data if after else None,
         }
 
-    @staticmethod
-    def get_side_articles_of_recent_article(obj, request):
+    def get_side_articles_of_recent_article(self, obj, request):
         article_read_log_set = obj.article_read_log_set.all()
 
         # 현재 ArticleReadLog
@@ -285,6 +270,9 @@ class ArticleSerializer(BaseArticleSerializer):
         if not recent_articles.filter(id=obj.id).exists():
             raise serializers.ValidationError(gettext('This article is never read by user.'))
 
+        if request.query_params.get('search_query'):
+            recent_articles = self.search_articles(recent_articles, request.query_params.get('search_query'))
+
         recent_articles = recent_articles.exclude(
             id=obj.id,  # 자기 자신 제거
         )
@@ -315,9 +303,6 @@ class ArticleSerializer(BaseArticleSerializer):
         source='comment_set',
     )
 
-    comments_count = serializers.ReadOnlyField()
-    nested_comments_count = serializers.ReadOnlyField()
-
     is_hidden = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -342,9 +327,6 @@ class ArticleSerializer(BaseArticleSerializer):
     my_scrap = serializers.SerializerMethodField(
         read_only=True,
     )
-    my_report = serializers.SerializerMethodField(
-        read_only=True,
-    )
     created_by = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -361,9 +343,6 @@ class ArticleListActionSerializer(BaseArticleSerializer):
         read_only=True,
     )
     parent_board = BoardSerializer(
-        read_only=True,
-    )
-    nested_comments_count = serializers.ReadOnlyField(
         read_only=True,
     )
     is_hidden = serializers.SerializerMethodField(
@@ -400,6 +379,7 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
         exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
         read_only_fields = (
             'hit_count',
+            'comment_count',
             'positive_vote_count',
             'negative_vote_count',
             'created_by',
@@ -422,6 +402,7 @@ class ArticleUpdateActionSerializer(BaseArticleSerializer):
         read_only_fields = (
             'is_anonymous',
             'hit_count',
+            'comment_count',
             'positive_vote_count',
             'negative_vote_count',
             'created_by',
