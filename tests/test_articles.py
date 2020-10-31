@@ -84,8 +84,6 @@ def set_kaist_articles(request):
             commented_at=timezone.now()
     )
     yield None
-    request.cls.non_kaist_user.delete()
-    request.cls.kaist_user.delete()
     request.cls.kaist_board.delete()
     request.cls.kaist_article.delete()
 
