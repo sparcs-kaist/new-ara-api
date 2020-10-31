@@ -107,8 +107,9 @@ def cascade_soft_deletion_comment(instance, **kwargs):
             vote.deleted_at = instance.deleted_at
             vote.save()
 
-        instance.attachment.deleted_at = instance.deleted_at
-        instance.attachment.save()
+        if instance.attachment:
+            instance.attachment.deleted_at = instance.deleted_at
+            instance.attachment.save()
 
 
 @receiver(models.signals.post_save, sender=Notification)
