@@ -125,6 +125,11 @@ class UserViewSet(ActionAPIViewSet):
             )
             user_profile.sso_user_info = user_info
 
+            # 1. 카이포탈 인증 이전, 회원가입을 시도했던 회원 (나중에 카이포탈 인증 후 다시 로그인 시도)
+            # 2. 아직 승인 이전, 회원가입을 시도했던 공용 계정 회원
+            if (not user_profile.user.is_active) and (is_kaist or is_manual):
+                user_profile.user.is_active = True
+
         except UserProfile.DoesNotExist:  # 회원가입
             user_nickname = _make_random_name()
             user_profile_picture = make_random_profile_picture()
