@@ -13,55 +13,20 @@ def cascade_soft_deletion_article(instance, **kwargs):
     deleted = instance.deleted_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
 
     if deleted:
-        for article_read_log in instance.article_read_log_set.all():
-            article_read_log.deleted_at = instance.deleted_at
-            article_read_log.save()
+        instance.article_read_log_set.all().delete()
+        instance.article_update_log_set.all().delete()
+        instance.article_delete_log_set.all().delete()
+        instance.best_set.all().delete()
 
-        for article_update_log in instance.article_update_log_set.all():
-            article_update_log.deleted_at = instance.deleted_at
-            article_update_log.save()
+        comments = instance.comment_set.all().delete()
+        if comments:
+            instance.update_comment_count()
 
-        for article_delete_log in instance.article_delete_log_set.all():
-            article_delete_log.deleted_at = instance.deleted_at
-            article_delete_log.save()
-
-        for best in instance.best_set.all():
-            best.deleted_at = instance.deleted_at
-            best.save()
-
-        for comment in instance.comment_set.all():
-            comment.deleted_at = instance.deleted_at
-            comment.save()
-
-        for notification in instance.notification_set.all():
-            notification.deleted_at = instance.deleted_at
-            notification.save()
-
-        for report in instance.report_set.all():
-            report.deleted_at = instance.deleted_at
-            report.save()
-
-        for scrap in instance.scrap_set.all():
-            scrap.deleted_at = instance.deleted_at
-            scrap.save()
-
-        for vote in instance.vote_set.all():
-            vote.deleted_at = instance.deleted_at
-            vote.save()
-
-        for attachment in instance.attachments.all():
-            attachment.deleted_at = instance.deleted_at
-            attachment.save()
-
-
-@receiver(models.signals.post_save, sender=Attachment)
-def cascade_soft_deletion_attachment(instance, **kwargs):
-    deleted = instance.deleted_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
-
-    if deleted:
-        for comment in instance.comment_set.all():
-            comment.deleted_at = instance.deleted_at
-            comment.save()
+        instance.notification_set.all().delete()
+        instance.report_set.all().delete()
+        instance.scrap_set.all().delete()
+        instance.vote_set.all().delete()
+        instance.attachments.all().delete()
 
 
 @receiver(models.signals.post_save, sender=Board)
@@ -69,13 +34,8 @@ def cascade_soft_deletion_board(instance, **kwargs):
     deleted = instance.deleted_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
 
     if deleted:
-        for article in instance.article_set.all():
-            article.deleted_at = instance.deleted_at
-            article.save()
-
-        for topic in instance.topic_set.all():
-            topic.deleted_at = instance.deleted_at
-            topic.save()
+        instance.article_set.all().delete()
+        instance.topic_set.all().delete()
 
 
 @receiver(models.signals.post_save, sender=Comment)
@@ -83,33 +43,17 @@ def cascade_soft_deletion_comment(instance, **kwargs):
     deleted = instance.deleted_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
 
     if deleted:
-        for comment in instance.comment_set.all():
-            comment.deleted_at = instance.deleted_at
-            comment.save()
+        comments = instance.comment_set.all().delete()
+        if comments:
+            instance.parent_article.update_comment_count()
 
-        for comment_update_log in instance.comment_update_log_set.all():
-            comment_update_log.deleted_at = instance.deleted_at
-            comment_update_log.save()
-
-        for comment_delete_log in instance.comment_delete_log_set.all():
-            comment_delete_log.deleted_at = instance.deleted_at
-            comment_delete_log.save()
-
-        for notification in instance.notification_set.all():
-            notification.deleted_at = instance.deleted_at
-            notification.save()
-
-        for report in instance.report_set.all():
-            report.deleted_at = instance.deleted_at
-            report.save()
-
-        for vote in instance.vote_set.all():
-            vote.deleted_at = instance.deleted_at
-            vote.save()
-
+        instance.comment_update_log_set.all().delete()
+        instance.comment_delete_log_set.all().delete()
+        instance.notification_set.all().delete()
+        instance.report_set.all().delete()
+        instance.vote_set.all().delete()
         if instance.attachment:
-            instance.attachment.deleted_at = instance.deleted_at
-            instance.attachment.save()
+            instance.attachment.delete()
 
 
 @receiver(models.signals.post_save, sender=Notification)
@@ -117,9 +61,7 @@ def cascade_soft_deletion_notification(instance, **kwargs):
     deleted = instance.deleted_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
 
     if deleted:
-        for notification_read_log in instance.notification_read_log_set.all():
-            notification_read_log.deleted_at = instance.deleted_at
-            notification_read_log.save()
+        instance.notification_read_log_set.all().delete()
 
 
 @receiver(models.signals.post_save, sender=Topic)
@@ -127,7 +69,4 @@ def cascade_soft_deletion_topic(instance, **kwargs):
     deleted = instance.deleted_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
 
     if deleted:
-        for article in instance.article_set.all():
-            article.deleted_at = instance.deleted_at
-            article.save()
-
+        instance.article_set.all().delete()
