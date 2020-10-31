@@ -27,8 +27,6 @@ def cascade_soft_deletion_article(instance, **kwargs):
         instance.scrap_set.all().delete()
 
         votes = instance.vote_set.all().delete()
-        if votes:
-            instance.parent_article.update_vote_status()
 
         instance.attachments.all().delete()
 
@@ -57,8 +55,6 @@ def cascade_soft_deletion_comment(instance, **kwargs):
         instance.report_set.all().delete()
 
         votes = instance.vote_set.all().delete()
-        if votes:
-            instance.parent_article.update_vote_status()
 
         if instance.attachment:
             instance.attachment.delete()
