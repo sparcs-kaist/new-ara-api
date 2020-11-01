@@ -96,6 +96,12 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 'parent_board',
             ).prefetch_related(
                 'attachments',
+                models.Prefetch(
+                    'vote_set',
+                    queryset=Vote.objects.select_related(
+                        'voted_by',
+                    ),
+                ),
                 Scrap.prefetch_my_scrap(self.request.user),
                 models.Prefetch(
                     'comment_set',
