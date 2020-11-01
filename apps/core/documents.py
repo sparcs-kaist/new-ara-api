@@ -10,56 +10,50 @@ from apps.core.models import Article
 from apps.user.models import UserProfile
 
 
-custom_analyzer = analyzer(
-    'nori_user_dict',
+ngram_analyzer = analyzer(
+    'ngram_anl',
     type='custom',
     tokenizer=tokenizer(
-        'nori_user_dict_tkn',
-        type='nori_tokenizer',
-        decompound_mode='mixed',
-        user_dictionary='analysis/userdict_ko.txt'
+        'ngram_tkn',
+        type='char_group',
+        tokenize_on_chars=['\n']
     ),
     filter=[
-        'nori_readingform',
         token_filter(
-            'synonym',
-            type='synonym',
-            expand=True,
-            synonyms_path='analysis/synonym.txt'
-        ),
-        *[
-            token_filter(
-                f'extend_{x}_to_4',
-                type='pattern_replace',
-                pattern='(^.{%d}$)'%x,
-                replacement=('$1'+' '*(4-x)),
-                all=False
-            ) for x in range(1,4)
-        ],
-        token_filter(
-            '4_5_grams',
+            'ngram_tkf',
             type='ngram',
-            min_gram=4,
-            max_gram=5
+            min_gram=1,
+            max_gram=15,
         ),
-        'lowercase',
+        'lowercase'
     ]
+)
+
+
+newline_analyzer = analyzer(
+    'nl_anl',
+    type='custom',
+    tokenizer=tokenizer(
+        'nl_tkn',
+        type='char_group',
+        tokenize_on_chars=['\n']
+    )
 )
 
 
 @registry.register_document
 class ArticleDocument(Document):
 
-    title = fields.TextField(attr='title', analyzer=custom_analyzer)
-    content_text = fields.TextField(attr='content_text', analyzer=custom_analyzer)
-    created_by_nickname = fields.KeywordField(attr='created_by_nickname')
+    title = fields.TextField(attr='title', analyzer=ngram_analyzer, search_analyzer=newline_analyzer)
+    content_text = fields.TextField(attr='content_text', analyzer=ngram_analyzer, search_analyzer=newline_analyzer)
+    created_by_nickname = fields.TextField(attr='created_by_nickname', analyzer=ngram_analyzer, search_analyzer=newline_analyzer)
 
     class Index:
         name = 'articles'
         settings = {
             'number_of_shards': 3,
             'number_of_replicas': 1,
-            # 'max_ngram_diff': 50,
+            'max_ngram_diff': 15,
         }
 
     class Django:
@@ -84,8 +78,13 @@ class ArticleDocument(Document):
 
     @staticmethod
     def get_main_search_id_set(value):
+        qt = 'match' # query type: match. Use search_analyzer
+        es_search_str = ''.join([
+            f"{x.replace('_',' ').lower()}\n" for x in value.split()
+        ])
+
         return ArticleDocument.get_id_set(
-            Q('match', title=value) | Q('match', content_text=value) | Q('match', created_by_nickname=value)
+            Q(qt, title=es_search_str) | Q(qt, content_text=es_search_str) | Q(qt, created_by_nickname=es_search_str)
         )
 
     @staticmethod
