@@ -107,13 +107,6 @@ class UserViewSet(ActionAPIViewSet):
         #     'email': 'foo@bar.com'
         # }
 
-        # TODO: 런칭 이후 제거
-        is_sparcs = user_info.get('sparcs_id') is not None
-        if not is_sparcs:
-            return response.Response(
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         is_kaist = user_info.get('kaist_id') is not None
 
         manual_user = ManualUser.objects.filter(sso_email=user_info['email']).first()
