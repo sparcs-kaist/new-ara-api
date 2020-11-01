@@ -73,18 +73,18 @@ class ArticleDocument(Document):
         return [
             x.meta.id
             for x
-            in ArticleDocument.search().query(q_object).sort('-created_at')[0:500].execute()
+            in ArticleDocument.search().query(q_object).sort('-created_at')[0:500].source(False).execute()
         ]
 
     @staticmethod
     def get_main_search_id_set(value):
-        qt = 'match' # query type: match. Use search_analyzer
+        qt = 'multi_match' # query type: match. Use search_analyzer
         es_search_str = ''.join([
             f"{x.replace('_',' ').lower()}\n" for x in value.split()
         ])
 
         return ArticleDocument.get_id_set(
-            Q(qt, title=es_search_str) | Q(qt, content_text=es_search_str) | Q(qt, created_by_nickname=es_search_str)
+            Q(qt, query=es_search_str, fields=['title', 'content_text', 'created_by_nickname'])
         )
 
     @staticmethod
