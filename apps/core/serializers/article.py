@@ -16,12 +16,12 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         exclude = ('content', 'content_text', 'attachments',
                    'migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
 
-    @staticmethod
-    def get_my_vote(obj):
-        if not obj.vote_set.exists():
+    def get_my_vote(self, obj):
+        request = self.context['request']
+        if not obj.vote_set.filter(voted_by=request.user).exists():
             return None
 
-        my_vote = obj.vote_set.all()[0]
+        my_vote = obj.vote_set.filter(voted_by=request.user)[0]
 
         return my_vote.is_positive
 
@@ -90,8 +90,8 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return data
 
-    def get_read_status(self, obj):
-        request = self.context['request']
+    @staticmethod
+    def get_read_status(obj):
         if not obj.article_read_log_set.exists():
             return 'N'
 
