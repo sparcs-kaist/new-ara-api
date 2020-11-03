@@ -122,6 +122,11 @@ class UserViewSet(ActionAPIViewSet):
             # 2. 아직 승인 이전, 회원가입을 시도했던 공용 계정 회원
             if (not user_profile.user.is_active) and (is_kaist or is_manual):
                 user_profile.user.is_active = True
+                if is_manual:
+                    user_profile.group = manual_user.org_type
+                elif is_kaist:
+                    user_profile.group = UserProfile.UserGroup.KAIST_MEMBER
+                user_profile.save()
 
         except UserProfile.DoesNotExist:  # 회원가입
             user_nickname = _make_random_name()
