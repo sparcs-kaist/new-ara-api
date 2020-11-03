@@ -126,6 +126,7 @@ class UserViewSet(ActionAPIViewSet):
                     user_profile.group = manual_user.org_type
                 elif is_kaist:
                     user_profile.group = UserProfile.UserGroup.KAIST_MEMBER
+                    user_profile.sso_user_info = user_info
                 user_profile.save()
 
         except UserProfile.DoesNotExist:  # 회원가입
