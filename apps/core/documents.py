@@ -37,7 +37,10 @@ newline_analyzer = analyzer(
         'nl_tkn',
         type='char_group',
         tokenize_on_chars=['\n']
-    )
+    ),
+    filter=[
+        'lowercase'
+    ]
 )
 
 
@@ -80,7 +83,7 @@ class ArticleDocument(Document):
     def get_main_search_id_set(value):
         qt = 'multi_match' # query type: match. Use search_analyzer
         es_search_str = ''.join([
-            f"{x.replace('_',' ').lower()}\n" for x in value.split()
+            f"{x.replace('_',' ')}\n" for x in value.split()
         ])
 
         return ArticleDocument.get_id_set(
