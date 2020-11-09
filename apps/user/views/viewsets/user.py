@@ -108,7 +108,7 @@ class UserViewSet(ActionAPIViewSet):
         #     'email': 'foo@bar.com'
         # }
 
-        is_kaist = user_info.get('kaist_id') is not None
+        is_kaist = (user_info.get('kaist_id') is not None) or (user_info.get('email').split('@')[-1] == 'kaist.ac.kr')
 
         manual_user = ManualUser.objects.filter(sso_email=user_info['email']).first()
         is_manual = manual_user is not None
