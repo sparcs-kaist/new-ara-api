@@ -17,6 +17,8 @@ from ara.classes.sparcssso import Client as SSOClient
 from apps.user.models import UserProfile
 from apps.user.permissions.user import UserPermission
 
+import hashlib
+
 
 def _make_random_name() -> str:
     nouns = ['외계인', '펭귄', '코뿔소', '여우', '염소', '타조', '사과', '포도', '다람쥐', '도토리', '해바라기', '코끼리', '돌고래', '거북이', '나비', '앵무새', '알파카', '강아지', '고양이', '원숭이', '두더지', '낙타', '망아지', '시조새', '힙스터', '로봇', '감자', '고구마', '가마우지', '직박구리', '오리너구리', '보노보', '개미핥기', '치타', '사자', '구렁이', '도마뱀', '개구리', '올빼미', '부엉이']
@@ -25,14 +27,13 @@ def _make_random_name() -> str:
     random.shuffle(adjectives)
     temp_nickname = adjectives[0] + ' ' + nouns[0]
     try:
-        duplicate_user_profile = UserProfile.objects.get(
-            nickname=temp_nickname,
-        )
-        tmparr = str(duplicate_user_profile.nickname).split(' ')
-        if len(tmparr) == 3:
-            temp_nickname += ' ' + str(int(tmparr[-1]) + 1)
-        else:
-            temp_nickname += ' 1'
+        UserProfile.objects.get(nickname=temp_nickname)
+        random_value = str(timezone.datetime.now().timestamp())
+        sha1 = hashlib.sha256()
+        sha1.update(bytes(random_value, 'utf-8'))
+        sha1.update(bytes(temp_nickname, 'utf-8'))
+        temp_nickname += '_' + sha1.hexdigest()[:4]
+
     except UserProfile.DoesNotExist:
         pass
     return temp_nickname
