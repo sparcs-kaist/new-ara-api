@@ -205,13 +205,7 @@ class UserViewSet(ActionAPIViewSet):
     def sso_logout(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             logout(request)
-            # In case of user who isn't logged in with Sparcs SSO
-            if not request.user.profile.sid:
-                return response.Response(
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
 
-        return self.sso_client.get_logout_url(
-            sid=request.user.profile.sid,
-            redirect_uri=request.GET.get('next', 'https://sparcssso.kaist.ac.kr/'),
+        return response.Response(
+            status=status.HTTP_200_OK,
         )
