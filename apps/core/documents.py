@@ -39,13 +39,13 @@ newline_analyzer = analyzer(
         tokenize_on_chars=['\n']
     ),
     filter=[
-        'lowercase',
         token_filter(
             'nl_syn_tkf',
             type='synonym',
             expand=True,
             synonyms_path='analysis/synonym.txt'
-        )
+        ),
+        'lowercase'
     ]
 )
 
