@@ -44,7 +44,6 @@ class BlockViewSet(mixins.ListModelMixin,
 
     @decorators.action(detail=False, methods=['post'])
     def without_id(self, request, *args, **kwargs):
-        print('request', request)
         instance = Block.objects.get(blocked_by=request.user, user=request.data.get('blocked'))
         self.perform_destroy(instance)
         return response.Response(status=status.HTTP_204_NO_CONTENT)

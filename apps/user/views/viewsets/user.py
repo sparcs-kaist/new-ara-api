@@ -1,5 +1,6 @@
 import uuid
 import random
+from urllib.parse import urlparse
 
 from cached_property import cached_property
 from django.conf import settings
@@ -9,11 +10,14 @@ from django.shortcuts import redirect
 from django.utils import timezone
 from rest_framework import status, response, decorators, permissions
 
+from apps.user.models.user.manual import ManualUser
 from ara.classes.viewset import ActionAPIViewSet
 from ara.classes.sparcssso import Client as SSOClient
 
 from apps.user.models import UserProfile
 from apps.user.permissions.user import UserPermission
+
+import hashlib
 
 
 def _make_random_name() -> str:
@@ -23,20 +27,19 @@ def _make_random_name() -> str:
     random.shuffle(adjectives)
     temp_nickname = adjectives[0] + ' ' + nouns[0]
     try:
-        duplicate_user_profile = UserProfile.objects.get(
-            nickname=temp_nickname,
-        )
-        tmparr = str(duplicate_user_profile.nickname).split(' ')
-        if len(tmparr) == 3:
-            temp_nickname += ' ' + str(int(tmparr[-1]) + 1)
-        else:
-            temp_nickname += ' 1'
+        UserProfile.objects.get(nickname=temp_nickname)
+        random_value = str(timezone.datetime.now().timestamp())
+        sha1 = hashlib.sha256()
+        sha1.update(bytes(random_value, 'utf-8'))
+        sha1.update(bytes(temp_nickname, 'utf-8'))
+        temp_nickname += '_' + sha1.hexdigest()[:4]
+
     except UserProfile.DoesNotExist:
         pass
     return temp_nickname
 
 
-def _make_random_profile_picture() -> str:
+def make_random_profile_picture() -> str:
     colors = ['blue', 'red', 'gray']
     random.shuffle(colors)
     numbers = ['1', '2', '3']
@@ -105,29 +108,50 @@ class UserViewSet(ActionAPIViewSet):
         #     'email': 'foo@bar.com'
         # }
 
-        is_kaist = 'kaist_id' in user_info
+        is_kaist = (user_info.get('kaist_id') is not None) or (user_info.get('email').split('@')[-1] == 'kaist.ac.kr')
 
-        try:
+        manual_user = ManualUser.objects.filter(sso_email=user_info['email']).first()
+        is_manual = manual_user is not None
+
+        try:  # 로그인
             user_profile = UserProfile.objects.get(
                 sid=user_info['sid'],
             )
             user_profile.sso_user_info = user_info
-            if is_kaist:
-                user_profile.group = UserProfile.UserGroup.KAIST_MEMBER
 
-        except UserProfile.DoesNotExist:
+            # 1. 카이포탈 인증 이전, 회원가입을 시도했던 회원 (나중에 카이포탈 인증 후 다시 로그인 시도)
+            # 2. 아직 승인 이전, 회원가입을 시도했던 공용 계정 회원
+            if (not user_profile.user.is_active) and (is_kaist or is_manual):
+                user_profile.user.is_active = True
+                if is_manual:
+                    user_profile.group = manual_user.org_type
+                elif is_kaist:
+                    user_profile.group = UserProfile.UserGroup.KAIST_MEMBER
+                    user_profile.sso_user_info = user_info
+                user_profile.save()
+
+        except UserProfile.DoesNotExist:  # 회원가입
             user_nickname = _make_random_name()
-            user_profile_picture = _make_random_profile_picture()
+            user_profile_picture = make_random_profile_picture()
             with transaction.atomic():
                 new_user = get_user_model().objects.create_user(
                     email=user_info['email'],
                     username=str(uuid.uuid4()),
                     password=str(uuid.uuid4()),
-                    is_active=is_kaist,
+                    is_active=is_kaist or is_manual,
                 )
                 user_group = UserProfile.UserGroup.UNAUTHORIZED
-                if is_kaist:
+
+                if is_manual:
+                    manual_user.user = new_user
+                    manual_user.save()
+                    user_nickname = manual_user.org_name
+
+                    user_group = manual_user.org_type
+
+                elif is_kaist:
                     user_group = UserProfile.UserGroup.KAIST_MEMBER
+
                 user_profile = UserProfile.objects.create(
                     uid=user_info['uid'],
                     sid=user_info['sid'],
@@ -147,7 +171,15 @@ class UserViewSet(ActionAPIViewSet):
         user_profile.user.save()
 
         login(request, user_profile.user)
-        return redirect(to=request.session.pop('next', '/'))
+
+        _next = request.session.get('next', '/')
+
+        # redirect to frontend's terms of service agreement page if user did not agree it yet
+        if request.user.is_authenticated and request.user.profile.agree_terms_of_service_at is None:
+            _next = urlparse(_next)
+            return redirect(to=f'{_next.scheme}://{_next.netloc}/tos')
+
+        return redirect(to=_next)
 
     @decorators.action(detail=True, methods=['post'])
     def sso_unregister(self, request, *args, **kwargs):
@@ -171,14 +203,9 @@ class UserViewSet(ActionAPIViewSet):
 
     @decorators.action(detail=True, methods=['delete'])
     def sso_logout(self, request, *args, **kwargs):
-        logout(request)
-        # In case of user who isn't logged in with Sparcs SSO
-        if not request.user.profile.sid:
-            return response.Response(
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        if request.user.is_authenticated:
+            logout(request)
 
-        return self.sso_client.get_logout_url(
-            sid=request.user.profile.sid,
-            redirect_uri=request.GET.get('next', 'https://sparcssso.kaist.ac.kr/'),
+        return response.Response(
+            status=status.HTTP_200_OK,
         )

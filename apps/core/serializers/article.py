@@ -1,12 +1,11 @@
-from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import gettext
 from rest_framework import exceptions, serializers
 
+from apps.core.documents import ArticleDocument
 from ara.classes.serializers import MetaDataModelSerializer
 
-from apps.core.models import Article, Board, Scrap, ArticleReadLog
-from apps.core.serializers.article_log import ArticleUpdateLogSerializer
+from apps.core.models import Article, ArticleReadLog, Board, Block
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
 
@@ -14,14 +13,16 @@ from apps.core.serializers.topic import TopicSerializer
 class BaseArticleSerializer(MetaDataModelSerializer):
     class Meta:
         model = Article
-        exclude = ('content', 'content_text', 'migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
+        exclude = ('content', 'content_text', 'attachments',
+                   'migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
 
-    @staticmethod
-    def get_my_vote(obj) -> bool:
-        if not obj.vote_set.exists():
+
+    def get_my_vote(self, obj) ->:
+        request = self.context['request']
+        if not obj.vote_set.filter(voted_by=request.user).exists():
             return None
 
-        my_vote = obj.vote_set.all()[0]
+        my_vote = obj.vote_set.filter(voted_by=request.user)[0]
 
         return my_vote.is_positive
 
@@ -35,17 +36,6 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         my_scrap = obj.scrap_set.all()[0]
 
         return BaseScrapSerializer(my_scrap).data
-
-    @staticmethod
-    def get_my_report(obj) -> dict:
-        from apps.core.serializers.report import BaseReportSerializer
-
-        if not obj.report_set.exists():
-            return None
-
-        my_report = obj.report_set.all()[0]
-
-        return BaseReportSerializer(my_report).data
 
     def get_is_hidden(self, obj) -> bool:
         if self.validate_hidden(obj):
@@ -90,15 +80,14 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return ''
 
-    @staticmethod
-    def get_created_by(obj) -> str:
+    def get_created_by(self, obj) -> str:
         from apps.user.serializers.user import PublicUserSerializer
 
         if obj.is_anonymous:
             return '익명'
 
         data = PublicUserSerializer(obj.created_by).data
-        data['is_blocked'] = obj.created_by.blocked_by_set.exists()
+        data['is_blocked'] = Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by)
 
         return data
 
@@ -111,15 +100,12 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         # compare with article's last commented datetime
         if obj.commented_at:
-            if obj.commented_at > my_article_read_log.last_read_at:
+            if obj.commented_at > my_article_read_log.created_at:
                 return 'U'
 
         # compare with article's last updated datetime
-        if obj.article_update_log_set.exists():
-            last_article_update_log = obj.article_update_log_set.all()[0]
-
-            if last_article_update_log.created_at > my_article_read_log.last_read_at:
-                return 'U'
+        if obj.content_updated_at and obj.content_updated_at > my_article_read_log.created_at:
+            return 'U'
 
         return '-'
 
@@ -138,17 +124,18 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
     def validate_hidden(self, obj: Article) -> dict:
         errors = []
+        request = self.context['request']
 
-        if obj.created_by.blocked_by_set.exists():
+        if Block.is_blocked(blocked_by=request.user, user=obj.created_by):
             errors.append(exceptions.ValidationError('차단한 사용자의 게시물입니다.'))
 
-        if obj.is_content_sexual and not self.context['request'].user.profile.see_sexual:
+        if obj.is_content_sexual and not request.user.profile.see_sexual:
             errors.append(exceptions.ValidationError('성인/음란성 내용의 게시물입니다.'))
 
-        if obj.is_content_social and not self.context['request'].user.profile.see_social:
+        if obj.is_content_social and not request.user.profile.see_social:
             errors.append(exceptions.ValidationError('정치/사회성 내용의 게시물입니다.'))
 
-        if not obj.parent_board.group_has_access(self.context['request'].user.profile.group):
+        if not obj.parent_board.group_has_access(request.user.profile.group):
             errors.append(exceptions.ValidationError('접근 권한이 없는 게시판입니다.'))
 
         return errors
@@ -158,7 +145,6 @@ class SideArticleSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
         pass
 
-    nested_comments_count = serializers.ReadOnlyField()
     created_by = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -183,103 +169,121 @@ class ArticleSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
         exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
 
-    # TODO: refactoring
-    def get_side_articles(self, obj) -> dict:
-        request = self.context['request']
+    @staticmethod
+    def search_articles(queryset, search):
+        return queryset.filter(id__in=ArticleDocument.get_main_search_id_set(search))
+
+    @staticmethod
+    def filter_articles(obj, request):
         from_view = request.query_params.get('from_view')
-        search_query = request.query_params.get('search_query')
+
+        if from_view == 'user':
+            created_by_id = request.query_params.get('created_by', request.user.id)
+            return Article.objects.filter(created_by_id=created_by_id)
+
+        elif from_view == 'board':
+            parent_board = obj.parent_board
+            return Article.objects.filter(parent_board=parent_board)
+
+        elif from_view == 'topic':
+            parent_topic = obj.parent_topic
+            return Article.objects.filter(parent_topic=parent_topic)
+
+        elif from_view == 'scrap':
+            articles = Article.objects.filter(
+                scrap_set__scrapped_by=request.user
+            ).order_by('-scrap_set__created_at')
+
+            if not articles.filter(id=obj.id).exists():
+                raise serializers.ValidationError(gettext("This article is not in user's scrap list."))
+
+            return articles
+
+        return Article.objects.all()
+
+    def get_side_articles(self, obj):
+        request = self.context['request']
+
+        from_view = request.query_params.get('from_view')
         if from_view is None:
             return {
                 'before': None,
                 'after': None
             }
 
-        if from_view in ['all', 'board', 'user']:
-            if from_view == 'all':
-                articles = Article.objects.all()
+        if from_view not in ['all', 'board', 'topic', 'user', 'scrap', 'recent']:
+            raise serializers.ValidationError(gettext("Wrong value for parameter 'from_view'."))
 
-            elif from_view == 'board':
-                articles = obj.parent_board.article_set.all()
+        if from_view == 'recent':
+            after, before = self.get_side_articles_of_recent_article(obj, request)
 
-            elif from_view == 'user':
-                created_by_id = request.query_params.get('created_by')
-                if created_by_id is None:
-                    created_by_id = request.user.id
-                articles = Article.objects.filter(created_by_id=created_by_id)
+        else:
+            articles = self.filter_articles(obj, request)
 
-            if search_query:
-                articles = articles.prefetch_related('created_by__profile').filter(
-                    models.Q(title__search=search_query) |
-                    models.Q(content_text__search=search_query) |
-                    models.Q(created_by__profile__nickname__search=search_query)
-                ).distinct()
+            if request.query_params.get('search_query'):
+                articles = self.search_articles(articles, request.query_params.get('search_query'))
 
             articles = articles.exclude(id=obj.id)
             before = articles.filter(created_at__lte=obj.created_at).first()
             after = articles.filter(created_at__gte=obj.created_at).last()
 
-            return {
-                'before': SideArticleSerializer(before, context=self.context).data if before else None,
-                'after': SideArticleSerializer(after, context=self.context).data if after else None,
-            }
+        return {
+            'before': SideArticleSerializer(before, context=self.context).data if before else None,
+            'after': SideArticleSerializer(after, context=self.context).data if after else None,
+        }
 
-        else:
-            if from_view == 'scrap':
-                scraps = request.user.scrap_set.all()
-                if search_query:
-                    scraps = scraps.prefetch_related('parent_article__created_by__profile').filter(
-                        models.Q(parent_article__title__search=search_query) |
-                        models.Q(parent_article__content_text__search=search_query) |
-                        models.Q(parent_article__created_by__profile__nickname__search=search_query)
-                    )
+    def get_side_articles_of_recent_article(self, obj, request):
+        article_read_log_set = obj.article_read_log_set.all()
 
-                try:
-                    s = scraps.get(parent_article=obj)
-                except Scrap.DoesNotExist:
-                    raise serializers.ValidationError(gettext("This article is not in user's scrap list."))
+        # 현재 ArticleReadLog
+        curr_read_log_of_obj = article_read_log_set.filter(
+            read_by=request.user,
+        ).order_by('-created_at')[0]
 
-                scraps = scraps.exclude(parent_article_id=obj.id)
-                before = scraps.filter(created_at__lte=s.created_at).first()
-                if before:
-                    before = before.parent_article
+        # 직전 ArticleReadLog
+        last_read_log_of_obj = article_read_log_set.filter(
+            read_by=request.user,
+        ).order_by('-created_at')[1]
 
-                after = scraps.filter(created_at__gte=s.created_at).last()
-                if after:
-                    after = after.parent_article
+        # 특정 글의 마지막 ArticleReadLog 를 찾기 위한 Subquery
+        last_read_log_of_article = ArticleReadLog.objects.filter(
+            article=models.OuterRef('pk')
+        ).order_by('-created_at')
 
-            elif from_view == 'recent':
-                # TODO: 글을 누르는 순간 최근본글 리스트가 바뀌어서 이전글다음글이 변경됨. 수정 필요.
-                before = None
-                after = None
-                # reads = request.user.article_read_log_set.all()
-                # if search_query:
-                #     reads = reads.prefetch_related('article__created_by__profile').filter(
-                #         models.Q(article__title__search=search_query) |
-                #         models.Q(article__content_text__search=search_query) |
-                #         models.Q(article__created_by__profile__nickname__search=search_query)
-                #     )
-                #
-                # try:
-                #     r = reads.get(article=obj)
-                # except ArticleReadLog.DoesNotExist:
-                #     raise serializers.ValidationError(gettext('This article is never read by user.'))
-                #
-                # reads = reads.exclude(article_id=obj.id)
-                # before = reads.filter(updated_at__lte=r.updated_at).first()
-                # if before:
-                #     before = before.article
-                #
-                # after = reads.filter(created_at__gte=r.updated_at).last()
-                # if after:
-                #     after = after.article
+        # 특정 글의 마지막 Article created_at 을 last_read_at 으로 annotate 하고, last_read_at 기준으로 정렬
+        recent_articles = Article.objects.filter(
+            article_read_log_set__read_by=request.user,
+        ).annotate(
+            last_read_at=models.Subquery(
+                queryset=last_read_log_of_article.exclude(
+                    id=curr_read_log_of_obj.id,  # 무한루프 방지를 위해서 마지막(현재 request) 조회 기록은 제외한다.
+                ).values('created_at')[:1],
+            ),
+        ).order_by(
+            '-last_read_at'
+        ).distinct()
 
-            else:
-                raise serializers.ValidationError(gettext("Wrong value for parameter 'from_view'."))
+        if not recent_articles.filter(id=obj.id).exists():
+            raise serializers.ValidationError(gettext('This article is never read by user.'))
 
-            return {
-                'before': SideArticleSerializer(before, context=self.context).data if before else None,
-                'after': SideArticleSerializer(after, context=self.context).data if after else None,
-            }
+        if request.query_params.get('search_query'):
+            recent_articles = self.search_articles(recent_articles, request.query_params.get('search_query'))
+
+        recent_articles = recent_articles.exclude(
+            id=obj.id,  # 자기 자신 제거
+        )
+
+        # 사용자가 현재 읽고 있는 글의 바로 직전 조회 기록보다 먼저 읽은 것 중 첫 번째
+        before = recent_articles.filter(
+            last_read_at__lte=last_read_log_of_obj.created_at,
+        ).order_by('-last_read_at').first()
+
+        # 사용자가 현재 읽고 있는 글의 바로 직전 조회 기록보다 늦게 읽은 것 중 첫 번째
+        after = recent_articles.filter(
+            last_read_at__gte=last_read_log_of_obj.created_at,
+        ).order_by('last_read_at').first()
+
+        return after, before
 
     parent_topic = TopicSerializer(
         read_only=True,
@@ -294,9 +298,6 @@ class ArticleSerializer(BaseArticleSerializer):
         read_only=True,
         source='comment_set',
     )
-
-    comments_count = serializers.ReadOnlyField()
-    nested_comments_count = serializers.ReadOnlyField()
 
     is_hidden = serializers.SerializerMethodField(
         read_only=True,
@@ -322,13 +323,7 @@ class ArticleSerializer(BaseArticleSerializer):
     my_scrap = serializers.SerializerMethodField(
         read_only=True,
     )
-    my_report = serializers.SerializerMethodField(
-        read_only=True,
-    )
     created_by = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    read_status = serializers.SerializerMethodField(
         read_only=True,
     )
     article_current_page = serializers.SerializerMethodField(
@@ -344,9 +339,6 @@ class ArticleListActionSerializer(BaseArticleSerializer):
         read_only=True,
     )
     parent_board = BoardSerializer(
-        read_only=True,
-    )
-    nested_comments_count = serializers.ReadOnlyField(
         read_only=True,
     )
     is_hidden = serializers.SerializerMethodField(
@@ -383,6 +375,7 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
         exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
         read_only_fields = (
             'hit_count',
+            'comment_count',
             'positive_vote_count',
             'negative_vote_count',
             'created_by',
@@ -405,6 +398,7 @@ class ArticleUpdateActionSerializer(BaseArticleSerializer):
         read_only_fields = (
             'is_anonymous',
             'hit_count',
+            'comment_count',
             'positive_vote_count',
             'negative_vote_count',
             'created_by',

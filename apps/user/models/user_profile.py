@@ -46,6 +46,7 @@ class UserProfile(MetaDataModel):
 
     picture = models.ImageField(
         null=True,
+        blank=True,
         default=None,
         upload_to='user_profiles/pictures',
         verbose_name='프로필',
@@ -97,6 +98,12 @@ class UserProfile(MetaDataModel):
         default='',
         max_length=128,
         verbose_name='이전 아라 아이디',
+    )
+
+    agree_terms_of_service_at = models.DateTimeField(
+        null=True,
+        default=None,
+        verbose_name='약관 동의 일시',
     )
 
     def __str__(self) -> str:

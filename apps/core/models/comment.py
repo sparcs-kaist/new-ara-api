@@ -44,6 +44,7 @@ class Comment(MetaDataModel):
         null=True,
         blank=True,
         db_index=True,
+        related_name='comment_set',
         verbose_name='첨부 파일',
     )
     parent_article = models.ForeignKey(
@@ -99,3 +100,9 @@ class Comment(MetaDataModel):
         self.negative_vote_count = self.vote_set.filter(is_positive=False).count()
 
         self.save()
+
+    def get_parent_article(self):
+        if self.parent_article:
+            return self.parent_article
+
+        return self.parent_comment.parent_article

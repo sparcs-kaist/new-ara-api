@@ -21,7 +21,7 @@ def _best_articles(period, request) -> dict:
     return BestArticleListActionSerializer(
         instance=[
             best_article.article for best_article
-            in BestArticle.objects.filter(period=period, latest=True)
+            in BestArticle.objects.filter(period=period, latest=True).reverse()
         ],
         many=True,
         **{'context': {'request': request}},

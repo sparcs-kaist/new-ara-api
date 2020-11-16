@@ -11,7 +11,7 @@ SSO_IS_BETA = False
 
 SESSION_COOKIE_SAMESITE = 'Lax'
 
-CSRF_COOKIE_SAMESITE = 'Strict'
+CSRF_COOKIE_SAMESITE = 'Lax'
 
 MIDDLEWARE += [
     'django.middleware.csrf.CsrfViewMiddleware',

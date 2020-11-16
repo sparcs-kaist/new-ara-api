@@ -1,5 +1,3 @@
-import datetime
-
 from django.db import models
 from django.conf import settings
 
@@ -28,10 +26,6 @@ class ArticleReadLog(MetaDataModel):
 
     def __str__(self) -> str:
         return str(self.read_by) + "/" + str(self.article)
-
-    @property
-    def last_read_at(self) -> datetime:
-        return self.updated_at
 
     @classmethod
     def prefetch_my_article_read_log(cls, user, prefix='') -> models.Prefetch:

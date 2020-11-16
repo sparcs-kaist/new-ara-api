@@ -12,9 +12,7 @@ from apps.core.models import (
     ArticleReadLog,
     ArticleUpdateLog,
     ArticleDeleteLog,
-    Block,
     Comment,
-    Report,
     Vote,
     Scrap,
 )
@@ -62,27 +60,35 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
 
-        if self.action == 'list':
-            # optimizing queryset for list action
+        # optimizing queryset for list action
+        if self.action in ['list', 'recent']:
             queryset = queryset.select_related(
                 'created_by',
                 'created_by__profile',
                 'parent_topic',
                 'parent_board',
             ).prefetch_related(
-                'attachments',
-                'article_update_log_set',
-                Block.prefetch_my_block(self.request.user),
                 ArticleReadLog.prefetch_my_article_read_log(self.request.user),
-                'comment_set',
-                'comment_set__comment_set',
-            ).annotate(
-                comment_set__count=models.Count('comment_set'),
-                comment_set__comment_set__count=models.Count('comment_set__comment_set'),
             )
 
+            # optimizing queryset for recent action
+            if self.action == 'recent':
+                last_read_log_of_the_article = ArticleReadLog.objects.filter(
+                    article=models.OuterRef('pk')
+                ).order_by('-created_at')
+
+                queryset = queryset.filter(
+                    article_read_log_set__read_by=self.request.user,
+                ).annotate(
+                    my_last_read_at=models.Subquery(last_read_log_of_the_article.filter(
+                        read_by=self.request.user,
+                    ).values('created_at')[:1]),
+                ).order_by(
+                    '-my_last_read_at'
+                ).distinct()
+
+        # optimizing queryset for create, update, retrieve actions
         else:
-            # optimizing queryset for create, update, retrieve actions
             queryset = queryset.select_related(
                 'created_by',
                 'created_by__profile',
@@ -90,26 +96,27 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 'parent_board',
             ).prefetch_related(
                 'attachments',
+                models.Prefetch(
+                    'vote_set',
+                    queryset=Vote.objects.select_related(
+                        'voted_by',
+                    ),
+                ),
                 Scrap.prefetch_my_scrap(self.request.user),
-                Block.prefetch_my_block(self.request.user),
                 models.Prefetch(
                     'comment_set',
                     queryset=Comment.objects.reverse().select_related(
-                        'attachment',
+                        'created_by',
+                        'created_by__profile',
                     ).prefetch_related(
-                        'comment_update_log_set',
                         Vote.prefetch_my_vote(self.request.user),
-                        Block.prefetch_my_block(self.request.user),
-                        Report.prefetch_my_report(self.request.user),
                         models.Prefetch(
                             'comment_set',
                             queryset=Comment.objects.reverse().select_related(
-                                'attachment',
+                                'created_by',
+                                'created_by__profile',
                             ).prefetch_related(
-                                'comment_update_log_set',
                                 Vote.prefetch_my_vote(self.request.user),
-                                Block.prefetch_my_block(self.request.user),
-                                Report.prefetch_my_report(self.request.user),
                             ),
                         ),
                     ),
@@ -126,9 +133,13 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def perform_update(self, serializer):
         instance = serializer.instance
 
-        ArticleUpdateLog.objects.create(
+        update_log = ArticleUpdateLog.objects.create(
             updated_by=self.request.user,
             article=instance,
+        )
+
+        serializer.save(
+            content_updated_at=update_log.created_at,
         )
 
         return super().perform_update(serializer)
@@ -144,13 +155,12 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def retrieve(self, request, *args, **kwargs):
         article = self.get_object()
 
-        created = ArticleReadLog.objects.update_or_create(
+        ArticleReadLog.objects.create(
             read_by=self.request.user,
             article=article,
-        )[1]
+        )
 
-        if created:
-            article.update_hit_count()
+        article.update_hit_count()
 
         pipe = redis.pipeline()
         redis_key = 'articles:hit'
@@ -221,3 +231,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         article.update_vote_status()
 
         return response.Response(status=status.HTTP_200_OK)
+
+    @decorators.action(detail=False, methods=['get'])
+    def recent(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)

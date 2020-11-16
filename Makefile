@@ -56,3 +56,8 @@ i18n_generate:
 i18n_compile:
 	python manage.py compilemessages -l en -l ko
 
+elasticsearch_index:
+	python manage.py search_index --rebuild
+
+show_sql:
+	python manage.py shell_plus --print-sql

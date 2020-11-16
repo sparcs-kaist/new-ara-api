@@ -1,6 +1,7 @@
 from django.db import models, IntegrityError
 from django.conf import settings
 
+from ara import redis
 from ara.db.models import MetaDataModel
 
 
@@ -45,3 +46,8 @@ class Block(MetaDataModel):
                 blocked_by=user,
             ),
         )
+
+    @staticmethod
+    def is_blocked(blocked_by, user):
+        block_objs = redis.get_objs_by_indexes(f'blocks:{blocked_by.id}', 0, -1, (lambda x: int(x)))  # all blocks
+        return user.id in block_objs

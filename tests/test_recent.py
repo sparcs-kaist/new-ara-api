@@ -1,7 +1,6 @@
 import pytest
-from django.test import TestCase
 from apps.core.models import Article, Topic, Board, Comment, Report
-from tests.conftest import RequestSetting
+from tests.conftest import RequestSetting, TestCase
 from django.utils import timezone
 
 
@@ -59,7 +58,7 @@ class TestRecent(TestCase, RequestSetting):
 
     # 아무것도 읽지 않았을 때 recently_read는 empty array 임을 확인
     def test_recent_at_start(self):
-        res = self.http_request(self.user, 'get', 'recents')
+        res = self.http_request(self.user, 'get', 'articles/recent')
         assert res.data.get('results') == []
 
     # article을 생 순서대로 읽었을 떄의 recent_articles 값 확인
@@ -70,7 +69,7 @@ class TestRecent(TestCase, RequestSetting):
         for article in self.articles:
             r = self.http_request(self.user, 'get', f'articles/{article.id}').data
 
-        recent_list = self.http_request(self.user, 'get', 'recents').data.get('results')
+        recent_list = self.http_request(self.user, 'get', 'articles/recent').data.get('results')
         assert len(recent_list) == 10
         for i in range(10):
             assert recent_list[i]['id'] == self.articles[9-i].id
@@ -80,7 +79,7 @@ class TestRecent(TestCase, RequestSetting):
         for article in reversed(self.articles):
             r = self.http_request(self.user, 'get', f'articles/{article.id}').data
 
-        recent_list = self.http_request(self.user, 'get', 'recents').data.get('results')
+        recent_list = self.http_request(self.user, 'get', 'articles/recent').data.get('results')
         assert len(recent_list) == 10
         for i in range(10):
             assert recent_list[i]['id'] == self.articles[i].id
@@ -98,12 +97,12 @@ class TestRecent(TestCase, RequestSetting):
         for _ in range(3):
             r = self.http_request(self.user, 'get', f'articles/{self.articles[9].id}').data
 
-        recent_list = self.http_request(self.user, 'get', 'recents').data.get('results')
+        recent_list = self.http_request(self.user, 'get', 'articles/recent').data.get('results')
         assert len(recent_list) == 10
         # Article 9, 10이 한 번씩만 들어가 있는지 확인
         for i in range(10):
             assert recent_list[i]['id'] == self.articles[9-i].id
-        recent_list = self.http_request(self.user, 'get', 'recents').data.get('recently_read')
+        recent_list = self.http_request(self.user, 'get', 'articles/recent').data.get('recently_read')
 
     # 같은 article을 비연속적으로 여러번 읽었을 경우 확인 (전에 읽은 article 최근에 다시 읽었을 때)
     def test_read_same_article_multiple_times(self):
@@ -113,7 +112,7 @@ class TestRecent(TestCase, RequestSetting):
 
         # Article 3을 다시 읽기
         r = self.http_request(self.user, 'get', f'articles/{self.articles[2].id}').data
-        recent_list = self.http_request(self.user, 'get', 'recents').data.get('results')
+        recent_list = self.http_request(self.user, 'get', 'articles/recent').data.get('results')
 
         expected_order = [2, 9, 8, 7, 6, 5, 4, 3, 1, 0]
         for i in range(10):

@@ -21,6 +21,7 @@ class Vote(MetaDataModel):
     voted_by = models.ForeignKey(
         on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
+        related_name='vote_set',
         verbose_name='투표자',
     )
     parent_article = models.ForeignKey(

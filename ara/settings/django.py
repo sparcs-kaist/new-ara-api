@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'django_celery_results',
     'drf_yasg',
     'cacheops',
+    'django_elasticsearch_dsl',
 
     'apps.core',
     'apps.user',
@@ -44,6 +45,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'ara.classes.middleware.CheckTermsOfServiceMiddleware',
 ]
 
 ROOT_URLCONF = 'ara.urls'

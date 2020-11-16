@@ -7,6 +7,7 @@ from .redis import *
 from .scheduler import *
 from .log import *
 from .cacheops import *
+from .elasticsearch import *
 from .sentry import *
 
 

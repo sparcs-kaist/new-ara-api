@@ -2,13 +2,13 @@ from rest_framework import serializers, exceptions
 
 from ara.classes.serializers import MetaDataModelSerializer
 
-from apps.core.models import Comment
+from apps.core.models import Comment, Block
 
 
 class BaseCommentSerializer(MetaDataModelSerializer):
     class Meta:
         model = Comment
-        fields = '__all__'
+        exclude = ('attachment', )
 
     @staticmethod
     def get_my_vote(obj) -> bool:
@@ -18,17 +18,6 @@ class BaseCommentSerializer(MetaDataModelSerializer):
         my_vote = obj.vote_set.all()[0]
 
         return my_vote.is_positive
-
-    @staticmethod
-    def get_my_report(obj) -> dict:
-        from apps.core.serializers.report import BaseReportSerializer
-
-        if not obj.report_set.exists():
-            return None
-
-        my_report = obj.report_set.all()[0]
-
-        return BaseReportSerializer(my_report).data
 
     def get_is_hidden(self, obj) -> bool:
         if self.validate_hidden(obj):
@@ -71,7 +60,7 @@ class BaseCommentSerializer(MetaDataModelSerializer):
     def validate_hidden(self, obj) -> dict:
         errors = []
 
-        if obj.created_by.blocked_by_set.exists():
+        if Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by):
             errors.append(exceptions.ValidationError('차단한 사용자의 게시물입니다.'))
 
         return errors
@@ -82,18 +71,7 @@ class CommentSerializer(BaseCommentSerializer):
     created_by = PublicUserSerializer(
         read_only=True,
     )
-
-    from apps.core.serializers.comment_log import CommentUpdateLogSerializer
-    comment_update_logs = CommentUpdateLogSerializer(
-        many=True,
-        read_only=True,
-        source='comment_update_log_set',
-    )
-
     my_vote = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    my_report = serializers.SerializerMethodField(
         read_only=True,
     )
     is_hidden = serializers.SerializerMethodField(
@@ -118,18 +96,7 @@ class CommentListActionSerializer(BaseCommentSerializer):
     created_by = PublicUserSerializer(
         read_only=True,
     )
-
-    from apps.core.serializers.comment_log import CommentUpdateLogSerializer
-    comment_update_logs = CommentUpdateLogSerializer(
-        many=True,
-        read_only=True,
-        source='comment_update_log_set',
-    )
-
     my_vote = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    my_report = serializers.SerializerMethodField(
         read_only=True,
     )
     is_hidden = serializers.SerializerMethodField(

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-09-22 00:35+0900\n"
+"POT-Creation-Date: 2020-10-08 23:59+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,19 +18,27 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: apps/core/serializers/article.py:239
+#: apps/core/management/scripts/portal_crawler.py:70
+msgid "No content for portal article"
+msgstr ""
+
+#: apps/core/serializers/article.py:214
 msgid "This article is not in user's scrap list."
 msgstr ""
 
-#: apps/core/serializers/article.py:277
+#: apps/core/serializers/article.py:224
+msgid "This article is never read by user."
+msgstr ""
+
+#: apps/core/serializers/article.py:241
 msgid "Wrong value for parameter 'from_view'."
 msgstr ""
 
-#: apps/core/serializers/article.py:396
+#: apps/core/serializers/article.py:369
 msgid "This board is read only."
 msgstr ""
 
-#: apps/core/serializers/article.py:398
+#: apps/core/serializers/article.py:371
 msgid "This board is only for KAIST members."
 msgstr ""
 
@@ -72,10 +80,10 @@ msgid ""
 "Nicknames can only be changed every 3 months. (can't change until %(date)s)"
 msgstr ""
 
-#: ara/settings/django.py:93
+#: ara/settings/django.py:94
 msgid "Korean"
 msgstr "Korean"
 
-#: ara/settings/django.py:94
+#: ara/settings/django.py:95
 msgid "English"
 msgstr "English"

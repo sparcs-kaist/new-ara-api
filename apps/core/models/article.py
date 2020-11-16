@@ -41,6 +41,10 @@ class Article(MetaDataModel):
         default=0,
         verbose_name='조회수',
     )
+    comment_count = models.IntegerField(
+        default=0,
+        verbose_name='댓글 수',
+    )
     positive_vote_count = models.IntegerField(
         default=0,
         verbose_name='좋아요 수',
@@ -103,8 +107,15 @@ class Article(MetaDataModel):
 
     url = models.TextField(
         null=True,
+        blank=True,
         default=None,
         verbose_name='링크',
+    )
+
+    content_updated_at = models.DateTimeField(
+        null=True,
+        default=None,
+        verbose_name='제목/본문/첨부파일 수정 시간',
     )
 
     def __str__(self) -> str:
@@ -125,13 +136,21 @@ class Article(MetaDataModel):
 
         super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
-    # TODO: hit_count property should be cached
     def update_hit_count(self):
-        self.hit_count = self.article_read_log_set.count() + self.migrated_hit_count
+        self.hit_count = self.article_read_log_set.values('read_by').annotate(models.Count('read_by')).order_by('read_by__count',).count() + self.migrated_hit_count
 
         self.save()
 
-    # TODO: positive_vote_count, negative_vote_count properties should be cached
+    def update_comment_count(self):
+        from apps.core.models import Comment
+
+        self.comment_count = Comment.objects.filter(
+            models.Q(parent_article=self) |
+            models.Q(parent_comment__parent_article=self)
+        ).count()
+
+        self.save()
+
     def update_vote_status(self):
         self.positive_vote_count = self.vote_set.filter(is_positive=True).count() + self.migrated_positive_vote_count
         self.negative_vote_count = self.vote_set.filter(is_positive=False).count() + self.migrated_negative_vote_count
@@ -139,19 +158,5 @@ class Article(MetaDataModel):
         self.save()
 
     @property
-    def comments_count(self) -> int:
-        from apps.core.models import Comment
-
-        return Comment.objects.filter(parent_article=self).count()
-
-    @property
-    def nested_comments_count(self) -> int:
-        from apps.core.models import Comment
-
-        if hasattr(self, 'comment_set__count') and hasattr(self, 'comment_set__comment_set__count'):
-            return sum([self.comment_set__count, self.comment_set__comment_set__count])
-
-        return Comment.objects.filter(
-            models.Q(parent_article=self) |
-            models.Q(parent_comment__parent_article=self)
-        ).count()
+    def created_by_nickname(self) -> str:
+        return self.created_by.profile.nickname

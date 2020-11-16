@@ -58,6 +58,9 @@ class LogObject(BaseLogObject):
         #     result['data'] = str(self.response.content)
         return result
 
+    def __repr__(self):
+        return str(self.response)
+
 
 class ErrorLogObject(BaseLogObject):
     def __init__(self, request, exception):
@@ -86,3 +89,6 @@ class ErrorLogObject(BaseLogObject):
             'type': ErrorLogObject.exception_type(exception),
             'traceback': tb
         }
+
+    def __repr__(self):
+        return str(self.exception)
