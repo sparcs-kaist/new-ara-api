@@ -17,7 +17,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
                    'migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
 
 
-    def get_my_vote(self, obj) ->:
+    def get_my_vote(self, obj) -> bool:
         request = self.context['request']
         if not obj.vote_set.filter(voted_by=request.user).exists():
             return None
