@@ -23,7 +23,7 @@ ngram_analyzer = analyzer(
             'ngram_tkf',
             type='ngram',
             min_gram=1,
-            max_gram=15,
+            max_gram=10,
         ),
         'lowercase'
     ]
@@ -62,7 +62,7 @@ class ArticleDocument(Document):
         settings = {
             'number_of_shards': 3,
             'number_of_replicas': 1,
-            'max_ngram_diff': 15,
+            'max_ngram_diff': 9,
         }
 
     class Django:
