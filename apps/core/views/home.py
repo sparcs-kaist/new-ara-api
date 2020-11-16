@@ -1,10 +1,14 @@
 from rest_framework import views, response
+from rest_framework.decorators import permission_classes
+from rest_framework.permissions import IsAuthenticated
 
 from apps.core.models import BestArticle, PERIOD_CHOICES
 from apps.core.serializers.article import BestArticleListActionSerializer
 
 
 class HomeView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         return response.Response(data={
             'daily_bests': _best_articles('daily', request),
