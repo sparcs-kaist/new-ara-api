@@ -14,7 +14,6 @@ from tqdm import tqdm
 
 from apps.core.models import Article
 from apps.user.models import UserProfile
-from apps.user.views.viewsets.user import make_random_profile_picture
 from ara.settings import PORTAL_ID, PORTAL_PASSWORD
 
 LOGIN_INFO_SSO2 = {
@@ -181,7 +180,7 @@ def crawl_hour():
                 is_newara=False,
                 user=user,
                 nickname=info['writer'],
-                picture=make_random_profile_picture(),
+                picture='user_profiles/default_pictures/KAIST-logo.png',
             )
 
         a, created = Article.objects.get_or_create(
@@ -240,7 +239,7 @@ def crawl_all():
                             is_newara=False,
                             user=user,
                             nickname=info['writer'],
-                            picture=make_random_profile_picture(),
+                            picture='user_profiles/default_pictures/KAIST-logo.png',
                         )
 
                     a = Article.objects.create(

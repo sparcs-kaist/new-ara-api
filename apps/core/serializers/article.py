@@ -176,7 +176,10 @@ class ArticleSerializer(BaseArticleSerializer):
     def filter_articles(obj, request):
         from_view = request.query_params.get('from_view')
 
-        if from_view == 'user':
+        if from_view == '-portal':
+            return Article.objects.exclude(parent_board__slug='portal-notice')
+
+        elif from_view == 'user':
             created_by_id = request.query_params.get('created_by', request.user.id)
             return Article.objects.filter(created_by_id=created_by_id)
 
@@ -210,7 +213,7 @@ class ArticleSerializer(BaseArticleSerializer):
                 'after': None
             }
 
-        if from_view not in ['all', 'board', 'topic', 'user', 'scrap', 'recent']:
+        if from_view not in ['all', '-portal', 'board', 'topic', 'user', 'scrap', 'recent']:
             raise serializers.ValidationError(gettext("Wrong value for parameter 'from_view'."))
 
         if from_view == 'recent':

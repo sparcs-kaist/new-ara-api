@@ -13,3 +13,5 @@ ELASTICSEARCH_DSL = {
         'retry_on_timeout': True,
     },
 }
+
+ELASTICSEARCH_DSL_PARALLEL = True
