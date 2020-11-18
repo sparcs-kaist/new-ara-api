@@ -21,6 +21,6 @@ class Attachment(MetaDataModel):
 
     mimetype = models.CharField(
         default='text/plain',
-        max_length=50,
+        max_length=128,
         verbose_name='타입',
     )
