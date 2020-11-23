@@ -9,6 +9,7 @@ from .log import *
 from .cacheops import *
 from .elasticsearch import *
 from .sentry import *
+from .websocket import *
 
 
 if env('DJANGO_ENV') == 'development':
