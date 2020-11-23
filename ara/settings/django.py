@@ -14,6 +14,7 @@ BASE_DIR = root()
 # Application definition
 
 INSTALLED_APPS = [
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -67,7 +68,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'ara.wsgi.application'
-
+ASGI_APPLICATION = 'ara.asgi.application'
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
