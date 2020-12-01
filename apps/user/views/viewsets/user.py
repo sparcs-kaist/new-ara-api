@@ -1,3 +1,4 @@
+import json
 import uuid
 import random
 from urllib.parse import urlparse
@@ -133,9 +134,18 @@ class UserViewSet(ActionAPIViewSet):
         except UserProfile.DoesNotExist:  # 회원가입
             user_nickname = _make_random_name()
             user_profile_picture = make_random_profile_picture()
+            email = user_info['email']
+
+            if email.split('@')[-1] == 'sso.sparcs.org':  # sso에서 random하게 만든 이메일인 경우
+                kaist_info = user_info['kaist_info']
+                if kaist_info:  # SNS 회원가입 후 카이생 인증
+                    kaist_info = json.loads(kaist_info)
+                    kaist_email = kaist_info['mail']
+                    email = kaist_email
+
             with transaction.atomic():
                 new_user = get_user_model().objects.create_user(
-                    email=user_info['email'],
+                    email=email,
                     username=str(uuid.uuid4()),
                     password=str(uuid.uuid4()),
                     is_active=is_kaist or is_manual,
