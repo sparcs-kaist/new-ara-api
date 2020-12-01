@@ -3,7 +3,7 @@ from django.contrib import admin
 from ara.classes.admin import MetaDataModelAdmin
 
 from apps.core.models import Board, Topic, Article, \
-    ArticleReadLog, ArticleDeleteLog, BestArticle, CommentDeleteLog, BestComment, FAQ, BestSearch
+    ArticleReadLog, ArticleDeleteLog, BestArticle, CommentDeleteLog, BestComment, FAQ, BestSearch, Report
 
 
 @admin.register(Board)
@@ -143,4 +143,15 @@ class BestSearchAdmin(MetaDataModelAdmin):
     search_fields = (
         'ko_word',
         'en_word',
+    )
+
+
+@admin.register(Report)
+class ReportAdmin(MetaDataModelAdmin):
+    list_display = (
+        'parent_article',
+        'parent_comment',
+        'reported_by',
+        'type',
+        'content',
     )
