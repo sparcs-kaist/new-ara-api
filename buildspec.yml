@@ -8,6 +8,7 @@ env:
 phases:
   install:
     commands:
+      - docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
       - chmod +x ./.docker/codebuild.sh
       - . ./.docker/codebuild.sh
       - $(aws ecr get-login --region ap-northeast-2 --no-include-email)
