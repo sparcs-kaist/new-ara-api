@@ -20,17 +20,6 @@ class BaseCommentSerializer(MetaDataModelSerializer):
 
         return my_vote.is_positive
 
-    @staticmethod
-    def get_my_report(obj) -> dict:
-        from apps.core.serializers.report import BaseReportSerializer
-
-        if not obj.report_set.exists():
-            return None
-
-        my_report = obj.report_set.all()[0]
-
-        return BaseReportSerializer(my_report).data
-
     def get_is_hidden(self, obj) -> bool:
         if self.validate_hidden(obj):
             return True
