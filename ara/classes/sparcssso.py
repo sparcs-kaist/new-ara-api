@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import time
 
+from sentry_sdk import capture_exception
 from urllib.parse import urlencode
 
 import binascii
@@ -67,15 +68,18 @@ class Client:
 
     def _post_data(self, url, data):
         r = requests.post(url, data)
-        if r.status_code == 400:
-            raise RuntimeError('INVALID_REQUEST')
-        elif r.status_code == 403:
-            raise RuntimeError('NO_PERMISSION')
-        elif r.status_code != 200:
-            raise RuntimeError('UNKNOWN_ERROR')
+
+        try:
+            r.raise_for_status()
+
+        except requests.exceptions.HTTPError as http_error:
+            capture_exception(http_error)
+
+            raise http_error
 
         try:
             return r.json()
+
         except:
             raise RuntimeError('INVALID_OBJECT')
 
