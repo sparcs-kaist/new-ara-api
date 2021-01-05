@@ -17,6 +17,9 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
     }
 
     def get_queryset(self):
+        if not self.request.user.is_authenticated:
+            return Notification.objects.none()
+        
         queryset = super().get_queryset()
 
         queryset = queryset.filter(

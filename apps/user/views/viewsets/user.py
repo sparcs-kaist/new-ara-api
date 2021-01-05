@@ -1,5 +1,6 @@
 import uuid
 import random
+import requests
 from urllib.parse import urlparse
 
 from cached_property import cached_property
@@ -93,7 +94,22 @@ class UserViewSet(ActionAPIViewSet):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        user_info = self.sso_client.get_user_info(request.GET['code'])
+        try:
+            user_info = self.sso_client.get_user_info(request.GET['code'])
+
+        except requests.exceptions.HTTPError as http_error:
+            if http_error.response.status_code == 400:
+                message = '잘못된 요청입니다.'
+
+            elif http_error.response.status_code == 403:
+                message = '권한이 부족합니다.'
+
+            else:
+                message = '알 수 없는 에러가 발생했습니다. 잠시 뒤에 다시 시도해주세요.'
+
+            return response.Response(
+                data={'message': message}, status=http_error.response.status_code,
+            )
 
         # Bypass SSO validation
         # if not request.GET.get('state'):

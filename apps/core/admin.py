@@ -74,8 +74,6 @@ class ArticleAdmin(MetaDataModelAdmin):
     search_fields = (
         'title',
         'content',
-        'ko_description',
-        'en_description',
     )
 
 
