@@ -173,10 +173,11 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def vote_cancel(self, request, *args, **kwargs):
         article = self.get_object()
 
-        vote = Vote.objects.filter(
+        vote = Vote.objects.get(
             voted_by=request.user,
             parent_article=article,
-        ).delete()
+        )
+        vote.delete()
 
         article.update_vote_status()
 
