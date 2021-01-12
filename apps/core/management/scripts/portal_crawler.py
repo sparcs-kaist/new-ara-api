@@ -122,7 +122,7 @@ def _get_article(url, session):
     }
 
 
-def crawl_hour():
+def crawl_hour(day=timezone.datetime.today().date()):
     session = _login_kaist_portal()
 
     def _get_board_today(page_num):
@@ -140,7 +140,10 @@ def crawl_hour():
             print('------- portal login failed!')
 
         for link, date in zip(links, dates):
-            if date.get_text() == str(timezone.datetime.today().date()).replace('-', '.'):
+            day_formatted = str(day).replace('-', '.')
+            if date.get_text() > day_formatted:
+                continue
+            elif date.get_text() == day_formatted:
                 linklist.append({'link': link.attrs['href'], 'date': date.get_text()})
             else:
                 today = False
