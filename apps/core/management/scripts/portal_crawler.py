@@ -122,7 +122,12 @@ def _get_article(url, session):
     }
 
 
-def crawl_hour(day=timezone.datetime.today().date()):
+
+def crawl_hour(day=None):
+    # parameter에서 default로 바로 today()하면, 캐싱되어서 업데이트가 안됨
+    if day is None:
+        day = timezone.datetime.today().date()
+
     session = _login_kaist_portal()
 
     def _get_board_today(page_num):
@@ -139,12 +144,13 @@ def crawl_hour(day=timezone.datetime.today().date()):
         else:
             print('------- portal login failed!')
 
+        today_date = str(day).replace('-', '.')
         for link, date in zip(links, dates):
-            day_formatted = str(day).replace('-', '.')
-            if date.get_text() > day_formatted:
+            article_date = date.get_text()
+            if article_date > today_date:
                 continue
-            elif date.get_text() == day_formatted:
-                linklist.append({'link': link.attrs['href'], 'date': date.get_text()})
+            elif article_date == today_date:
+                linklist.append({'link': link.attrs['href'], 'date': article_date})
             else:
                 today = False
                 return linklist, today
