@@ -134,7 +134,18 @@ class UserViewSet(ActionAPIViewSet):
             user_profile = UserProfile.objects.get(
                 sid=user_info['sid'],
             )
+
+            if user_profile.inactive_due_at:
+                if timezone.now() < user_profile.inactive_due_at:
+                    return response.Response(
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                else:
+                    user_profile.inactive_due_at = None
+                    user_profile.user.is_active = True
+
             user_profile.sso_user_info = user_info
+            user_profile.save()
 
             # 1. 카이포탈 인증 이전, 회원가입을 시도했던 회원 (나중에 카이포탈 인증 후 다시 로그인 시도)
             # 2. 아직 승인 이전, 회원가입을 시도했던 공용 계정 회원
