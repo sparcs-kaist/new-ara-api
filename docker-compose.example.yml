@@ -1,4 +1,4 @@
-# Check S3 'sparcs-newara' bucket for the complete file
+# Check S3 'sparcs-credentials' bucket for the complete file
 version: '3'
 
 services:
