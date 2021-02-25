@@ -9,7 +9,6 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext
-from fake_useragent import UserAgent
 from tqdm import tqdm
 
 from apps.core.models import Article
@@ -37,15 +36,8 @@ BASE_URL = 'https://portal.kaist.ac.kr'
 
 def _login_kaist_portal():
     session = requests.Session()
-    user_agent = UserAgent()
-    login_req1 = session.post('https://portalsso.kaist.ac.kr/ssoProcess2.ps', data=LOGIN_INFO_SSO2,
-                              headers={
-                                  'User-Agent': user_agent.random,
-                              })
-    login_req2 = session.post('https://portalsso.kaist.ac.kr/ssoProcess.ps', data=LOGIN_INFO_SSO,
-                              headers={
-                                  'User-Agent': user_agent.random,
-                              })
+    login_req1 = session.post('https://portalsso.kaist.ac.kr/ssoProcess2.ps', data=LOGIN_INFO_SSO2,)
+    login_req2 = session.post('https://portalsso.kaist.ac.kr/ssoProcess.ps', data=LOGIN_INFO_SSO,)
 
     print(f'sso2: {login_req1.status_code} & sso: {login_req2.status_code}')
 
