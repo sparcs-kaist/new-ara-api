@@ -73,7 +73,8 @@ class Client:
             r.raise_for_status()
 
         except requests.exceptions.HTTPError as http_error:
-            capture_exception(http_error)
+            if int(http_error.response.status_code) >= 500:
+                capture_exception(http_error)
 
             raise http_error
 
