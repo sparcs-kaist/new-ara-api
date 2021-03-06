@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+
+    <title>Oops!</title>
+    <style>
+      html {
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body class="h-100">
+    <div class="d-flex justify-content-center h-100">
+      <div class="align-self-center">
+        <div class="text-center mb-4">
+          <img src="https://i.pinimg.com/originals/d3/a7/38/d3a738413b1b9c65333276c89ed82476.gif" />
+        </div>
+        <div class="alert alert-secondary" role="alert">
+          <h4 class="alert-heading">Oops!</h4>
+          <p>
+            <strong>Ara에 로그인 하는 중에 문제가 발생했습니다.</strong>
+            <br>
+            아래와 같은 원인에 의해 문제가 발생했을 수 있습니다.
+          </p>
+
+          <ul>
+            <li>SPARCS SSO 에 facebook 계정으로 로그인 하였음.
+              <ul>
+                <li><strong>SPARCS SSO 에서 로그아웃 하신 후에 facebook 대신 KAIST IAM (통합인증)으로 로그인해보세요.</strong></li>
+              </ul>
+            </li>
+            <li>
+              로그인 과정이 지연되어서 토큰이 만료됨.
+              <ul>
+                <li><strong>SPARCS SSO 에서 로그아웃 하신 후에 다시 로그인해보세요.</strong></li>
+              </ul>
+            </li>
+          </ul>
+          <p>
+            문제가 반복될 경우 new-ara@sparcs.org 에 아래의 에러 정보를 포함해 문의 부탁드립니다.
+            <br>
+            <code>code: {{ code }}, status_code: {{ status_code }}</code>
+          </p>
+          <hr>
+          <p class="mb-0">
+            <a href="https://sparcssso.kaist.ac.kr/" class="btn btn-link px-0">
+              SPARCS SSO 으로 이동
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
+  </body>
+</html>

@@ -24,7 +24,7 @@ class UserProfileAdmin(MetaDataModelAdmin):
         'uid',
         'sid',
         'nickname',
-        'user',
+        'user__id',
     )
 
 

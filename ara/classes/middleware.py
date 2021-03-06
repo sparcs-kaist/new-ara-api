@@ -6,7 +6,8 @@ class CheckTermsOfServiceMiddleware:
         'me',
         'user-sso-login',
         'user-sso-login-callback',
-        'userprofile-agree-terms-of-service'
+        'userprofile-agree-terms-of-service',
+        'InvalidSsoLoginView',
     ]
 
     def __init__(self, get_response):
