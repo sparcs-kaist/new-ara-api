@@ -9,7 +9,6 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext
-from fake_useragent import UserAgent
 from tqdm import tqdm
 
 from apps.core.models import Article
@@ -37,15 +36,8 @@ BASE_URL = 'https://portal.kaist.ac.kr'
 
 def _login_kaist_portal():
     session = requests.Session()
-    user_agent = UserAgent()
-    login_req1 = session.post('https://portalsso.kaist.ac.kr/ssoProcess2.ps', data=LOGIN_INFO_SSO2,
-                              headers={
-                                  'User-Agent': user_agent.random,
-                              })
-    login_req2 = session.post('https://portalsso.kaist.ac.kr/ssoProcess.ps', data=LOGIN_INFO_SSO,
-                              headers={
-                                  'User-Agent': user_agent.random,
-                              })
+    login_req1 = session.post('https://portalsso.kaist.ac.kr/ssoProcess2.ps', data=LOGIN_INFO_SSO2,)
+    login_req2 = session.post('https://portalsso.kaist.ac.kr/ssoProcess.ps', data=LOGIN_INFO_SSO,)
 
     print(f'sso2: {login_req1.status_code} & sso: {login_req2.status_code}')
 
@@ -122,7 +114,12 @@ def _get_article(url, session):
     }
 
 
-def crawl_hour():
+
+def crawl_hour(day=None):
+    # parameter에서 default로 바로 today()하면, 캐싱되어서 업데이트가 안됨
+    if day is None:
+        day = timezone.datetime.today().date()
+
     session = _login_kaist_portal()
 
     def _get_board_today(page_num):
@@ -139,9 +136,13 @@ def crawl_hour():
         else:
             print('------- portal login failed!')
 
+        today_date = str(day).replace('-', '.')
         for link, date in zip(links, dates):
-            if date.get_text() == str(timezone.datetime.today().date()).replace('-', '.'):
-                linklist.append({'link': link.attrs['href'], 'date': date.get_text()})
+            article_date = date.get_text()
+            if article_date > today_date:
+                continue
+            elif article_date == today_date:
+                linklist.append({'link': link.attrs['href'], 'date': article_date})
             else:
                 today = False
                 return linklist, today

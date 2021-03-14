@@ -106,6 +106,12 @@ class UserProfile(MetaDataModel):
         verbose_name='약관 동의 일시',
     )
 
+    inactive_due_at = models.DateTimeField(
+        null=True,
+        default=None,
+        verbose_name='활동정지 마감 일시',
+    )
+
     def __str__(self) -> str:
         return self.nickname
 

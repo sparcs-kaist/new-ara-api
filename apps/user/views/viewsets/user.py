@@ -1,3 +1,4 @@
+import json
 import uuid
 import random
 import requests
@@ -7,7 +8,7 @@ from cached_property import cached_property
 from django.conf import settings
 from django.contrib.auth import get_user_model, login, logout
 from django.db import transaction
-from django.shortcuts import redirect
+from django.shortcuts import redirect, reverse
 from django.utils import timezone
 from rest_framework import status, response, decorators, permissions
 
@@ -98,18 +99,13 @@ class UserViewSet(ActionAPIViewSet):
             user_info = self.sso_client.get_user_info(request.GET['code'])
 
         except requests.exceptions.HTTPError as http_error:
-            if http_error.response.status_code == 400:
-                message = '잘못된 요청입니다.'
+            try:
+                code = json.loads(http_error.response.content)['code']
 
-            elif http_error.response.status_code == 403:
-                message = '권한이 부족합니다.'
+            except:
+                code = "json-loads-error"
 
-            else:
-                message = '알 수 없는 에러가 발생했습니다. 잠시 뒤에 다시 시도해주세요.'
-
-            return response.Response(
-                data={'message': message}, status=http_error.response.status_code,
-            )
+            return redirect(to=reverse('core:InvalidSsoLoginView') + f'?code={code}&status_code={http_error.response.status_code}')
 
         # Bypass SSO validation
         # if not request.GET.get('state'):
@@ -133,7 +129,18 @@ class UserViewSet(ActionAPIViewSet):
             user_profile = UserProfile.objects.get(
                 sid=user_info['sid'],
             )
+
+            if user_profile.inactive_due_at:
+                if timezone.now() < user_profile.inactive_due_at:
+                    return response.Response(
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                else:
+                    user_profile.inactive_due_at = None
+                    user_profile.user.is_active = True
+
             user_profile.sso_user_info = user_info
+            user_profile.save()
 
             # 1. 카이포탈 인증 이전, 회원가입을 시도했던 회원 (나중에 카이포탈 인증 후 다시 로그인 시도)
             # 2. 아직 승인 이전, 회원가입을 시도했던 공용 계정 회원
@@ -149,9 +156,18 @@ class UserViewSet(ActionAPIViewSet):
         except UserProfile.DoesNotExist:  # 회원가입
             user_nickname = _make_random_name()
             user_profile_picture = make_random_profile_picture()
+            email = user_info['email']
+
+            if email.split('@')[-1] == 'sso.sparcs.org':  # sso에서 random하게 만든 이메일인 경우
+                kaist_info = user_info['kaist_info']
+                if kaist_info:  # SNS 회원가입 후 카이생 인증
+                    kaist_info = json.loads(kaist_info)
+                    kaist_email = kaist_info['mail']
+                    email = kaist_email
+
             with transaction.atomic():
                 new_user = get_user_model().objects.create_user(
-                    email=user_info['email'],
+                    email=email,
                     username=str(uuid.uuid4()),
                     password=str(uuid.uuid4()),
                     is_active=is_kaist or is_manual,

@@ -1,11 +1,41 @@
 # SPARCS NewAra API
-
+<br />
+<br />
+<br />
 <p align="center">
-  <img src="https://raw.githubusercontent.com/sparcs-kaist/new-ara-web/master/src/assets/Services-Ara.png" alt="Logo" height="150">
+  <a href="https://newara.sparcs.org">
+    <img src="https://raw.githubusercontent.com/sparcs-kaist/new-ara-web/master/src/assets/Services-Ara.png" alt="Logo" height="150">
+  </a>
+  
+  <p align="center">
+    <img src="https://img.shields.io/badge/version-1.1-informational.svg" />
+    <img src="https://img.shields.io/badge/license-MIT-black.svg" />
+  </p>
+  
+  <p align="center">
+    Restful API for NewAra @ SPARCS
+    <br />
+    KAIST 공식 학내 커뮤니티
+    <br />
+    <a href="https://newara.sparcs.org">Go to ARA</a>
+  </p>
 </p>
 
-Restful API for NewAra @ SPARCS
+## Management Information
+- Issue tracking: Notion
+- Credentials: S3 sparcs-credentials
+- Communication: Slack
+  - general: #new-ara
+  - backend: #new-ara-backend
+  - fontend: #new-ara-frontend
+  - github commits: #new-ara-noti
+  - sentry alerts: #new-ara-sentry
+  - notion changes: #new-ara-notion
+  - with OB: #ara
+- Contact: new-ara@sparcs.org
 
+<br />
+<br />
 
 ## Project Setup
 
@@ -108,7 +138,8 @@ For managing docker images, we are using AWS ECR, `newara` repository.
 - **.docker/supervisor-app.conf**
 - **.docker/supervisor-celery-worker.conf**
 
----
+<br />
+<br />
 
 ## Project Stack
 
