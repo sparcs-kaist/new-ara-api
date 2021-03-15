@@ -37,6 +37,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         'partial_update': ArticleUpdateActionSerializer,
         'vote_positive': serializers.Serializer,
         'vote_negative': serializers.Serializer,
+        'recent': ArticleListActionSerializer,
     }
     permission_classes = (
         ArticlePermission,
@@ -79,6 +80,9 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
                 queryset = queryset.filter(
                     article_read_log_set__read_by=self.request.user,
+                ).select_related(
+                    'created_by',
+                    'created_by__profile',
                 ).annotate(
                     my_last_read_at=models.Subquery(last_read_log_of_the_article.filter(
                         read_by=self.request.user,
