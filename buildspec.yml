@@ -11,7 +11,7 @@ phases:
       - docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
       - chmod +x ./.docker/codebuild.sh
       - . ./.docker/codebuild.sh
-      - $(aws ecr get-login --region ap-northeast-2 --no-include-email)
+      - aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin $ECR
       - docker pull $ECR/$PROJECT_NAME:$CACHE_DOCKER_TAG || true
 
   build:
@@ -24,4 +24,3 @@ phases:
       - docker-compose -f docker-compose.test.yml run api test
       - docker-compose -f docker-compose.test.yml down
       - if [ $PUSH = true ]; then docker tag $PROJECT_NAME $ECR/$PROJECT_NAME:$DOCKER_TAG && docker push $ECR/$PROJECT_NAME:$DOCKER_TAG ; fi
-
