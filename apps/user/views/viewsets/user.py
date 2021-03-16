@@ -195,9 +195,7 @@ class UserViewSet(ActionAPIViewSet):
                 )
 
         if not user_profile.user.is_active:
-            return response.Response(
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return redirect(to=reverse('core:InvalidSsoLoginView') + f'?code=not-kaist-and-not-manual&status_code=400')
 
         user_profile.user.last_login = timezone.now()
         user_profile.user.save()
