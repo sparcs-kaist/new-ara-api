@@ -52,7 +52,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
             } for error in errors
         ]
 
-    def get_title(self, obj) -> str:
+    def get_title(self, obj) -> typing.Union[str, list]:
         errors = self.validate_hidden(obj)
 
         if errors:
@@ -66,7 +66,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return ''
 
-    def get_content(self, obj) -> str:
+    def get_content(self, obj) -> typing.Union[str, list]:
         errors = self.validate_hidden(obj)
 
         if errors:
@@ -80,12 +80,13 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return ''
 
-    def get_created_by(self, obj) -> str:
+    def get_created_by(self, obj) -> typing.Union[str, dict]:
         from apps.user.serializers.user import PublicUserSerializer
 
         if obj.is_anonymous:
             return '익명'
 
+        # <class 'rest_framework.utils.serializer_helpers.ReturnDict'> (is an OrderedDict)
         data = PublicUserSerializer(obj.created_by).data
         data['is_blocked'] = Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by)
 
@@ -122,7 +123,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return None
 
-    def validate_hidden(self, obj: Article) -> dict:
+    def validate_hidden(self, obj: Article) -> typing.List[exceptions.ValidationError]:
         errors = []
         request = self.context['request']
 

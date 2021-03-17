@@ -35,7 +35,7 @@ class BaseCommentSerializer(MetaDataModelSerializer):
             } for error in errors
         ]
 
-    def get_content(self, obj) -> str:
+    def get_content(self, obj) -> typing.Union[str, list]:
         errors = self.validate_hidden(obj)
 
         if errors:
@@ -50,15 +50,16 @@ class BaseCommentSerializer(MetaDataModelSerializer):
         return ''
 
     @staticmethod
-    def get_created_by(obj) -> str:
+    def get_created_by(obj) -> typing.Union[str, dict]:
         from apps.user.serializers.user import PublicUserSerializer
 
         if obj.is_anonymous:
             return '익명'
 
+        # <class 'rest_framework.utils.serializer_helpers.ReturnDict'> (is an OrderedDict)
         return PublicUserSerializer(obj.created_by).data
 
-    def validate_hidden(self, obj) -> dict:
+    def validate_hidden(self, obj) -> typing.List[exceptions.ValidationError]:
         errors = []
 
         if Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by):
