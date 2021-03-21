@@ -1,3 +1,5 @@
+import typing
+
 from django.utils.translation import gettext
 
 from ara.classes.serializers import MetaDataModelSerializer
@@ -16,7 +18,7 @@ class BaseUserProfileSerializer(MetaDataModelSerializer):
         fields = '__all__'
 
     @staticmethod
-    def get_email(obj) -> str:
+    def get_email(obj) -> typing.Optional[str]:
         if obj.email.endswith('@sso.sparcs.org'):
             return None
         return obj.email
