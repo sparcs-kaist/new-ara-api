@@ -12,7 +12,7 @@ class BaseCommentSerializer(MetaDataModelSerializer):
         exclude = ('attachment', )
 
     @staticmethod
-    def get_my_vote(obj) -> bool:
+    def get_my_vote(obj) -> typing.Optional[bool]:
         if not obj.vote_set.exists():
             return None
 

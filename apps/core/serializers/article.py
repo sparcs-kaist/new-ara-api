@@ -17,7 +17,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         exclude = ('content', 'content_text', 'attachments',
                    'migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
 
-    def get_my_vote(self, obj) -> bool:
+    def get_my_vote(self, obj) -> typing.Optional[bool]:
         request = self.context['request']
         if not obj.vote_set.filter(voted_by=request.user).exists():
             return None
@@ -27,7 +27,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return my_vote.is_positive
 
     @staticmethod
-    def get_my_scrap(obj) -> dict:
+    def get_my_scrap(obj) -> typing.Optional[dict]:
         from apps.core.serializers.scrap import BaseScrapSerializer
 
         if not obj.scrap_set.exists():
@@ -37,7 +37,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return BaseScrapSerializer(my_scrap).data
 
-    def get_is_hidden(self, obj):
+    def get_is_hidden(self, obj) -> bool:
         if self.validate_hidden(obj):
             return True
 
@@ -111,7 +111,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return '-'
 
     # TODO: article_current_page property must be cached
-    def get_article_current_page(self, obj) -> int:
+    def get_article_current_page(self, obj) -> typing.Optional[int]:
         view = self.context.get('view')
 
         if view:
