@@ -1,3 +1,5 @@
+import typing
+
 from django.utils.translation import gettext
 
 from ara.classes.serializers import MetaDataModelSerializer
@@ -16,7 +18,7 @@ class BaseUserProfileSerializer(MetaDataModelSerializer):
         fields = '__all__'
 
     @staticmethod
-    def get_email(obj):
+    def get_email(obj) -> typing.Optional[str]:
         if obj.email.endswith('@sso.sparcs.org'):
             return None
         return obj.email
@@ -35,7 +37,7 @@ class UserProfileUpdateActionSerializer(BaseUserProfileSerializer):
             'user',
         )
 
-    def validate_nickname(self, value):
+    def validate_nickname(self, value) -> str:
         nickname_changed = self.instance and value != self.instance.nickname
         if nickname_changed and not self.instance.can_change_nickname():
             next_change_date = self.instance.nickname_updated_at + relativedelta(months=3)

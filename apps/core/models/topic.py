@@ -42,5 +42,5 @@ class Topic(MetaDataModel):
         verbose_name='상위 게시판'
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.ko_name

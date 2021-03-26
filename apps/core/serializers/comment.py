@@ -1,4 +1,5 @@
 from rest_framework import serializers, exceptions
+import typing
 
 from ara.classes.serializers import MetaDataModelSerializer
 
@@ -11,7 +12,7 @@ class BaseCommentSerializer(MetaDataModelSerializer):
         exclude = ('attachment', )
 
     @staticmethod
-    def get_my_vote(obj):
+    def get_my_vote(obj) -> typing.Optional[bool]:
         if not obj.vote_set.exists():
             return None
 
@@ -19,13 +20,13 @@ class BaseCommentSerializer(MetaDataModelSerializer):
 
         return my_vote.is_positive
 
-    def get_is_hidden(self, obj):
+    def get_is_hidden(self, obj) -> bool:
         if self.validate_hidden(obj):
             return True
 
         return False
 
-    def get_why_hidden(self, obj):
+    def get_why_hidden(self, obj) -> typing.List[dict]:
         errors = self.validate_hidden(obj)
 
         return [
@@ -34,7 +35,7 @@ class BaseCommentSerializer(MetaDataModelSerializer):
             } for error in errors
         ]
 
-    def get_content(self, obj):
+    def get_content(self, obj) -> typing.Union[str, list]:
         errors = self.validate_hidden(obj)
 
         if errors:
@@ -42,22 +43,23 @@ class BaseCommentSerializer(MetaDataModelSerializer):
 
         return obj.content
 
-    def get_hidden_content(self, obj):
+    def get_hidden_content(self, obj) -> str:
         if self.validate_hidden(obj):
             return obj.content
 
         return ''
 
     @staticmethod
-    def get_created_by(obj):
+    def get_created_by(obj) -> typing.Union[str, dict]:
         from apps.user.serializers.user import PublicUserSerializer
 
         if obj.is_anonymous:
             return '익명'
 
+        # <class 'rest_framework.utils.serializer_helpers.ReturnDict'> (is an OrderedDict)
         return PublicUserSerializer(obj.created_by).data
 
-    def validate_hidden(self, obj):
+    def validate_hidden(self, obj) -> typing.List[exceptions.ValidationError]:
         errors = []
 
         if Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by):

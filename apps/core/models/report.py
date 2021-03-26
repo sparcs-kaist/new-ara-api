@@ -76,7 +76,7 @@ class Report(MetaDataModel):
         return self.parent_article if self.parent_article else self.parent_comment
 
     @classmethod
-    def prefetch_my_report(cls, user, prefix=''):
+    def prefetch_my_report(cls, user, prefix='') -> models.Prefetch:
         return models.Prefetch(
             '{}report_set'.format(prefix),
             queryset=Report.objects.filter(

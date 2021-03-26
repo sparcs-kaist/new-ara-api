@@ -59,7 +59,7 @@ class Vote(MetaDataModel):
         return self.parent_article if self.parent_article else self.parent_comment
 
     @classmethod
-    def prefetch_my_vote(cls, user, prefix=''):
+    def prefetch_my_vote(cls, user, prefix='') -> models.Prefetch:
         return models.Prefetch(
             '{}vote_set'.format(prefix),
             queryset=Vote.objects.filter(

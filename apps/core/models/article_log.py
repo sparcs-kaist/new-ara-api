@@ -24,11 +24,11 @@ class ArticleReadLog(MetaDataModel):
         verbose_name='조회된 게시글',
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.read_by) + "/" + str(self.article)
 
     @classmethod
-    def prefetch_my_article_read_log(cls, user, prefix=''):
+    def prefetch_my_article_read_log(cls, user, prefix='') -> models.Prefetch:
         return models.Prefetch(
             '{}article_read_log_set'.format(prefix),
             queryset=ArticleReadLog.objects.filter(
@@ -74,7 +74,7 @@ class ArticleUpdateLog(MetaDataModel):
         verbose_name='변경된 게시글',
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.updated_by) + "/" + str(self.article)
 
 
@@ -96,5 +96,5 @@ class ArticleDeleteLog(MetaDataModel):
         verbose_name='삭제된 게시글',
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.deleted_by) + "/" + str(self.article)

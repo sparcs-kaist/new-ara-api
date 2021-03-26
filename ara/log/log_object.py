@@ -10,7 +10,7 @@ class BaseLogObject(metaclass=abc.ABCMeta):
     def __init__(self, request):
         self.request = request
 
-    def format_request(self):
+    def format_request(self) -> dict:
         result = {
             'method': self.request.method,
             'meta': {key.lower(): str(value) for key, value in self.request.META.items() if key in REQUEST_META_KEYS},
@@ -42,13 +42,13 @@ class LogObject(BaseLogObject):
         super(LogObject, self).__init__(request)
         self.response = response
 
-    def format(self):
+    def format(self) -> dict:
         return {
             'request': self.format_request(),
             'response': self.format_response()
         }
 
-    def format_response(self):
+    def format_response(self) -> dict:
         result = {
             'status': self.response.status_code,
             'headers': dict(self.response.items()),
@@ -67,18 +67,18 @@ class ErrorLogObject(BaseLogObject):
         super(ErrorLogObject, self).__init__(request)
         self.exception = exception
 
-    def format(self):
+    def format(self) -> dict:
         return {
             'request': self.format_request(),
             'exception': self.format_exception(self.exception)
         }
 
     @staticmethod
-    def exception_type(exception):
+    def exception_type(exception) -> str:
         return str(type(exception)).split('\'')[1]
 
     @staticmethod
-    def format_exception(exception):
+    def format_exception(exception) -> dict:
         # Supported for Python version >= 3.5
         tb = [
             {'file': item[0], 'line': item[1], 'method': item[2]}

@@ -16,7 +16,7 @@ class HomeView(views.APIView):
         })
 
 
-def _best_articles(period, request):
+def _best_articles(period, request) -> dict:
     try:
         assert (period, period) in PERIOD_CHOICES
     except AssertionError:
