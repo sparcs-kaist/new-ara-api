@@ -3,7 +3,7 @@ from django.contrib import admin
 from ara.classes.admin import MetaDataModelAdmin
 
 from apps.core.models import Board, Topic, Article, \
-    ArticleReadLog, ArticleDeleteLog, BestArticle, CommentDeleteLog, BestComment, FAQ, BestSearch, Report
+    ArticleReadLog, ArticleDeleteLog, BestArticle, CommentDeleteLog, BestComment, FAQ, BestSearch, Report, Comment
 
 
 @admin.register(Board)
@@ -73,6 +73,25 @@ class ArticleAdmin(MetaDataModelAdmin):
     )
     search_fields = (
         'title',
+        'content',
+    )
+
+
+@admin.register(Comment)
+class CommentAdmin(MetaDataModelAdmin):
+    list_filter = (
+        'is_anonymous',
+    )
+    list_display = (
+        'content',
+        'positive_vote_count',
+        'negative_vote_count',
+        'is_anonymous',
+        'created_by',
+        'parent_article',
+        'parent_comment',
+    )
+    search_fields = (
         'content',
     )
 
