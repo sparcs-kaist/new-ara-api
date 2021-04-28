@@ -36,6 +36,9 @@ class BaseCommentSerializer(MetaDataModelSerializer):
         ]
 
     def get_content(self, obj) -> typing.Union[str, list]:
+        if self.get_is_hidden_by_reported(obj):
+            return '숨김 처리된 게시글 입니다.'
+
         errors = self.validate_hidden(obj)
 
         if errors:
@@ -44,6 +47,9 @@ class BaseCommentSerializer(MetaDataModelSerializer):
         return obj.content
 
     def get_hidden_content(self, obj) -> str:
+        if self.get_is_hidden_by_reported(obj):
+            return '숨김 처리된 게시글 입니다.'
+            
         if self.validate_hidden(obj):
             return obj.content
 
@@ -66,6 +72,9 @@ class BaseCommentSerializer(MetaDataModelSerializer):
             errors.append(exceptions.ValidationError('차단한 사용자의 게시물입니다.'))
 
         return errors
+
+    def get_is_hidden_by_reported(self, obj:Article) -> bool:
+        return obj.hidden_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
 
 
 class CommentSerializer(BaseCommentSerializer):

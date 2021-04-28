@@ -9,6 +9,7 @@ from ara.classes.serializers import MetaDataModelSerializer
 from apps.core.models import Article, ArticleReadLog, Board, Block
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
+from django.utils import timezone
 
 
 class BaseArticleSerializer(MetaDataModelSerializer):
@@ -53,6 +54,9 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         ]
 
     def get_title(self, obj) -> typing.Union[str, list]:
+        if self.get_is_hidden_by_reported(obj):
+            return '임시 숨김 처리된 게시글 입니다.'
+
         errors = self.validate_hidden(obj)
 
         if errors:
@@ -61,12 +65,18 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return obj.title
 
     def get_hidden_title(self, obj) -> str:
+        if self.get_is_hidden_by_reported(obj):
+            return '숨김 처리된 게시글 입니다.'
+
         if self.validate_hidden(obj):
             return obj.title
 
         return ''
 
     def get_content(self, obj) -> typing.Union[str, list]:
+        if self.get_is_hidden_by_reported(obj):
+            return '다수의 신고가 접수되어 숨김 처리된 게시글 입니다.'
+
         errors = self.validate_hidden(obj)
 
         if errors:
@@ -75,6 +85,9 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return obj.content
 
     def get_hidden_content(self, obj) -> str:
+        if self.get_is_hidden_by_reported(obj):
+            return '다수의 신고가 접수되어 숨김 처리된 게시글 입니다.'
+
         if self.validate_hidden(obj):
             return obj.content
 
@@ -140,6 +153,10 @@ class BaseArticleSerializer(MetaDataModelSerializer):
             errors.append(exceptions.ValidationError('접근 권한이 없는 게시판입니다.'))
 
         return errors
+    
+    def get_is_hidden_by_reported(self, obj:Article) -> bool:
+        return obj.hidden_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
+
 
 
 class SideArticleSerializer(BaseArticleSerializer):

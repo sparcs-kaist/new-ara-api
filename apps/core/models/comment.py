@@ -30,6 +30,14 @@ class Comment(MetaDataModel):
         default=0,
         verbose_name='싫어요 수',
     )
+    report_count = models.IntegerField(
+        default=0,
+        verbose_name='신고 수',
+    )
+    hidden_at = models.DateTimeField(
+        default=timezone.datetime.min.replace(tzinfo=timezone.utc),
+        verbose_name='임시 삭제 시간',
+    )
 
     created_by = models.ForeignKey(
         on_delete=models.CASCADE,
@@ -100,6 +108,13 @@ class Comment(MetaDataModel):
         self.negative_vote_count = self.vote_set.filter(is_positive=False).count()
 
         self.save()
+
+    def update_report_count(self):
+        from apps.core.models import Report
+
+        self.report_count = Report.objects.filter(
+            models.Q(parent_comment=self)
+        ).count()
 
     def get_parent_article(self):
         if self.parent_article:
