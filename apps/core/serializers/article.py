@@ -408,8 +408,8 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
         user_has_perm = board.group_has_access(self.context['request'].user.profile.group)
         if not user_is_superuser and board.is_readonly:
             raise serializers.ValidationError(gettext('This board is read only.'))
-        if not user_has_perm:
-            raise serializers.ValidationError(gettext('This board is only for KAIST members.'))
+        '''if not user_has_perm:
+            raise serializers.ValidationError(gettext('This board is only for KAIST members.'))'''
         return board
 
 

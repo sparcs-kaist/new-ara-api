@@ -2,6 +2,7 @@ import bs4
 
 from django.db import models, IntegrityError
 from django.conf import settings
+from django.utils import timezone
 
 from ara.db.models import MetaDataModel
 from ara.sanitizer import sanitize
@@ -45,6 +46,10 @@ class Article(MetaDataModel):
         default=0,
         verbose_name='댓글 수',
     )
+    report_count = models.IntegerField(
+        default=0,
+        verbose_name ='신고 수',
+    )
     positive_vote_count = models.IntegerField(
         default=0,
         verbose_name='좋아요 수',
@@ -52,14 +57,6 @@ class Article(MetaDataModel):
     negative_vote_count = models.IntegerField(
         default=0,
         verbose_name='싫어요 수',
-    )
-    report_count = models.IntegerField(
-        default=0,
-        verbose_name='신고 수',
-    )
-    hidden_at = models.DateTimeField(
-        default=timezone.datetime.min.replace(tzinfo=timezone.utc),
-        verbose_name='임시 삭제 시간',
     )
 
     migrated_hit_count = models.IntegerField(
@@ -126,7 +123,13 @@ class Article(MetaDataModel):
         verbose_name='제목/본문/첨부파일 수정 시간',
     )
 
-    def __str__(self) -> str:
+    hidden_at = models.DateTimeField(
+        default=timezone.datetime.min.replace(tzinfo=timezone.utc),
+        db_index=True,
+        verbose_name='임시 삭제 시간',
+    )
+
+    def __str__(self):
         return self.title
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
@@ -158,7 +161,7 @@ class Article(MetaDataModel):
         ).count()
 
         self.save()
-
+    
     def update_report_count(self):
         from apps.core.models import Report
 
@@ -166,11 +169,19 @@ class Article(MetaDataModel):
             models.Q(parent_article=self)
         ).count()
 
+        threshold = 1
+
+        if int(self.report_count % threshold) == 0:
+            self.hidden_at = timezone.now()
+
+        self.save() 
+
     def update_vote_status(self):
         self.positive_vote_count = self.vote_set.filter(is_positive=True).count() + self.migrated_positive_vote_count
         self.negative_vote_count = self.vote_set.filter(is_positive=False).count() + self.migrated_negative_vote_count
 
         self.save()
+
 
     @property
     def created_by_nickname(self):

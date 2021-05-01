@@ -4,6 +4,7 @@ import typing
 from ara.classes.serializers import MetaDataModelSerializer
 
 from apps.core.models import Comment, Block
+from django.utils import timezone
 
 
 class BaseCommentSerializer(MetaDataModelSerializer):
@@ -73,7 +74,7 @@ class BaseCommentSerializer(MetaDataModelSerializer):
 
         return errors
 
-    def get_is_hidden_by_reported(self, obj:Article) -> bool:
+    def get_is_hidden_by_reported(self, obj:Comment) -> bool:
         return obj.hidden_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
 
 

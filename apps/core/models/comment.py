@@ -2,6 +2,7 @@ import bleach
 
 from django.db import models, IntegrityError
 from django.conf import settings
+from django.utils import timezone
 
 from ara.db.models import MetaDataModel
 from ara.sanitizer import sanitize
@@ -22,6 +23,10 @@ class Comment(MetaDataModel):
         verbose_name='익명',
     )
 
+    report_count = models.IntegerField(
+        default=0,
+        verbose_name ='신고 수',
+    )
     positive_vote_count = models.IntegerField(
         default=0,
         verbose_name='좋아요 수',
@@ -29,14 +34,6 @@ class Comment(MetaDataModel):
     negative_vote_count = models.IntegerField(
         default=0,
         verbose_name='싫어요 수',
-    )
-    report_count = models.IntegerField(
-        default=0,
-        verbose_name='신고 수',
-    )
-    hidden_at = models.DateTimeField(
-        default=timezone.datetime.min.replace(tzinfo=timezone.utc),
-        verbose_name='임시 삭제 시간',
     )
 
     created_by = models.ForeignKey(
@@ -75,8 +72,13 @@ class Comment(MetaDataModel):
         related_name='comment_set',
         verbose_name='댓글',
     )
+    hidden_at = models.DateTimeField(
+        default=timezone.datetime.min.replace(tzinfo=timezone.utc),
+        db_index=True,
+        verbose_name='임시 삭제 시간',
+    )
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.content
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
@@ -109,15 +111,22 @@ class Comment(MetaDataModel):
 
         self.save()
 
-    def update_report_count(self):
-        from apps.core.models import Report
-
-        self.report_count = Report.objects.filter(
-            models.Q(parent_comment=self)
-        ).count()
-
     def get_parent_article(self):
         if self.parent_article:
             return self.parent_article
 
         return self.parent_comment.parent_article
+    
+    def update_report_count(self):
+        from apps.core.models import Report
+
+        self.report_count = Report.objects.filter(
+            models.Q(parent_article=self)
+        ).count()
+
+        threshold = 1
+
+        if int(self.report_count % threshold) == 0:
+            self.hidden_at = timezone.now()
+
+        self.save() 
