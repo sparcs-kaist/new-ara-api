@@ -121,7 +121,7 @@ class Comment(MetaDataModel):
         from apps.core.models import Report
 
         self.report_count = Report.objects.filter(
-            models.Q(parent_article=self)
+            models.Q(parent_comment=self)
         ).count()
 
         threshold = 1
