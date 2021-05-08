@@ -6,8 +6,8 @@ from apps.core.models import Report
 
 @receiver(models.signals.post_save, sender=Report)
 def report_post_save_signal(created, instance, **kwargs):
-    #change threshold
-    threshold = 1
+    # change threshold
+    # current threshold = 3
 
     if created:
 

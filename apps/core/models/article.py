@@ -169,7 +169,7 @@ class Article(MetaDataModel):
             models.Q(parent_article=self)
         ).count()
 
-        threshold = 1
+        threshold = 3
 
         if int(self.report_count % threshold) == 0:
             self.hidden_at = timezone.now()

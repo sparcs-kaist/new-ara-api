@@ -124,7 +124,7 @@ class Comment(MetaDataModel):
             models.Q(parent_comment=self)
         ).count()
 
-        threshold = 1
+        threshold = 3
 
         if int(self.report_count % threshold) == 0:
             self.hidden_at = timezone.now()
