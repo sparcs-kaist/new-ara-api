@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import Max
+from django.utils import timezone
 from django.utils.translation import gettext
 from rest_framework import exceptions, serializers
 import typing
@@ -86,7 +88,6 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         if obj.is_anonymous:
             return '익명'
 
-        # <class 'rest_framework.utils.serializer_helpers.ReturnDict'> (is an OrderedDict)
         data = PublicUserSerializer(obj.created_by).data
         data['is_blocked'] = Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by)
 
@@ -94,18 +95,22 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
     @staticmethod
     def get_read_status(obj) -> str:
-        if not obj.article_read_log_set.exists():
+        if not hasattr(obj, "my_last_read_at") and not obj.article_read_log_set.exists():
             return 'N'
 
-        my_article_read_log = obj.article_read_log_set.all()[0]
+        my_article_read_time = None
+        if hasattr(obj, "my_last_read_at"):
+            my_article_read_time = obj.my_last_read_at.replace(tzinfo=timezone.get_current_timezone())
+        else:
+            my_article_read_time = obj.article_read_log_set.all()[0].created_at
 
         # compare with article's last commented datetime
         if obj.commented_at:
-            if obj.commented_at > my_article_read_log.created_at:
+            if obj.commented_at > my_article_read_time:
                 return 'U'
 
         # compare with article's last updated datetime
-        if obj.content_updated_at and obj.content_updated_at > my_article_read_log.created_at:
+        if obj.content_updated_at and obj.content_updated_at > my_article_read_time:
             return 'U'
 
         return '-'
