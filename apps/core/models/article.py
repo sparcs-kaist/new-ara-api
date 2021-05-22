@@ -3,6 +3,7 @@ import bs4
 from django.db import models, IntegrityError
 from django.conf import settings
 from django.utils import timezone
+from django.db import transaction
 
 from ara.db.models import MetaDataModel
 from ara.sanitizer import sanitize
@@ -162,19 +163,20 @@ class Article(MetaDataModel):
 
         self.save()
     
+    @transaction.atomic
     def update_report_count(self):
         from apps.core.models import Report
 
-        self.report_count = Report.objects.filter(
+        count = Report.objects.filter(
             models.Q(parent_article=self)
         ).count()
 
-        threshold = 3
+        self.report_count = count
 
-        if int(self.report_count % threshold) == 0:
-            self.hidden_at = timezone.now()
+        if int(count % REPORT_THRESHOLD) == 0:
+            self.hidden_at = timezone.now()    
 
-        self.save() 
+        self.save()
 
     def update_vote_status(self):
         self.positive_vote_count = self.vote_set.filter(is_positive=True).count() + self.migrated_positive_vote_count

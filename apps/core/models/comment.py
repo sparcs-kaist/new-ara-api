@@ -3,6 +3,7 @@ import bleach
 from django.db import models, IntegrityError
 from django.conf import settings
 from django.utils import timezone
+from django.db import transaction
 
 from ara.db.models import MetaDataModel
 from ara.sanitizer import sanitize
@@ -117,16 +118,19 @@ class Comment(MetaDataModel):
 
         return self.parent_comment.parent_article
     
+    @transaction.atomic
     def update_report_count(self):
         from apps.core.models import Report
 
-        self.report_count = Report.objects.filter(
+        count = Report.objects.filter(
             models.Q(parent_comment=self)
         ).count()
 
+        self.report_count = count
+
         threshold = 3
 
-        if int(self.report_count % threshold) == 0:
+        if int(count % REPORT_THRESHOLD) == 0:
             self.hidden_at = timezone.now()
 
         self.save() 

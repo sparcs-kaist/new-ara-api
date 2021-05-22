@@ -55,7 +55,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
     def get_title(self, obj) -> typing.Union[str, list]:
         if self.get_is_hidden_by_reported(obj):
-            return '임시 숨김 처리된 게시글 입니다.'
+            return gettext('This article is temporarily hidden 1')
 
         errors = self.validate_hidden(obj)
 
@@ -66,7 +66,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
     def get_hidden_title(self, obj) -> str:
         if self.get_is_hidden_by_reported(obj):
-            return '숨김 처리된 게시글 입니다.'
+            return gettext('This article is temporarily hidden 2')
 
         if self.validate_hidden(obj):
             return obj.title
@@ -75,7 +75,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
     def get_content(self, obj) -> typing.Union[str, list]:
         if self.get_is_hidden_by_reported(obj):
-            return '다수의 신고가 접수되어 숨김 처리된 게시글 입니다.'
+            return gettext('This article is hidden because it has received multiple reports 1')
 
         errors = self.validate_hidden(obj)
 
@@ -86,7 +86,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
     def get_hidden_content(self, obj) -> str:
         if self.get_is_hidden_by_reported(obj):
-            return '다수의 신고가 접수되어 숨김 처리된 게시글 입니다.'
+            return gettext('This article is hidden because it has received multiple reports 2')
 
         if self.validate_hidden(obj):
             return obj.content
@@ -97,7 +97,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         from apps.user.serializers.user import PublicUserSerializer
 
         if obj.is_anonymous:
-            return '익명'
+            return gettext('anonymous')
 
         # <class 'rest_framework.utils.serializer_helpers.ReturnDict'> (is an OrderedDict)
         data = PublicUserSerializer(obj.created_by).data

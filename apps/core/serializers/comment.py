@@ -38,7 +38,7 @@ class BaseCommentSerializer(MetaDataModelSerializer):
 
     def get_content(self, obj) -> typing.Union[str, list]:
         if self.get_is_hidden_by_reported(obj):
-            return '숨김 처리된 댓글 입니다.'
+            return gettext('This comment is hidden 1')
 
         errors = self.validate_hidden(obj)
 
@@ -49,7 +49,7 @@ class BaseCommentSerializer(MetaDataModelSerializer):
 
     def get_hidden_content(self, obj) -> str:
         if self.get_is_hidden_by_reported(obj):
-            return '숨김 처리된 댓글 입니다.'
+            return gettext('This comment is hidden 2')
             
         if self.validate_hidden(obj):
             return obj.content
