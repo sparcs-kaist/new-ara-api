@@ -5,6 +5,7 @@ from ara.classes.serializers import MetaDataModelSerializer
 
 from apps.core.models import Comment, Block
 from django.utils import timezone
+from django.utils.translation import gettext
 
 
 class BaseCommentSerializer(MetaDataModelSerializer):
@@ -38,7 +39,7 @@ class BaseCommentSerializer(MetaDataModelSerializer):
 
     def get_content(self, obj) -> typing.Union[str, list]:
         if self.get_is_hidden_by_reported(obj):
-            return gettext('This comment is hidden 1')
+            return gettext('This comment is hidden because it received multiple reports')
 
         errors = self.validate_hidden(obj)
 
@@ -49,7 +50,7 @@ class BaseCommentSerializer(MetaDataModelSerializer):
 
     def get_hidden_content(self, obj) -> str:
         if self.get_is_hidden_by_reported(obj):
-            return gettext('This comment is hidden 2')
+            return gettext('This comment is hidden because it received multiple reports')
             
         if self.validate_hidden(obj):
             return obj.content
@@ -61,7 +62,7 @@ class BaseCommentSerializer(MetaDataModelSerializer):
         from apps.user.serializers.user import PublicUserSerializer
 
         if obj.is_anonymous:
-            return '익명'
+            return gettext('anonymous')
 
         # <class 'rest_framework.utils.serializer_helpers.ReturnDict'> (is an OrderedDict)
         return PublicUserSerializer(obj.created_by).data
@@ -70,7 +71,7 @@ class BaseCommentSerializer(MetaDataModelSerializer):
         errors = []
 
         if Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by):
-            errors.append(exceptions.ValidationError('차단한 사용자의 게시물입니다.'))
+            errors.append(exceptions.ValidationError(gettext('This article is written by a user you blocked.')))
 
         return errors
 

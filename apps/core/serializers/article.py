@@ -55,7 +55,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
     def get_title(self, obj) -> typing.Union[str, list]:
         if self.get_is_hidden_by_reported(obj):
-            return gettext('This article is temporarily hidden 1')
+            return gettext('This article is temporarily hidden')
 
         errors = self.validate_hidden(obj)
 
@@ -66,7 +66,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
     def get_hidden_title(self, obj) -> str:
         if self.get_is_hidden_by_reported(obj):
-            return gettext('This article is temporarily hidden 2')
+            return gettext('This article is temporarily hidden')
 
         if self.validate_hidden(obj):
             return obj.title
@@ -75,7 +75,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
     def get_content(self, obj) -> typing.Union[str, list]:
         if self.get_is_hidden_by_reported(obj):
-            return gettext('This article is hidden because it has received multiple reports 1')
+            return gettext('This article is hidden because it has received multiple reports')
 
         errors = self.validate_hidden(obj)
 
@@ -86,7 +86,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
     def get_hidden_content(self, obj) -> str:
         if self.get_is_hidden_by_reported(obj):
-            return gettext('This article is hidden because it has received multiple reports 2')
+            return gettext('This article is hidden because it has received multiple reports')
 
         if self.validate_hidden(obj):
             return obj.content
