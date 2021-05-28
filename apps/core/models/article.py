@@ -171,7 +171,7 @@ class Article(MetaDataModel):
 
         self.report_count = count
 
-        if int(count % REPORT_THRESHOLD) == 0:
+        if int(count % settings.REPORT_THRESHOLD) == 0:
             self.hidden_at = timezone.now()    
 
         self.save()

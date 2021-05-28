@@ -33,3 +33,5 @@ try:
     from .local_settings import *
 except ImportError:
     pass
+
+REPORT_THRESHOLD = 3
