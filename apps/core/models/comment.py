@@ -122,13 +122,9 @@ class Comment(MetaDataModel):
     def update_report_count(self):
         from apps.core.models import Report
 
-        count = Report.objects.filter(
-            models.Q(parent_comment=self)
-        ).count()
+        count = Report.objects.filter(parent_comment=self).count()
 
         self.report_count = count
-
-        threshold = 3
 
         if int(count % REPORT_THRESHOLD) == 0:
             self.hidden_at = timezone.now()

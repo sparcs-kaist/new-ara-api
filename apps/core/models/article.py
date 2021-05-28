@@ -167,9 +167,7 @@ class Article(MetaDataModel):
     def update_report_count(self):
         from apps.core.models import Report
 
-        count = Report.objects.filter(
-            models.Q(parent_article=self)
-        ).count()
+        count = Report.objects.filter(parent_article=self).count()
 
         self.report_count = count
 
