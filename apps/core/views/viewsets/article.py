@@ -245,7 +245,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 LIMIT %s OFFSET %s
             ) recents ON recents.article_id = `core_article`.id
             ''', [self.request.user.id, paginator.page_size, max(0, paginator.page.start_index()-1)])\
-            .prefetch_related('created_by', 'created_by__profile')
+            .prefetch_related('created_by', 'created_by__profile', 'parent_board', 'parent_topic')
 
         serializer = self.get_serializer_class()([v for v in queryset], many=True, context={"request": request})
         return paginator.get_paginated_response(serializer.data)
