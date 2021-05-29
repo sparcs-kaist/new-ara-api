@@ -3,6 +3,7 @@ import time
 from django.db import models
 
 from rest_framework import status, viewsets, response, decorators, serializers, permissions
+from rest_framework.response import Response
 
 from ara import redis
 from ara.classes.pagination import PageNumberPagination
@@ -152,7 +153,8 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         pipe.zadd(redis_key, {f'{article.id}:1:{self.request.user.id}:{time.time()}': time.time()})
         pipe.execute(raise_on_error=True)
 
-        return super().retrieve(request, *args, **kwargs)
+        serialized = self.serializer_class(article, context={'request': request})
+        return Response(serialized.data)
 
     @decorators.action(detail=True, methods=['post'])
     def vote_cancel(self, request, *args, **kwargs):
