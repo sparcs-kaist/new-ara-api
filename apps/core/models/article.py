@@ -126,8 +126,7 @@ class Article(MetaDataModel):
 
     hidden_at = models.DateTimeField(
         default=timezone.datetime.min.replace(tzinfo=timezone.utc),
-        db_index=True,
-        verbose_name='임시 삭제 시간',
+        verbose_name='숨김 시간',
     )
 
     def __str__(self):
@@ -168,7 +167,6 @@ class Article(MetaDataModel):
         from apps.core.models import Report
 
         count = Report.objects.filter(parent_article=self).count()
-
         self.report_count = count
 
         if int(count % settings.REPORT_THRESHOLD) == 0:
