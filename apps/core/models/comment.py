@@ -4,6 +4,7 @@ from django.db import models, IntegrityError
 from django.conf import settings
 from django.utils import timezone
 from django.db import transaction
+from .report import Report
 
 from ara.db.models import MetaDataModel
 from ara.sanitizer import sanitize
@@ -119,8 +120,6 @@ class Comment(MetaDataModel):
     
     @transaction.atomic
     def update_report_count(self):
-        from apps.core.models import Report
-
         count = Report.objects.filter(parent_comment=self).count()
         self.report_count = count
 
