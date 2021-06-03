@@ -1,10 +1,25 @@
 from django.contrib import admin
+from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
+from django.db.models import Q
 
 from ara.classes.admin import MetaDataModelAdmin
 
 from apps.core.models import Board, Topic, Article, \
     ArticleReadLog, ArticleDeleteLog, BestArticle, CommentDeleteLog, BestComment, FAQ, BestSearch, Report, Comment
 
+class HiddenArticleListFilter(admin.SimpleListFilter):
+    title = _('Hidden Article')
+    parameter_name = 'hidden_at'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('1', _('숨김 처리된 글')),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == '1':
+            return queryset.exclude(hidden_at = timezone.datetime.min.replace(tzinfo=timezone.utc))
 
 @admin.register(Board)
 class BoardAdmin(MetaDataModelAdmin):
@@ -58,6 +73,7 @@ class ArticleAdmin(MetaDataModelAdmin):
         'is_content_social',
         'parent_topic',
         'parent_board',
+        HiddenArticleListFilter,
     )
     list_display = (
         'title',
@@ -70,17 +86,51 @@ class ArticleAdmin(MetaDataModelAdmin):
         'created_by',
         'parent_topic',
         'parent_board',
+        'report_count',
+        'hidden_at',
     )
     search_fields = (
         'title',
         'content',
+        'hidden_at',
     )
+    actions = (
+        'Restore_Article',
+        'Delete_Article'
+    )
+    # 기존 delete action 제거
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+    # Hidden_at 값 초기화
+    def Restore_Article(self, request, queryset):
+        rows_updated = queryset.update(hidden_at=timezone.datetime.min.replace(tzinfo=timezone.utc))
+        if rows_updated == 1:
+            message_bit = "1개의 게시물이"
+        else:
+            message_bit = "%s개의 게시물들이" % rows_updated
+        self.message_user(request, "%s 성공적으로 복구되었습니다." % message_bit)
+    # 게시글 삭제 시 댓글도 함께 삭제되도록 save함수 추가
+    def Delete_Article(self, request, queryset):
+        num = 0
+        for e in queryset.filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)):
+            e.deleted_at = timezone.now()
+            e.save()
+            num += 1
+        if num == 1:
+            message_bit = "1개의 게시물이"
+        else:
+            message_bit = "%s개의 게시물들이" % num
+        self.message_user(request, "%s 성공적으로 삭제되었습니다." % message_bit)
 
 
 @admin.register(Comment)
 class CommentAdmin(MetaDataModelAdmin):
     list_filter = (
         'is_anonymous',
+        HiddenArticleListFilter,
     )
     list_display = (
         'content',
@@ -90,10 +140,24 @@ class CommentAdmin(MetaDataModelAdmin):
         'created_by',
         'parent_article',
         'parent_comment',
+        'report_count',
+        'hidden_at',
     )
     search_fields = (
         'content',
+        'hidden_at',
     )
+    actions = (
+        'Restore_Hidden_Comment',
+    )
+
+    def Restore_Hidden_Comment(self, request, queryset):
+        rows_updated = queryset.update(hidden_at=timezone.datetime.min.replace(tzinfo=timezone.utc))
+        if rows_updated == 1:
+            message_bit = "1개의 댓글이"
+        else:
+            message_bit = "%s개의 댓들이" % rows_updated
+        self.message_user(request, "%s 성공적으로 복구되었습니다." % message_bit)
 
 
 @admin.register(ArticleReadLog)
