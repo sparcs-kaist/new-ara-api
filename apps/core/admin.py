@@ -95,35 +95,38 @@ class ArticleAdmin(MetaDataModelAdmin):
         'hidden_at',
     )
     actions = (
-        'Restore_Article',
-        'Delete_Article'
+        'restore_articles',
+        'delete_articles'
     )
+
     # 기존 delete action 제거
     def get_actions(self, request):
         actions = super().get_actions(request)
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
-    # Hidden_at 값 초기화
-    def Restore_Article(self, request, queryset):
+
+    # hidden_at 값 초기화
+    def restore_articles(self, request, queryset):
         rows_updated = queryset.update(hidden_at=timezone.datetime.min.replace(tzinfo=timezone.utc))
         if rows_updated == 1:
-            message_bit = "1개의 게시물이"
+            message_bit = '1개의 게시물이'
         else:
-            message_bit = "%s개의 게시물들이" % rows_updated
-        self.message_user(request, "%s 성공적으로 복구되었습니다." % message_bit)
+            message_bit = f'{rows_updated}개의 게시물들이'
+        self.message_user(request, f'{message_bit} 성공적으로 복구되었습니다.')
+
     # 게시글 삭제 시 댓글도 함께 삭제되도록 save함수 추가
-    def Delete_Article(self, request, queryset):
+    def delete_articles(self, request, queryset):
         num = 0
         for e in queryset.filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)):
             e.deleted_at = timezone.now()
             e.save()
             num += 1
         if num == 1:
-            message_bit = "1개의 게시물이"
+            message_bit = '1개의 게시물이'
         else:
-            message_bit = "%s개의 게시물들이" % num
-        self.message_user(request, "%s 성공적으로 삭제되었습니다." % message_bit)
+            message_bit = f'{num}개의 게시물들이'
+        self.message_user(request, f'{message_bit}성공적으로 삭제되었습니다.')
 
 
 @admin.register(Comment)
@@ -148,16 +151,38 @@ class CommentAdmin(MetaDataModelAdmin):
         'hidden_at',
     )
     actions = (
-        'Restore_Hidden_Comment',
+        'restore_comments',
+        'delete_comments'
     )
 
-    def Restore_Hidden_Comment(self, request, queryset):
+    # 기존 delete action 제거
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+    # hidden_at값 초기화
+    def restore_comments(self, request, queryset):
         rows_updated = queryset.update(hidden_at=timezone.datetime.min.replace(tzinfo=timezone.utc))
         if rows_updated == 1:
-            message_bit = "1개의 댓글이"
+            message_bit = '1개의 댓글이'
         else:
-            message_bit = "%s개의 댓들이" % rows_updated
-        self.message_user(request, "%s 성공적으로 복구되었습니다." % message_bit)
+            message_bit = f'{rows_updated}개의 댓글들이'
+        self.message_user(request, f'{message_bit}성공적으로 복구되었습니다.')
+
+    # 댓글 삭제 시 하위 댓글도 함께 삭제되도록 save함수 추가
+    def delete_comments(self, request, queryset):
+        num = 0
+        for e in queryset.filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)):
+            e.deleted_at = timezone.now()
+            e.save()
+            num += 1
+        if num == 1:
+            message_bit = '1개의 댓글이'
+        else:
+            message_bit = f'{num}개의 댓글들이'
+        self.message_user(request, f'{message_bit}성공적으로 삭제되었습니다.')
 
 
 @admin.register(ArticleReadLog)
