@@ -95,22 +95,18 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
     @staticmethod
     def get_read_status(obj) -> str:
-        if not hasattr(obj, "my_last_read_at") and not obj.article_read_log_set.exists():
+        if not obj.article_read_log_set.exists():
             return 'N'
 
-        my_article_read_time = None
-        if hasattr(obj, "my_last_read_at"):
-            my_article_read_time = obj.my_last_read_at.replace(tzinfo=timezone.get_current_timezone())
-        else:
-            my_article_read_time = obj.article_read_log_set.all()[0].created_at
+        my_article_read_log = obj.article_read_log_set.all()[0]
 
         # compare with article's last commented datetime
         if obj.commented_at:
-            if obj.commented_at > my_article_read_time:
+            if obj.commented_at > my_article_read_log.created_at:
                 return 'U'
 
         # compare with article's last updated datetime
-        if obj.content_updated_at and obj.content_updated_at > my_article_read_time:
+        if obj.content_updated_at and obj.content_updated_at > my_article_read_log.created_at:
             return 'U'
 
         return '-'
