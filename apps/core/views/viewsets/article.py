@@ -6,7 +6,6 @@ from rest_framework import status, viewsets, response, decorators, serializers, 
 from rest_framework.response import Response
 
 from ara import redis
-from ara.classes.pagination import PageNumberPagination
 from ara.classes.viewset import ActionAPIViewSet
 
 from apps.core.models import (
@@ -233,8 +232,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             .filter(read_by=request.user) \
             .distinct()
 
-        paginator = PageNumberPagination()
-        paginator.paginate_queryset(count_queryset, request)
+        self.paginate_queryset(count_queryset)
 
         queryset = Article.objects.raw(f'''
             SELECT * FROM `core_article`
@@ -244,7 +242,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 WHERE (`core_articlereadlog`.`deleted_at` = '0001-01-01 00:00:00' AND `core_articlereadlog`.`read_by_id` = {self.request.user.id})
                 GROUP BY `core_articlereadlog`.`article_id`
                 ORDER BY my_last_read_at desc
-                LIMIT {paginator.page_size} OFFSET {max(0, paginator.page.start_index()-1)}
+                LIMIT {self.paginator.get_page_size(request)} OFFSET {max(0, self.paginator.page.start_index()-1)}
             ) recents ON recents.article_id = `core_article`.id''') \
             .prefetch_related('created_by',
                               'created_by__profile',
@@ -253,4 +251,4 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                               ArticleReadLog.prefetch_my_article_read_log(self.request.user))
 
         serializer = self.get_serializer_class()([v for v in queryset], many=True, context={"request": request})
-        return paginator.get_paginated_response(serializer.data)
+        return self.paginator.get_paginated_response(serializer.data)
