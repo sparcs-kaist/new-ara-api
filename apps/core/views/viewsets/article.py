@@ -234,16 +234,17 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         self.paginate_queryset(count_queryset)
 
-        queryset = Article.objects.raw(f'''
+        queryset = Article.objects.raw('''
             SELECT * FROM `core_article`
             JOIN (
                 SELECT `core_articlereadlog`.`article_id`, MAX(`core_articlereadlog`.`created_at`) AS my_last_read_at
                 FROM `core_articlereadlog`
-                WHERE (`core_articlereadlog`.`deleted_at` = '0001-01-01 00:00:00' AND `core_articlereadlog`.`read_by_id` = {self.request.user.id})
+                WHERE (`core_articlereadlog`.`deleted_at` = '0001-01-01 00:00:00' AND `core_articlereadlog`.`read_by_id` = %s)
                 GROUP BY `core_articlereadlog`.`article_id`
                 ORDER BY my_last_read_at desc
-                LIMIT {self.paginator.get_page_size(request)} OFFSET {max(0, self.paginator.page.start_index()-1)}
-            ) recents ON recents.article_id = `core_article`.id''') \
+                LIMIT %s OFFSET %s
+            ) recents ON recents.article_id = `core_article`.id
+            ''', [self.request.user.id, self.paginator.get_page_size(request), max(0, self.paginator.page.start_index()-1)]) \
             .prefetch_related('created_by',
                               'created_by__profile',
                               'parent_board',
