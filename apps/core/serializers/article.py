@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import Max
+from django.utils import timezone
 from django.utils.translation import gettext
 from rest_framework import exceptions, serializers
 import typing
@@ -86,7 +88,6 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         if obj.is_anonymous:
             return '익명'
 
-        # <class 'rest_framework.utils.serializer_helpers.ReturnDict'> (is an OrderedDict)
         data = PublicUserSerializer(obj.created_by).data
         data['is_blocked'] = Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by)
 
