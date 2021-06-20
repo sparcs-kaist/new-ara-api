@@ -236,19 +236,21 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         paginator = PageNumberPagination()
         paginator.paginate_queryset(count_queryset, request)
 
-        queryset = Article.objects.raw('''
+        queryset = Article.objects.raw(f'''
             SELECT * FROM `core_article`
             JOIN (
                 SELECT `core_articlereadlog`.`article_id`, MAX(`core_articlereadlog`.`created_at`) AS my_last_read_at
                 FROM `core_articlereadlog`
-                WHERE (`core_articlereadlog`.`deleted_at` = '0001-01-01 00:00:00' AND `core_articlereadlog`.`read_by_id` = %s)
+                WHERE (`core_articlereadlog`.`deleted_at` = '0001-01-01 00:00:00' AND `core_articlereadlog`.`read_by_id` = {self.request.user.id})
                 GROUP BY `core_articlereadlog`.`article_id`
                 ORDER BY my_last_read_at desc
-                LIMIT %s OFFSET %s
-            ) recents ON recents.article_id = `core_article`.id
-            ''', [self.request.user.id, paginator.page_size, max(0, paginator.page.start_index()-1)]) \
-            .prefetch_related('created_by', 'created_by__profile', 'parent_board', 'parent_topic') \
-            .prefetch_related(ArticleReadLog.prefetch_my_article_read_log(self.request.user))
+                LIMIT {paginator.page_size} OFFSET {max(0, paginator.page.start_index()-1)}
+            ) recents ON recents.article_id = `core_article`.id''') \
+            .prefetch_related('created_by',
+                              'created_by__profile',
+                              'parent_board',
+                              'parent_topic',
+                              ArticleReadLog.prefetch_my_article_read_log(self.request.user))
 
         serializer = self.get_serializer_class()([v for v in queryset], many=True, context={"request": request})
         return paginator.get_paginated_response(serializer.data)
