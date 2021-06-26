@@ -8,7 +8,7 @@ class MetaDataModelAdmin(admin.ModelAdmin):
         'deleted_at',
     )
 
-    def get_readonly_fields(self, request, obj=None):
+    def get_readonly_fields(self, request, obj=None) -> list:
         readonly_fields = list(super().get_readonly_fields(request, obj))
 
         for meta_data_field in self.meta_data_fields:
@@ -25,7 +25,7 @@ class MetaDataStackedInline(admin.StackedInline):
         'deleted_at',
     )
 
-    def get_readonly_fields(self, request, obj=None):
+    def get_readonly_fields(self, request, obj=None) -> list:
         readonly_fields = list(super().get_readonly_fields(request, obj))
 
         for meta_data_field in self.meta_data_fields:
@@ -42,7 +42,7 @@ class MetaDataTabularInline(admin.TabularInline):
         'deleted_at',
     )
 
-    def get_readonly_fields(self, request, obj=None):
+    def get_readonly_fields(self, request, obj=None) -> list:
         readonly_fields = list(super().get_readonly_fields(request, obj))
 
         for meta_data_field in self.meta_data_fields:

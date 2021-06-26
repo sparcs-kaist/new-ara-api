@@ -23,5 +23,5 @@ class FAQ(MetaDataModel):
         verbose_name='FAQ 영문 답변',
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.ko_question

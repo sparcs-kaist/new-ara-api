@@ -118,7 +118,7 @@ class Article(MetaDataModel):
         verbose_name='제목/본문/첨부파일 수정 시간',
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.title
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):

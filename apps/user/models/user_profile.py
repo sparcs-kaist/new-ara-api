@@ -112,13 +112,13 @@ class UserProfile(MetaDataModel):
         verbose_name='활동정지 마감 일시',
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.nickname
 
     def can_change_nickname(self) -> bool:
         return (timezone.now() - relativedelta(months=3)) >= self.nickname_updated_at
 
     @cached_property
-    def email(self):
+    def email(self) -> str:
         return self.user.email
 

@@ -1,6 +1,9 @@
 from django.db import models
+from django.db.models import Max
+from django.utils import timezone
 from django.utils.translation import gettext
 from rest_framework import exceptions, serializers
+import typing
 
 from apps.core.documents import ArticleDocument
 from ara.classes.serializers import MetaDataModelSerializer
@@ -16,7 +19,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         exclude = ('content', 'content_text', 'attachments',
                    'migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
 
-    def get_my_vote(self, obj):
+    def get_my_vote(self, obj) -> typing.Optional[bool]:
         request = self.context['request']
         if not obj.vote_set.filter(voted_by=request.user).exists():
             return None
@@ -26,7 +29,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return my_vote.is_positive
 
     @staticmethod
-    def get_my_scrap(obj):
+    def get_my_scrap(obj) -> typing.Optional[dict]:
         from apps.core.serializers.scrap import BaseScrapSerializer
 
         if not obj.scrap_set.exists():
@@ -36,13 +39,13 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return BaseScrapSerializer(my_scrap).data
 
-    def get_is_hidden(self, obj):
+    def get_is_hidden(self, obj) -> bool:
         if self.validate_hidden(obj):
             return True
 
         return False
 
-    def get_why_hidden(self, obj):
+    def get_why_hidden(self, obj) -> typing.List[dict]:
         errors = self.validate_hidden(obj)
 
         return [
@@ -51,7 +54,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
             } for error in errors
         ]
 
-    def get_title(self, obj):
+    def get_title(self, obj) -> typing.Union[str, list]:
         errors = self.validate_hidden(obj)
 
         if errors:
@@ -59,13 +62,13 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return obj.title
 
-    def get_hidden_title(self, obj):
+    def get_hidden_title(self, obj) -> str:
         if self.validate_hidden(obj):
             return obj.title
 
         return ''
 
-    def get_content(self, obj):
+    def get_content(self, obj) -> typing.Union[str, list]:
         errors = self.validate_hidden(obj)
 
         if errors:
@@ -73,13 +76,13 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return obj.content
 
-    def get_hidden_content(self, obj):
+    def get_hidden_content(self, obj) -> str:
         if self.validate_hidden(obj):
             return obj.content
 
         return ''
 
-    def get_created_by(self, obj):
+    def get_created_by(self, obj) -> typing.Union[str, dict]:
         from apps.user.serializers.user import PublicUserSerializer
 
         if obj.is_anonymous:
@@ -91,7 +94,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return data
 
     @staticmethod
-    def get_read_status(obj):
+    def get_read_status(obj) -> str:
         if not obj.article_read_log_set.exists():
             return 'N'
 
@@ -109,7 +112,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return '-'
 
     # TODO: article_current_page property must be cached
-    def get_article_current_page(self, obj):
+    def get_article_current_page(self, obj) -> typing.Optional[int]:
         view = self.context.get('view')
 
         if view:
@@ -121,7 +124,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return None
 
-    def validate_hidden(self, obj: Article):
+    def validate_hidden(self, obj: Article) -> typing.List[exceptions.ValidationError]:
         errors = []
         request = self.context['request']
 
@@ -203,7 +206,7 @@ class ArticleSerializer(BaseArticleSerializer):
 
         return Article.objects.all()
 
-    def get_side_articles(self, obj):
+    def get_side_articles(self, obj) -> dict:
         request = self.context['request']
 
         from_view = request.query_params.get('from_view')

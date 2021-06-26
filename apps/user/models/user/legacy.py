@@ -34,7 +34,7 @@ class LegacyUser(MetaDataModel):
     )
 
     @staticmethod
-    def encrypt_password(raw_password, salt):
+    def encrypt_password(raw_password, salt) -> str:
         """
         @type raw_password: string
         @type salt: string
@@ -57,7 +57,7 @@ class LegacyUser(MetaDataModel):
                 break
         return pw
 
-    def compare_password(self, password):
+    def compare_password(self, password) -> bool:
         """
         @type password: string
         @rtype: bool
@@ -69,7 +69,7 @@ class LegacyUser(MetaDataModel):
         return hash_from_user == hash_from_db
 
 
-def smart_unicode(_str):
+def smart_unicode(_str) -> str:
     """
     Util function from ARAra project.
     Website: https://github.com/sparcs-kaist/arara/blob/master/libs/__init__.py
