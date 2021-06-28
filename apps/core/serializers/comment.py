@@ -4,7 +4,9 @@ import hashlib
 
 from ara.classes.serializers import MetaDataModelSerializer
 
-from apps.core.models import Comment, Block
+from apps.core.models import Article, Comment, Block
+from django.utils import timezone
+from django.utils.translation import gettext
 from ara.settings import HASH_SECRET_VALUE
 
 
@@ -56,6 +58,7 @@ class BaseCommentSerializer(MetaDataModelSerializer):
         from apps.user.serializers.user import PublicUserSerializer
 
         if obj.is_anonymous:
+            # TODO: 익명 게시글의 작성자가 본인의 글에 쓴 댓글은 '글쓴이'로 표시
             return get_anonymous_user(obj)
 
         # <class 'rest_framework.utils.serializer_helpers.ReturnDict'> (is an OrderedDict)
@@ -65,21 +68,40 @@ class BaseCommentSerializer(MetaDataModelSerializer):
         errors = []
 
         if Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by):
-            errors.append(exceptions.ValidationError('차단한 사용자의 게시물입니다.'))
+            errors.append(exceptions.ValidationError(gettext('This article is written by a시 user you blocked.')))
 
         return errors
 
 
+def get_parent_article(obj) -> Article:
+    if obj.parent_article:
+        print('parent article writer', obj.parent_article.created_by.id)
+        return obj.parent_article
+    else:
+        parent_comment_id = obj.parent_comment.id
+        parent_article = Comment.objects.get(id=parent_comment_id).parent_article
+        return parent_article
+
+
 def get_anonymous_user(obj) -> dict:
     from apps.user.serializers.user import PublicUserSerializer
-    user = PublicUserSerializer(obj.created_by).data
-    # 댓글 작성자는 (작성자 id + parent article id + 시크릿)으로 구별합니다.
-    print('hash val: ', HASH_SECRET_VALUE)
-    user_num = user['id'] + obj.parent_article.id + int(HASH_SECRET_VALUE)
-    user_str = str(hex(user_num)).encode('utf-8')
-    user_hash = hashlib.sha224(user_str).hexdigest()
-    user_name = make_anonymous_name(hash(user_str))
-    user_profile_picture = make_random_profile_picture(hash(user_str))
+
+    parent_article = get_parent_article(obj)
+    parent_article_id = parent_article.id
+    parent_article_created_by_id = parent_article.created_by.id
+    comment_created_by_id = obj.created_by.id
+
+    # 댓글 작성자는 (작성자 id + parent article id + 시크릿)을 해시한 값으로 구별합니다.
+    user_unique_num = comment_created_by_id + parent_article_id + int(HASH_SECRET_VALUE)
+    user_unique_encoding = str(hex(user_unique_num)).encode('utf-8')
+    user_hash = hashlib.sha224(user_unique_encoding).hexdigest()
+    user_profile_picture = make_random_profile_picture(hash(user_unique_encoding))
+
+    if parent_article_created_by_id == comment_created_by_id:
+        user_name = '글쓴이' # TODO: 번역
+    else:
+        user_name = make_anonymous_name(hash(user_unique_encoding))
+
     return {
         'id': user_hash,
         'username': user_name,
@@ -96,6 +118,7 @@ def make_anonymous_name(hash_val) -> str:
              '앵무새', '알파카', '강아지', '고양이', '원숭이', '두더지', '낙타', '망아지', '시조새', '힙스터', '로봇', '감자', '고구마', '가마우지', '직박구리',
              '오리너구리', '보노보', '개미핥기', '치타', '사자', '구렁이', '도마뱀', '개구리', '올빼미', '부엉이']
 
+    # TODO: anonymous name에서 중복 제거 (서로 다른 두 명의 댓글이 같은 이름을 가지지 않도록)
     nickname = '익명의 ' + nouns[hash_val % len(nouns)]
     return nickname
 
