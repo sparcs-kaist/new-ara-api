@@ -105,9 +105,9 @@ def get_anonymous_user(obj) -> dict:
     user_profile_picture = make_random_profile_picture(hash(user_unique_encoding))
 
     if parent_article_created_by_id == comment_created_by_id:
-        user_name = '글쓴이' # TODO: 번역
+        user_name = gettext('글쓴이') # TODO: 번역
     else:
-        user_name = make_anonymous_name(hash(user_unique_encoding))
+        user_name = make_anonymous_name(hash(user_unique_encoding), user_hash[-3:])
 
     return {
         'id': user_hash,
@@ -120,13 +120,12 @@ def get_anonymous_user(obj) -> dict:
     }
 
 
-def make_anonymous_name(hash_val) -> str:
+def make_anonymous_name(hash_val, unique_tail) -> str:
     nouns = ['외계인', '펭귄', '코뿔소', '여우', '염소', '타조', '사과', '포도', '다람쥐', '도토리', '해바라기', '코끼리', '돌고래', '거북이', '나비',
              '앵무새', '알파카', '강아지', '고양이', '원숭이', '두더지', '낙타', '망아지', '시조새', '힙스터', '로봇', '감자', '고구마', '가마우지', '직박구리',
-             '오리너구리', '보노보', '개미핥기', '치타', '사자', '구렁이', '도마뱀', '개구리', '올빼미', '부엉이']
+             '오리너구리', '보노보노', '개미핥기', '치타', '사자', '구렁이', '도마뱀', '개구리', '올빼미', '부엉이']
 
-    # TODO: anonymous name에서 중복 제거 (서로 다른 두 명의 댓글이 같은 이름을 가지지 않도록)
-    nickname = '익명의 ' + nouns[hash_val % len(nouns)]
+    nickname = '익명의 ' + nouns[hash_val % len(nouns)] + ' ' + unique_tail
     return nickname
 
 
