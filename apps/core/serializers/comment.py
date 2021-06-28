@@ -58,8 +58,7 @@ class BaseCommentSerializer(MetaDataModelSerializer):
         from apps.user.serializers.user import PublicUserSerializer
 
         if obj.is_anonymous:
-            # TODO: 익명 게시글의 작성자가 본인의 글에 쓴 댓글은 '글쓴이'로 표시
-            return get_anonymous_user(obj)
+            return get_anonymous_user(obj) # 게시글 작성자의 댓글은 '글쓴이'로 표시
 
         # <class 'rest_framework.utils.serializer_helpers.ReturnDict'> (is an OrderedDict)
         return PublicUserSerializer(obj.created_by).data
@@ -84,7 +83,6 @@ def get_parent_article(obj) -> Article:
 
 
 def get_anonymous_user(obj) -> dict:
-    from apps.user.serializers.user import PublicUserSerializer
 
     parent_article = get_parent_article(obj)
     parent_article_id = parent_article.id

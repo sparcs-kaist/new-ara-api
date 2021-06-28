@@ -4,9 +4,11 @@ from django.utils import timezone
 from django.utils.translation import gettext
 from rest_framework import exceptions, serializers
 import typing
+import hashlib
 
 from apps.core.documents import ArticleDocument
 from ara.classes.serializers import MetaDataModelSerializer
+from ara.settings import HASH_SECRET_VALUE
 
 from apps.core.models import Article, ArticleReadLog, Board, Block
 from apps.core.serializers.board import BoardSerializer
@@ -86,7 +88,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         from apps.user.serializers.user import PublicUserSerializer
 
         if obj.is_anonymous:
-            return '익명'
+            return get_anonymous_user(obj)
 
         data = PublicUserSerializer(obj.created_by).data
         data['is_blocked'] = Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by)
@@ -141,6 +143,32 @@ class BaseArticleSerializer(MetaDataModelSerializer):
             errors.append(exceptions.ValidationError('접근 권한이 없는 게시판입니다.'))
 
         return errors
+
+def get_anonymous_user(obj) -> dict:
+    user_unique_num = obj.created_by.id + obj.id + int(HASH_SECRET_VALUE)
+    user_unique_encoding = str(hex(user_unique_num)).encode('utf-8')
+    user_profile_picture = make_random_profile_picture(hash(user_unique_encoding))
+
+    return {
+        'id': 0,
+        'username': gettext('anonymous'),
+        'profile': {
+            'picture': user_profile_picture,
+            'nickname': gettext('anonymous'),
+            'user': gettext('anonymous')
+        }
+    }
+
+
+def make_random_profile_picture(hash_val) -> str:
+    colors = ['blue', 'red', 'gray']
+    numbers = ['1', '2', '3']
+
+    temp_color = colors[hash_val % len(colors)]
+    temp_num = numbers[hash_val % len(numbers)]
+    default_picture = f'user_profiles/default_pictures/{temp_color}-default{temp_num}.png'
+
+    return default_picture
 
 
 class SideArticleSerializer(BaseArticleSerializer):
