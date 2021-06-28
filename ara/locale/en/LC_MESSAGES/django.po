@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-08 23:59+0900\n"
+"POT-Creation-Date: 2021-06-28 22:46+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,23 +22,36 @@ msgstr ""
 msgid "No content for portal article"
 msgstr ""
 
-#: apps/core/serializers/article.py:214
+#: apps/core/serializers/article.py:60 apps/core/serializers/article.py:71
+msgid "This article is temporarily hidden"
+msgstr ""
+
+#: apps/core/serializers/article.py:80 apps/core/serializers/article.py:91
+msgid "This article is hidden because it has received multiple reports"
+msgstr ""
+
+#: apps/core/serializers/article.py:170 apps/core/serializers/article.py:173
+#: apps/core/serializers/article.py:174
+msgid "anonymous"
+msgstr ""
+
+#: apps/core/serializers/article.py:247
 msgid "This article is not in user's scrap list."
 msgstr ""
 
-#: apps/core/serializers/article.py:224
-msgid "This article is never read by user."
-msgstr ""
-
-#: apps/core/serializers/article.py:241
+#: apps/core/serializers/article.py:264
 msgid "Wrong value for parameter 'from_view'."
 msgstr ""
 
-#: apps/core/serializers/article.py:369
+#: apps/core/serializers/article.py:316
+msgid "This article is never read by user."
+msgstr ""
+
+#: apps/core/serializers/article.py:438
 msgid "This board is read only."
 msgstr ""
 
-#: apps/core/serializers/article.py:371
+#: apps/core/serializers/article.py:440
 msgid "This board is only for KAIST members."
 msgstr ""
 
@@ -48,6 +61,18 @@ msgstr ""
 
 #: apps/core/serializers/block.py:44
 msgid "This user is already blocked."
+msgstr ""
+
+#: apps/core/serializers/comment.py:44 apps/core/serializers/comment.py:55
+msgid "This comment is hidden because it received multiple reports"
+msgstr ""
+
+#: apps/core/serializers/comment.py:76
+msgid "This article is written by a시 user you blocked."
+msgstr ""
+
+#: apps/core/serializers/comment.py:108
+msgid "글쓴이"
 msgstr ""
 
 #: apps/core/serializers/report.py:43
