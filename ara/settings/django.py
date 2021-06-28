@@ -109,6 +109,7 @@ USE_L10N = True
 USE_TZ = True
 
 SECRET_KEY = env('SECRET_KEY')
+HASH_SECRET_VALUE = env('HASH_SECRET_VALUE')
 
 DATABASES = {
     'default': {
