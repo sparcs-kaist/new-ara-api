@@ -110,9 +110,9 @@ class ArticleAdmin(MetaDataModelAdmin):
     def restore_articles(self, request, queryset):
         rows_updated = queryset.update(hidden_at=timezone.datetime.min.replace(tzinfo=timezone.utc))
         if rows_updated == 1:
-            message_bit = '1개의 게시물이'
+            message_bit = '1개의 게시물이'
         else:
-            message_bit = f'{rows_updated}개의 게시물들이'
+            message_bit = f'{rows_updated}개의 게시물들이'
         self.message_user(request, f'{message_bit} 성공적으로 복구되었습니다.')
 
     # 게시글 삭제 시 댓글도 함께 삭제되도록 save함수 추가
@@ -123,10 +123,10 @@ class ArticleAdmin(MetaDataModelAdmin):
             e.save()
             num += 1
         if num == 1:
-            message_bit = '1개의 게시물이'
+            message_bit = '1개의 게시물이'
         else:
-            message_bit = f'{num}개의 게시물들이'
-        self.message_user(request, f'{message_bit}성공적으로 삭제되었습니다.')
+            message_bit = f'{num}개의 게시물들이'
+        self.message_user(request, f'{message_bit} 성공적으로 삭제되었습니다.')
 
 
 @admin.register(Comment)
@@ -166,10 +166,10 @@ class CommentAdmin(MetaDataModelAdmin):
     def restore_comments(self, request, queryset):
         rows_updated = queryset.update(hidden_at=timezone.datetime.min.replace(tzinfo=timezone.utc))
         if rows_updated == 1:
-            message_bit = '1개의 댓글이'
+            message_bit = '1개의 댓글이'
         else:
-            message_bit = f'{rows_updated}개의 댓글들이'
-        self.message_user(request, f'{message_bit}성공적으로 복구되었습니다.')
+            message_bit = f'{rows_updated}개의 댓글들이'
+        self.message_user(request, f'{message_bit} 성공적으로 복구되었습니다.')
 
     # 댓글 삭제 시 하위 댓글도 함께 삭제되도록 save함수 추가
     def delete_comments(self, request, queryset):
@@ -179,10 +179,10 @@ class CommentAdmin(MetaDataModelAdmin):
             e.save()
             num += 1
         if num == 1:
-            message_bit = '1개의 댓글이'
+            message_bit = '1개의 댓글이'
         else:
-            message_bit = f'{num}개의 댓글들이'
-        self.message_user(request, f'{message_bit}성공적으로 삭제되었습니다.')
+            message_bit = f'{num}개의 댓글들이'
+        self.message_user(request, f'{message_bit} 성공적으로 삭제되었습니다.')
 
 
 @admin.register(ArticleReadLog)
