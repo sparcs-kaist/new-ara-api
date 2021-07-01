@@ -165,7 +165,7 @@ def make_random_profile_picture(hash_val) -> str:
     numbers = ['1', '2', '3']
 
     temp_color = colors[hash_val % len(colors)]
-    temp_num = numbers[hash_val % len(numbers)]
+    temp_num = numbers[(hash_val // 3) % len(numbers)]
     default_picture = f'user_profiles/default_pictures/{temp_color}-default{temp_num}.png'
 
     return default_picture

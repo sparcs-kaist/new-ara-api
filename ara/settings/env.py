@@ -15,5 +15,5 @@ env = environ.Env(
     SSO_SECRET_KEY=(str, os_environ.get('SSO_SECRET_KEY')),
     PORTAL_ID=(str, os_environ.get('PORTAL_ID')),
     PORTAL_PASSWORD=(str, os_environ.get('PORTAL_PASSWORD')),
-    HASH_SECRET_VALUE=(int, os_environ.get('HASH_SECRET_VALUE', 1234)),
+    HASH_SECRET_VALUE=(int, os_environ.get('HASH_SECRET_VALUE')),
 )
