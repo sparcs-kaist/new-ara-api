@@ -1,6 +1,9 @@
 from cached_property import cached_property
 from django.db import models
 
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+
 from ara.db.models import MetaDataModel
 
 
@@ -72,6 +75,8 @@ class Notification(MetaDataModel):
                 ),
             )
 
+            async_to_sync(get_channel_layer().group_send)('broadcast', {'type':'update.notification', 'user_id': _article.created_by.id})
+
         def notify_comment_commented(_article, _comment):
             NotificationReadLog.objects.create(
                 read_by=_comment.parent_comment.created_by,
@@ -83,6 +88,8 @@ class Notification(MetaDataModel):
                     related_comment=_comment,
                 ),
             )
+
+            async_to_sync(get_channel_layer().group_send)('broadcast', {'type':'update.notification', 'user_id': _comment.parent_comment.created_by.id})
 
         article = comment.parent_article if comment.parent_article else comment.parent_comment.parent_article
 
