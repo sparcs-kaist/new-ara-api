@@ -111,14 +111,6 @@ class Comment(MetaDataModel):
 
         return self.parent_comment.parent_article
 
-    def get_parent_article(self):
-        if self.parent_article:
-            return self.parent_article
-        else:
-            parent_comment_id = self.parent_comment.id
-            parent_article = Comment.objects.get(id=parent_comment_id).parent_article
-            return parent_article
-
     # API 상에서 보이는 사용자 (익명일 경우 익명화된 글쓴이, 그 외는 그냥 글쓴이)
     @cached_property
     def postprocessed_created_by(self):
