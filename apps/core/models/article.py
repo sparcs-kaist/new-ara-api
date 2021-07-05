@@ -4,6 +4,8 @@ from django.db import models, IntegrityError
 from django.conf import settings
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
+
+from apps.user.views.viewsets import make_random_profile_picture
 from ara.db.models import MetaDataModel
 from ara.sanitizer import sanitize
 from ara.settings import HASH_SECRET_VALUE
@@ -183,13 +185,3 @@ class Article(MetaDataModel):
                 },
             }
 
-
-def make_random_profile_picture(hash_val) -> str:
-    colors = ['blue', 'red', 'gray']
-    numbers = ['1', '2', '3']
-
-    temp_color = colors[hash_val % len(colors)]
-    temp_num = numbers[(hash_val // 3) % len(numbers)]
-    default_picture = f'user_profiles/default_pictures/{temp_color}-default{temp_num}.png'
-
-    return default_picture

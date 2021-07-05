@@ -4,11 +4,10 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext
 import hashlib
 
-from apps.user.views.viewsets import NOUNS
+from apps.user.views.viewsets import NOUNS, make_random_profile_picture
 from ara.db.models import MetaDataModel
 from ara.sanitizer import sanitize
 from ara.settings import HASH_SECRET_VALUE
-from apps.core.models.article import make_random_profile_picture
 
 
 class Comment(MetaDataModel):

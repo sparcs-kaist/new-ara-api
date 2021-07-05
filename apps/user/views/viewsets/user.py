@@ -46,14 +46,19 @@ def _make_random_name() -> str:
     return temp_nickname
 
 
-def make_random_profile_picture() -> str:
+def make_random_profile_picture(hash_val=None) -> str:
     colors = ['blue', 'red', 'gray']
-    random.shuffle(colors)
     numbers = ['1', '2', '3']
-    random.shuffle(numbers)
 
-    temp_color = colors[0]
-    temp_num = numbers[0]
+    if hash_val:
+        col = hash_val % len(colors)
+        num = (hash_val // 3) % len(numbers)
+    else:
+        col = random.randrange(len(colors))
+        num = random.randrange(len(numbers))
+
+    temp_color = colors[col]
+    temp_num = numbers[num]
     default_picture = f'user_profiles/default_pictures/{temp_color}-default{temp_num}.png'
 
     return default_picture
