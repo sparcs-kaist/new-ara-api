@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
 from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 import asyncio
 
 from apps.user.views.viewsets import make_random_profile_picture
@@ -162,7 +163,7 @@ class Article(MetaDataModel):
                 get_channel_layer().group_send('broadcast', {'type':'update.articleview', 'post_id': self.id })
             )
 
-        asyncio.run(notify_websockets())
+        async_to_sync(notify_websockets)()
         
     def update_hit_count(self):
         self.hit_count = self.article_read_log_set.values('read_by').annotate(models.Count('read_by')).order_by('read_by__count',).count() + self.migrated_hit_count
