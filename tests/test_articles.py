@@ -179,6 +179,38 @@ class TestArticle(TestCase, RequestSetting):
 
         assert self.http_request(self.user, 'get', f'articles/{article.id}').data.get('created_by') == '익명'
 
+
+
+
+    def test_anonymous_article(self):
+        # 익명 게시글 생성
+        anon_article = Article.objects.create(
+            title="example anonymous article",
+            content="example anonymous content",
+            content_text="example anonymous content text",
+            is_anonymous=True,
+            is_content_sexual=False,
+            is_content_social=False,
+            hit_count=0,
+            positive_vote_count=0,
+            negative_vote_count=0,
+            created_by=self.user,
+            parent_topic=self.topic,
+            parent_board=self.board,
+            commented_at=timezone.now()
+        )
+
+        # 익명 게시글을 GET할 때, 작성자의 정보가 전달되지 않는 것 확인
+        res = self.http_request(self.user, 'get', f'articles/{anon_article.id}').data
+        assert res.get('is_anonymous')
+        print(res.get('created_by'))
+        assert res.get('created_by')['username'] != anon_article.user.username
+
+
+
+
+
+
     def test_create(self):
         # test_create: HTTP request (POST)를 이용해서 생성
         # user data in dict

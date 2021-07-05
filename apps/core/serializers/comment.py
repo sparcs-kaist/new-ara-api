@@ -5,7 +5,6 @@ import hashlib
 from ara.classes.serializers import MetaDataModelSerializer
 
 from apps.core.models import Article, Comment, Block
-from django.utils import timezone
 from django.utils.translation import gettext
 from ara.settings import HASH_SECRET_VALUE
 from apps.user.views.viewsets.user import NOUNS
