@@ -39,7 +39,9 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return BaseScrapSerializer(my_scrap).data
 
     def get_is_hidden(self, obj) -> bool:
-        if self.validate_hidden(obj):
+        if obj.is_hidden_by_reported():
+            return False
+        elif self.validate_hidden(obj):
             return True
 
         return False
@@ -54,7 +56,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         ]
 
     def get_title(self, obj) -> typing.Union[str, list]:
-        if self.get_is_hidden_by_reported(obj):
+        if obj.is_hidden_by_reported():
             return gettext('This article is temporarily hidden')
 
         errors = self.validate_hidden(obj)
@@ -65,16 +67,15 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return obj.title
 
     def get_hidden_title(self, obj) -> str:
-        if self.get_is_hidden_by_reported(obj):
+        if obj.is_hidden_by_reported():
             return gettext('This article is temporarily hidden')
-
-        if self.validate_hidden(obj):
+        elif self.validate_hidden(obj):
             return obj.title
 
         return ''
 
     def get_content(self, obj) -> typing.Union[str, list]:
-        if self.get_is_hidden_by_reported(obj):
+        if obj.is_hidden_by_reported():
             return gettext('This article is hidden because it has received multiple reports')
 
         errors = self.validate_hidden(obj)
@@ -85,10 +86,9 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return obj.content
 
     def get_hidden_content(self, obj) -> str:
-        if self.get_is_hidden_by_reported(obj):
+        if obj.is_hidden_by_reported():
             return gettext('This article is hidden because it has received multiple reports')
-
-        if self.validate_hidden(obj):
+        elif self.validate_hidden(obj):
             return obj.content
 
         return ''
@@ -153,10 +153,6 @@ class BaseArticleSerializer(MetaDataModelSerializer):
             errors.append(exceptions.ValidationError('접근 권한이 없는 게시판입니다.'))
 
         return errors
-    
-    def get_is_hidden_by_reported(self, obj:Article) -> bool:
-        return obj.hidden_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
-
 
 
 class SideArticleSerializer(BaseArticleSerializer):

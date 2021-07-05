@@ -178,6 +178,8 @@ class Article(MetaDataModel):
 
         self.save()
 
+    def is_hidden_by_reported(self) -> bool:
+        return self.hidden_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
 
     @property
     def created_by_nickname(self):

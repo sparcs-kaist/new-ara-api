@@ -117,6 +117,9 @@ class Comment(MetaDataModel):
             return self.parent_article
 
         return self.parent_comment.parent_article
+
+    def is_hidden_by_reported(self) -> bool:
+        return self.hidden_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
     
     @transaction.atomic
     def update_report_count(self):

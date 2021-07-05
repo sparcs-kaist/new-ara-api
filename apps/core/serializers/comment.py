@@ -23,7 +23,9 @@ class BaseCommentSerializer(MetaDataModelSerializer):
         return my_vote.is_positive
 
     def get_is_hidden(self, obj) -> bool:
-        if self.validate_hidden(obj):
+        if obj.is_hidden_by_reported():
+            return False
+        elif self.validate_hidden(obj):
             return True
 
         return False
@@ -38,7 +40,7 @@ class BaseCommentSerializer(MetaDataModelSerializer):
         ]
 
     def get_content(self, obj) -> typing.Union[str, list]:
-        if self.get_is_hidden_by_reported(obj):
+        if obj.is_hidden_by_reported():
             return gettext('This comment is hidden because it received multiple reports')
 
         errors = self.validate_hidden(obj)
@@ -49,10 +51,9 @@ class BaseCommentSerializer(MetaDataModelSerializer):
         return obj.content
 
     def get_hidden_content(self, obj) -> str:
-        if self.get_is_hidden_by_reported(obj):
+        if obj.is_hidden_by_reported():
             return gettext('This comment is hidden because it received multiple reports')
-            
-        if self.validate_hidden(obj):
+        elif self.validate_hidden(obj):
             return obj.content
 
         return ''
@@ -74,9 +75,6 @@ class BaseCommentSerializer(MetaDataModelSerializer):
             errors.append(exceptions.ValidationError(gettext('This article is written by a user you blocked.')))
 
         return errors
-
-    def get_is_hidden_by_reported(self, obj:Comment) -> bool:
-        return obj.hidden_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
 
 
 class CommentSerializer(BaseCommentSerializer):
