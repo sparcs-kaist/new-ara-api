@@ -171,7 +171,7 @@ class Article(MetaDataModel):
         if not self.is_anonymous:
             return self.created_by
         else:
-            user_unique_num = self.created_by.id + self.id + int(HASH_SECRET_VALUE)
+            user_unique_num = self.created_by.id + self.id + HASH_SECRET_VALUE
             user_unique_encoding = str(hex(user_unique_num)).encode('utf-8')
             user_profile_picture = make_random_profile_picture(hash(user_unique_encoding))
 
