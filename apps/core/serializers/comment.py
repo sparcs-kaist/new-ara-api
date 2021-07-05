@@ -20,6 +20,9 @@ class BaseCommentSerializer(MetaDataModelSerializer):
 
         return my_vote.is_positive
 
+    def get_is_mine(self, obj) -> bool:
+        return self.context['request'].user == obj.created_by
+
     def get_is_hidden(self, obj) -> bool:
         if self.validate_hidden(obj):
             return True
@@ -76,6 +79,9 @@ class CommentSerializer(BaseCommentSerializer):
     my_vote = serializers.SerializerMethodField(
         read_only=True,
     )
+    is_mine = serializers.SerializerMethodField(
+        read_only=True,
+    )
     is_hidden = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -99,6 +105,9 @@ class CommentListActionSerializer(BaseCommentSerializer):
         read_only=True,
     )
     my_vote = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    is_mine = serializers.SerializerMethodField(
         read_only=True,
     )
     is_hidden = serializers.SerializerMethodField(
