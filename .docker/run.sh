@@ -26,5 +26,7 @@ else
     venv/bin/python manage.py migrate --no-input
     venv/bin/python manage.py compilemessages -l en -l ko
     ln -s /newara/www/.docker/supervisor-app.conf /etc/supervisor/conf.d/ || true
+    sudo mkdir /run/daphne
+    sudo chown $(whoami):$(whoami) /run/daphne
     exec supervisord -n
 fi
