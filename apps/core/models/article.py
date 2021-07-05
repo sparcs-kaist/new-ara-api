@@ -2,9 +2,11 @@ import bs4
 
 from django.db import models, IntegrityError
 from django.conf import settings
-
+from django.utils.functional import cached_property
+from django.utils.translation import gettext
 from ara.db.models import MetaDataModel
 from ara.sanitizer import sanitize
+from ara.settings import HASH_SECRET_VALUE
 
 
 class Article(MetaDataModel):
@@ -160,3 +162,34 @@ class Article(MetaDataModel):
     @property
     def created_by_nickname(self):
         return self.created_by.profile.nickname
+
+    # API 상에서 보이는 사용자 (익명일 경우 익명화된 글쓴이, 그 외는 그냥 글쓴이)
+    @cached_property
+    def postprocessed_created_by(self):
+        if not self.is_anonymous:
+            return self.created_by
+        else:
+            user_unique_num = self.created_by.id + self.id + int(HASH_SECRET_VALUE)
+            user_unique_encoding = str(hex(user_unique_num)).encode('utf-8')
+            user_profile_picture = make_random_profile_picture(hash(user_unique_encoding))
+
+            return {
+                'id': 0,
+                'username': gettext('anonymous'),
+                'profile': {
+                    'picture': user_profile_picture,
+                    'nickname': gettext('anonymous'),
+                    'user': gettext('anonymous')
+                },
+            }
+
+
+def make_random_profile_picture(hash_val) -> str:
+    colors = ['blue', 'red', 'gray']
+    numbers = ['1', '2', '3']
+
+    temp_color = colors[hash_val % len(colors)]
+    temp_num = numbers[(hash_val // 3) % len(numbers)]
+    default_picture = f'user_profiles/default_pictures/{temp_color}-default{temp_num}.png'
+
+    return default_picture

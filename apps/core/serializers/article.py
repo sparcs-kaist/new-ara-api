@@ -1,6 +1,4 @@
 from django.db import models
-from django.db.models import Max
-from django.utils import timezone
 from django.utils.translation import gettext
 from rest_framework import exceptions, serializers
 import typing
@@ -11,6 +9,7 @@ from ara.classes.serializers import MetaDataModelSerializer
 from apps.core.models import Article, ArticleReadLog, Board, Block
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
+from apps.user.serializers.user import PublicUserSerializer
 
 
 class BaseArticleSerializer(MetaDataModelSerializer):
@@ -82,16 +81,13 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return ''
 
-    def get_created_by(self, obj) -> typing.Union[str, dict]:
-        from apps.user.serializers.user import PublicUserSerializer
-
+    def get_created_by(self, obj) -> dict:
         if obj.is_anonymous:
-            return '익명'
-
-        data = PublicUserSerializer(obj.created_by).data
-        data['is_blocked'] = Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by)
-
-        return data
+            return obj.postprocessed_created_by
+        else:
+            data = PublicUserSerializer(obj.postprocessed_created_by).data
+            data['is_blocked'] = Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by)
+            return data
 
     @staticmethod
     def get_read_status(obj) -> str:
