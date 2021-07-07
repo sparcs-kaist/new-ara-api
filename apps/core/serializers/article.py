@@ -39,6 +39,9 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return BaseScrapSerializer(my_scrap).data
 
+    def get_is_mine(self, obj) -> bool:
+        return self.context['request'].user == obj.created_by
+
     def get_is_hidden(self, obj) -> bool:
         if self.validate_hidden(obj):
             return True
@@ -304,6 +307,9 @@ class ArticleSerializer(BaseArticleSerializer):
         source='comment_set',
     )
 
+    is_mine = serializers.SerializerMethodField(
+        read_only=True,
+    )
     is_hidden = serializers.SerializerMethodField(
         read_only=True,
     )
