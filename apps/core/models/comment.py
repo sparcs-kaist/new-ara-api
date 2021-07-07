@@ -1,3 +1,5 @@
+from typing import Dict, Union
+
 from django.db import models, IntegrityError
 from django.conf import settings
 from django.utils.functional import cached_property
@@ -112,7 +114,7 @@ class Comment(MetaDataModel):
 
     # API 상에서 보이는 사용자 (익명일 경우 익명화된 글쓴이, 그 외는 그냥 글쓴이)
     @cached_property
-    def postprocessed_created_by(self):
+    def postprocessed_created_by(self) -> Union[settings.AUTH_USER_MODEL, Dict]:
         if not self.is_anonymous:
             return self.created_by
         else:
