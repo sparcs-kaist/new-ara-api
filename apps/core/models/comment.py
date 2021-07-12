@@ -1,13 +1,18 @@
-import bleach
+from typing import Dict, Union
+import hashlib
 
 from django.db import models, IntegrityError
 from django.conf import settings
 from django.utils import timezone
 from django.db import transaction
-from .report import Report
+from django.utils.functional import cached_property
+from django.utils.translation import gettext
 
+from apps.user.views.viewsets import NOUNS, make_random_profile_picture
 from ara.db.models import MetaDataModel
 from ara.sanitizer import sanitize
+from ara.settings import HASH_SECRET_VALUE
+from .report import Report
 
 
 class Comment(MetaDataModel):
@@ -130,3 +135,41 @@ class Comment(MetaDataModel):
             self.hidden_at = timezone.now()
 
         self.save() 
+    
+    # API 상에서 보이는 사용자 (익명일 경우 익명화된 글쓴이, 그 외는 그냥 글쓴이)
+    @cached_property
+    def postprocessed_created_by(self) -> Union[settings.AUTH_USER_MODEL, Dict]:
+        if not self.is_anonymous:
+            return self.created_by
+        else:
+            parent_article = self.get_parent_article()
+            parent_article_id = parent_article.id
+            parent_article_created_by_id = parent_article.created_by.id
+            comment_created_by_id = self.created_by.id
+
+            # 댓글 작성자는 (작성자 id + parent article id + 시크릿)을 해시한 값으로 구별합니다.
+            user_unique_num = comment_created_by_id + parent_article_id + HASH_SECRET_VALUE
+            user_unique_encoding = str(hex(user_unique_num)).encode('utf-8')
+            user_hash = hashlib.sha224(user_unique_encoding).hexdigest()
+            user_hash_int = int(user_hash[-4:], 16)
+            user_profile_picture = make_random_profile_picture(user_hash_int)
+
+            if parent_article_created_by_id == comment_created_by_id:
+                user_name = gettext('author')
+            else:
+                user_name = make_anonymous_name(user_hash_int, user_hash[-3:])
+
+            return {
+                'id': user_hash,
+                'username': user_name,
+                'profile': {
+                    'picture': user_profile_picture,
+                    'nickname': user_name,
+                    'user': user_hash
+                }
+            }
+
+
+def make_anonymous_name(hash_val, unique_tail) -> str:
+    nickname = '익명의 ' + NOUNS[hash_val % len(NOUNS)] + ' ' + unique_tail
+    return nickname

@@ -1,8 +1,8 @@
 import time
 
 from django.db import models
-
 from rest_framework import status, viewsets, response, decorators, serializers, permissions
+from rest_framework.response import Response
 
 from ara import redis
 from ara.classes.viewset import ActionAPIViewSet
@@ -61,8 +61,8 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
 
-        # optimizing queryset for list action
-        if self.action in ['list', 'recent']:
+        if self.action == 'list':
+            # optimizing queryset for list action
             queryset = queryset.select_related(
                 'created_by',
                 'created_by__profile',
@@ -71,26 +71,6 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             ).prefetch_related(
                 ArticleReadLog.prefetch_my_article_read_log(self.request.user),
             )
-
-            # optimizing queryset for recent action
-            if self.action == 'recent':
-                last_read_log_of_the_article = ArticleReadLog.objects.filter(
-                    article=models.OuterRef('pk')
-                ).order_by('-created_at')
-
-                queryset = queryset.filter(
-                    article_read_log_set__read_by=self.request.user,
-                ).select_related(
-                    'created_by',
-                    'created_by__profile',
-                ).annotate(
-                    my_last_read_at=models.Subquery(last_read_log_of_the_article.filter(
-                        read_by=self.request.user,
-                    ).values('created_at')[:1]),
-                ).order_by(
-                    '-my_last_read_at'
-                ).distinct()
-
         # optimizing queryset for create, update, retrieve actions
         else:
             queryset = queryset.select_related(
@@ -171,7 +151,8 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         pipe.zadd(redis_key, {f'{article.id}:1:{self.request.user.id}:{time.time()}': time.time()})
         pipe.execute(raise_on_error=True)
 
-        return super().retrieve(request, *args, **kwargs)
+        serialized = self.serializer_class(article, context={'request': request})
+        return Response(serialized.data)
 
     @decorators.action(detail=True, methods=['post'])
     def vote_cancel(self, request, *args, **kwargs):
@@ -244,4 +225,30 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
     @decorators.action(detail=False, methods=['get'])
     def recent(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
+        # Cardinality of this queryset is same with actual query
+        count_queryset = ArticleReadLog.objects \
+            .values("article_id") \
+            .filter(read_by=request.user) \
+            .distinct()
+
+        self.paginate_queryset(count_queryset)
+
+        queryset = Article.objects.raw('''
+            SELECT * FROM `core_article`
+            JOIN (
+                SELECT `core_articlereadlog`.`article_id`, MAX(`core_articlereadlog`.`created_at`) AS my_last_read_at
+                FROM `core_articlereadlog`
+                WHERE (`core_articlereadlog`.`deleted_at` = '0001-01-01 00:00:00' AND `core_articlereadlog`.`read_by_id` = %s)
+                GROUP BY `core_articlereadlog`.`article_id`
+                ORDER BY my_last_read_at desc
+                LIMIT %s OFFSET %s
+            ) recents ON recents.article_id = `core_article`.id
+            ''', [self.request.user.id, self.paginator.get_page_size(request), max(0, self.paginator.page.start_index()-1)]) \
+            .prefetch_related('created_by',
+                              'created_by__profile',
+                              'parent_board',
+                              'parent_topic',
+                              ArticleReadLog.prefetch_my_article_read_log(self.request.user))
+
+        serializer = self.get_serializer_class()([v for v in queryset], many=True, context={"request": request})
+        return self.paginator.get_paginated_response(serializer.data)

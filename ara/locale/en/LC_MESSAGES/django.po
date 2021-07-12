@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-07-12 18:19+0900\n"
+"POT-Creation-Date: 2021-07-12 23:55+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,39 +30,44 @@ msgstr ""
 msgid "Restore hidden comments"
 msgstr ""
 
-#: apps/core/management/scripts/portal_crawler.py:104
+#: apps/core/management/scripts/portal_crawler.py:135
 msgid "No content for portal article"
 msgstr ""
 
-#: apps/core/serializers/article.py:58 apps/core/serializers/article.py:69
-msgid "This article is temporarily hidden"
-msgstr ""
-
-#: apps/core/serializers/article.py:78 apps/core/serializers/article.py:89
-msgid "This article is hidden because it has received multiple reports"
-msgstr ""
-
-#: apps/core/serializers/article.py:100 apps/core/serializers/comment.py:65
+#: apps/core/models/article.py:205 apps/core/models/article.py:208
+#: apps/core/models/article.py:209
 msgid "anonymous"
 msgstr ""
 
-#: apps/core/serializers/article.py:219
+#: apps/core/models/comment.py:158
+msgid "author"
+msgstr ""
+
+#: apps/core/serializers/article.py:64 apps/core/serializers/article.py:75
+msgid "This article is temporarily hidden"
+msgstr ""
+
+#: apps/core/serializers/article.py:83 apps/core/serializers/article.py:94
+msgid "This article is hidden because it has received multiple reports"
+msgstr ""
+
+#: apps/core/serializers/article.py:215
 msgid "This article is not in user's scrap list."
 msgstr ""
 
-#: apps/core/serializers/article.py:236
+#: apps/core/serializers/article.py:232
 msgid "Wrong value for parameter 'from_view'."
 msgstr ""
 
-#: apps/core/serializers/article.py:288
+#: apps/core/serializers/article.py:284
 msgid "This article is never read by user."
 msgstr ""
 
-#: apps/core/serializers/article.py:410
+#: apps/core/serializers/article.py:409
 msgid "This board is read only."
 msgstr ""
 
-#: apps/core/serializers/article.py:412
+#: apps/core/serializers/article.py:411
 msgid "This board is only for KAIST members."
 msgstr ""
 
@@ -74,11 +79,11 @@ msgstr ""
 msgid "This user is already blocked."
 msgstr ""
 
-#: apps/core/serializers/comment.py:42 apps/core/serializers/comment.py:53
+#: apps/core/serializers/comment.py:47 apps/core/serializers/comment.py:58
 msgid "This comment is hidden because it received multiple reports"
 msgstr ""
 
-#: apps/core/serializers/comment.py:74
+#: apps/core/serializers/comment.py:76
 msgid "This article is written by a user you blocked."
 msgstr ""
 
