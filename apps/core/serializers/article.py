@@ -181,7 +181,7 @@ class SideArticleSerializer(BaseArticleSerializer):
 
 class ArticleSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
-        exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
+        exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count', 'content_text',)
 
     @staticmethod
     def search_articles(queryset, search):
@@ -389,7 +389,7 @@ class BestArticleListActionSerializer(BaseArticleSerializer):
 
 class ArticleCreateActionSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
-        exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
+        exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count', 'content_text',)
         read_only_fields = (
             'hit_count',
             'comment_count',
@@ -411,7 +411,7 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
 
 class ArticleUpdateActionSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
-        exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
+        exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count', 'content_text',)
         read_only_fields = (
             'is_anonymous',
             'hit_count',
