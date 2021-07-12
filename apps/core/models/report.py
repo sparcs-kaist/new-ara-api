@@ -34,7 +34,7 @@ class Report(MetaDataModel):
         null=True,
         blank=True,
         related_name='report_set',
-        verbose_name='신고된 문서',
+        verbose_name='신고된 게시물',
     )
     parent_comment = models.ForeignKey(
         on_delete=models.CASCADE,
