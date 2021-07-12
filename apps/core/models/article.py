@@ -13,8 +13,8 @@ from ara.sanitizer import sanitize
 
 class Article(MetaDataModel):
     class Meta(MetaDataModel.Meta):
-        verbose_name = '문서'
-        verbose_name_plural = '문서 목록'
+        verbose_name = '게시물'
+        verbose_name_plural = '게시물 목록'
 
     title = models.CharField(
         max_length=256,

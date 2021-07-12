@@ -32,7 +32,7 @@ class Vote(MetaDataModel):
         blank=True,
         db_index=True,
         related_name='vote_set',
-        verbose_name='상위 문서',
+        verbose_name='상위 게시물',
     )
     parent_comment = models.ForeignKey(
         on_delete=models.CASCADE,

@@ -24,7 +24,7 @@ msgstr "숨김처리된 컨텐츠"
 
 #: apps/core/admin.py:117
 msgid "Restore hidden articles"
-msgstr "(선택된) 숨겨진 문서 목록을 복구합니다."
+msgstr "(선택된) 숨겨진 게시물 목록을 복구합니다."
 
 #: apps/core/admin.py:148
 msgid "Restore hidden comments"
