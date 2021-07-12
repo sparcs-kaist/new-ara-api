@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-07-05 21:40+0900\n"
+"POT-Creation-Date: 2021-07-12 18:19+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,14 +18,30 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: apps/core/admin.py:24
+msgid "Hidden Contents"
+msgstr ""
+
+#: apps/core/admin.py:117
+msgid "Restore hidden articles"
+msgstr ""
+
+#: apps/core/admin.py:148
+msgid "Restore hidden comments"
+msgstr ""
+
 #: apps/core/management/scripts/portal_crawler.py:104
 msgid "No content for portal article"
 msgstr ""
 
-#: apps/core/models/article.py:178 apps/core/models/article.py:181
-#: apps/core/models/article.py:182
-msgid "anonymous"
+#: apps/core/serializers/article.py:58 apps/core/serializers/article.py:69
+msgid "This article is temporarily hidden"
 msgstr ""
+
+#: apps/core/serializers/article.py:78 apps/core/serializers/article.py:89
+msgid "This article is hidden because it has received multiple reports"
+msgstr ""
+
 
 #: apps/core/models/comment.py:141
 msgid "author"
@@ -57,6 +73,14 @@ msgstr ""
 
 #: apps/core/serializers/block.py:44
 msgid "This user is already blocked."
+msgstr ""
+
+#: apps/core/serializers/comment.py:42 apps/core/serializers/comment.py:53
+msgid "This comment is hidden because it received multiple reports"
+msgstr ""
+
+#: apps/core/serializers/comment.py:74
+msgid "This article is written by a user you blocked."
 msgstr ""
 
 #: apps/core/serializers/report.py:43
@@ -91,8 +115,8 @@ msgstr ""
 
 #: ara/settings/django.py:96
 msgid "Korean"
-msgstr "Korean"
+msgstr ""
 
 #: ara/settings/django.py:97
 msgid "English"
-msgstr "English"
+msgstr ""
