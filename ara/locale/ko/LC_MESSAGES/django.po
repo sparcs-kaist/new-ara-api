@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-07-12 12:24+0900\n"
+"POT-Creation-Date: 2021-07-12 18:20+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,9 +18,17 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: apps/core/admin.py:12
+#: apps/core/admin.py:24
 msgid "Hidden Contents"
 msgstr "숨김처리된 컨텐츠"
+
+#: apps/core/admin.py:117
+msgid "Restore hidden articles"
+msgstr "(선택된) 숨겨진 문서 목록을 복구합니다."
+
+#: apps/core/admin.py:148
+msgid "Restore hidden comments"
+msgstr "(선택된) 숨겨진 댓글 목록을 복구합니다."
 
 #: apps/core/management/scripts/portal_crawler.py:104
 msgid "No content for portal article"

@@ -112,10 +112,10 @@ class ArticleAdmin(MetaDataModelAdmin):
         "content",
         "hidden_at",
     )
-    actions = ("restore_articles",)
+    actions = ("restore_hidden_articles",)
 
-    # hidden_at 값 초기화
-    def restore_articles(self, request, queryset):
+    @admin.action(description=gettext("Restore hidden articles"))
+    def restore_hidden_articles(self, request, queryset):
         rows_updated = queryset.update(
             hidden_at=timezone.datetime.min.replace(tzinfo=timezone.utc)
         )
@@ -143,10 +143,10 @@ class CommentAdmin(MetaDataModelAdmin):
         "content",
         "hidden_at",
     )
-    actions = ("restore_comments",)
+    actions = ("restore_hidden_comments",)
 
-    # hidden_at값 초기화
-    def restore_comments(self, request, queryset):
+    @admin.action(description=gettext("Restore hidden comments"))
+    def restore_hidden_comments(self, request, queryset):
         rows_updated = queryset.update(
             hidden_at=timezone.datetime.min.replace(tzinfo=timezone.utc)
         )
