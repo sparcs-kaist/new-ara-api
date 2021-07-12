@@ -1,4 +1,3 @@
-from .env import env
 from .django import *
 from .djangorestframework import *
 from .aws import *
@@ -9,6 +8,7 @@ from .log import *
 from .cacheops import *
 from .elasticsearch import *
 from .sentry import *
+from .api import *
 
 
 if env('DJANGO_ENV') == 'development':

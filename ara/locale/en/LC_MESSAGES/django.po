@@ -42,27 +42,28 @@ msgstr ""
 msgid "This article is hidden because it has received multiple reports"
 msgstr ""
 
-#: apps/core/serializers/article.py:100 apps/core/serializers/comment.py:65
-msgid "anonymous"
+
+#: apps/core/models/comment.py:141
+msgid "author"
 msgstr ""
 
-#: apps/core/serializers/article.py:219
+#: apps/core/serializers/article.py:199
 msgid "This article is not in user's scrap list."
 msgstr ""
 
-#: apps/core/serializers/article.py:236
+#: apps/core/serializers/article.py:216
 msgid "Wrong value for parameter 'from_view'."
 msgstr ""
 
-#: apps/core/serializers/article.py:288
+#: apps/core/serializers/article.py:268
 msgid "This article is never read by user."
 msgstr ""
 
-#: apps/core/serializers/article.py:410
+#: apps/core/serializers/article.py:390
 msgid "This board is read only."
 msgstr ""
 
-#: apps/core/serializers/article.py:412
+#: apps/core/serializers/article.py:392
 msgid "This board is only for KAIST members."
 msgstr ""
 

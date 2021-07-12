@@ -18,6 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
+
 #: apps/core/admin.py:24
 msgid "Hidden Contents"
 msgstr "숨김처리된 컨텐츠"
@@ -42,10 +43,6 @@ msgstr "임시 숨김 처리된 게시글입니다."
 msgid "This article is hidden because it has received multiple reports"
 msgstr "다수의 신고가 접수되어 숨김 처리된 게시글입니다."
 
-#: apps/core/serializers/article.py:100 apps/core/serializers/comment.py:65
-msgid "anonymous"
-msgstr "익명"
-
 #: apps/core/serializers/article.py:219
 msgid "This article is not in user's scrap list."
 msgstr "사용자가 스크랩하지 않은 글입니다."
@@ -58,11 +55,15 @@ msgstr "from_view 쿼리 파라미터 value값이 틀렸습니다."
 msgid "This article is never read by user."
 msgstr "읽은적이 없는 게시물입니다."
 
-#: apps/core/serializers/article.py:410
+#: apps/core/models/comment.py:141
+msgid "author"
+msgstr "글쓴이"
+
+#: apps/core/serializers/article.py:390
 msgid "This board is read only."
 msgstr "읽기 전용 게시판입니다."
 
-#: apps/core/serializers/article.py:412
+#: apps/core/serializers/article.py:392
 msgid "This board is only for KAIST members."
 msgstr "카이스트 구성원만 이용할 수 있는 게시판입니다."
 

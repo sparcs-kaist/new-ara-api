@@ -10,6 +10,7 @@ from apps.core.models import Article, ArticleReadLog, Board, Block
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
 from django.utils import timezone
+from apps.user.serializers.user import PublicUserSerializer
 
 
 class BaseArticleSerializer(MetaDataModelSerializer):
@@ -37,6 +38,9 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         my_scrap = obj.scrap_set.all()[0]
 
         return BaseScrapSerializer(my_scrap).data
+
+    def get_is_mine(self, obj) -> bool:
+        return self.context['request'].user == obj.created_by
 
     def get_is_hidden(self, obj) -> bool:
         if obj.is_hidden_by_reported():
@@ -93,17 +97,13 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return ''
 
-    def get_created_by(self, obj) -> typing.Union[str, dict]:
-        from apps.user.serializers.user import PublicUserSerializer
-
+    def get_created_by(self, obj) -> dict:
         if obj.is_anonymous:
-            return gettext('anonymous')
-
-        # <class 'rest_framework.utils.serializer_helpers.ReturnDict'> (is an OrderedDict)
-        data = PublicUserSerializer(obj.created_by).data
-        data['is_blocked'] = Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by)
-
-        return data
+            return obj.postprocessed_created_by
+        else:
+            data = PublicUserSerializer(obj.postprocessed_created_by).data
+            data['is_blocked'] = Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by)
+            return data
 
     @staticmethod
     def get_read_status(obj) -> str:
@@ -316,6 +316,9 @@ class ArticleSerializer(BaseArticleSerializer):
         source='comment_set',
     )
 
+    is_mine = serializers.SerializerMethodField(
+        read_only=True,
+    )
     is_hidden = serializers.SerializerMethodField(
         read_only=True,
     )
