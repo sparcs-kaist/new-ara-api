@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-08 23:59+0900\n"
+"POT-Creation-Date: 2021-07-12 23:55+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,27 +18,56 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: apps/core/management/scripts/portal_crawler.py:70
+#: apps/core/admin.py:24
+msgid "Hidden Contents"
+msgstr ""
+
+#: apps/core/admin.py:117
+msgid "Restore hidden articles"
+msgstr ""
+
+#: apps/core/admin.py:148
+msgid "Restore hidden comments"
+msgstr ""
+
+#: apps/core/management/scripts/portal_crawler.py:135
 msgid "No content for portal article"
 msgstr ""
 
-#: apps/core/serializers/article.py:214
+#: apps/core/models/article.py:205 apps/core/models/article.py:208
+#: apps/core/models/article.py:209
+msgid "anonymous"
+msgstr ""
+
+#: apps/core/models/comment.py:158
+msgid "author"
+msgstr ""
+
+#: apps/core/serializers/article.py:64 apps/core/serializers/article.py:75
+msgid "This article is temporarily hidden"
+msgstr ""
+
+#: apps/core/serializers/article.py:83 apps/core/serializers/article.py:94
+msgid "This article is hidden because it has received multiple reports"
+msgstr ""
+
+#: apps/core/serializers/article.py:215
 msgid "This article is not in user's scrap list."
 msgstr ""
 
-#: apps/core/serializers/article.py:224
-msgid "This article is never read by user."
-msgstr ""
-
-#: apps/core/serializers/article.py:241
+#: apps/core/serializers/article.py:232
 msgid "Wrong value for parameter 'from_view'."
 msgstr ""
 
-#: apps/core/serializers/article.py:369
+#: apps/core/serializers/article.py:284
+msgid "This article is never read by user."
+msgstr ""
+
+#: apps/core/serializers/article.py:409
 msgid "This board is read only."
 msgstr ""
 
-#: apps/core/serializers/article.py:371
+#: apps/core/serializers/article.py:411
 msgid "This board is only for KAIST members."
 msgstr ""
 
@@ -48,6 +77,14 @@ msgstr ""
 
 #: apps/core/serializers/block.py:44
 msgid "This user is already blocked."
+msgstr ""
+
+#: apps/core/serializers/comment.py:47 apps/core/serializers/comment.py:58
+msgid "This comment is hidden because it received multiple reports"
+msgstr ""
+
+#: apps/core/serializers/comment.py:76
+msgid "This article is written by a user you blocked."
 msgstr ""
 
 #: apps/core/serializers/report.py:43
@@ -74,16 +111,16 @@ msgstr ""
 msgid "Other employee"
 msgstr ""
 
-#: apps/user/serializers/user_profile.py:43
+#: apps/user/serializers/user_profile.py:45
 #, python-format
 msgid ""
 "Nicknames can only be changed every 3 months. (can't change until %(date)s)"
 msgstr ""
 
-#: ara/settings/django.py:94
+#: ara/settings/django.py:96
 msgid "Korean"
-msgstr "Korean"
+msgstr ""
 
-#: ara/settings/django.py:95
+#: ara/settings/django.py:97
 msgid "English"
-msgstr "English"
+msgstr ""

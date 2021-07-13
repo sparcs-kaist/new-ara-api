@@ -12,15 +12,15 @@ class BestArticle(MetaDataModel):
     )
 
     class Meta(MetaDataModel.Meta):
-        verbose_name = '베스트 문서'
-        verbose_name_plural = '베스트 문서 목록'
+        verbose_name = '베스트 게시물'
+        verbose_name_plural = '베스트 게시물 목록'
 
     period = models.CharField(
         choices=PERIOD_CHOICES,
         default='daily',
         db_index=True,
         max_length=32,
-        verbose_name='베스트 문서 종류',
+        verbose_name='베스트 게시물 종류',
     )
 
     article = models.ForeignKey(
@@ -28,11 +28,11 @@ class BestArticle(MetaDataModel):
         to='core.Article',
         db_index=True,
         related_name='best_set',
-        verbose_name='문서',
+        verbose_name='게시물',
     )
 
     latest = models.BooleanField(
         default=True,
         db_index=True,
-        verbose_name='최신 베스트 문서',
+        verbose_name='최신 베스트 게시물',
     )

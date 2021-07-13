@@ -80,7 +80,7 @@ def set_comment_report(request):
     )
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_topic', 'set_article', 'set_comment',
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_client3', 'set_board', 'set_topic', 'set_article', 'set_comment',
                          'set_article_report', 'set_comment_report')
 class TestReport(TestCase, RequestSetting):
     # report 개수를 확인하는 테스트
@@ -136,5 +136,54 @@ class TestReport(TestCase, RequestSetting):
         else:
             assert False
 
+    # 한 게시글이 여러번 신고당하면 자동 숨김되는 것 확인
+    def test_hide_article_if_many_reports(self):
+        # 신고가 1개 있는 상태에서는 article title, content가 잘 조회되는 것 확인
+        res = self.http_request(self.user, 'get', f'articles/{self.article.id}').data
+        assert res.get('title') == self.article.title
+        assert res.get('content') == self.article.content
 
+        # 신고 2번 추가
+        Report.objects.create(
+            parent_article=self.article,
+            reported_by=self.user2,
+            content='test report 2'
+        )
+
+        Report.objects.create(
+            parent_article=self.article,
+            reported_by=self.user3,
+            content='test report 3'
+        )
+
+        # 신고가 threshold 이상인 경우 읽을 수 없음 (현재 총 3번 신고됨, 현재 threshold 1)
+        res2 = self.http_request(self.user, 'get', f'articles/{self.article.id}').data
+        assert res2.get('title') != self.article.title
+        assert res2.get('content') != self.article.content
+        assert '숨김' in res2.get('title')
+        assert '숨김' in res2.get('content')
+
+    # 한 댓글이 여러번 신고당하면 자동 숨김되는 것 확인
+    def test_hide_comment_if_many_reports(self):
+        # 신고가 1개 있는 상태에서는 comment의 content가 잘 조회되는 것 확인
+        res = self.http_request(self.user, 'get', f'comments/{self.comment.id}').data
+        assert res.get('content') == self.comment.content
+
+        # 신고 2번 추가
+        Report.objects.create(
+            parent_comment=self.comment,
+            reported_by=self.user2,
+            content='test report 2'
+        )
+
+        Report.objects.create(
+            parent_comment=self.comment,
+            reported_by=self.user3,
+            content='test report 3'
+        )
+
+        # 신고가 threshold 이상인 경우 읽을 수 없음 (현재 총 3번 신고됨, 현재 threshold 1)
+        res2 = self.http_request(self.user, 'get', f'comments/{self.comment.id}').data
+        assert res2.get('content') != self.comment.content
+        assert '숨김' in res2.get('content')
 

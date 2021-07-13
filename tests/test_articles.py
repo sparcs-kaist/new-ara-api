@@ -149,7 +149,6 @@ class TestArticle(TestCase, RequestSetting):
         res = self.http_request(self.user, 'get', f'articles/{self.article.id}').data
         assert res.get('title') == self.article.title
         assert res.get('content') == self.article.content
-        assert res.get('content_text') == self.article.content_text
         assert res.get('is_anonymous') == self.article.is_anonymous
         assert res.get('is_content_sexual') == self.article.is_content_sexual
         assert res.get('is_content_social') == self.article.is_content_social
@@ -159,12 +158,13 @@ class TestArticle(TestCase, RequestSetting):
         assert res.get('parent_topic')['ko_name'] == self.article.parent_topic.ko_name
         assert res.get('parent_board')['ko_name'] == self.article.parent_board.ko_name
 
-    def test_anonymous_writer(self):
-        # 익명의 글쓴이가 익명임을 확인
-        article = Article.objects.create(
-            title="example article",
-            content="example content",
-            content_text="example content text",
+    # http get으로 익명 게시글을 retrieve했을 때 작성자가 익명으로 나타나는지 확인
+    def test_anonymous_article(self):
+        # 익명 게시글 생성
+        anon_article = Article.objects.create(
+            title="example anonymous article",
+            content="example anonymous content",
+            content_text="example anonymous content text",
             is_anonymous=True,
             is_content_sexual=False,
             is_content_social=False,
@@ -177,7 +177,14 @@ class TestArticle(TestCase, RequestSetting):
             commented_at=timezone.now()
         )
 
-        assert self.http_request(self.user, 'get', f'articles/{article.id}').data.get('created_by') == '익명'
+        # 익명 게시글을 GET할 때, 작성자의 정보가 전달되지 않는 것 확인
+        res = self.http_request(self.user, 'get', f'articles/{anon_article.id}').data
+        assert res.get('is_anonymous')
+        assert res.get('created_by')['username'] != anon_article.created_by.username
+
+        res2 = self.http_request(self.user2, 'get', f'articles/{anon_article.id}').data
+        assert res2.get('is_anonymous')
+        assert res2.get('created_by')['username'] != anon_article.created_by.username
 
     def test_create(self):
         # test_create: HTTP request (POST)를 이용해서 생성

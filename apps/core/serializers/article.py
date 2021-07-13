@@ -1,16 +1,15 @@
-from django.db import models
-from django.db.models import Max
-from django.utils import timezone
-from django.utils.translation import gettext
-from rest_framework import exceptions, serializers
 import typing
 
-from apps.core.documents import ArticleDocument
-from ara.classes.serializers import MetaDataModelSerializer
+from django.db import models
+from django.utils.translation import gettext
+from rest_framework import exceptions, serializers
 
+from apps.core.documents import ArticleDocument
 from apps.core.models import Article, ArticleReadLog, Board, Block
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
+from apps.user.serializers.user import PublicUserSerializer
+from ara.classes.serializers import MetaDataModelSerializer
 
 
 class BaseArticleSerializer(MetaDataModelSerializer):
@@ -43,7 +42,9 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return self.context['request'].user == obj.created_by
 
     def get_is_hidden(self, obj) -> bool:
-        if self.validate_hidden(obj):
+        if obj.is_hidden_by_reported():
+            return False
+        elif self.validate_hidden(obj):
             return True
 
         return False
@@ -58,6 +59,9 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         ]
 
     def get_title(self, obj) -> typing.Union[str, list]:
+        if obj.is_hidden_by_reported():
+            return gettext('This article is temporarily hidden')
+
         errors = self.validate_hidden(obj)
 
         if errors:
@@ -66,12 +70,17 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return obj.title
 
     def get_hidden_title(self, obj) -> str:
-        if self.validate_hidden(obj):
+        if obj.is_hidden_by_reported():
+            return gettext('This article is temporarily hidden')
+        elif self.validate_hidden(obj):
             return obj.title
 
         return ''
 
     def get_content(self, obj) -> typing.Union[str, list]:
+        if obj.is_hidden_by_reported():
+            return gettext('This article is hidden because it has received multiple reports')
+
         errors = self.validate_hidden(obj)
 
         if errors:
@@ -80,21 +89,20 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return obj.content
 
     def get_hidden_content(self, obj) -> str:
-        if self.validate_hidden(obj):
+        if obj.is_hidden_by_reported():
+            return gettext('This article is hidden because it has received multiple reports')
+        elif self.validate_hidden(obj):
             return obj.content
 
         return ''
 
-    def get_created_by(self, obj) -> typing.Union[str, dict]:
-        from apps.user.serializers.user import PublicUserSerializer
-
+    def get_created_by(self, obj) -> dict:
         if obj.is_anonymous:
-            return '익명'
-
-        data = PublicUserSerializer(obj.created_by).data
-        data['is_blocked'] = Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by)
-
-        return data
+            return obj.postprocessed_created_by
+        else:
+            data = PublicUserSerializer(obj.postprocessed_created_by).data
+            data['is_blocked'] = Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by)
+            return data
 
     @staticmethod
     def get_read_status(obj) -> str:
@@ -172,7 +180,7 @@ class SideArticleSerializer(BaseArticleSerializer):
 
 class ArticleSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
-        exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
+        exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count', 'content_text',)
 
     @staticmethod
     def search_articles(queryset, search):
@@ -383,7 +391,7 @@ class BestArticleListActionSerializer(BaseArticleSerializer):
 
 class ArticleCreateActionSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
-        exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
+        exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count', 'content_text',)
         read_only_fields = (
             'hit_count',
             'comment_count',
@@ -405,7 +413,7 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
 
 class ArticleUpdateActionSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
-        exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count',)
+        exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count', 'content_text',)
         read_only_fields = (
             'is_anonymous',
             'hit_count',

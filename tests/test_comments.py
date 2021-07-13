@@ -114,19 +114,31 @@ class TestComments(TestCase, RequestSetting):
 
     # 대댓글의 생성과 삭제에 따라서 article의 comment_count가 맞게 바뀌는지 확인
     def test_article_comment_count_with_subcomments(self):
+
+        article = Article.objects.get(id=self.article.id)
+        print('comment set: ', article.comment_set)
+        assert article.comment_count == 1
+
         subcomment1 = Comment.objects.create(
-            content='Test comment 3',
+            content='Test comment 2',
             is_anonymous=False,
             created_by=self.user,
             parent_comment=self.comment
         )
+
+        article = Article.objects.get(id=self.article.id)
+        print('comment set: ', article.comment_set)
+        assert article.comment_count == 2
+
         subcomment2 = Comment.objects.create(
             content='Test comment 3',
             is_anonymous=False,
             created_by=self.user,
             parent_comment=self.comment
         )
+
         article = Article.objects.get(id=self.article.id)
+        print('comment set: ', article.comment_set)
         assert article.comment_count == 3
 
         # 대댓글 삭제
@@ -189,16 +201,23 @@ class TestComments(TestCase, RequestSetting):
         assert Comment.objects.get(id=self.comment.id).content == original_content
 
     # http get으로 익명 댓글을 retrieve했을 때 작성자가 익명으로 나타나는지 확인
-    def test_comment_anonymity(self):
-        anonymous_comment = Comment.objects.create(
+    def test_anonymous_comment(self):
+        # 익명 댓글 생성
+        anon_comment = Comment.objects.create(
                                 content='Anonymous test comment',
                                 is_anonymous=True,
                                 created_by=self.user,
                                 parent_article=self.article
                             )
 
-        assert self.http_request(self.user, 'get', f'comments/{anonymous_comment.id}').data.get('created_by') == '익명'
-        assert self.http_request(self.user2, 'get', f'comments/{anonymous_comment.id}').data.get('created_by') == '익명'
+        # 익명 댓글을 GET할 때, 작성자의 정보가 전달되지 않는 것 확인
+        res = self.http_request(self.user, 'get', f'comments/{anon_comment.id}').data
+        assert res.get('is_anonymous')
+        assert res.get('created_by')['username'] != anon_comment.created_by.username
+
+        res2 = self.http_request(self.user2, 'get', f'comments/{anon_comment.id}').data
+        assert res2.get('is_anonymous')
+        assert res2.get('created_by')['username'] != anon_comment.created_by.username
 
     # 댓글 좋아요 확인
     def test_positive_vote(self):
