@@ -2,8 +2,9 @@ from typing import Dict, Union
 
 import bs4
 
-from django.db import models, IntegrityError
+from django.db import models, IntegrityError, transaction
 from django.conf import settings
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
 
@@ -11,12 +12,14 @@ from apps.user.views.viewsets import make_random_profile_picture
 from ara.db.models import MetaDataModel
 from ara.sanitizer import sanitize
 from ara.settings import HASH_SECRET_VALUE
+from .report import Report
+from .comment import Comment
 
 
 class Article(MetaDataModel):
     class Meta(MetaDataModel.Meta):
-        verbose_name = '문서'
-        verbose_name_plural = '문서 목록'
+        verbose_name = '게시물'
+        verbose_name_plural = '게시물 목록'
 
     title = models.CharField(
         max_length=256,
@@ -50,6 +53,10 @@ class Article(MetaDataModel):
     comment_count = models.IntegerField(
         default=0,
         verbose_name='댓글 수',
+    )
+    report_count = models.IntegerField(
+        default=0,
+        verbose_name ='신고 수',
     )
     positive_vote_count = models.IntegerField(
         default=0,
@@ -124,7 +131,12 @@ class Article(MetaDataModel):
         verbose_name='제목/본문/첨부파일 수정 시간',
     )
 
-    def __str__(self) -> str:
+    hidden_at = models.DateTimeField(
+        default=timezone.datetime.min.replace(tzinfo=timezone.utc),
+        verbose_name='숨김 시간',
+    )
+
+    def __str__(self):
         return self.title
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
@@ -148,12 +160,20 @@ class Article(MetaDataModel):
         self.save()
 
     def update_comment_count(self):
-        from apps.core.models import Comment
-
         self.comment_count = Comment.objects.filter(
             models.Q(parent_article=self) |
             models.Q(parent_comment__parent_article=self)
         ).count()
+
+        self.save()
+    
+    @transaction.atomic
+    def update_report_count(self):
+        count = Report.objects.filter(parent_article=self).count()
+        self.report_count = count
+
+        if count >= int(settings.REPORT_THRESHOLD):
+            self.hidden_at = timezone.now()    
 
         self.save()
 
@@ -162,6 +182,9 @@ class Article(MetaDataModel):
         self.negative_vote_count = self.vote_set.filter(is_positive=False).count() + self.migrated_negative_vote_count
 
         self.save()
+
+    def is_hidden_by_reported(self) -> bool:
+        return self.hidden_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
 
     @property
     def created_by_nickname(self):

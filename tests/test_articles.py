@@ -149,7 +149,6 @@ class TestArticle(TestCase, RequestSetting):
         res = self.http_request(self.user, 'get', f'articles/{self.article.id}').data
         assert res.get('title') == self.article.title
         assert res.get('content') == self.article.content
-        assert res.get('content_text') == self.article.content_text
         assert res.get('is_anonymous') == self.article.is_anonymous
         assert res.get('is_content_sexual') == self.article.is_content_sexual
         assert res.get('is_content_social') == self.article.is_content_social

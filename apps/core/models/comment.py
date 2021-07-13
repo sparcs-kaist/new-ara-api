@@ -1,15 +1,18 @@
 from typing import Dict, Union
+import hashlib
 
 from django.db import models, IntegrityError
 from django.conf import settings
+from django.utils import timezone
+from django.db import transaction
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
-import hashlib
 
 from apps.user.views.viewsets import NOUNS, make_random_profile_picture
 from ara.db.models import MetaDataModel
 from ara.sanitizer import sanitize
 from ara.settings import HASH_SECRET_VALUE
+from .report import Report
 
 
 class Comment(MetaDataModel):
@@ -27,6 +30,10 @@ class Comment(MetaDataModel):
         verbose_name='익명',
     )
 
+    report_count = models.IntegerField(
+        default=0,
+        verbose_name ='신고 수',
+    )
     positive_vote_count = models.IntegerField(
         default=0,
         verbose_name='좋아요 수',
@@ -72,6 +79,10 @@ class Comment(MetaDataModel):
         related_name='comment_set',
         verbose_name='댓글',
     )
+    hidden_at = models.DateTimeField(
+        default=timezone.datetime.min.replace(tzinfo=timezone.utc),
+        verbose_name='숨김 시간',
+    )
 
     def __str__(self) -> str:
         return self.content
@@ -112,6 +123,19 @@ class Comment(MetaDataModel):
 
         return self.parent_comment.parent_article
 
+    def is_hidden_by_reported(self) -> bool:
+        return self.hidden_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
+    
+    @transaction.atomic
+    def update_report_count(self):
+        count = Report.objects.filter(parent_comment=self).count()
+        self.report_count = count
+
+        if count >= int(settings.REPORT_THRESHOLD):
+            self.hidden_at = timezone.now()
+
+        self.save() 
+    
     # API 상에서 보이는 사용자 (익명일 경우 익명화된 글쓴이, 그 외는 그냥 글쓴이)
     @cached_property
     def postprocessed_created_by(self) -> Union[settings.AUTH_USER_MODEL, Dict]:
