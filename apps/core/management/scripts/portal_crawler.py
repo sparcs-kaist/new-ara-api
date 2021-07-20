@@ -9,11 +9,12 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext
+import pyotp
 from tqdm import tqdm
 
 from apps.core.models import Article
 from apps.user.models import UserProfile
-from ara.settings import PORTAL_ID, PORTAL_PASSWORD
+from ara.settings import PORTAL_ID, PORTAL_PASSWORD, PORTAL_2FA_KEY
 
 LOGIN_INFO_SSO2 = {
     "userid": PORTAL_ID,
@@ -33,7 +34,13 @@ LOGIN_INFO_SSO = {
 BASE_URL = "https://portal.kaist.ac.kr"
 
 
+def _make_2fa_token():
+    totp = pyotp.TOTP(PORTAL_2FA_KEY)
+    return totp.now()
+
+
 def _login_kaist_portal():
+    print(f" >>>>> 2FA Token: {_make_2fa_token()}")
     session = requests.Session()
     init_response = session.get(
         "https://portal.kaist.ac.kr/portal/", allow_redirects=True
