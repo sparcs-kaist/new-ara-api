@@ -227,20 +227,27 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
     @decorators.action(detail=False, methods=['get'])
     def recent(self, request, *args, **kwargs):
+
+        search_keyword = request.query_params.get('main_search__contains')
+        search_restriction_sql = ''
+        if search_keyword:
+            id_set = ArticleDocument.get_main_search_id_set(search_keyword)
+            if id_set:
+                search_restriction_sql = 'AND `core_articlereadlog`.`article_id` IN (' + ', '.join(map(str, id_set)) + ') '
+            else:
+                # there is no search result! In this edge case, 'IN ()' cause a mysql error
+                search_restriction_sql = 'AND FALSE'
+
         # Cardinality of this queryset is same with actual query
         count_queryset = ArticleReadLog.objects \
             .values("article_id") \
             .filter(read_by=request.user) \
             .distinct()
 
-        self.paginate_queryset(count_queryset)
-
-        search_keyword = request.query_params.get('main_search__contains')
-        search_restriction_sql = ''
         if search_keyword:
-            search_restriction_sql = 'AND `core_articlereadlog`.`article_id` IN (' + \
-                ', '.join(map(str, ArticleDocument.get_main_search_id_set(search_keyword))) + ') '
+            count_queryset = count_queryset.filter(article_id__in=id_set)
 
+        self.paginate_queryset(count_queryset)
 
         queryset = Article.objects.raw(f'''
             SELECT * FROM `core_article`
