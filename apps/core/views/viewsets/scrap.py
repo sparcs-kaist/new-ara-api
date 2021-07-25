@@ -13,6 +13,8 @@ from apps.core.serializers.scrap import (
     ScrapCreateActionSerializer,
 )
 
+from apps.core.documents import ArticleDocument
+
 
 class ScrapViewSet(mixins.ListModelMixin,
                    mixins.CreateModelMixin,
@@ -31,8 +33,16 @@ class ScrapViewSet(mixins.ListModelMixin,
         queryset = super(ScrapViewSet, self).get_queryset()
 
         queryset = queryset.filter(
-            scrapped_by=self.request.user,
-        ).select_related(
+            scrapped_by=self.request.user
+        )
+
+        search_keyword = self.request.query_params.get('main_search__contains')
+        if search_keyword:
+            queryset = queryset.filter(
+                id__in=ArticleDocument.get_main_search_id_set(search_keyword)
+            )
+        
+        queryset = queryset.select_related(
             'scrapped_by',
             'scrapped_by__profile',
             'parent_article',
