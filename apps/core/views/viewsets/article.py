@@ -25,6 +25,8 @@ from apps.core.serializers.article import (
     ArticleUpdateActionSerializer,
 )
 
+from apps.core.documents import ArticleDocument
+
 
 class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     queryset = Article.objects.all()
@@ -233,12 +235,19 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         self.paginate_queryset(count_queryset)
 
-        queryset = Article.objects.raw('''
+        search_keyword = request.query_params.get('main_search__contains')
+        search_restriction_sql = ''
+        if search_keyword:
+            search_restriction_sql = 'AND `core_articlereadlog`.`article_id` IN (' + \
+                ', '.join(map(str, ArticleDocument.get_main_search_id_set(search_keyword))) + ') '
+
+
+        queryset = Article.objects.raw(f'''
             SELECT * FROM `core_article`
             JOIN (
                 SELECT `core_articlereadlog`.`article_id`, MAX(`core_articlereadlog`.`created_at`) AS my_last_read_at
                 FROM `core_articlereadlog`
-                WHERE (`core_articlereadlog`.`deleted_at` = '0001-01-01 00:00:00' AND `core_articlereadlog`.`read_by_id` = %s)
+                WHERE (`core_articlereadlog`.`deleted_at` = '0001-01-01 00:00:00' AND `core_articlereadlog`.`read_by_id` = %s {search_restriction_sql})
                 GROUP BY `core_articlereadlog`.`article_id`
                 ORDER BY my_last_read_at desc
                 LIMIT %s OFFSET %s
