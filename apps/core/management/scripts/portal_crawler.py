@@ -52,6 +52,18 @@ def _login_kaist_portal():
         data={**LOGIN_INFO_SSO, "param_id": login_param_id,},
     )
 
+    if login_response.status_code == 500:
+        # Need 2FA
+        login_response = session.post(
+            "https://iam2.kaist.ac.kr/api/sso/login",
+            data={
+                **LOGIN_INFO_SSO,
+                "param_id": login_param_id,
+                "alrdln": "T",
+                "auth_type_2nd": "google",
+                "otp": _make_2fa_token()
+            },
+        )
     k_uid = login_response.json()["dataMap"]["USER_INFO"]["kaist_uid"]
     state = login_response.json()["dataMap"]["state"]
 
