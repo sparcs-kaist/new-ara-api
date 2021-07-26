@@ -62,8 +62,9 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         queryset = super().filter_queryset(queryset)
 
         if self.action == 'list':
-            created_by = int(self.request.query_params.get('created_by'))
+            created_by = self.request.query_params.get('created_by')
             if created_by is not None:  # 특정 사용자의 글을 가져오는 쿼리
+                created_by = int(created_by)
                 if created_by != self.request.user.id:  # 사용자가 다른 사람의 글들을 가져올 때 (ex. 사용자 이름 클릭해서)
                     # 다른 사용자의 글들을 볼때는, 익명 글 숨기기
                     queryset = queryset.exclude(is_anonymous=1)
