@@ -29,8 +29,12 @@ services:
       - NEWARA_DB_PASSWORD=
       - NEWARA_DB_NAME=new_ara
       - NEWARA_REDIS_ADDRESS=redis
+      - PORTAL_ID=
+      - PORTAL_PASSWORD=
       - NEWARA_ELASTICSEARCH_HOST=elasticsearch
       - NEWARA_ELASTICSEARCH_PORT=9200
+      - HASH_SECRET_VALUE=1
+      - PORTAL_2FA_KEY=
     entrypoint: /newara/www/.docker/run.sh
     volumes:
       - /var/log/newara_api:/var/log/newara
@@ -58,9 +62,13 @@ services:
       - NEWARA_DB_PASSWORD=
       - NEWARA_DB_NAME=new_ara
       - NEWARA_REDIS_ADDRESS=redis
+      - PORTAL_ID=
+      - PORTAL_PASSWORD=
       - NEWARA_ELASTICSEARCH_HOST=elasticsearch
       - NEWARA_ELASTICSEARCH_PORT=9200
       - C_FORCE_ROOT=true
+      - HASH_SECRET_VALUE=1
+      - PORTAL_2FA_KEY=
     entrypoint: /newara/www/.docker/run-celery.sh
     volumes:
       - /var/log/newara_celery:/var/log/newara

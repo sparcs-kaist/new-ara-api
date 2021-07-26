@@ -26,6 +26,7 @@ services:
       - NEWARA_REDIS_ADDRESS=redis
       - NEWARA_ELASTICSEARCH_HOST=elasticsearch
       - NEWARA_ELASTICSEARCH_PORT=9200
+      - PORTAL_2FA_KEY=${PORTAL_2FA_KEY}
     entrypoint: /newara/www/.docker/run.sh
     volumes:
       - nori:/newara/www/ara/db/elasticsearch
@@ -55,6 +56,7 @@ services:
       - NEWARA_ELASTICSEARCH_HOST=elasticsearch
       - NEWARA_ELASTICSEARCH_PORT=9200
       - C_FORCE_ROOT=true
+      - PORTAL_2FA_KEY=${PORTAL_2FA_KEY}
     entrypoint: /newara/www/.docker/run-celery.sh
 
   db:
