@@ -250,7 +250,8 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         if search_keyword:
             query_params.insert(1, id_set)
 
-        queryset = Article.objects.raw(f'''
+        queryset = Article.objects.raw(
+            f'''
             SELECT * FROM `core_article`
             JOIN (
                 SELECT `core_articlereadlog`.`article_id`, MAX(`core_articlereadlog`.`created_at`) AS my_last_read_at
@@ -260,13 +261,15 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 ORDER BY my_last_read_at desc
                 LIMIT %s OFFSET %s
             ) recents ON recents.article_id = `core_article`.id
-            ''', query_params)
-
-        queryset = queryset.prefetch_related('created_by',
-                                             'created_by__profile',
-                                             'parent_board',
-                                             'parent_topic',
-                                             ArticleReadLog.prefetch_my_article_read_log(self.request.user))
+            ''', 
+            query_params
+        ).prefetch_related(
+            'created_by',
+            'created_by__profile',
+            'parent_board',
+            'parent_topic',
+            ArticleReadLog.prefetch_my_article_read_log(self.request.user)
+        )
 
         serializer = self.get_serializer_class()([v for v in queryset], many=True, context={"request": request})
         return self.paginator.get_paginated_response(serializer.data)
