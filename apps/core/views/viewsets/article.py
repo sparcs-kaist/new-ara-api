@@ -235,8 +235,9 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             if id_set:
                 search_restriction_sql = 'AND `core_articlereadlog`.`article_id` IN (' + ', '.join(map(str, id_set)) + ') '
             else:
-                # there is no search result! In this edge case, 'IN ()' cause a mysql error
-                search_restriction_sql = 'AND FALSE'
+                # There is no search result! Return empty result
+                self.paginate_queryset(ArticleReadLog.objects.none())
+                return self.paginator.get_paginated_response([])
 
         # Cardinality of this queryset is same with actual query
         count_queryset = ArticleReadLog.objects \
