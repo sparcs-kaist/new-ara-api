@@ -62,6 +62,10 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         queryset = super().filter_queryset(queryset)
 
         if self.action == 'list':
+            created_by = self.request.query_params.get('created_by')
+            if created_by and int(created_by) != self.request.user.id:
+                queryset = queryset.exclude(is_anonymous=True)
+
             # optimizing queryset for list action
             queryset = queryset.select_related(
                 'created_by',
@@ -71,6 +75,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             ).prefetch_related(
                 ArticleReadLog.prefetch_my_article_read_log(self.request.user),
             )
+
         # optimizing queryset for create, update, retrieve actions
         else:
             queryset = queryset.select_related(
