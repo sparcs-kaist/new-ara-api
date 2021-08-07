@@ -239,9 +239,15 @@ class ArticleSerializer(BaseArticleSerializer):
             if request.query_params.get('search_query'):
                 articles = self.search_articles(articles, request.query_params.get('search_query'))
 
-            articles = articles.exclude(id=obj.id)
-            before = articles.filter(created_at__lte=obj.created_at).first()
-            after = articles.filter(created_at__gte=obj.created_at).last()
+            if from_view == 'scrap':
+                articles = articles.exclude(id=obj.id)
+                before = articles.filter(scrap_set__created_at__lte=obj.scrap_set.get().created_at).first()
+                after = articles.filter(scrap_set__created_at__gte=obj.scrap_set.get().created_at).last()
+                
+            else:
+                articles = articles.exclude(id=obj.id)
+                before = articles.filter(created_at__lte=obj.created_at).first()
+                after = articles.filter(created_at__gte=obj.created_at).last()
 
         return {
             'before': SideArticleSerializer(before, context=self.context).data if before else None,
