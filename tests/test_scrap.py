@@ -144,3 +144,15 @@ class TestScrap(TestCase, RequestSetting):
         scrap = self.http_request(self.user2, 'get', 'scraps').data
         assert scrap.get('num_items') == 1
         assert scrap.get('results')[0].get('parent_article').get('is_hidden')
+
+    def test_scrap_side_article_order(self):
+        # side_article 순서가 게시글 작성 순서가 아닌 스크랩 순서인지 확인
+        Scrap.objects.create(parent_article=self.article2, scrapped_by=self.user) # 늦게 작성, 먼저 스크랩 된 글 
+        Scrap.objects.create(parent_article=self.article, scrapped_by=self.user) # 먼저 작성, 늦게 스크랩 된 글
+
+        res1 = self.http_request(self.user, 'get', f'articles/{self.article2.id}', querystring = 'from_view=scrap')
+        assert res1.data['side_articles']['after']['id'] == self.article.id
+
+        res2 = self.http_request(self.user, 'get', f'articles/{self.article.id}', querystring = 'from_view=scrap')
+        assert res2.data['side_articles']['before']['id'] == self.article2.id
+
