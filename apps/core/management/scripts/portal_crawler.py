@@ -223,7 +223,7 @@ def crawl_hour(day=None):
         # Since it is time ordered, consequent ones have been posted more than 1 hour ago.
 
         user_exist = UserProfile.objects.filter(nickname=info['writer'], is_newara=False)
-        exist = Article.objects.filter(title=info['title'],content_text=info['content_text'])
+        article_exist = Article.objects.filter(title=info['title'],content_text=info['content_text'])
 
         if user_exist:
             user = user_exist.first().user
@@ -238,9 +238,7 @@ def crawl_hour(day=None):
                 picture='user_profiles/default_pictures/KAIST-logo.png',
             )
 
-        if exist:
-            continue
-        else:
+        if not article_exist:
             a, created = Article.objects.get_or_create(
                 url=full_link,
                 defaults={
