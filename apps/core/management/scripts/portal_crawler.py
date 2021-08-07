@@ -222,9 +222,11 @@ def crawl_hour(day=None):
 
         # Since it is time ordered, consequent ones have been posted more than 1 hour ago.
 
-        exist = UserProfile.objects.filter(nickname=info["writer"], is_newara=False)
-        if exist:
-            user = exist.first().user
+        user_exist = UserProfile.objects.filter(nickname=info["writer"], is_newara=False)
+        exist = Article.objects.filter(title=info['title'],content_text=info['content_text'])
+
+        if user_exist:
+            user = user_exist.first().user
         else:
             user = get_user_model().objects.create(
                 username=str(uuid.uuid1()), is_active=False
@@ -236,21 +238,24 @@ def crawl_hour(day=None):
                 picture="user_profiles/default_pictures/KAIST-logo.png",
             )
 
-        a, created = Article.objects.get_or_create(
-            url=full_link,
-            defaults={
-                "parent_board_id": 1,  # 포탈공지 게시판
-                "title": info["title"],
-                "content": info["content"],
-                "content_text": info["content_text"],
-                "created_by": user,
-            },
-        )
+        if exist:
+            continue
+        else:
+            a, created = Article.objects.get_or_create(
+                url=full_link,
+                defaults={
+                    "parent_board_id": 1,  # 포탈공지 게시판
+                    "title": info["title"],
+                    "content": info["content"],
+                    "content_text": info["content_text"],
+                    "created_by": user,
+                },
+            )
 
-        if created:
-            a.created_at = info["created_at"]
-            a.save()
-            print(f"crawled id: {a.id} - {a.title}")
+            if created:
+                a.created_at = info["created_at"]
+                a.save()
+                print(f"crawled id: {a.id} - {a.title}")
 
 
 def crawl_all():
@@ -284,11 +289,11 @@ def crawl_all():
                     full_link = f"{BASE_URL}/board/read.brd?cmd=READ&boardId={board_id}&bltnNo={num}&lang_knd=ko"
                     info = _get_article(full_link, session)
 
-                    exist = UserProfile.objects.filter(
+                    user_exist = UserProfile.objects.filter(
                         nickname=info["writer"], is_newara=False
                     )
-                    if exist:
-                        user = exist.first().user
+                    if user_exist:
+                        user = user_exist.first().user
                     else:
                         user = get_user_model().objects.create(
                             username=str(uuid.uuid1()), is_active=False
@@ -300,7 +305,7 @@ def crawl_all():
                             picture="user_profiles/default_pictures/KAIST-logo.png",
                         )
 
-                    a = Article.objects.create(
+                    a, created = Article.objects.get_or_create(
                         parent_board_id=1,  # 포탈공지 게시판
                         title=info["title"],
                         content=info["content"],
@@ -309,8 +314,9 @@ def crawl_all():
                         url=full_link,
                     )
 
-                    a.created_at = info["created_at"]
-                    a.save()
+                    if created:
+                        a.created_at = info["created_at"]
+                        a.save()
 
             page_num += 1
 
