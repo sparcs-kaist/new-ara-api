@@ -41,6 +41,8 @@ sentry-sdk = "0.19.4"
 django-elasticsearch-dsl = "^7.1.4"
 html5lib = "^1.1"
 pyotp = "^2.6.0"
+channels = "^3.0.4"
+channels-redis = "^3.3.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
