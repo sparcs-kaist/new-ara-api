@@ -1,6 +1,7 @@
 from typing import Dict, Union
 
 import bs4
+from django.core.files.storage import default_storage
 
 from django.db import models, IntegrityError, transaction
 from django.conf import settings
@@ -204,7 +205,7 @@ class Article(MetaDataModel):
                 'id': 0,
                 'username': gettext('anonymous'),
                 'profile': {
-                    'picture': user_profile_picture,
+                    'picture': default_storage.url(user_profile_picture),
                     'nickname': gettext('anonymous'),
                     'user': gettext('anonymous')
                 },

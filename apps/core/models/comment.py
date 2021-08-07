@@ -1,6 +1,7 @@
 from typing import Dict, Union
 import hashlib
 
+from django.core.files.storage import default_storage
 from django.db import models, IntegrityError
 from django.conf import settings
 from django.utils import timezone
@@ -163,7 +164,7 @@ class Comment(MetaDataModel):
                 'id': user_hash,
                 'username': user_name,
                 'profile': {
-                    'picture': user_profile_picture,
+                    'picture': default_storage.url(user_profile_picture),
                     'nickname': user_name,
                     'user': user_hash
                 }
