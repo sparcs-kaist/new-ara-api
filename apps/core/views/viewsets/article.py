@@ -25,6 +25,8 @@ from apps.core.serializers.article import (
     ArticleUpdateActionSerializer,
 )
 
+from apps.core.documents import ArticleDocument
+
 
 class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     queryset = Article.objects.all()
@@ -230,30 +232,49 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
     @decorators.action(detail=False, methods=['get'])
     def recent(self, request, *args, **kwargs):
+
+        search_keyword = request.query_params.get('main_search__contains')
+        search_restriction_sql = ''
+        if search_keyword:
+            id_set = ArticleDocument.get_main_search_id_set(search_keyword)
+            if id_set:
+                search_restriction_sql = 'AND `core_articlereadlog`.`article_id` IN %s'
+            else:
+                # There is no search result! Return empty result
+                self.paginate_queryset(ArticleReadLog.objects.none())
+                return self.paginator.get_paginated_response([])
+
         # Cardinality of this queryset is same with actual query
-        count_queryset = ArticleReadLog.objects \
-            .values("article_id") \
-            .filter(read_by=request.user) \
-            .distinct()
+        count_queryset = ArticleReadLog.objects.values("article_id").filter(read_by=request.user).distinct()
+        if search_keyword:
+            count_queryset = count_queryset.filter(article_id__in=id_set)
 
         self.paginate_queryset(count_queryset)
 
-        queryset = Article.objects.raw('''
+        query_params = [self.request.user.id, self.paginator.get_page_size(request), max(0, self.paginator.page.start_index()-1)]
+        if search_keyword:
+            query_params.insert(1, id_set)
+
+        queryset = Article.objects.raw(
+            f'''
             SELECT * FROM `core_article`
             JOIN (
                 SELECT `core_articlereadlog`.`article_id`, MAX(`core_articlereadlog`.`created_at`) AS my_last_read_at
                 FROM `core_articlereadlog`
-                WHERE (`core_articlereadlog`.`deleted_at` = '0001-01-01 00:00:00' AND `core_articlereadlog`.`read_by_id` = %s)
+                WHERE (`core_articlereadlog`.`deleted_at` = '0001-01-01 00:00:00' AND `core_articlereadlog`.`read_by_id` = %s {search_restriction_sql})
                 GROUP BY `core_articlereadlog`.`article_id`
                 ORDER BY my_last_read_at desc
                 LIMIT %s OFFSET %s
             ) recents ON recents.article_id = `core_article`.id
-            ''', [self.request.user.id, self.paginator.get_page_size(request), max(0, self.paginator.page.start_index()-1)]) \
-            .prefetch_related('created_by',
-                              'created_by__profile',
-                              'parent_board',
-                              'parent_topic',
-                              ArticleReadLog.prefetch_my_article_read_log(self.request.user))
+            ''', 
+            query_params
+        ).prefetch_related(
+            'created_by',
+            'created_by__profile',
+            'parent_board',
+            'parent_topic',
+            ArticleReadLog.prefetch_my_article_read_log(self.request.user)
+        )
 
         serializer = self.get_serializer_class()([v for v in queryset], many=True, context={"request": request})
         return self.paginator.get_paginated_response(serializer.data)
