@@ -75,7 +75,7 @@ def set_anonymous_article(request):
         title='익명글',
         is_content_sexual=False,
         is_content_social=False,
-        is_anonymous=False,
+        is_anonymous=True,
         content='example content',
         content_text='example content text',
         created_by=request.cls.user2,
@@ -201,17 +201,15 @@ class TestAnonymousUser(TestCase, RequestSetting):
     def test_anonymous_article_profile_picture(self):
         r = self.http_request(self.user, 'get', f'articles/{self.article_anonymous.id}').data
         profile_picture_url = r.get('created_by')['profile']['picture']
-        validate = URLValidator
         try:
-            validate(profile_picture_url)
+            URLValidator(profile_picture_url)
         except ValidationError:
             assert False, 'Bad URL for anonymous article profile picture'
 
     def test_anonymous_comment_profile_picture(self):
         r = self.http_request(self.user, 'get', f'comments/{self.comment_anonymous.id}').data
         profile_picture_url = r.get('created_by')['profile']['picture']
-        validate = URLValidator
         try:
-            validate(profile_picture_url)
+            URLValidator(profile_picture_url)
         except ValidationError:
             assert False, 'Bad URL for anonymous comment profile picture'
