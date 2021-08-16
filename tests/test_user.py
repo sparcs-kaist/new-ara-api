@@ -1,9 +1,11 @@
 from datetime import timedelta
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.core.validators import URLValidator
 
-from apps.core.models import Board, Article
+from apps.core.models import Board, Article, Comment
 from tests.conftest import RequestSetting, TestCase
 
 
@@ -59,10 +61,38 @@ def set_articles(request):
         is_content_social=True,
         **common_kwargs
     )
+
     request.cls.articles_meta[request.cls.article_clean.id] = (False, False)
     request.cls.articles_meta[request.cls.article_sexual.id] = (True, False)
     request.cls.articles_meta[request.cls.article_social.id] = (False, True)
     request.cls.articles_meta[request.cls.article_sexual_and_social.id] = (True, True)
+
+
+@pytest.fixture(scope='class')
+def set_anonymous_article(request):
+    """set_board, set_user_client2 먼저 적용"""
+    request.cls.article_anonymous = Article.objects.create(
+        title='익명글',
+        is_content_sexual=False,
+        is_content_social=False,
+        is_anonymous=True,
+        content='example content',
+        content_text='example content text',
+        created_by=request.cls.user2,
+        parent_board=request.cls.board,
+        hit_count=0,
+    )
+
+
+@pytest.fixture(scope='class')
+def set_anonymous_comment(request):
+    """set_anonymous_articles 먼저 적용"""
+    request.cls.comment_anonymous = Comment.objects.create(
+        content='example comment',
+        is_anonymous=True,
+        created_by=request.cls.user,
+        parent_article=request.cls.article_anonymous,
+    )
 
 
 @pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_articles')
@@ -164,3 +194,22 @@ class TestUserNickname(TestCase, RequestSetting):
         self.user.refresh_from_db()
         assert self.user.profile.nickname == 'bar'
         assert (timezone.now() - self.user.profile.nickname_updated_at).total_seconds() < 5
+
+
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_anonymous_article', 'set_anonymous_comment')
+class TestAnonymousUser(TestCase, RequestSetting):
+    def test_anonymous_article_profile_picture(self):
+        r = self.http_request(self.user, 'get', f'articles/{self.article_anonymous.id}').data
+        profile_picture_url = r.get('created_by')['profile']['picture']
+        try:
+            URLValidator(profile_picture_url)
+        except ValidationError:
+            assert False, 'Bad URL for anonymous article profile picture'
+
+    def test_anonymous_comment_profile_picture(self):
+        r = self.http_request(self.user, 'get', f'comments/{self.comment_anonymous.id}').data
+        profile_picture_url = r.get('created_by')['profile']['picture']
+        try:
+            URLValidator(profile_picture_url)
+        except ValidationError:
+            assert False, 'Bad URL for anonymous comment profile picture'
