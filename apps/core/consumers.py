@@ -1,33 +1,31 @@
+import re
+
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
-
-from channels.auth import get_user
-
 
 class WebSocketHandler(AsyncJsonWebsocketConsumer):
 
     # there is only one channel group
     groups = ['broadcast']
 
+    article_id_regex = re.compile(r'/post/(\d+)$')
+
     async def connect(self):
-        # TODO: websocket scope does not give appropriate user(scope['user'] is always anonymous). Need to fix
+        self.watching_article = 0
         await self.accept()
 
     async def disconnect(self, code):
         pass
 
     async def receive_json(self, content, **kwargs):
-        """
-        Receive handler. Do nothing since there is no usage now. 
-        """
-        pass
-
+        match = WebSocketHandler.article_id_regex.search(content['new_route'])
+        self.watching_article = int(match.group(1)) if match else 0
 
     # websocket sessions are not preserved between pages
     async def update_articlelist(self, event):
         """
         Notify if the client is watching the articlelist.
         """
-        if 'post_id' not in self.scope['url_route']['kwargs']:
+        if not self.watching_article:
             await self.send_json({
                 'msg_type': 'update',
                 'target': 'articlelist',
@@ -37,7 +35,7 @@ class WebSocketHandler(AsyncJsonWebsocketConsumer):
         """
         Notify if the client is watching a specific article.
         """
-        if self.scope['url_route']['kwargs'].get('post_id') == str(event['post_id']):
+        if self.watching_article == int(event['post_id']):
             await self.send_json({
                 'msg_type': 'update',
                 'target': 'articleview',
