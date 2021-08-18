@@ -29,7 +29,7 @@ def set_topic(request):
 
 
 @pytest.fixture(scope='class')
-def set_article(request):
+def set_articles(request):
     """set_topic, set_user_client 먼저 적용"""
     request.cls.article = Article.objects.create(
         title='Test Article',
@@ -47,9 +47,26 @@ def set_article(request):
         commented_at=timezone.now()
     )
 
+    """set_topic, set_user_client 먼저 적용"""
+    request.cls.article_anonymous = Article.objects.create(
+        title='Anonymous Test Article',
+        content='Content of test article',
+        content_text='Content of test article in text',
+        is_anonymous=True,
+        is_content_sexual=False,
+        is_content_social=False,
+        hit_count=0,
+        positive_vote_count=0,
+        negative_vote_count=0,
+        created_by=request.cls.user,
+        parent_topic=request.cls.topic,
+        parent_board=request.cls.board,
+        commented_at=timezone.now()
+    )
+
 
 @pytest.fixture(scope='class')
-def set_comment(request):
+def set_comments(request):
     """set_article 먼저 적용"""
     request.cls.comment = Comment.objects.create(
         content='this is a test comment',
@@ -58,8 +75,15 @@ def set_comment(request):
         parent_article=request.cls.article,
     )
 
+    request.cls.comment_anonymous = Comment.objects.create(
+        content='this is an anonymous test comment',
+        is_anonymous=True,
+        created_by=request.cls.user,
+        parent_article=request.cls.article_anonymous,
+    )
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_topic', 'set_article', 'set_comment')
+
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_topic', 'set_articles', 'set_comments')
 class TestComments(TestCase, RequestSetting):
     # comment 개수를 확인하는 테스트
     def test_comment_list(self):
@@ -218,6 +242,28 @@ class TestComments(TestCase, RequestSetting):
         res2 = self.http_request(self.user2, 'get', f'comments/{anon_comment.id}').data
         assert res2.get('is_anonymous')
         assert res2.get('created_by')['username'] != anon_comment.created_by.username
+
+    # 익명글의 글쓴이가 본인의 글에 남긴 댓글에 대해, user_id가 같은지 확인
+    def test_anonymous_comment_by_article_writer(self):
+        # 익명 댓글 생성
+        Comment.objects.create(
+            content='Anonymous test comment',
+            is_anonymous=True,
+            created_by=self.user,
+            parent_article=self.article
+        )
+
+        r_article = self.http_request(self.user, 'get', f'articles/{self.article_anonymous.id}').data
+        article_auther_id = r_article.get('created_by')['id']
+        r_comment = self.http_request(self.user, 'get', f'comments/{self.comment_anonymous.id}').data
+        comment_auther_id = r_comment.get('created_by')['id']
+        assert article_auther_id == comment_auther_id
+
+        r_article2 = self.http_request(self.user2, 'get', f'articles/{self.article_anonymous.id}').data
+        article_auther_id2 = r_article2.get('created_by')['id']
+        r_comment2 = self.http_request(self.user2, 'get', f'comments/{self.comment_anonymous.id}').data
+        comment_auther_id2 = r_comment2.get('created_by')['id']
+        assert article_auther_id2 == comment_auther_id2
 
     # 댓글 좋아요 확인
     def test_positive_vote(self):

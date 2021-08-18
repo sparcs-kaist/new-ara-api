@@ -1,6 +1,7 @@
 from typing import Dict, Union
 
 import bs4
+from django.core.files.storage import default_storage
 
 from django.db import models, IntegrityError, transaction
 from django.conf import settings
@@ -8,7 +9,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
 
-from apps.user.views.viewsets import make_random_profile_picture
+from apps.user.views.viewsets import make_random_profile_picture, hashlib
 from ara.db.models import MetaDataModel
 from ara.sanitizer import sanitize
 from ara.settings import HASH_SECRET_VALUE
@@ -198,13 +199,15 @@ class Article(MetaDataModel):
         else:
             user_unique_num = self.created_by.id + self.id + HASH_SECRET_VALUE
             user_unique_encoding = str(hex(user_unique_num)).encode('utf-8')
-            user_profile_picture = make_random_profile_picture(hash(user_unique_encoding))
+            user_hash = hashlib.sha224(user_unique_encoding).hexdigest()
+            user_hash_int = int(user_hash[-4:], 16)
+            user_profile_picture = make_random_profile_picture(user_hash_int)
 
             return {
-                'id': 0,
+                'id': user_hash,
                 'username': gettext('anonymous'),
                 'profile': {
-                    'picture': user_profile_picture,
+                    'picture': default_storage.url(user_profile_picture),
                     'nickname': gettext('anonymous'),
                     'user': gettext('anonymous')
                 },
