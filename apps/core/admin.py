@@ -111,7 +111,7 @@ class ArticleAdmin(MetaDataModelAdmin):
         'title',
         'content',
         'hidden_at',
-        'created_by__username',
+        'created_by__email'
     )
     actions = ('restore_hidden_articles',)
 
@@ -143,7 +143,7 @@ class CommentAdmin(MetaDataModelAdmin):
     search_fields = (
         'content',
         'hidden_at',
-        'created_by__username',
+        'created_by__email'
     )
     actions = ('restore_hidden_comments',)
 
