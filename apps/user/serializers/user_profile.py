@@ -10,9 +10,6 @@ from apps.user.models import UserProfile
 
 class BaseUserProfileSerializer(MetaDataModelSerializer):
     email = serializers.SerializerMethodField()
-    num_articles = serializers.SerializerMethodField()
-    num_comments = serializers.SerializerMethodField()
-    num_positive_votes = serializers.SerializerMethodField()
 
     class Meta:
         model = UserProfile
@@ -23,26 +20,6 @@ class BaseUserProfileSerializer(MetaDataModelSerializer):
         if obj.email.endswith('@sso.sparcs.org'):
             return None
         return obj.email
-
-    @staticmethod
-    def get_num_articles(obj):
-        from apps.core.models import Article
-        num_articles = Article.objects.filter(created_by=obj.user.id).count()
-        return num_articles
-
-    @staticmethod
-    def get_num_comments(obj):
-        from apps.core.models import Comment
-        num_comments = Comment.objects.filter(created_by=obj.user.id).count()
-        return num_comments
-
-    @staticmethod
-    def get_num_positive_votes(obj):
-        from apps.core.models import Vote
-        num_article_votes = Vote.objects.filter(parent_article__created_by=obj.user.id, is_positive=True).count()
-        num_comment_votes = Vote.objects.filter(parent_comment__created_by=obj.user.id, is_positive=True).count()
-        num_votes = num_article_votes + num_comment_votes
-        return num_votes
 
 
 class UserProfileSerializer(BaseUserProfileSerializer):
@@ -85,3 +62,28 @@ class PublicUserProfileSerializer(BaseUserProfileSerializer):
             'nickname',
             'user'
         )
+
+
+class MyPageUserProfileSerializer(BaseUserProfileSerializer):
+    num_articles = serializers.SerializerMethodField()
+    num_comments = serializers.SerializerMethodField()
+    num_positive_votes = serializers.SerializerMethodField()
+
+    @staticmethod
+    def get_num_articles(obj):
+        from apps.core.models import Article
+        num_articles = Article.objects.filter(created_by=obj.user).count()
+        return num_articles
+
+    @staticmethod
+    def get_num_comments(obj):
+        from apps.core.models import Comment
+        num_comments = Comment.objects.filter(created_by=obj.user).count()
+        return num_comments
+
+    @staticmethod
+    def get_num_positive_votes(obj):
+        from apps.core.models import Vote
+        num_article_votes = Vote.objects.filter(parent_article__created_by=obj.user, is_positive=True).count()
+        num_comment_votes = Vote.objects.filter(parent_comment__created_by=obj.user, is_positive=True).count()
+        return num_article_votes + num_comment_votes
