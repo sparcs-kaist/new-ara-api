@@ -1,12 +1,10 @@
 import typing
-
 from django.utils.translation import gettext
-
-from ara.classes.serializers import MetaDataModelSerializer
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from rest_framework import serializers
 
+from ara.classes.serializers import MetaDataModelSerializer
 from apps.user.models import UserProfile
 
 
@@ -64,3 +62,28 @@ class PublicUserProfileSerializer(BaseUserProfileSerializer):
             'nickname',
             'user'
         )
+
+
+class MyPageUserProfileSerializer(BaseUserProfileSerializer):
+    num_articles = serializers.SerializerMethodField()
+    num_comments = serializers.SerializerMethodField()
+    num_positive_votes = serializers.SerializerMethodField()
+
+    @staticmethod
+    def get_num_articles(obj):
+        from apps.core.models import Article
+        num_articles = Article.objects.filter(created_by=obj.user).count()
+        return num_articles
+
+    @staticmethod
+    def get_num_comments(obj):
+        from apps.core.models import Comment
+        num_comments = Comment.objects.filter(created_by=obj.user).count()
+        return num_comments
+
+    @staticmethod
+    def get_num_positive_votes(obj):
+        from apps.core.models import Vote
+        num_article_votes = Vote.objects.filter(parent_article__created_by=obj.user, is_positive=True).count()
+        num_comment_votes = Vote.objects.filter(parent_comment__created_by=obj.user, is_positive=True).count()
+        return num_article_votes + num_comment_votes
