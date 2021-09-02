@@ -212,20 +212,17 @@ def crawl_hour(day=None):
         # Next page
         page_num += 1
 
-    new_articles = []
-
-    # TODO: check num db hits
+    utc_day_time = timezone.datetime.combine(day, datetime.min.time()).astimezone(timezone.utc)
     today_articles = Article.objects.filter(parent_board_id=1,
-                                            created_at__year=day.year,
-                                            created_at__month= day.month,
-                                            created_at__day = day.day)
+                                            created_at__gte=utc_day_time,)
 
     most_recent_portal_article_in_db = today_articles.order_by('-created_at').first()
-    date_of_most_recent_portal_article_in_db = timezone.datetime.min.replace(tzinfo=timezone.utc)
 
-    if most_recent_portal_article_in_db:
-        date_of_most_recent_portal_article_in_db = most_recent_portal_article_in_db.created_at
+    date_of_most_recent_portal_article_in_db = most_recent_portal_article_in_db.created_at \
+        if most_recent_portal_article_in_db \
+        else timezone.datetime.min.replace(tzinfo=timezone.utc)
 
+    new_articles = []
     for link in links:
         link = link['link']
         board_id = link.split('/')[-2]
@@ -241,9 +238,9 @@ def crawl_hour(day=None):
             continue
 
         user_exist = UserProfile.objects.filter(nickname=info['writer'], is_newara=False)
-        same_article_exist_in_db = today_articles.filter(title=info['title'],
-                                                         content_text=info['content_text'])
-        same_article_exist_in_list = list_contains_article(new_articles, info)
+        is_contained_in_db = today_articles.filter(title=info['title'],
+                                                   content_text=info['content_text'])
+        is_contained_in_list = list_contains_article(new_articles, info)
 
         if user_exist:
             user = user_exist.first().user
@@ -258,28 +255,27 @@ def crawl_hour(day=None):
                 picture='user_profiles/default_pictures/KAIST-logo.png',
             )
 
-        if (not same_article_exist_in_db) and (not same_article_exist_in_list):
-            article_info = {
-                    'parent_board_id': 1,  # 포탈공지 게시판
-                    'title': info['title'],
-                    'content': info['content'],
-                    'content_text': info['content_text'],
-                    'created_by': user,
-                    'created_at': info['created_at'],
-                    'url': full_link
-                }
-            new_articles.append(article_info)
+        if (not is_contained_in_db) and (not is_contained_in_list):
+            article = Article(
+                        parent_board_id=1,
+                        title=info['title'],
+                        content=info['content'],
+                        content_text=info['content_text'],
+                        created_by=user,
+                        created_at=info['created_at'],
+                        url=full_link
+                      )
+            new_articles.append(article)
 
-    for article in new_articles:
-        a = Article.objects.create(**article)
-        a.created_at = article['created_at']
-        a.save()
-        print(f'crawled id: {a.id} - {a.title}')
+    created_articles = Article.objects.bulk_create(new_articles)
+
+    for i in range(len(created_articles)):
+        print(f'crawled article: {created_articles[i].title}')
 
 
-def list_contains_article(articles, article):
+def list_contains_article(articles, article_info):
     for a in articles:
-        if a['title'] == article['title'] and a['content_text'] == article['content_text']:
+        if a.title == article_info['title'] and a.content_text == article_info['content_text']:
             return True
     return False
 
