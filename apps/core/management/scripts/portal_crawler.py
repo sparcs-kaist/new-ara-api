@@ -238,8 +238,8 @@ def crawl_hour(day=None):
             continue
 
         user_exist = UserProfile.objects.filter(nickname=info['writer'], is_newara=False)
-        is_contained_in_db = today_articles.filter(title=info['title'],
-                                                   content_text=info['content_text'])
+        articles_contained_in_db = today_articles.filter(title=info['title'],
+                                                         content_text=info['content_text'])
         is_contained_in_list = list_contains_article(new_articles, info)
 
         if user_exist:
@@ -255,7 +255,7 @@ def crawl_hour(day=None):
                 picture='user_profiles/default_pictures/KAIST-logo.png',
             )
 
-        if (not is_contained_in_db) and (not is_contained_in_list):
+        if (not articles_contained_in_db) and (not is_contained_in_list):
             article = Article(
                         parent_board_id=1,
                         title=info['title'],
