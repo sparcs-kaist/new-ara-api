@@ -5,7 +5,7 @@ from django.utils.translation import gettext
 from rest_framework import exceptions, serializers
 
 from apps.core.documents import ArticleDocument
-from apps.core.models import Article, ArticleReadLog, Board, Block
+from apps.core.models import Article, ArticleReadLog, Board, Block, Scrap
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
 from apps.user.serializers.user import PublicUserSerializer
@@ -242,9 +242,21 @@ class ArticleSerializer(BaseArticleSerializer):
             articles = articles.exclude(id=obj.id)
 
             if from_view == 'scrap':
-                scrap_obj_created_at = obj.scrap_set.get().created_at
-                before = articles.filter(scrap_set__created_at__lte=scrap_obj_created_at).first()
-                after = articles.filter(scrap_set__created_at__gte=scrap_obj_created_at).last()
+                scrap_obj_created_at = obj.scrap_set.get(scrapped_by=request.user).created_at
+
+                scrap_list = Scrap.objects.filter(scrapped_by=request.user).exclude(parent_article_id=obj.id)
+                before_scrap = scrap_list.filter(created_at__lte=scrap_obj_created_at).first()
+                after_scrap = scrap_list.filter(created_at__gte=scrap_obj_created_at).last()
+
+                if before_scrap:
+                    before = before_scrap.parent_article
+                else:
+                    before = None
+
+                if after_scrap:
+                    after = after_scrap.parent_article
+                else:
+                    after = None
                 
             else:
                 before = articles.filter(created_at__lte=obj.created_at).first()

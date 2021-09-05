@@ -156,3 +156,11 @@ class TestScrap(TestCase, RequestSetting):
         res2 = self.http_request(self.user, 'get', f'articles/{self.article.id}', querystring = 'from_view=scrap')
         assert res2.data['side_articles']['before']['id'] == self.article2.id
 
+    def test_scrapped_by_multiple_user(self):
+        # 한 게시글이 여러명에게 스크랩될 때, side_article 순서가 잘 작동하는지 확인
+        Scrap.objects.create(parent_article=self.article, scrapped_by=self.user)
+        Scrap.objects.create(parent_article=self.article2, scrapped_by=self.user)
+        Scrap.objects.create(parent_article=self.article2, scrapped_by=self.user2) # 같은 글을 user2가 스크랩
+
+        res1 = self.http_request(self.user, 'get', f'articles/{self.article.id}', querystring = 'from_view=scrap')
+        assert res1.data['side_articles']['after']['id'] == self.article2.id
