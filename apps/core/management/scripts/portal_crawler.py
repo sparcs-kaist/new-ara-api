@@ -212,35 +212,28 @@ def crawl_hour(day=None):
         # Next page
         page_num += 1
 
-    utc_day_time = timezone.datetime.combine(day, datetime.min.time()).astimezone(timezone.utc)
-    today_articles = Article.objects.filter(parent_board_id=1,
-                                            created_at__gte=utc_day_time,)
-
-    most_recent_portal_article_in_db = today_articles.order_by('-created_at').first()
-
-    date_of_most_recent_portal_article_in_db = most_recent_portal_article_in_db.created_at \
-        if most_recent_portal_article_in_db \
-        else timezone.datetime.min.replace(tzinfo=timezone.utc)
+    last_portal_article_in_db = Article.objects.filter(
+            parent_board_id=1,
+        ).order_by('-created_at').first()
 
     new_articles = []
+    prev_title = ''
+
     for link in links:
         link = link['link']
         board_id = link.split('/')[-2]
         num = link.split('/')[-1]
         full_link = f'{BASE_URL}/board/read.brd?cmd=READ&boardId={board_id}&bltnNo={num}&lang_knd=ko'
-        article_url_exists_in_db = today_articles.filter(url=full_link)
-
         info = _get_article(full_link, session)
 
         # Since it is time ordered, consequent ones have been posted more than 1 hour ago.
 
-        if article_url_exists_in_db or info['created_at'] < date_of_most_recent_portal_article_in_db:
+        created_at_utc = info['created_at'].astimezone(timezone.utc)
+
+        if created_at_utc < last_portal_article_in_db.created_at or info['title'] == prev_title:
             continue
 
         user_exist = UserProfile.objects.filter(nickname=info['writer'], is_newara=False)
-        articles_contained_in_db = today_articles.filter(title=info['title'],
-                                                         content_text=info['content_text'])
-        is_contained_in_list = list_contains_article(new_articles, info)
 
         if user_exist:
             user = user_exist.first().user
@@ -248,24 +241,37 @@ def crawl_hour(day=None):
             user = get_user_model().objects.create(
                 username=str(uuid.uuid1()), is_active=False
             )
-            user_profile = UserProfile.objects.create(
+
+            UserProfile.objects.create(
                 is_newara=False,
                 user=user,
                 nickname=info['writer'],
                 picture='user_profiles/default_pictures/KAIST-logo.png',
             )
 
-        if (not articles_contained_in_db) and (not is_contained_in_list):
-            article = Article(
-                        parent_board_id=1,
-                        title=info['title'],
-                        content=info['content'],
-                        content_text=info['content_text'],
-                        created_by=user,
-                        created_at=info['created_at'],
-                        url=full_link
-                      )
-            new_articles.append(article)
+        article = Article(
+                    parent_board_id=1,
+                    title=info['title'],
+                    content=info['content'],
+                    content_text=info['content_text'],
+                    created_by=user,
+                    created_at=created_at_utc,
+                    url=full_link
+                  )
+
+        new_articles.append(article)
+        prev_title = article.title
+
+    # DB의 마지막 포탈글과 방금 크롤링한 글 중 가장 이른 글을 비교
+    earliest_new_article = new_articles[-1]
+    is_same_day = last_portal_article_in_db.created_at.date() == earliest_new_article.created_at.date()
+    is_same_title = last_portal_article_in_db.title == earliest_new_article.title
+
+    if is_same_day and is_same_title:
+        last_portal_article_in_db.created_at = earliest_new_article.created_at
+        last_portal_article_in_db.content = earliest_new_article.content
+        last_portal_article_in_db.save()
+        new_articles.pop()
 
     created_articles = Article.objects.bulk_create(new_articles)
 
