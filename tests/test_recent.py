@@ -1,4 +1,6 @@
 import pytest
+import hashlib, time
+from collections import OrderedDict
 from apps.core.models import Article, Topic, Board, Comment, Report
 from tests.conftest import RequestSetting, TestCase
 from django.utils import timezone
@@ -117,3 +119,23 @@ class TestRecent(TestCase, RequestSetting):
         expected_order = [2, 9, 8, 7, 6, 5, 4, 3, 1, 0]
         for i in range(10):
             assert recent_list[i]['id'] == self.articles[expected_order[i]].id
+
+    # 매우 복잡한 읽기 패턴에 대한 테스트
+    def test_read_article_complex_pattern(self):
+        
+        length = len(self.articles)
+        seed = int(hashlib.sha224(b'foobarbaz').hexdigest(), base=16) # predictable random value
+
+        order = []
+        while seed:
+            order.append(seed % length)
+            seed //= length
+
+        for num in order:
+            r = self.http_request(self.user, 'get', f'articles/{self.articles[num].id}').data
+        
+        recent_list = self.http_request(self.user, 'get', 'articles/recent').data.get('results')
+
+        expected_order = list(OrderedDict.fromkeys(reversed(order)).keys())
+
+        assert [x['id'] for x in recent_list] == [self.articles[x].id for x in expected_order]
