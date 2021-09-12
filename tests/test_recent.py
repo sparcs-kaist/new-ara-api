@@ -51,7 +51,7 @@ def set_articles(request):
             parent_board=request.cls.board,
             commented_at=timezone.now()
         )
-    request.cls.articles = [create_article(i) for i in range(1, 11)]
+    request.cls.articles = [create_article(i) for i in range(10)]
 
 
 @pytest.fixture(scope='class')
@@ -194,9 +194,9 @@ class TestRecent(TestCase, RequestSetting):
         after = expected_order[i-1]
 
         article_titles = ' '.join([
-            f'Article{before + 1}',
-            f'Article{wanted + 1}',
-            f'Article{after + 1}',
+            f'Article{before}',
+            f'Article{wanted}',
+            f'Article{after}',
         ])
 
         recent_list = self.http_request(self.user, 'get', 'articles/recent', querystring=f'main_search__contains={article_titles}').data.get('results')
