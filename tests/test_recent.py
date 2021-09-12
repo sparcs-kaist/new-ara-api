@@ -142,3 +142,30 @@ class TestRecent(TestCase, RequestSetting):
         expected_order = list(OrderedDict.fromkeys(reversed(order)).keys())
 
         assert [x['id'] for x in recent_list] == [self.articles[x].id for x in expected_order]
+
+    # 매우 복잡한 읽기 패턴에 대한 side_article 테스트
+    def test_read_article_complex_pattern_side_article(self):
+
+        length = len(self.articles)
+        seed = int(hashlib.sha224(b'foobarbaz').hexdigest(), base=16)
+
+        order = []
+        while seed:
+            order.append(seed % length)
+            seed //= length
+
+        for num in order:
+            r = self.http_request(self.user, 'get', f'articles/{self.articles[num].id}').data
+
+        expected_order = list(OrderedDict.fromkeys(reversed(order)).keys())
+
+        i = len(expected_order) // 2
+
+        before_id = self.articles[expected_order[i+1]].id
+        wanted_id = self.articles[expected_order[i]].id
+        after_id = self.articles[expected_order[i-1]].id
+
+        resp = self.http_request(self.user, 'get', f'articles/{wanted_id}', querystring='from_view=recent').data
+        
+        assert resp['side_articles']['before']['id'] == before_id
+        assert resp['side_articles']['after']['id'] == after_id
