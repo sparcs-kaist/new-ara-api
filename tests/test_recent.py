@@ -1,5 +1,5 @@
 import pytest
-import hashlib, time
+import hashlib
 from collections import OrderedDict
 from apps.core.models import Article, Topic, Board, Comment, Report
 from tests.conftest import RequestSetting, TestCase
@@ -124,18 +124,21 @@ class TestRecent(TestCase, RequestSetting):
     def test_read_article_complex_pattern(self):
         
         length = len(self.articles)
-        seed = int(hashlib.sha224(b'foobarbaz').hexdigest(), base=16) # predictable random value
+        seed = int(hashlib.sha224(b'foobarbaz').hexdigest(), base=16) # predictable 224-bit random integer seed
 
+        # create an order of reading from the provided seed
         order = []
         while seed:
             order.append(seed % length)
             seed //= length
 
+        # read articles in created order
         for num in order:
             r = self.http_request(self.user, 'get', f'articles/{self.articles[num].id}').data
         
         recent_list = self.http_request(self.user, 'get', 'articles/recent').data.get('results')
 
+        # the expected order is 'last read comes first', used OrderedDict to make distinct
         expected_order = list(OrderedDict.fromkeys(reversed(order)).keys())
 
         assert [x['id'] for x in recent_list] == [self.articles[x].id for x in expected_order]
