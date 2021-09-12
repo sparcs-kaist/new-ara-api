@@ -1,6 +1,8 @@
 import pytest
 import hashlib
 from collections import OrderedDict
+from django.core.management import call_command
+
 from apps.core.models import Article, Topic, Board, Comment, Report
 from tests.conftest import RequestSetting, TestCase
 from django.utils import timezone
@@ -52,7 +54,30 @@ def set_articles(request):
     request.cls.articles = [create_article(i) for i in range(1, 11)]
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_topic', 'set_articles')
+@pytest.fixture(scope='class')
+def set_index(request):
+    call_command('search_index', '--delete', '-f')
+    call_command('search_index', '--create')
+
+
+def generate_order(string):
+
+    length = 10 # number of articles
+    seed = int(hashlib.sha224(string.encode('utf-8')).hexdigest(), base=16) # predictable 224-bit random integer seed
+
+    # create an order of reading from the provided seed
+    order = []
+    while seed:
+        order.append(seed % length)
+        seed //= length
+
+    # the expected order is 'last read comes first', used OrderedDict to make distinct
+    expected_order = list(OrderedDict.fromkeys(reversed(order)).keys())
+
+    return order, expected_order
+
+
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_topic', 'set_index', 'set_articles')
 class TestRecent(TestCase, RequestSetting):
     def test_created_list(self):
         res = self.http_request(self.user, 'get', 'articles')
@@ -123,14 +148,7 @@ class TestRecent(TestCase, RequestSetting):
     # 매우 복잡한 읽기 패턴에 대한 테스트
     def test_read_article_complex_pattern(self):
         
-        length = len(self.articles)
-        seed = int(hashlib.sha224(b'foobarbaz').hexdigest(), base=16) # predictable 224-bit random integer seed
-
-        # create an order of reading from the provided seed
-        order = []
-        while seed:
-            order.append(seed % length)
-            seed //= length
+        order, expected_order = generate_order('foobarbaz')
 
         # read articles in created order
         for num in order:
@@ -138,26 +156,17 @@ class TestRecent(TestCase, RequestSetting):
         
         recent_list = self.http_request(self.user, 'get', 'articles/recent').data.get('results')
 
-        # the expected order is 'last read comes first', used OrderedDict to make distinct
-        expected_order = list(OrderedDict.fromkeys(reversed(order)).keys())
-
         assert [x['id'] for x in recent_list] == [self.articles[x].id for x in expected_order]
 
     # 매우 복잡한 읽기 패턴에 대한 side_article 테스트
     def test_read_article_complex_pattern_side_article(self):
 
-        length = len(self.articles)
-        seed = int(hashlib.sha224(b'foobarbaz').hexdigest(), base=16)
-
-        order = []
-        while seed:
-            order.append(seed % length)
-            seed //= length
+        order, expected_order = generate_order('foobarbaz')
 
         for num in order:
             r = self.http_request(self.user, 'get', f'articles/{self.articles[num].id}').data
 
-        expected_order = list(OrderedDict.fromkeys(reversed(order)).keys())
+        recent_list = self.http_request(self.user, 'get', 'articles/recent').data.get('results')
 
         i = len(expected_order) // 2
 
@@ -167,5 +176,30 @@ class TestRecent(TestCase, RequestSetting):
 
         resp = self.http_request(self.user, 'get', f'articles/{wanted_id}', querystring='from_view=recent').data
         
-        assert resp['side_articles']['before']['id'] == before_id
-        assert resp['side_articles']['after']['id'] == after_id
+        assert resp['side_articles']['before']['id'] == before_id == recent_list[i+1]['id']
+        assert resp['side_articles']['after']['id'] == after_id == recent_list[i-1]['id']
+
+    # 매우 복잡한 읽기 패턴에 대한 검색 테스트
+    def test_read_article_complex_pattern_search(self):
+        
+        order, expected_order = generate_order('foobarbaz')
+
+        for num in order:
+            r = self.http_request(self.user, 'get', f'articles/{self.articles[num].id}').data
+
+        i = len(expected_order) // 2
+
+        before = expected_order[i+1]
+        wanted = expected_order[i]
+        after = expected_order[i-1]
+
+        article_titles = ' '.join([
+            f'Article{before + 1}',
+            f'Article{wanted + 1}',
+            f'Article{after + 1}',
+        ])
+
+        recent_list = self.http_request(self.user, 'get', 'articles/recent', querystring=f'main_search__contains={article_titles}').data.get('results')
+
+        assert [x['id'] for x in recent_list] == [self.articles[x].id for x in [after, wanted, before]]
+        
