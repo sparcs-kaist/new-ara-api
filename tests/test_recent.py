@@ -3,7 +3,7 @@ import hashlib
 from collections import OrderedDict
 from django.core.management import call_command
 
-from apps.core.models import Article, Topic, Board, Comment, Report
+from apps.core.models import Article, Topic, Board
 from tests.conftest import RequestSetting, TestCase
 from django.utils import timezone
 
@@ -99,7 +99,7 @@ class TestRecent(TestCase, RequestSetting):
     # array[0]이 가장 최근에 읽은 article 임
     def test_recent_order_written(self):
         for article in self.articles:
-            r = self.http_request(self.user, 'get', f'articles/{article.id}').data
+            self.http_request(self.user, 'get', f'articles/{article.id}')
 
         recent_list = self.http_request(self.user, 'get', 'articles/recent').data.get('results')
         assert len(recent_list) == 10
@@ -109,7 +109,7 @@ class TestRecent(TestCase, RequestSetting):
     # article을 id 역순으로 읽었을 때의 recent_articles 값 확인
     def test_reverse_order_written(self):
         for article in reversed(self.articles):
-            r = self.http_request(self.user, 'get', f'articles/{article.id}').data
+            self.http_request(self.user, 'get', f'articles/{article.id}')
 
         recent_list = self.http_request(self.user, 'get', 'articles/recent').data.get('results')
         assert len(recent_list) == 10
@@ -119,15 +119,15 @@ class TestRecent(TestCase, RequestSetting):
     # 같은 article을 연속으로 여러번 읽었을 때 recent_articles
     def test_read_same_article_multiple_times_in_a_row(self):
         for article in self.articles[:8]:
-            r = self.http_request(self.user, 'get', f'articles/{article.id}').data
+            self.http_request(self.user, 'get', f'articles/{article.id}')
 
         # Article 9를 3번 읽음
         for _ in range(3):
-            r = self.http_request(self.user, 'get', f'articles/{self.articles[8].id}').data
+            self.http_request(self.user, 'get', f'articles/{self.articles[8].id}')
 
         # Article 10을 3번 읽음
         for _ in range(3):
-            r = self.http_request(self.user, 'get', f'articles/{self.articles[9].id}').data
+            self.http_request(self.user, 'get', f'articles/{self.articles[9].id}')
 
         recent_list = self.http_request(self.user, 'get', 'articles/recent').data.get('results')
         assert len(recent_list) == 10
@@ -140,10 +140,10 @@ class TestRecent(TestCase, RequestSetting):
     def test_read_same_article_multiple_times(self):
         # Article 1부터 10까지 순서대로 읽기
         for article in self.articles:
-            r = self.http_request(self.user, 'get', f'articles/{article.id}').data
+            self.http_request(self.user, 'get', f'articles/{article.id}')
 
         # Article 3을 다시 읽기
-        r = self.http_request(self.user, 'get', f'articles/{self.articles[2].id}').data
+        self.http_request(self.user, 'get', f'articles/{self.articles[2].id}')
         recent_list = self.http_request(self.user, 'get', 'articles/recent').data.get('results')
 
         expected_order = [2, 9, 8, 7, 6, 5, 4, 3, 1, 0]
@@ -157,7 +157,7 @@ class TestRecent(TestCase, RequestSetting):
 
         # read articles in created order
         for num in order:
-            r = self.http_request(self.user, 'get', f'articles/{self.articles[num].id}').data
+            self.http_request(self.user, 'get', f'articles/{self.articles[num].id}')
         
         recent_list = self.http_request(self.user, 'get', 'articles/recent').data.get('results')
 
@@ -169,7 +169,7 @@ class TestRecent(TestCase, RequestSetting):
         order, expected_order = generate_order('foobarbaz')
 
         for num in order:
-            r = self.http_request(self.user, 'get', f'articles/{self.articles[num].id}').data
+            self.http_request(self.user, 'get', f'articles/{self.articles[num].id}')
 
         i = len(expected_order) // 2
 
@@ -188,7 +188,7 @@ class TestRecent(TestCase, RequestSetting):
         order, expected_order = generate_order('foobarbaz')
 
         for num in order:
-            r = self.http_request(self.user, 'get', f'articles/{self.articles[num].id}').data
+            self.http_request(self.user, 'get', f'articles/{self.articles[num].id}')
 
         rand_selection = generate_order('foo')[1][:3]
 
@@ -205,7 +205,7 @@ class TestRecent(TestCase, RequestSetting):
         order, expected_order = generate_order('foobarbaz')
 
         for num in order:
-            r = self.http_request(self.user, 'get', f'articles/{self.articles[num].id}').data
+            self.http_request(self.user, 'get', f'articles/{self.articles[num].id}')
 
         rand_selection = generate_order('foo')[1][:3]
 
