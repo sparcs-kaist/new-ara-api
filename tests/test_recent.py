@@ -171,18 +171,16 @@ class TestRecent(TestCase, RequestSetting):
         for num in order:
             r = self.http_request(self.user, 'get', f'articles/{self.articles[num].id}').data
 
-        recent_list = self.http_request(self.user, 'get', 'articles/recent').data.get('results')
-
         i = len(expected_order) // 2
 
         before_id = self.articles[expected_order[i+1]].id
         wanted_id = self.articles[expected_order[i]].id
-        after_id = self.articles[expected_order[i-1]].id
+        after_id =  self.articles[expected_order[i-1]].id
 
         resp = self.http_request(self.user, 'get', f'articles/{wanted_id}', querystring='from_view=recent').data
         
-        assert resp['side_articles']['before']['id'] == before_id == recent_list[i+1]['id']
-        assert resp['side_articles']['after']['id'] == after_id == recent_list[i-1]['id']
+        assert resp['side_articles']['before']['id'] == before_id
+        assert resp['side_articles']['after']['id'] == after_id
 
     # 매우 복잡한 읽기 패턴에 대한 검색 테스트
     def test_read_article_complex_pattern_search(self):
@@ -200,4 +198,31 @@ class TestRecent(TestCase, RequestSetting):
         recent_list = self.http_request(self.user, 'get', 'articles/recent', querystring=f'main_search__contains={article_titles}').data.get('results')
 
         assert [x['id'] for x in recent_list] == [self.articles[x].id for x in expected_selection_order]
+
+    # 매우 복잡한 읽기 패턴에 대한 검색 및 side_article 테스트
+    def test_read_article_complex_pattern_search_side_article(self):
         
+        order, expected_order = generate_order('foobarbaz')
+
+        for num in order:
+            r = self.http_request(self.user, 'get', f'articles/{self.articles[num].id}').data
+
+        rand_selection = generate_order('foo')[1][:3]
+
+        expected_selection_order = [expected_order[x] for x in sorted(rand_selection)]
+        article_titles = ' '.join([f'Article{expected_order[x]}' for x in rand_selection])
+
+        before_id = self.articles[expected_selection_order[2]].id
+        wanted_id = self.articles[expected_selection_order[1]].id
+        after_id =  self.articles[expected_selection_order[0]].id
+
+        resp = self.http_request(
+            self.user, 
+            'get', 
+            f'articles/{wanted_id}', 
+            querystring=f'from_view=recent&search_query={article_titles}'
+        ).data
+
+        assert resp['side_articles']['before']['id'] == before_id
+        assert resp['side_articles']['after']['id'] == after_id
+
