@@ -71,6 +71,11 @@ def generate_order(string):
         order.append(seed % length)
         seed //= length
 
+    # add unread articles
+    for i in range(length):
+        if i not in order:
+            order.append(i)
+
     # the expected order is 'last read comes first', used OrderedDict to make distinct
     expected_order = list(OrderedDict.fromkeys(reversed(order)).keys())
 
@@ -187,19 +192,12 @@ class TestRecent(TestCase, RequestSetting):
         for num in order:
             r = self.http_request(self.user, 'get', f'articles/{self.articles[num].id}').data
 
-        i = len(expected_order) // 2
+        rand_selection = generate_order('foo')[1][:3]
 
-        before = expected_order[i+1]
-        wanted = expected_order[i]
-        after = expected_order[i-1]
-
-        article_titles = ' '.join([
-            f'Article{before}',
-            f'Article{wanted}',
-            f'Article{after}',
-        ])
+        expected_selection_order = [expected_order[x] for x in sorted(rand_selection)]
+        article_titles = ' '.join([f'Article{expected_order[x]}' for x in rand_selection])
 
         recent_list = self.http_request(self.user, 'get', 'articles/recent', querystring=f'main_search__contains={article_titles}').data.get('results')
 
-        assert [x['id'] for x in recent_list] == [self.articles[x].id for x in [after, wanted, before]]
+        assert [x['id'] for x in recent_list] == [self.articles[x].id for x in expected_selection_order]
         
