@@ -190,13 +190,17 @@ class TestRecent(TestCase, RequestSetting):
         for num in order:
             self.http_request(self.user, 'get', f'articles/{self.articles[num].id}')
 
+        # expected_order에서 3개를 선택하기 위해 서로 겹치지 않는 3개의 숫자 생성
         rand_selection = generate_order('foo')[1][:3]
 
+        # expected_order의 순서를 보존하면서, rand_selection에 해당하는 원소만 뽑기
         expected_selection_order = [expected_order[x] for x in sorted(rand_selection)]
+        # rand_selection에 해당하는 글들의 제목
         article_titles = ' '.join([f'Article{expected_order[x]}' for x in rand_selection])
 
         recent_list = self.http_request(self.user, 'get', 'articles/recent', querystring=f'main_search__contains={article_titles}').data.get('results')
 
+        # recent 검색결과가 expected_order의 순서를 그대로 유지하고 있는지 확인
         assert [x['id'] for x in recent_list] == [self.articles[x].id for x in expected_selection_order]
 
     # 매우 복잡한 읽기 패턴에 대한 검색 및 side_article 테스트
@@ -212,8 +216,11 @@ class TestRecent(TestCase, RequestSetting):
         expected_selection_order = [expected_order[x] for x in sorted(rand_selection)]
         article_titles = ' '.join([f'Article{expected_order[x]}' for x in rand_selection])
 
+        # recent 검색결과 3개 중 가장 덜 최근에 읽은 글의 id
         before_id = self.articles[expected_selection_order[2]].id
+        # recent 검색결과 3개 중 중간 글의 id
         wanted_id = self.articles[expected_selection_order[1]].id
+        # recent 검색결과 3개 중 가장 최근에 읽은 글의 id
         after_id =  self.articles[expected_selection_order[0]].id
 
         resp = self.http_request(
