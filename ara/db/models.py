@@ -59,6 +59,42 @@ class MetaDataModel(models.Model):
     def hard_delete(self):
         super().delete()
 
+# Manager for get_queryset all instance
+class AllQueryMetaDataManager(models.Manager):
+    queryset_class = MetaDataQuerySet
+
+# Model for get_queryset all instance
+class AllQueryMetaDataModel(models.Model):
+    class Meta:
+        abstract = True
+        ordering = (
+            '-created_at',
+        )
+
+    objects = AllQueryMetaDataManager()
+
+    created_at = models.DateTimeField(
+        default=timezone.now,
+        db_index=True,
+        verbose_name='생성 시간',
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        db_index=True,
+        verbose_name='수정 시간',
+    )
+    deleted_at = models.DateTimeField(
+        default=timezone.datetime.min.replace(tzinfo=timezone.utc),
+        db_index=True,
+        verbose_name='삭제 시간',
+    )
+
+    def delete(self, using=None, keep_parents=False):
+        self.deleted_at = timezone.now()
+        self.save()
+
+    def hard_delete(self):
+        super().delete()
 
 class Search(models.Lookup):
    lookup_name = 'search'
