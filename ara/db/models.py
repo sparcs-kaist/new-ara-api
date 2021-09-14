@@ -59,10 +59,6 @@ class MetaDataModel(models.Model):
     def hard_delete(self):
         super().delete()
 
-# Manager for get_queryset all instance
-class AllQueryMetaDataManager(models.Manager):
-    queryset_class = MetaDataQuerySet
-
 # Model for get_queryset all instance
 class AllQueryMetaDataModel(models.Model):
     class Meta:
@@ -71,7 +67,7 @@ class AllQueryMetaDataModel(models.Model):
             '-created_at',
         )
 
-    objects = AllQueryMetaDataManager()
+    objects = MetaDataQuerySet.as_manager()
 
     created_at = models.DateTimeField(
         default=timezone.now,

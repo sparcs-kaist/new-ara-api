@@ -161,7 +161,7 @@ class Article(MetaDataModel):
         self.save()
 
     def update_comment_count(self):
-        self.comment_count = Comment.objects.filter(
+        self.comment_count = Comment.objects.filter(deleted_at = timezone.datetime.min.replace(tzinfo=timezone.utc)).filter(
             models.Q(parent_article=self) |
             models.Q(parent_comment__parent_article=self)
         ).count()
