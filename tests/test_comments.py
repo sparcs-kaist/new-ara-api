@@ -197,7 +197,8 @@ class TestComments(TestCase, RequestSetting):
             created_by=self.user,
             parent_comment=self.comment
         )
-        comment = Comment.objects.filter(id=self.comment.id)
+        comment = Comment.objects.filter(id=self.comment.id).get()
+        # MetaDataModel class에서 delete하여 signal로 cascade 삭제 확인.
         comment.delete()
         assert Comment.objects.filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)).filter(id=subcomment.id)
 
