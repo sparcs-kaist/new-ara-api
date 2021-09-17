@@ -1,5 +1,9 @@
 import pytest
-from apps.core.models import Article, Topic, Board, Comment, Report
+import hashlib
+from collections import OrderedDict
+from django.core.management import call_command
+
+from apps.core.models import Article, Topic, Board
 from tests.conftest import RequestSetting, TestCase
 from django.utils import timezone
 
@@ -47,10 +51,38 @@ def set_articles(request):
             parent_board=request.cls.board,
             commented_at=timezone.now()
         )
-    request.cls.articles = [create_article(i) for i in range(1, 11)]
+    request.cls.articles = [create_article(i) for i in range(10)]
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_topic', 'set_articles')
+@pytest.fixture(scope='class')
+def set_index(request):
+    call_command('search_index', '--delete', '-f')
+    call_command('search_index', '--create')
+
+
+def generate_order(string):
+
+    length = 10 # number of articles
+    seed = int(hashlib.sha224(string.encode('utf-8')).hexdigest(), base=16) # predictable 224-bit random integer seed
+
+    # create an order of reading from the provided seed
+    order = []
+    while seed:
+        order.append(seed % length)
+        seed //= length
+
+    # add unread articles
+    for i in range(length):
+        if i not in order:
+            order.append(i)
+
+    # the expected order is 'last read comes first', used OrderedDict to make distinct
+    expected_order = list(OrderedDict.fromkeys(reversed(order)).keys())
+
+    return order, expected_order
+
+
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_topic', 'set_index', 'set_articles')
 class TestRecent(TestCase, RequestSetting):
     def test_created_list(self):
         res = self.http_request(self.user, 'get', 'articles')
@@ -67,7 +99,7 @@ class TestRecent(TestCase, RequestSetting):
     # array[0]이 가장 최근에 읽은 article 임
     def test_recent_order_written(self):
         for article in self.articles:
-            r = self.http_request(self.user, 'get', f'articles/{article.id}').data
+            self.http_request(self.user, 'get', f'articles/{article.id}')
 
         recent_list = self.http_request(self.user, 'get', 'articles/recent').data.get('results')
         assert len(recent_list) == 10
@@ -77,7 +109,7 @@ class TestRecent(TestCase, RequestSetting):
     # article을 id 역순으로 읽었을 때의 recent_articles 값 확인
     def test_reverse_order_written(self):
         for article in reversed(self.articles):
-            r = self.http_request(self.user, 'get', f'articles/{article.id}').data
+            self.http_request(self.user, 'get', f'articles/{article.id}')
 
         recent_list = self.http_request(self.user, 'get', 'articles/recent').data.get('results')
         assert len(recent_list) == 10
@@ -87,15 +119,15 @@ class TestRecent(TestCase, RequestSetting):
     # 같은 article을 연속으로 여러번 읽었을 때 recent_articles
     def test_read_same_article_multiple_times_in_a_row(self):
         for article in self.articles[:8]:
-            r = self.http_request(self.user, 'get', f'articles/{article.id}').data
+            self.http_request(self.user, 'get', f'articles/{article.id}')
 
         # Article 9를 3번 읽음
         for _ in range(3):
-            r = self.http_request(self.user, 'get', f'articles/{self.articles[8].id}').data
+            self.http_request(self.user, 'get', f'articles/{self.articles[8].id}')
 
         # Article 10을 3번 읽음
         for _ in range(3):
-            r = self.http_request(self.user, 'get', f'articles/{self.articles[9].id}').data
+            self.http_request(self.user, 'get', f'articles/{self.articles[9].id}')
 
         recent_list = self.http_request(self.user, 'get', 'articles/recent').data.get('results')
         assert len(recent_list) == 10
@@ -108,12 +140,96 @@ class TestRecent(TestCase, RequestSetting):
     def test_read_same_article_multiple_times(self):
         # Article 1부터 10까지 순서대로 읽기
         for article in self.articles:
-            r = self.http_request(self.user, 'get', f'articles/{article.id}').data
+            self.http_request(self.user, 'get', f'articles/{article.id}')
 
         # Article 3을 다시 읽기
-        r = self.http_request(self.user, 'get', f'articles/{self.articles[2].id}').data
+        self.http_request(self.user, 'get', f'articles/{self.articles[2].id}')
         recent_list = self.http_request(self.user, 'get', 'articles/recent').data.get('results')
 
         expected_order = [2, 9, 8, 7, 6, 5, 4, 3, 1, 0]
         for i in range(10):
             assert recent_list[i]['id'] == self.articles[expected_order[i]].id
+
+    # 매우 복잡한 읽기 패턴에 대한 테스트
+    def test_read_article_complex_pattern(self):
+        
+        order, expected_order = generate_order('foobarbaz')
+
+        # read articles in created order
+        for num in order:
+            self.http_request(self.user, 'get', f'articles/{self.articles[num].id}')
+        
+        recent_list = self.http_request(self.user, 'get', 'articles/recent').data.get('results')
+
+        assert [x['id'] for x in recent_list] == [self.articles[x].id for x in expected_order]
+
+    # 매우 복잡한 읽기 패턴에 대한 side_article 테스트
+    def test_read_article_complex_pattern_side_article(self):
+
+        order, expected_order = generate_order('foobarbaz')
+
+        for num in order:
+            self.http_request(self.user, 'get', f'articles/{self.articles[num].id}')
+
+        i = len(expected_order) // 2
+
+        before_id = self.articles[expected_order[i+1]].id
+        wanted_id = self.articles[expected_order[i]].id
+        after_id =  self.articles[expected_order[i-1]].id
+
+        resp = self.http_request(self.user, 'get', f'articles/{wanted_id}', querystring='from_view=recent').data
+        
+        assert resp['side_articles']['before']['id'] == before_id
+        assert resp['side_articles']['after']['id'] == after_id
+
+    # 매우 복잡한 읽기 패턴에 대한 검색 테스트
+    def test_read_article_complex_pattern_search(self):
+        
+        order, expected_order = generate_order('foobarbaz')
+
+        for num in order:
+            self.http_request(self.user, 'get', f'articles/{self.articles[num].id}')
+
+        # expected_order에서 3개를 선택하기 위해 서로 겹치지 않는 3개의 숫자 생성
+        rand_selection = generate_order('foo')[1][:3]
+
+        # expected_order의 순서를 보존하면서, rand_selection에 해당하는 원소만 뽑기
+        expected_selection_order = [expected_order[x] for x in sorted(rand_selection)]
+        # rand_selection에 해당하는 글들의 제목
+        article_titles = ' '.join([f'Article{expected_order[x]}' for x in rand_selection])
+
+        recent_list = self.http_request(self.user, 'get', 'articles/recent', querystring=f'main_search__contains={article_titles}').data.get('results')
+
+        # recent 검색결과가 expected_order의 순서를 그대로 유지하고 있는지 확인
+        assert [x['id'] for x in recent_list] == [self.articles[x].id for x in expected_selection_order]
+
+    # 매우 복잡한 읽기 패턴에 대한 검색 및 side_article 테스트
+    def test_read_article_complex_pattern_search_side_article(self):
+        
+        order, expected_order = generate_order('foobarbaz')
+
+        for num in order:
+            self.http_request(self.user, 'get', f'articles/{self.articles[num].id}')
+
+        rand_selection = generate_order('foo')[1][:3]
+
+        expected_selection_order = [expected_order[x] for x in sorted(rand_selection)]
+        article_titles = ' '.join([f'Article{expected_order[x]}' for x in rand_selection])
+
+        # recent 검색결과 3개 중 가장 덜 최근에 읽은 글의 id
+        before_id = self.articles[expected_selection_order[2]].id
+        # recent 검색결과 3개 중 중간 글의 id
+        wanted_id = self.articles[expected_selection_order[1]].id
+        # recent 검색결과 3개 중 가장 최근에 읽은 글의 id
+        after_id =  self.articles[expected_selection_order[0]].id
+
+        resp = self.http_request(
+            self.user, 
+            'get', 
+            f'articles/{wanted_id}', 
+            querystring=f'from_view=recent&search_query={article_titles}'
+        ).data
+
+        assert resp['side_articles']['before']['id'] == before_id
+        assert resp['side_articles']['after']['id'] == after_id
+

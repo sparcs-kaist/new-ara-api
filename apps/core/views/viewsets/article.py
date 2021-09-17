@@ -266,6 +266,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 ORDER BY my_last_read_at desc
                 LIMIT %s OFFSET %s
             ) recents ON recents.article_id = `core_article`.id
+            ORDER BY recents.my_last_read_at desc
             ''', 
             query_params
         ).prefetch_related(

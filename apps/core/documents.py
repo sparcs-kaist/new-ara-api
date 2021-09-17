@@ -58,7 +58,7 @@ class ArticleDocument(Document):
     created_by_nickname = fields.TextField(attr='created_by_nickname', analyzer=ngram_analyzer, search_analyzer=newline_analyzer)
 
     class Index:
-        name = 'articles'
+        name = settings.ELASTICSEARCH_INDEX_NAME
         settings = {
             'number_of_shards': 3,
             'number_of_replicas': 1,
