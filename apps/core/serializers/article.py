@@ -13,6 +13,13 @@ from apps.user.serializers.user import PublicUserSerializer
 from ara.classes.serializers import MetaDataModelSerializer
 
 
+CAN_OVERRIDE_REASONS = [
+    ArticleHiddenReason.SOCIAL_CONTENT,
+    ArticleHiddenReason.ADULT_CONTENT,
+    ArticleHiddenReason.BLOCKED_USER_CONTENT
+]
+
+
 class BaseArticleSerializer(MetaDataModelSerializer):
     class Meta:
         model = Article
@@ -43,21 +50,27 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return self.context['request'].user == obj.created_by
 
     def get_is_hidden(self, obj) -> bool:
-        hidden, _ = self.hidden_info(obj)
+        hidden, _, _ = self.hidden_info(obj)
         return hidden
 
     def get_why_hidden(self, obj) -> typing.List[str]:
-        _, reasons = self.hidden_info(obj)
+        _, _, reasons = self.hidden_info(obj)
         return [reason.value for reason in reasons]
 
+    def get_can_override_hidden(self, obj) -> typing.Optional[bool] :
+        hidden, can_override, _ = self.hidden_info(obj)
+        if not hidden:
+            return
+        return can_override
+
     def get_title(self, obj) -> typing.Optional[str]:
-        hidden, _ = self.hidden_info(obj)
+        hidden, _, _ = self.hidden_info(obj)
         if hidden:
             return
         return obj.title
 
     def get_content(self, obj) -> typing.Optional[str]:
-        hidden, _ = self.hidden_info(obj)
+        hidden, _, _ = self.hidden_info(obj)
         if hidden:
             return
         return obj.content
@@ -102,7 +115,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return None
 
     # TODO: 전체 캐싱 (여기에 이 메소드 자체가 없도록 디자인을 바꿔야할듯)
-    def hidden_info(self, obj) -> typing.Tuple[bool, typing.List[ArticleHiddenReason]]:
+    def hidden_info(self, obj) -> typing.Tuple[bool, bool, typing.List[ArticleHiddenReason]]:
         reasons: typing.List[ArticleHiddenReason] = []
         request = self.context['request']
 
@@ -116,7 +129,11 @@ class BaseArticleSerializer(MetaDataModelSerializer):
             reasons.append(ArticleHiddenReason.ACCESS_DENIED_CONTENT)
         if obj.is_hidden_by_reported():
             reasons.append(ArticleHiddenReason.REPORTED_CONTENT)
-        return len(reasons) > 0, reasons
+
+        cannot_override_reasons = [reason for reason in reasons if reason not in CAN_OVERRIDE_REASONS]
+        can_override = len(cannot_override_reasons) == 0
+
+        return len(reasons) > 0, can_override, reasons
 
 
 class SideArticleSerializer(BaseArticleSerializer):
@@ -130,6 +147,9 @@ class SideArticleSerializer(BaseArticleSerializer):
         read_only=True,
     )
     why_hidden = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    can_override_hidden = serializers.SerializerMethodField(
         read_only=True,
     )
     parent_topic = TopicSerializer(
@@ -303,6 +323,9 @@ class ArticleSerializer(BaseArticleSerializer):
         read_only=True,
     )
     why_hidden = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    can_override_hidden = serializers.SerializerMethodField(
         read_only=True,
     )
     title = serializers.SerializerMethodField(

@@ -471,7 +471,7 @@ class TestHiddenArticles(TestCase, RequestSetting):
             is_content_social=False
         )
 
-        res = self.http_request(self.clean_mind_user, 'get', f'articles/{target_article.id}').data
+        res = self.http_request(self.dirty_mind_user, 'get', f'articles/{target_article.id}').data
         assert res.get('is_content_sexual')
         assert res.get('can_override_hidden') is None
         assert not res.get('is_hidden')
@@ -504,7 +504,7 @@ class TestHiddenArticles(TestCase, RequestSetting):
             is_content_social=True
         )
 
-        res = self.http_request(self.clean_mind_user, 'get', f'articles/{target_article.id}').data
+        res = self.http_request(self.dirty_mind_user, 'get', f'articles/{target_article.id}').data
         assert res.get('can_override_hidden') is None
         assert res.get('is_content_social')
         assert not res.get('is_hidden')
