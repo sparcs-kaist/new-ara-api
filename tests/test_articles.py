@@ -330,7 +330,6 @@ class TestArticle(TestCase, RequestSetting):
         assert article.positive_vote_count == 0
         assert article.negative_vote_count == 0
 
-    # TODO: TestHiddenArticles suite랑 겹치니까 게시물 읽기 부분은 삭제
     @pytest.mark.usefixtures('set_kaist_articles')
     def test_kaist_permission(self):
         # 카이스트 구성원만 볼 수 있는 게시판에 대한 테스트
@@ -551,15 +550,3 @@ class TestHiddenArticles(TestCase, RequestSetting):
         assert res.get('hidden_content') is None
         assert 'REPORTED_CONTENT' in res.get('why_hidden')
         self._test_can_override(self.clean_mind_user, target_article, False)
-
-    @pytest.mark.usefixtures('set_kaist_articles')
-    def test_access_denied_block(self):
-        res = self.http_request(self.non_kaist_user, 'get', f'articles/{self.kaist_article.id}')
-        assert not res.get('can_override_hidden')
-        assert res.get('is_hidden')
-        assert res.get('title') is None
-        assert res.get('content') is None
-        assert res.get('hidden_title') is None
-        assert res.get('hidden_content') is None
-        assert 'ACCESS_DENIED_CONTENT' in res.get('why_hidden')
-        self._test_can_override(self.clean_mind_user, self.kaist_article, False)

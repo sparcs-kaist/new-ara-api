@@ -125,6 +125,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
             reasons.append(ArticleHiddenReason.ADULT_CONTENT)
         if obj.is_content_social and not request.user.profile.see_social:
             reasons.append(ArticleHiddenReason.SOCIAL_CONTENT)
+        # 혹시 몰라 여기 두기는 하는데 여기 오기전에 Permission에서 막혀야 함
         if not obj.parent_board.group_has_access(request.user.profile.group):
             reasons.append(ArticleHiddenReason.ACCESS_DENIED_CONTENT)
         if obj.is_hidden_by_reported():
