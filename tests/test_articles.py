@@ -2,7 +2,7 @@ import pytest
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-from apps.core.models import Article, Topic, Board
+from apps.core.models import Article, Topic, Board, Block
 from apps.user.models import UserProfile
 from tests.conftest import RequestSetting, TestCase
 
@@ -330,6 +330,7 @@ class TestArticle(TestCase, RequestSetting):
         assert article.positive_vote_count == 0
         assert article.negative_vote_count == 0
 
+    # TODO: TestHiddenArticles suite랑 겹치니까 게시물 읽기 부분은 삭제
     @pytest.mark.usefixtures('set_kaist_articles')
     def test_kaist_permission(self):
         # 카이스트 구성원만 볼 수 있는 게시판에 대한 테스트
@@ -389,3 +390,224 @@ class TestArticle(TestCase, RequestSetting):
 
         res2 = self.http_request(self.user2, 'get', 'articles')
         assert res2.data['results'][0]['read_status'] == 'U'
+
+
+@pytest.mark.usefixtures('set_user_client', 'set_board', 'set_topic', 'set_article')
+class TestHiddenArticles(TestCase, RequestSetting):
+    @staticmethod
+    def _user_factory(user_kwargs, profile_kwargs):
+        user_instance, _ = User.objects.get_or_create(**user_kwargs)
+        if not hasattr(user_instance, 'profile'):
+            UserProfile.objects.get_or_create(**{
+                **profile_kwargs,
+                'user': user_instance,
+                'agree_terms_of_service_at': timezone.now()
+            })
+        return user_instance
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.clean_mind_user = cls._user_factory(
+            {'username': 'clean-mind-user', 'email': 'iamclean@sparcs.org'},
+            {'nickname': 'clean', 'see_social': False, 'see_sexual': False}
+        )
+        cls.dirty_mind_user = cls._user_factory(
+            {'username': 'dirty-mind-user', 'email': 'kbdwarrior@sparcs.org'},
+            {'nickname': 'kbdwarrior', 'see_social': True, 'see_sexual': True}
+        )
+
+    def _test_can_override(self, user: User, target_article: Article, expected: bool):
+        res = self.http_request(user, 'get', f'articles/{target_article.id}', None, 'override_hidden').data
+        assert res.get('hidden_title') is None
+        assert res.get('hidden_content') is None
+        assert res.get('why_hidden') is not None
+        assert res.get('why_hidden') != []
+        assert res.get('is_hidden') != expected
+        if expected:
+            assert res.get('title') is not None
+            assert res.get('content') is not None
+        else:
+            assert res.get('title') is None
+            assert res.get('content') is None
+
+    def test_sexual_article_block(self):
+        target_article = Article.objects.create(
+            title="example article",
+            content="example content",
+            content_text="example content text",
+            is_anonymous=False,
+            is_content_sexual=True,
+            is_content_social=False,
+            hit_count=0,
+            positive_vote_count=0,
+            negative_vote_count=0,
+            created_by=self.user,
+            parent_topic=self.topic,
+            parent_board=self.board,
+            commented_at=timezone.now()
+        )
+
+        res = self.http_request(self.clean_mind_user, 'get', f'articles/{target_article.id}').data
+        assert res.get('is_content_sexual')
+        assert res.get('can_override_hidden')
+        assert res.get('is_hidden')
+        assert res.get('hidden_title') is None
+        assert res.get('hidden_content') is None
+        assert res.get('title') is None
+        assert res.get('content') is None
+        assert 'ADULT_CONTENT' in res.get('why_hidden')
+        self._test_can_override(self.clean_mind_user, target_article, True)
+
+    def test_sexual_article_pass(self):
+        target_article = Article.objects.create(
+            title="example article",
+            content="example content",
+            content_text="example content text",
+            is_anonymous=False,
+            is_content_sexual=True,
+            is_content_social=False,
+            hit_count=0,
+            positive_vote_count=0,
+            negative_vote_count=0,
+            created_by=self.user,
+            parent_topic=self.topic,
+            parent_board=self.board,
+            commented_at=timezone.now()
+        )
+
+        res = self.http_request(self.clean_mind_user, 'get', f'articles/{target_article.id}').data
+        assert res.get('is_content_sexual')
+        assert res.get('can_override_hidden') is None
+        assert not res.get('is_hidden')
+        assert res.get('title') is not None
+        assert res.get('content') is not None
+        assert res.get('hidden_title') is None
+        assert res.get('hidden_content') is None
+        assert res.get('why_hidden') == []
+
+    def test_social_article_block(self):
+        target_article = Article.objects.create(
+            title="example article",
+            content="example content",
+            content_text="example content text",
+            is_anonymous=False,
+            is_content_sexual=False,
+            is_content_social=True,
+            hit_count=0,
+            positive_vote_count=0,
+            negative_vote_count=0,
+            created_by=self.user,
+            parent_topic=self.topic,
+            parent_board=self.board,
+            commented_at=timezone.now()
+        )
+
+        res = self.http_request(self.clean_mind_user, 'get', f'articles/{target_article.id}').data
+        assert res.get('is_content_social')
+        assert res.get('can_override_hidden')
+        assert res.get('is_hidden')
+        assert res.get('title') is None
+        assert res.get('content') is None
+        assert res.get('hidden_title') is None
+        assert res.get('hidden_content') is None
+        assert 'SOCIAL_CONTENT' in res.get('why_hidden')
+        self._test_can_override(self.clean_mind_user, target_article, True)
+
+    def test_sexual_article_pass(self):
+        target_article = Article.objects.create(
+            title="example article",
+            content="example content",
+            content_text="example content text",
+            is_anonymous=False,
+            is_content_sexual=False,
+            is_content_social=True,
+            hit_count=0,
+            positive_vote_count=0,
+            negative_vote_count=0,
+            created_by=self.user,
+            parent_topic=self.topic,
+            parent_board=self.board,
+            commented_at=timezone.now()
+        )
+
+        res = self.http_request(self.clean_mind_user, 'get', f'articles/{target_article.id}').data
+        assert res.get('is_content_social')
+        assert res.get('can_override_hidden') is None
+        assert not res.get('is_hidden')
+        assert res.get('title') is not None
+        assert res.get('content') is not None
+        assert res.get('hidden_title') is None
+        assert res.get('hidden_content') is None
+        assert res.get('why_hidden') == []
+
+    def test_blocked_user_block(self):
+        target_article = Article.objects.create(
+            title="example article",
+            content="example content",
+            content_text="example content text",
+            is_anonymous=False,
+            is_content_sexual=False,
+            is_content_social=True,
+            hit_count=0,
+            positive_vote_count=0,
+            negative_vote_count=0,
+            created_by=self.user,
+            parent_topic=self.topic,
+            parent_board=self.board,
+            commented_at=timezone.now()
+        )
+        Block.objects.create(
+            blocked_by=self.clean_mind_user,
+            user=self.user
+        )
+
+        res = self.http_request(self.clean_mind_user, 'get', f'articles/{target_article.id}').data
+        assert res.get('can_override_hidden')
+        assert res.get('is_hidden')
+        assert res.get('title') is None
+        assert res.get('content') is None
+        assert res.get('hidden_title') is None
+        assert res.get('hidden_content') is None
+        assert 'BLOCKED_USER_CONTENT' in res.get('why_hidden')
+        self._test_can_override(self.clean_mind_user, target_article, True)
+
+    def test_reported_article_block(self):
+        target_article = Article.objects.create(
+            title="example article",
+            content="example content",
+            content_text="example content text",
+            is_anonymous=False,
+            is_content_sexual=False,
+            is_content_social=True,
+            hit_count=0,
+            positive_vote_count=10000,
+            negative_vote_count=0,
+            report_count=1000000,
+            created_by=self.user,
+            parent_topic=self.topic,
+            parent_board=self.board,
+            commented_at=timezone.now()
+        )
+
+        res = self.http_request(self.clean_mind_user, 'get', f'articles/{target_article.id}').data
+        assert not res.get('can_override_hidden')
+        assert res.get('is_hidden')
+        assert res.get('title') is None
+        assert res.get('content') is None
+        assert res.get('hidden_title') is None
+        assert res.get('hidden_content') is None
+        assert 'REPORTED_CONTENT' in res.get('why_hidden')
+        self._test_can_override(self.clean_mind_user, target_article, False)
+
+    @pytest.mark.usefixtures('set_kaist_articles')
+    def test_access_denied_block(self):
+        res = self.http_request(self.non_kaist_user, 'get', f'articles/{self.kaist_article.id}')
+        assert not res.get('can_override_hidden')
+        assert res.get('is_hidden')
+        assert res.get('title') is None
+        assert res.get('content') is None
+        assert res.get('hidden_title') is None
+        assert res.get('hidden_content') is None
+        assert 'ACCESS_DENIED_CONTENT' in res.get('why_hidden')
+        self._test_can_override(self.clean_mind_user, self.kaist_article, False)
