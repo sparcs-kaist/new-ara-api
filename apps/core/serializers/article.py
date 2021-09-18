@@ -1,9 +1,8 @@
 import typing
-from functools import cached_property
 
 from django.db import models
 from django.utils.translation import gettext
-from rest_framework import exceptions, serializers
+from rest_framework import serializers
 
 from apps.core.documents import ArticleDocument
 from apps.core.models import Article, ArticleReadLog, Board, Block, Scrap, ArticleHiddenReason
