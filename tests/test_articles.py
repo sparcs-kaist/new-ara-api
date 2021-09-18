@@ -417,6 +417,22 @@ class TestHiddenArticles(TestCase, RequestSetting):
             {'nickname': 'kbdwarrior', 'see_social': True, 'see_sexual': True}
         )
 
+    def _article_factory(self, **article_kwargs):
+        return Article.objects.create(
+            title="example article",
+            content="example content",
+            content_text="example content text",
+            is_anonymous=False,
+            hit_count=0,
+            positive_vote_count=0,
+            negative_vote_count=0,
+            created_by=self.user,
+            parent_topic=self.topic,
+            parent_board=self.board,
+            commented_at=timezone.now(),
+            **article_kwargs
+        )
+
     def _test_can_override(self, user: User, target_article: Article, expected: bool):
         res = self.http_request(user, 'get', f'articles/{target_article.id}', None, 'override_hidden').data
         assert res.get('hidden_title') is None
@@ -432,20 +448,9 @@ class TestHiddenArticles(TestCase, RequestSetting):
             assert res.get('content') is None
 
     def test_sexual_article_block(self):
-        target_article = Article.objects.create(
-            title="example article",
-            content="example content",
-            content_text="example content text",
-            is_anonymous=False,
+        target_article = self._article_factory(
             is_content_sexual=True,
-            is_content_social=False,
-            hit_count=0,
-            positive_vote_count=0,
-            negative_vote_count=0,
-            created_by=self.user,
-            parent_topic=self.topic,
-            parent_board=self.board,
-            commented_at=timezone.now()
+            is_content_social=False
         )
 
         res = self.http_request(self.clean_mind_user, 'get', f'articles/{target_article.id}').data
@@ -460,20 +465,9 @@ class TestHiddenArticles(TestCase, RequestSetting):
         self._test_can_override(self.clean_mind_user, target_article, True)
 
     def test_sexual_article_pass(self):
-        target_article = Article.objects.create(
-            title="example article",
-            content="example content",
-            content_text="example content text",
-            is_anonymous=False,
+        target_article = self._article_factory(
             is_content_sexual=True,
-            is_content_social=False,
-            hit_count=0,
-            positive_vote_count=0,
-            negative_vote_count=0,
-            created_by=self.user,
-            parent_topic=self.topic,
-            parent_board=self.board,
-            commented_at=timezone.now()
+            is_content_social=False
         )
 
         res = self.http_request(self.clean_mind_user, 'get', f'articles/{target_article.id}').data
@@ -487,20 +481,9 @@ class TestHiddenArticles(TestCase, RequestSetting):
         assert res.get('why_hidden') == []
 
     def test_social_article_block(self):
-        target_article = Article.objects.create(
-            title="example article",
-            content="example content",
-            content_text="example content text",
-            is_anonymous=False,
+        target_article = self._article_factory(
             is_content_sexual=False,
-            is_content_social=True,
-            hit_count=0,
-            positive_vote_count=0,
-            negative_vote_count=0,
-            created_by=self.user,
-            parent_topic=self.topic,
-            parent_board=self.board,
-            commented_at=timezone.now()
+            is_content_social=True
         )
 
         res = self.http_request(self.clean_mind_user, 'get', f'articles/{target_article.id}').data
@@ -514,21 +497,10 @@ class TestHiddenArticles(TestCase, RequestSetting):
         assert 'SOCIAL_CONTENT' in res.get('why_hidden')
         self._test_can_override(self.clean_mind_user, target_article, True)
 
-    def test_sexual_article_pass(self):
-        target_article = Article.objects.create(
-            title="example article",
-            content="example content",
-            content_text="example content text",
-            is_anonymous=False,
+    def test_social_article_pass(self):
+        target_article = self._article_factory(
             is_content_sexual=False,
-            is_content_social=True,
-            hit_count=0,
-            positive_vote_count=0,
-            negative_vote_count=0,
-            created_by=self.user,
-            parent_topic=self.topic,
-            parent_board=self.board,
-            commented_at=timezone.now()
+            is_content_social=True
         )
 
         res = self.http_request(self.clean_mind_user, 'get', f'articles/{target_article.id}').data
@@ -542,20 +514,9 @@ class TestHiddenArticles(TestCase, RequestSetting):
         assert res.get('why_hidden') == []
 
     def test_blocked_user_block(self):
-        target_article = Article.objects.create(
-            title="example article",
-            content="example content",
-            content_text="example content text",
-            is_anonymous=False,
+        target_article = self._article_factory(
             is_content_sexual=False,
-            is_content_social=True,
-            hit_count=0,
-            positive_vote_count=0,
-            negative_vote_count=0,
-            created_by=self.user,
-            parent_topic=self.topic,
-            parent_board=self.board,
-            commented_at=timezone.now()
+            is_content_social=False
         )
         Block.objects.create(
             blocked_by=self.clean_mind_user,
@@ -573,21 +534,11 @@ class TestHiddenArticles(TestCase, RequestSetting):
         self._test_can_override(self.clean_mind_user, target_article, True)
 
     def test_reported_article_block(self):
-        target_article = Article.objects.create(
-            title="example article",
-            content="example content",
-            content_text="example content text",
-            is_anonymous=False,
+        target_article = self._article_factory(
             is_content_sexual=False,
-            is_content_social=True,
-            hit_count=0,
-            positive_vote_count=10000,
-            negative_vote_count=0,
+            is_content_social=False,
             report_count=1000000,
-            created_by=self.user,
-            parent_topic=self.topic,
-            parent_board=self.board,
-            commented_at=timezone.now()
+            hidden_at=timezone.now()
         )
 
         res = self.http_request(self.clean_mind_user, 'get', f'articles/{target_article.id}').data
