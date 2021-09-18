@@ -158,7 +158,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         pipe.zadd(redis_key, {f'{article.id}:1:{self.request.user.id}:{time.time()}': time.time()})
         pipe.execute(raise_on_error=True)
 
-        serialized = self.serializer_class(article, context={'request': request})
+        serialized = ArticleSerializer(article, context={'request': request})
         return Response(serialized.data)
 
     @decorators.action(detail=True, methods=['post'])

@@ -1,11 +1,12 @@
 import typing
+from functools import cached_property
 
 from django.db import models
 from django.utils.translation import gettext
 from rest_framework import exceptions, serializers
 
 from apps.core.documents import ArticleDocument
-from apps.core.models import Article, ArticleReadLog, Board, Block, Scrap
+from apps.core.models import Article, ArticleReadLog, Board, Block, Scrap, ArticleHiddenReason
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
 from apps.user.serializers.user import PublicUserSerializer
@@ -42,59 +43,24 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return self.context['request'].user == obj.created_by
 
     def get_is_hidden(self, obj) -> bool:
-        if obj.is_hidden_by_reported():
-            return False
-        elif self.validate_hidden(obj):
-            return True
+        hidden, _ = self.hidden_info(obj)
+        return hidden
 
-        return False
+    def get_why_hidden(self, obj) -> typing.List[str]:
+        _, reasons = self.hidden_info(obj)
+        return [reason.value for reason in reasons]
 
-    def get_why_hidden(self, obj) -> typing.List[dict]:
-        errors = self.validate_hidden(obj)
-
-        return [
-            {
-                'detail': error.detail,
-            } for error in errors
-        ]
-
-    def get_title(self, obj) -> typing.Union[str, list]:
-        if obj.is_hidden_by_reported():
-            return gettext('This article is temporarily hidden')
-
-        errors = self.validate_hidden(obj)
-
-        if errors:
-            return [error.detail for error in errors]
-
+    def get_title(self, obj) -> typing.Optional[str]:
+        hidden, _ = self.hidden_info(obj)
+        if hidden:
+            return
         return obj.title
 
-    def get_hidden_title(self, obj) -> str:
-        if obj.is_hidden_by_reported():
-            return gettext('This article is temporarily hidden')
-        elif self.validate_hidden(obj):
-            return obj.title
-
-        return ''
-
-    def get_content(self, obj) -> typing.Union[str, list]:
-        if obj.is_hidden_by_reported():
-            return gettext('This article is hidden because it has received multiple reports')
-
-        errors = self.validate_hidden(obj)
-
-        if errors:
-            return [error.detail for error in errors]
-
+    def get_content(self, obj) -> typing.Optional[str]:
+        hidden, _ = self.hidden_info(obj)
+        if hidden:
+            return
         return obj.content
-
-    def get_hidden_content(self, obj) -> str:
-        if obj.is_hidden_by_reported():
-            return gettext('This article is hidden because it has received multiple reports')
-        elif self.validate_hidden(obj):
-            return obj.content
-
-        return ''
 
     def get_created_by(self, obj) -> dict:
         if obj.is_anonymous:
@@ -135,23 +101,22 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return None
 
-    def validate_hidden(self, obj: Article) -> typing.List[exceptions.ValidationError]:
-        errors = []
+    # TODO: 전체 캐싱 (여기에 이 메소드 자체가 없도록 디자인을 바꿔야할듯)
+    def hidden_info(self, obj) -> typing.Tuple[bool, typing.List[ArticleHiddenReason]]:
+        reasons: typing.List[ArticleHiddenReason] = []
         request = self.context['request']
 
         if Block.is_blocked(blocked_by=request.user, user=obj.created_by):
-            errors.append(exceptions.ValidationError('차단한 사용자의 게시물입니다.'))
-
+            reasons.append(ArticleHiddenReason.BLOCKED_USER_CONTENT)
         if obj.is_content_sexual and not request.user.profile.see_sexual:
-            errors.append(exceptions.ValidationError('성인/음란성 내용의 게시물입니다.'))
-
+            reasons.append(ArticleHiddenReason.ADULT_CONTENT)
         if obj.is_content_social and not request.user.profile.see_social:
-            errors.append(exceptions.ValidationError('정치/사회성 내용의 게시물입니다.'))
-
+            reasons.append(ArticleHiddenReason.SOCIAL_CONTENT)
         if not obj.parent_board.group_has_access(request.user.profile.group):
-            errors.append(exceptions.ValidationError('접근 권한이 없는 게시판입니다.'))
-
-        return errors
+            reasons.append(ArticleHiddenReason.ACCESS_DENIED_CONTENT)
+        if obj.is_hidden_by_reported():
+            reasons.append(ArticleHiddenReason.REPORTED_CONTENT)
+        return len(reasons) > 0, reasons
 
 
 class SideArticleSerializer(BaseArticleSerializer):
@@ -171,9 +136,6 @@ class SideArticleSerializer(BaseArticleSerializer):
         read_only=True,
     )
     title = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    hidden_title = serializers.SerializerMethodField(
         read_only=True,
     )
 
@@ -346,13 +308,7 @@ class ArticleSerializer(BaseArticleSerializer):
     title = serializers.SerializerMethodField(
         read_only=True,
     )
-    hidden_title = serializers.SerializerMethodField(
-        read_only=True,
-    )
     content = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    hidden_content = serializers.SerializerMethodField(
         read_only=True,
     )
     my_vote = serializers.SerializerMethodField(
@@ -386,9 +342,6 @@ class ArticleListActionSerializer(BaseArticleSerializer):
         read_only=True,
     )
     title = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    hidden_title = serializers.SerializerMethodField(
         read_only=True,
     )
     created_by = serializers.SerializerMethodField(

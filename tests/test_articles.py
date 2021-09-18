@@ -401,7 +401,8 @@ class TestHiddenArticles(TestCase, RequestSetting):
             UserProfile.objects.get_or_create(**{
                 **profile_kwargs,
                 'user': user_instance,
-                'agree_terms_of_service_at': timezone.now()
+                'agree_terms_of_service_at': timezone.now(),
+                'group': UserProfile.UserGroup.KAIST_MEMBER
             })
         return user_instance
 
@@ -487,6 +488,7 @@ class TestHiddenArticles(TestCase, RequestSetting):
         )
 
         res = self.http_request(self.clean_mind_user, 'get', f'articles/{target_article.id}').data
+        assert 'SOCIAL_CONTENT' in res.get('why_hidden')
         assert res.get('is_content_social')
         assert res.get('can_override_hidden')
         assert res.get('is_hidden')
@@ -494,7 +496,6 @@ class TestHiddenArticles(TestCase, RequestSetting):
         assert res.get('content') is None
         assert res.get('hidden_title') is None
         assert res.get('hidden_content') is None
-        assert 'SOCIAL_CONTENT' in res.get('why_hidden')
         self._test_can_override(self.clean_mind_user, target_article, True)
 
     def test_social_article_pass(self):
@@ -504,8 +505,8 @@ class TestHiddenArticles(TestCase, RequestSetting):
         )
 
         res = self.http_request(self.clean_mind_user, 'get', f'articles/{target_article.id}').data
-        assert res.get('is_content_social')
         assert res.get('can_override_hidden') is None
+        assert res.get('is_content_social')
         assert not res.get('is_hidden')
         assert res.get('title') is not None
         assert res.get('content') is not None
