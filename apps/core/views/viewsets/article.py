@@ -145,6 +145,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         article = self.get_object()
+        override_hidden = 'override_hidden' in self.request.query_params
 
         ArticleReadLog.objects.create(
             read_by=self.request.user,
@@ -158,7 +159,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         pipe.zadd(redis_key, {f'{article.id}:1:{self.request.user.id}:{time.time()}': time.time()})
         pipe.execute(raise_on_error=True)
 
-        serialized = ArticleSerializer(article, context={'request': request})
+        serialized = ArticleSerializer(article, context={'request': request, 'override_hidden': override_hidden})
         return Response(serialized.data)
 
     @decorators.action(detail=True, methods=['post'])

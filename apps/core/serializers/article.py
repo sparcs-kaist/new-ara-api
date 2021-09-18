@@ -50,30 +50,27 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return self.context['request'].user == obj.created_by
 
     def get_is_hidden(self, obj) -> bool:
-        hidden, _, _ = self.hidden_info(obj)
-        return hidden
+        return not self.visible_verdict(obj)
 
     def get_why_hidden(self, obj) -> typing.List[str]:
         _, _, reasons = self.hidden_info(obj)
         return [reason.value for reason in reasons]
 
-    def get_can_override_hidden(self, obj) -> typing.Optional[bool] :
+    def get_can_override_hidden(self, obj) -> typing.Optional[bool]:
         hidden, can_override, _ = self.hidden_info(obj)
         if not hidden:
             return
         return can_override
 
     def get_title(self, obj) -> typing.Optional[str]:
-        hidden, _, _ = self.hidden_info(obj)
-        if hidden:
-            return
-        return obj.title
+        if self.visible_verdict(obj):
+            return obj.title
+        return None
 
     def get_content(self, obj) -> typing.Optional[str]:
-        hidden, _, _ = self.hidden_info(obj)
-        if hidden:
-            return
-        return obj.content
+        if self.visible_verdict(obj):
+            return obj.content
+        return None
 
     def get_created_by(self, obj) -> dict:
         if obj.is_anonymous:
@@ -113,6 +110,14 @@ class BaseArticleSerializer(MetaDataModelSerializer):
             return queryset.count() // view.paginator.page_size + 1
 
         return None
+
+    def visible_verdict(self, obj):
+        hidden, can_override, _ = self.hidden_info(obj)
+        return not hidden or (can_override and self.requested_override_hidden)
+
+    @property
+    def requested_override_hidden(self):
+        return 'override_hidden' in self.context and self.context['override_hidden'] is True
 
     # TODO: 전체 캐싱 (여기에 이 메소드 자체가 없도록 디자인을 바꿔야할듯)
     def hidden_info(self, obj) -> typing.Tuple[bool, bool, typing.List[ArticleHiddenReason]]:
