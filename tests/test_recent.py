@@ -233,3 +233,9 @@ class TestRecent(TestCase, RequestSetting):
         assert resp['side_articles']['before']['id'] == before_id
         assert resp['side_articles']['after']['id'] == after_id
 
+    # 첫 번째 읽기가 from_view=recent일 경우 테스트
+    def test_read_first_article_from_recent(self):
+
+        resp = self.http_request(self.user, 'get', f'articles/{self.articles[2].id}', querystring='from_view=recent').data
+        assert resp['side_articles']['before'] is None
+        assert resp['side_articles']['after'] is None
