@@ -10,14 +10,16 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext
 
 from apps.user.views.viewsets import NOUNS, make_random_profile_picture
-from ara.db.models import AllQueryMetaDataModel
+from ara.db.models import MetaDataModel, MetaDataQuerySet
 from ara.sanitizer import sanitize
 from ara.settings import HASH_SECRET_VALUE
 from .report import Report
 
 
-class Comment(AllQueryMetaDataModel):
-    class Meta(AllQueryMetaDataModel.Meta):
+class Comment(MetaDataModel):
+    objects = MetaDataQuerySet.as_manager()
+
+    class Meta(MetaDataModel.Meta):
         verbose_name = '댓글'
         verbose_name_plural = '댓글 목록'
 
