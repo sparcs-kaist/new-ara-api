@@ -304,3 +304,10 @@ class TestComments(TestCase, RequestSetting):
         comment = Comment.objects.get(id=self.comment.id)
         assert comment.positive_vote_count == 0
         assert comment.negative_vote_count == 1
+
+    # 삭제된 댓글에 내용이 '삭제된 댓글입니다.'로 변경되어있는지 확인
+    def test_deleted_comment_message(self):
+        assert Comment.objects.filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)).filter(id=self.comment.id)
+        self.http_request(self.user, 'delete', f'comments/{self.comment.id}')
+        res = self.http_request(self.user, 'get', f'comments/{self.comment.id}')
+        assert res.data.get('content') == '삭제된 댓글입니다.'
