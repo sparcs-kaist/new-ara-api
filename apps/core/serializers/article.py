@@ -268,17 +268,19 @@ class ArticleSerializer(BaseArticleSerializer):
         }
 
     def get_side_articles_of_recent_article(self, obj, request):
-        article_read_log_set = obj.article_read_log_set.all()
+        article_user_read_log_set = obj.article_read_log_set.filter(
+            read_by=request.user,
+        ).order_by('-created_at')
+
+        # abort if there is not enough recent articles
+        if article_user_read_log_set.count() <= 1:
+            return None, None
 
         # 현재 ArticleReadLog
-        curr_read_log_of_obj = article_read_log_set.filter(
-            read_by=request.user,
-        ).order_by('-created_at')[0]
+        curr_read_log_of_obj = article_user_read_log_set[0]
 
         # 직전 ArticleReadLog
-        last_read_log_of_obj = article_read_log_set.filter(
-            read_by=request.user,
-        ).order_by('-created_at')[1]
+        last_read_log_of_obj = article_user_read_log_set[1]
 
         # 특정 글의 마지막 ArticleReadLog 를 찾기 위한 Subquery
         last_read_log_of_article = ArticleReadLog.objects.filter(
