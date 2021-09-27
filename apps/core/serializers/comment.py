@@ -42,6 +42,9 @@ class BaseCommentSerializer(MetaDataModelSerializer):
         ]
 
     def get_content(self, obj) -> typing.Union[str, list]:
+        if obj.is_deleted():
+            return gettext('This comment is deleted')
+
         if obj.is_hidden_by_reported():
             return gettext('This comment is hidden because it received multiple reports')
 
@@ -53,6 +56,9 @@ class BaseCommentSerializer(MetaDataModelSerializer):
         return obj.content
 
     def get_hidden_content(self, obj) -> str:
+        if obj.is_deleted():
+            return gettext('This comment is deleted')
+            
         if obj.is_hidden_by_reported():
             return gettext('This comment is hidden because it received multiple reports')
         elif self.validate_hidden(obj):

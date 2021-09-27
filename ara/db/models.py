@@ -58,7 +58,7 @@ class MetaDataModel(models.Model):
 
     def hard_delete(self):
         super().delete()
-
+      
 
 class Search(models.Lookup):
    lookup_name = 'search'

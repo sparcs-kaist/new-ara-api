@@ -45,10 +45,6 @@ def cascade_soft_deletion_comment(instance, **kwargs):
     deleted = instance.deleted_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
 
     if deleted:
-        comments = instance.comment_set.all().delete()
-        if comments:
-            instance.parent_article.update_comment_count()
-
         instance.comment_update_log_set.all().delete()
         instance.comment_delete_log_set.all().delete()
         instance.notification_set.all().delete()

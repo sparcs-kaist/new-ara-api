@@ -10,13 +10,15 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext
 
 from apps.user.views.viewsets import NOUNS, make_random_profile_picture
-from ara.db.models import MetaDataModel
+from ara.db.models import MetaDataModel, MetaDataQuerySet
 from ara.sanitizer import sanitize
 from ara.settings import HASH_SECRET_VALUE
 from .report import Report
 
 
 class Comment(MetaDataModel):
+    objects = MetaDataQuerySet.as_manager()
+
     class Meta(MetaDataModel.Meta):
         verbose_name = '댓글'
         verbose_name_plural = '댓글 목록'
@@ -126,6 +128,9 @@ class Comment(MetaDataModel):
 
     def is_hidden_by_reported(self) -> bool:
         return self.hidden_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
+
+    def is_deleted(self) -> bool:
+        return self.deleted_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
     
     @transaction.atomic
     def update_report_count(self):
