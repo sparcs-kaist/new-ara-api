@@ -11,6 +11,7 @@ class ArticlePermission(permissions.IsAuthenticated):
         return super().has_object_permission(request, view, obj)
 
 
+# TODO: Rename to ArticleGroupPermission
 class ArticleKAISTPermission(permissions.BasePermission):
     message = 'KAIST 구성원만 읽을 수 있는 게시물입니다.'
 

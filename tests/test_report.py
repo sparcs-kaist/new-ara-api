@@ -160,8 +160,8 @@ class TestReport(TestCase, RequestSetting):
         res2 = self.http_request(self.user, 'get', f'articles/{self.article.id}').data
         assert res2.get('title') != self.article.title
         assert res2.get('content') != self.article.content
-        assert '숨김' in res2.get('title')
-        assert '숨김' in res2.get('content')
+        assert res2.get('title') is None
+        assert res2.get('content') is None
 
     # 한 댓글이 여러번 신고당하면 자동 숨김되는 것 확인
     def test_hide_comment_if_many_reports(self):
