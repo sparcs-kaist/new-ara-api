@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Dict, Union
 
 import bs4
@@ -15,6 +16,14 @@ from ara.sanitizer import sanitize
 from ara.settings import HASH_SECRET_VALUE
 from .report import Report
 from .comment import Comment
+
+
+class ArticleHiddenReason(Enum):
+    ADULT_CONTENT = 'ADULT_CONTENT'
+    SOCIAL_CONTENT = 'SOCIAL_CONTENT'
+    REPORTED_CONTENT = 'REPORTED_CONTENT'
+    BLOCKED_USER_CONTENT = 'BLOCKED_USER_CONTENT'
+    ACCESS_DENIED_CONTENT = 'ACCESS_DENIED_CONTENT'
 
 
 class Article(MetaDataModel):
@@ -161,7 +170,7 @@ class Article(MetaDataModel):
         self.save()
 
     def update_comment_count(self):
-        self.comment_count = Comment.objects.filter(
+        self.comment_count = Comment.objects.filter(deleted_at = timezone.datetime.min.replace(tzinfo=timezone.utc)).filter(
             models.Q(parent_article=self) |
             models.Q(parent_comment__parent_article=self)
         ).count()

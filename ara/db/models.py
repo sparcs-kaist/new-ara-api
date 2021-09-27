@@ -37,7 +37,7 @@ class MetaDataModel(models.Model):
     objects = MetaDataManager()
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
+        default=timezone.now,
         db_index=True,
         verbose_name='생성 시간',
     )
@@ -58,7 +58,7 @@ class MetaDataModel(models.Model):
 
     def hard_delete(self):
         super().delete()
-
+      
 
 class Search(models.Lookup):
    lookup_name = 'search'

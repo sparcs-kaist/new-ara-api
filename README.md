@@ -151,8 +151,8 @@ For managing docker images, we are using AWS ECR, `newara` repository.
 
 ### Framework
 
-* `Django 3.1`
-* `djangorestframework 3.10`
+* `Django 3.2.4`
+* `djangorestframework 3.12.4`
 
 ### Database
 

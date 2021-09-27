@@ -25,7 +25,7 @@ test:
 	pytest tests/
 
 test_coverage:
-	pytest --cov=. tests/
+	pytest --cov-report html --cov=. --cov-config=.coveragerc tests/
 
 test_coverage_missing:
 	pytest --cov-report term-missing --cov=. tests/

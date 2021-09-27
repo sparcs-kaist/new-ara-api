@@ -2,14 +2,21 @@ import typing
 
 from django.db import models
 from django.utils.translation import gettext
-from rest_framework import exceptions, serializers
+from rest_framework import serializers
 
 from apps.core.documents import ArticleDocument
-from apps.core.models import Article, ArticleReadLog, Board, Block
+from apps.core.models import Article, ArticleReadLog, Board, Block, Scrap, ArticleHiddenReason
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.topic import TopicSerializer
 from apps.user.serializers.user import PublicUserSerializer
 from ara.classes.serializers import MetaDataModelSerializer
+
+
+CAN_OVERRIDE_REASONS = [
+    ArticleHiddenReason.SOCIAL_CONTENT,
+    ArticleHiddenReason.ADULT_CONTENT,
+    ArticleHiddenReason.BLOCKED_USER_CONTENT
+]
 
 
 class BaseArticleSerializer(MetaDataModelSerializer):
@@ -42,59 +49,27 @@ class BaseArticleSerializer(MetaDataModelSerializer):
         return self.context['request'].user == obj.created_by
 
     def get_is_hidden(self, obj) -> bool:
-        if obj.is_hidden_by_reported():
-            return False
-        elif self.validate_hidden(obj):
-            return True
+        return not self.visible_verdict(obj)
 
-        return False
+    def get_why_hidden(self, obj) -> typing.List[str]:
+        _, _, reasons = self.hidden_info(obj)
+        return [reason.value for reason in reasons]
 
-    def get_why_hidden(self, obj) -> typing.List[dict]:
-        errors = self.validate_hidden(obj)
+    def get_can_override_hidden(self, obj) -> typing.Optional[bool]:
+        hidden, can_override, _ = self.hidden_info(obj)
+        if not hidden:
+            return
+        return can_override
 
-        return [
-            {
-                'detail': error.detail,
-            } for error in errors
-        ]
-
-    def get_title(self, obj) -> typing.Union[str, list]:
-        if obj.is_hidden_by_reported():
-            return gettext('This article is temporarily hidden')
-
-        errors = self.validate_hidden(obj)
-
-        if errors:
-            return [error.detail for error in errors]
-
-        return obj.title
-
-    def get_hidden_title(self, obj) -> str:
-        if obj.is_hidden_by_reported():
-            return gettext('This article is temporarily hidden')
-        elif self.validate_hidden(obj):
+    def get_title(self, obj) -> typing.Optional[str]:
+        if self.visible_verdict(obj):
             return obj.title
+        return None
 
-        return ''
-
-    def get_content(self, obj) -> typing.Union[str, list]:
-        if obj.is_hidden_by_reported():
-            return gettext('This article is hidden because it has received multiple reports')
-
-        errors = self.validate_hidden(obj)
-
-        if errors:
-            return [error.detail for error in errors]
-
-        return obj.content
-
-    def get_hidden_content(self, obj) -> str:
-        if obj.is_hidden_by_reported():
-            return gettext('This article is hidden because it has received multiple reports')
-        elif self.validate_hidden(obj):
+    def get_content(self, obj) -> typing.Optional[str]:
+        if self.visible_verdict(obj):
             return obj.content
-
-        return ''
+        return None
 
     def get_created_by(self, obj) -> dict:
         if obj.is_anonymous:
@@ -135,23 +110,35 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         return None
 
-    def validate_hidden(self, obj: Article) -> typing.List[exceptions.ValidationError]:
-        errors = []
+    def visible_verdict(self, obj):
+        hidden, can_override, _ = self.hidden_info(obj)
+        return not hidden or (can_override and self.requested_override_hidden)
+
+    @property
+    def requested_override_hidden(self):
+        return 'override_hidden' in self.context and self.context['override_hidden'] is True
+
+    # TODO: 전체 캐싱 (여기에 이 메소드 자체가 없도록 디자인을 바꿔야할듯)
+    def hidden_info(self, obj) -> typing.Tuple[bool, bool, typing.List[ArticleHiddenReason]]:
+        reasons: typing.List[ArticleHiddenReason] = []
         request = self.context['request']
 
         if Block.is_blocked(blocked_by=request.user, user=obj.created_by):
-            errors.append(exceptions.ValidationError('차단한 사용자의 게시물입니다.'))
-
+            reasons.append(ArticleHiddenReason.BLOCKED_USER_CONTENT)
         if obj.is_content_sexual and not request.user.profile.see_sexual:
-            errors.append(exceptions.ValidationError('성인/음란성 내용의 게시물입니다.'))
-
+            reasons.append(ArticleHiddenReason.ADULT_CONTENT)
         if obj.is_content_social and not request.user.profile.see_social:
-            errors.append(exceptions.ValidationError('정치/사회성 내용의 게시물입니다.'))
-
+            reasons.append(ArticleHiddenReason.SOCIAL_CONTENT)
+        # 혹시 몰라 여기 두기는 하는데 여기 오기전에 Permission에서 막혀야 함
         if not obj.parent_board.group_has_access(request.user.profile.group):
-            errors.append(exceptions.ValidationError('접근 권한이 없는 게시판입니다.'))
+            reasons.append(ArticleHiddenReason.ACCESS_DENIED_CONTENT)
+        if obj.is_hidden_by_reported():
+            reasons.append(ArticleHiddenReason.REPORTED_CONTENT)
 
-        return errors
+        cannot_override_reasons = [reason for reason in reasons if reason not in CAN_OVERRIDE_REASONS]
+        can_override = len(cannot_override_reasons) == 0
+
+        return len(reasons) > 0, can_override, reasons
 
 
 class SideArticleSerializer(BaseArticleSerializer):
@@ -167,13 +154,13 @@ class SideArticleSerializer(BaseArticleSerializer):
     why_hidden = serializers.SerializerMethodField(
         read_only=True,
     )
+    can_override_hidden = serializers.SerializerMethodField(
+        read_only=True,
+    )
     parent_topic = TopicSerializer(
         read_only=True,
     )
     title = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    hidden_title = serializers.SerializerMethodField(
         read_only=True,
     )
 
@@ -240,8 +227,27 @@ class ArticleSerializer(BaseArticleSerializer):
                 articles = self.search_articles(articles, request.query_params.get('search_query'))
 
             articles = articles.exclude(id=obj.id)
-            before = articles.filter(created_at__lte=obj.created_at).first()
-            after = articles.filter(created_at__gte=obj.created_at).last()
+
+            if from_view == 'scrap':
+                scrap_obj_created_at = obj.scrap_set.get(scrapped_by=request.user).created_at
+
+                scrap_list = Scrap.objects.filter(scrapped_by=request.user).exclude(parent_article_id=obj.id)
+                before_scrap = scrap_list.filter(created_at__lte=scrap_obj_created_at).first()
+                after_scrap = scrap_list.filter(created_at__gte=scrap_obj_created_at).last()
+
+                if before_scrap:
+                    before = before_scrap.parent_article
+                else:
+                    before = None
+
+                if after_scrap:
+                    after = after_scrap.parent_article
+                else:
+                    after = None
+                
+            else:
+                before = articles.filter(created_at__lte=obj.created_at).first()
+                after = articles.filter(created_at__gte=obj.created_at).last()
 
         return {
             'before': SideArticleSerializer(before, context=self.context).data if before else None,
@@ -249,17 +255,19 @@ class ArticleSerializer(BaseArticleSerializer):
         }
 
     def get_side_articles_of_recent_article(self, obj, request):
-        article_read_log_set = obj.article_read_log_set.all()
+        article_user_read_log_set = obj.article_read_log_set.filter(
+            read_by=request.user,
+        ).order_by('-created_at')
+
+        # abort if there is not enough recent articles
+        if article_user_read_log_set.count() <= 1:
+            return None, None
 
         # 현재 ArticleReadLog
-        curr_read_log_of_obj = article_read_log_set.filter(
-            read_by=request.user,
-        ).order_by('-created_at')[0]
+        curr_read_log_of_obj = article_user_read_log_set[0]
 
         # 직전 ArticleReadLog
-        last_read_log_of_obj = article_read_log_set.filter(
-            read_by=request.user,
-        ).order_by('-created_at')[1]
+        last_read_log_of_obj = article_user_read_log_set[1]
 
         # 특정 글의 마지막 ArticleReadLog 를 찾기 위한 Subquery
         last_read_log_of_article = ArticleReadLog.objects.filter(
@@ -324,16 +332,13 @@ class ArticleSerializer(BaseArticleSerializer):
     why_hidden = serializers.SerializerMethodField(
         read_only=True,
     )
+    can_override_hidden = serializers.SerializerMethodField(
+        read_only=True,
+    )
     title = serializers.SerializerMethodField(
         read_only=True,
     )
-    hidden_title = serializers.SerializerMethodField(
-        read_only=True,
-    )
     content = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    hidden_content = serializers.SerializerMethodField(
         read_only=True,
     )
     my_vote = serializers.SerializerMethodField(
@@ -367,9 +372,6 @@ class ArticleListActionSerializer(BaseArticleSerializer):
         read_only=True,
     )
     title = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    hidden_title = serializers.SerializerMethodField(
         read_only=True,
     )
     created_by = serializers.SerializerMethodField(
