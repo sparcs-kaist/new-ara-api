@@ -3,8 +3,13 @@ import typing
 
 from ara.classes.serializers import MetaDataModelSerializer
 from apps.user.serializers.user import PublicUserSerializer
-from apps.core.models import Comment, Block
+from apps.core.models import Comment, Block, CommentHiddenReason
 from django.utils.translation import gettext
+
+
+CAN_OVERRIDE_REASONS = [
+    CommentHiddenReason.BLOCKED_USER_CONTENT
+]
 
 
 class BaseCommentSerializer(MetaDataModelSerializer):
@@ -25,46 +30,16 @@ class BaseCommentSerializer(MetaDataModelSerializer):
         return self.context['request'].user == obj.created_by
 
     def get_is_hidden(self, obj) -> bool:
-        if obj.is_hidden_by_reported():
-            return False
-        elif self.validate_hidden(obj):
-            return True
+        return not self.visible_verdict(obj)
 
-        return False
-
-    def get_why_hidden(self, obj) -> typing.List[dict]:
-        errors = self.validate_hidden(obj)
-
-        return [
-            {
-                'detail': error.detail,
-            } for error in errors
-        ]
-
-    def get_content(self, obj) -> typing.Union[str, list]:
-        if obj.is_deleted():
-            return gettext('This comment is deleted')
-
-        if obj.is_hidden_by_reported():
-            return gettext('This comment is hidden because it received multiple reports')
-
-        errors = self.validate_hidden(obj)
-
-        if errors:
-            return [error.detail for error in errors]
-
-        return obj.content
-
-    def get_hidden_content(self, obj) -> str:
-        if obj.is_deleted():
-            return gettext('This comment is deleted')
-            
-        if obj.is_hidden_by_reported():
-            return gettext('This comment is hidden because it received multiple reports')
-        elif self.validate_hidden(obj):
+    def get_why_hidden(self, obj) -> typing.List[str]:
+        _, _, reasons = self.hidden_info(obj)
+        return [reason.value for reason in reasons]
+        
+    def get_content(self, obj) -> typing.Optional[str]:
+        if self.visible_verdict(obj):
             return obj.content
-
-        return ''
+        return None
 
     def get_created_by(self, obj) -> dict:
         if obj.is_anonymous:
@@ -74,13 +49,38 @@ class BaseCommentSerializer(MetaDataModelSerializer):
             data['is_blocked'] = Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by)
             return data
 
-    def validate_hidden(self, obj) -> typing.List[exceptions.ValidationError]:
-        errors = []
+    def get_can_override_hidden(self, obj) -> typing.Optional[bool]:
+        hidden, can_override, _ = self.hidden_info(obj)
+        if not hidden:
+            return
+        return can_override
 
-        if Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by):
-            errors.append(exceptions.ValidationError(gettext('This article is written by a user you blocked.')))
+    def visible_verdict(self, obj):
+        hidden, can_override, _ = self.hidden_info(obj)
+        return not hidden or (can_override and self.requested_override_hidden)
 
-        return errors
+    @property
+    def requested_override_hidden(self):
+        request = self.context['request']
+        override_hidden = 'override_hidden' in request.query_params
+        return override_hidden
+
+    # TODO: 전체 캐싱 (여기에 이 메소드 자체가 없도록 디자인을 바꿔야할듯)
+    def hidden_info(self, obj) -> typing.Tuple[bool, bool, typing.List[CommentHiddenReason]]:
+        reasons: typing.List[CommentHiddenReason] = []
+        request = self.context['request']
+
+        if Block.is_blocked(blocked_by=request.user, user=obj.created_by):
+            reasons.append(CommentHiddenReason.BLOCKED_USER_CONTENT)
+        if obj.is_hidden_by_reported():
+            reasons.append(CommentHiddenReason.REPORTED_CONTENT)
+        if obj.is_deleted():
+            reasons.append(CommentHiddenReason.DELETED_CONTENT)
+
+        cannot_override_reasons = [reason for reason in reasons if reason not in CAN_OVERRIDE_REASONS]
+        can_override = len(cannot_override_reasons) == 0
+
+        return len(reasons) > 0, can_override, reasons
 
 
 class CommentSerializer(BaseCommentSerializer):
@@ -100,10 +100,10 @@ class CommentSerializer(BaseCommentSerializer):
     why_hidden = serializers.SerializerMethodField(
         read_only=True,
     )
-    content = serializers.SerializerMethodField(
+    can_override_hidden = serializers.SerializerMethodField(
         read_only=True,
     )
-    hidden_content = serializers.SerializerMethodField(
+    content = serializers.SerializerMethodField(
         read_only=True,
     )
     created_by = serializers.SerializerMethodField(
@@ -129,9 +129,6 @@ class CommentListActionSerializer(BaseCommentSerializer):
         read_only=True,
     )
     content = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    hidden_content = serializers.SerializerMethodField(
         read_only=True,
     )
     created_by = serializers.SerializerMethodField(

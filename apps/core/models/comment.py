@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Dict, Union
 import hashlib
 
@@ -14,6 +15,12 @@ from ara.db.models import MetaDataModel, MetaDataQuerySet
 from ara.sanitizer import sanitize
 from ara.settings import HASH_SECRET_VALUE
 from .report import Report
+
+
+class CommentHiddenReason(Enum):
+    REPORTED_CONTENT = 'REPORTED_CONTENT'
+    BLOCKED_USER_CONTENT = 'BLOCKED_USER_CONTENT'
+    DELETED_CONTENT = 'DELETED_CONTENT'
 
 
 class Comment(MetaDataModel):
