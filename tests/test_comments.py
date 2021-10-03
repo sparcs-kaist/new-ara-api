@@ -1,6 +1,7 @@
 import pytest
+from django.contrib.auth.models import User
 from django.utils import timezone
-from apps.core.models import Article, Topic, Board, Comment
+from apps.core.models import Article, Topic, Board, Comment, Block
 from tests.conftest import RequestSetting, TestCase
 
 
@@ -305,9 +306,78 @@ class TestComments(TestCase, RequestSetting):
         assert comment.positive_vote_count == 0
         assert comment.negative_vote_count == 1
 
-    # 삭제된 댓글에 내용이 '삭제된 댓글입니다.'로 변경되어있는지 확인
-    def test_deleted_comment_message(self):
-        assert Comment.objects.filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)).filter(id=self.comment.id)
-        self.http_request(self.user, 'delete', f'comments/{self.comment.id}')
-        res = self.http_request(self.user, 'get', f'comments/{self.comment.id}')
-        assert res.data.get('content') == '삭제된 댓글입니다.'
+
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_topic', 'set_articles', 'set_comments') 
+class TestHiddenComments(TestCase, RequestSetting):
+    def _comment_factory(self, **comment_kwargs):
+        return Comment.objects.create(
+            content='example comment',
+            is_anonymous=False,
+            created_by=self.user,
+            parent_article=self.article,
+            **comment_kwargs
+        )
+
+    def _test_can_override(self, user: User, target_comment: Comment, expected: bool):
+        res = self.http_request(user, 'get', f'comments/{target_comment.id}', None, 'override_hidden').data
+        assert res.get('hidden_content') is None
+        assert res.get('why_hidden') is not None
+        assert res.get('why_hidden') != []
+        assert res.get('is_hidden') != expected
+        if expected:
+            assert res.get('content') is not None
+        else:
+            assert res.get('content') is None
+
+    def test_blocked_user_block(self):
+        Block.objects.create(
+            blocked_by=self.user,
+            user=self.user2
+        )
+
+        comment2 = Comment.objects.create(
+            content='example comment',
+            is_anonymous=False,
+            created_by=self.user2,
+            parent_article=self.article
+        )
+
+        res = self.http_request(self.user, 'get', f'comments/{comment2.id}').data
+        assert res.get('can_override_hidden')
+        assert res.get('is_hidden')
+        assert res.get('title') is None
+        assert res.get('hidden_title') is None
+        assert res.get('hidden_content') is None
+        assert 'BLOCKED_USER_CONTENT' in res.get('why_hidden')
+        self._test_can_override(self.user, comment2, True)
+
+    def test_reported_comment_block(self):
+        target_comment = self._comment_factory(
+            report_count=1000000,
+            hidden_at=timezone.now()
+        )
+
+        res = self.http_request(self.user, 'get', f'comments/{target_comment.id}').data
+        assert not res.get('can_override_hidden')
+        assert res.get('is_hidden')
+        assert res.get('title') is None
+        assert res.get('content') is None
+        assert res.get('hidden_title') is None
+        assert res.get('hidden_content') is None
+        assert 'REPORTED_CONTENT' in res.get('why_hidden')
+        self._test_can_override(self.user, target_comment, False)
+
+    def test_deleted_comment_block(self):
+        target_comment = self._comment_factory(
+            deleted_at=timezone.now()
+        )
+
+        res = self.http_request(self.user, 'get', f'comments/{target_comment.id}').data
+        assert not res.get('can_override_hidden')
+        assert res.get('is_hidden')
+        assert res.get('title') is None
+        assert res.get('content') is None
+        assert res.get('hidden_title') is None
+        assert res.get('hidden_content') is None
+        assert 'DELETED_CONTENT' in res.get('why_hidden')
+        self._test_can_override(self.user, target_comment, False)
