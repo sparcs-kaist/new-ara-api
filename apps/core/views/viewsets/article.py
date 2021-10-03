@@ -121,6 +121,13 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             created_by=self.request.user,
         )
 
+    def update(self, request, *args, **kwargs):
+        article = self.get_object()
+        if article.is_hidden_by_reported():
+            return response.Response({'message': 'Cannot modify articles hidden by reports'},
+                                     status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return super().update(request, *args, **kwargs)
+
     def perform_update(self, serializer):
         instance = serializer.instance
 
