@@ -54,6 +54,15 @@ class CommentViewSet(mixins.CreateModelMixin,
             created_by=self.request.user,
         )
 
+    def update(self, request, *args, **kwargs):
+        comment = self.get_object()
+
+        if comment.is_hidden_by_reported() or comment.is_deleted():
+            return response.Response({'message': 'Cannot modify hidden or deleted comments'},
+                                     status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        return super().update(request, *args, **kwargs)
+
     def perform_update(self, serializer):
         from apps.core.models import CommentUpdateLog
 

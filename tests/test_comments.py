@@ -381,3 +381,25 @@ class TestHiddenComments(TestCase, RequestSetting):
         assert res.get('hidden_content') is None
         assert 'DELETED_CONTENT' in res.get('why_hidden')
         self._test_can_override(self.user, target_comment, False)
+
+    def test_modify_deleted_comment(self):
+        target_comment = self._comment_factory(
+            deleted_at=timezone.now()
+        )
+
+        res = self.http_request(self.user, 'patch', f'comments/{target_comment.id}', {
+            'content': 'attempt to modify deleted comment',
+        })
+
+        assert res.status_code == 405
+
+    def test_modify_report_hidden_article(self):
+        target_comment = self._comment_factory(
+            report_count=1000000,
+            hidden_at=timezone.now()
+        )
+
+        res = self.http_request(self.user, 'patch', f'comments/{target_comment.id}', {
+            'content': 'attempt to modify hidden comment'
+        })
+        assert res.status_code == 405
