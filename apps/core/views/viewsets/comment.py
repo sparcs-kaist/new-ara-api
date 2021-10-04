@@ -55,6 +55,13 @@ class CommentViewSet(mixins.CreateModelMixin,
             created_by=self.request.user,
         )
 
+    def retrieve(self, request, *args, **kwargs):
+        comment = self.get_object()
+        override_hidden = 'override_hidden' in self.request.query_params
+
+        serialized = CommentSerializer(comment, context={'request': request, 'override_hidden': override_hidden})
+        return response.Response(serialized.data)
+
     def update(self, request, *args, **kwargs):
         comment = self.get_object()
 

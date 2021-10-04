@@ -1,3 +1,4 @@
+import typing
 from enum import Enum
 from typing import Dict, Union
 import hashlib
@@ -14,6 +15,7 @@ from apps.user.views.viewsets import NOUNS, make_random_profile_picture
 from ara.db.models import MetaDataModel, MetaDataQuerySet
 from ara.sanitizer import sanitize
 from ara.settings import HASH_SECRET_VALUE
+from .block import Block
 from .report import Report
 
 
@@ -181,6 +183,18 @@ class Comment(MetaDataModel):
                     'user': user_hash
                 }
             }
+
+    def hidden_reasons(self, user: settings.AUTH_USER_MODEL) -> typing.List:
+        reasons: typing.List[CommentHiddenReason] = []
+
+        if Block.is_blocked(blocked_by=user, user=self.created_by):
+            reasons.append(CommentHiddenReason.BLOCKED_USER_CONTENT)
+        if self.is_hidden_by_reported():
+            reasons.append(CommentHiddenReason.REPORTED_CONTENT)
+        if self.is_deleted():
+            reasons.append(CommentHiddenReason.DELETED_CONTENT)
+
+        return reasons
 
 
 def make_anonymous_name(hash_val, unique_tail) -> str:
