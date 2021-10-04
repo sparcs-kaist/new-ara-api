@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-09-14 21:09+0900\n"
+"POT-Creation-Date: 2021-10-04 19:08+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -34,40 +34,32 @@ msgstr ""
 msgid "No content for portal article"
 msgstr ""
 
-#: apps/core/models/article.py:208 apps/core/models/article.py:211
-#: apps/core/models/article.py:212
+#: apps/core/models/article.py:217 apps/core/models/article.py:220
+#: apps/core/models/article.py:221
 msgid "anonymous"
 msgstr ""
 
-#: apps/core/models/comment.py:162
+#: apps/core/models/comment.py:171
 msgid "author"
 msgstr ""
 
-#: apps/core/serializers/article.py:63 apps/core/serializers/article.py:74
-msgid "This article is temporarily hidden"
-msgstr ""
-
-#: apps/core/serializers/article.py:82 apps/core/serializers/article.py:93
-msgid "This article is hidden because it has received multiple reports"
-msgstr ""
-
-#: apps/core/serializers/article.py:214
+#: apps/core/serializers/article.py:201
 msgid "This article is not in user's scrap list."
 msgstr ""
 
-#: apps/core/serializers/article.py:231
+#: apps/core/serializers/article.py:218
 msgid "Wrong value for parameter 'from_view'."
 msgstr ""
 
-#: apps/core/serializers/article.py:283
+#: apps/core/serializers/article.py:291
 msgid "This article is never read by user."
 msgstr ""
 
-#: apps/core/serializers/article.py:408
+#: apps/core/serializers/article.py:410
 msgid "This board is read only."
 msgstr ""
 
-#: apps/core/serializers/article.py:410
+#: apps/core/serializers/article.py:412
 msgid "This board is only for KAIST members."
 msgstr ""
 
@@ -79,24 +71,20 @@ msgstr ""
 msgid "This user is already blocked."
 msgstr ""
 
-#: apps/core/serializers/comment.py:46 apps/core/serializers/comment.py:60
-msgid "This comment is deleted"
-msgstr ""
-
-#: apps/core/serializers/comment.py:49 apps/core/serializers/comment.py:63
-msgid "This comment is hidden because it received multiple reports"
-msgstr ""
-
-#: apps/core/serializers/comment.py:81
-msgid "This article is written by a user you blocked."
-msgstr ""
-
 #: apps/core/serializers/report.py:43
 msgid "You already reported this article."
 msgstr ""
 
 #: apps/core/serializers/scrap.py:37
 msgid "This article is already scrapped."
+msgstr ""
+
+#: apps/core/views/viewsets/article.py:128
+msgid "Cannot modify articles hidden by reports"
+msgstr ""
+
+#: apps/core/views/viewsets/comment.py:62
+msgid "Cannot modify hidden or deleted comments"
 msgstr ""
 
 #: apps/user/models/user_profile.py:23

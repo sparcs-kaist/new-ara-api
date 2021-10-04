@@ -1,6 +1,7 @@
 import time
 
 from django.db import models
+from django.utils.translation import gettext
 from rest_framework import status, viewsets, response, decorators, serializers, permissions
 from rest_framework.response import Response
 
@@ -120,6 +121,13 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         serializer.save(
             created_by=self.request.user,
         )
+
+    def update(self, request, *args, **kwargs):
+        article = self.get_object()
+        if article.is_hidden_by_reported():
+            return response.Response({'message': gettext('Cannot modify articles hidden by reports')},
+                                     status=status.HTTP_403_FORBIDDEN)
+        return super().update(request, *args, **kwargs)
 
     def perform_update(self, serializer):
         instance = serializer.instance

@@ -1,3 +1,4 @@
+from django.utils.translation import gettext
 from rest_framework import mixins, status, response, decorators, serializers, permissions
 
 from ara.classes.viewset import ActionAPIViewSet
@@ -53,6 +54,15 @@ class CommentViewSet(mixins.CreateModelMixin,
         serializer.save(
             created_by=self.request.user,
         )
+
+    def update(self, request, *args, **kwargs):
+        comment = self.get_object()
+
+        if comment.is_hidden_by_reported() or comment.is_deleted():
+            return response.Response({'message': gettext('Cannot modify hidden or deleted comments')},
+                                     status=status.HTTP_403_FORBIDDEN)
+
+        return super().update(request, *args, **kwargs)
 
     def perform_update(self, serializer):
         from apps.core.models import CommentUpdateLog

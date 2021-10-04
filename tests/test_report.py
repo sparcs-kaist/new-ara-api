@@ -185,5 +185,5 @@ class TestReport(TestCase, RequestSetting):
         # 신고가 threshold 이상인 경우 읽을 수 없음 (현재 총 3번 신고됨, 현재 threshold 1)
         res2 = self.http_request(self.user, 'get', f'comments/{self.comment.id}').data
         assert res2.get('content') != self.comment.content
-        assert '숨김' in res2.get('content')
+        assert res2.get('content') is None
 

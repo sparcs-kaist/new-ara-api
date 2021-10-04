@@ -550,3 +550,37 @@ class TestHiddenArticles(TestCase, RequestSetting):
         assert res.get('hidden_content') is None
         assert 'REPORTED_CONTENT' in res.get('why_hidden')
         self._test_can_override(self.clean_mind_user, target_article, False)
+
+    def test_modify_deleted_article(self):
+        target_article = self._article_factory(
+            is_content_sexual=False,
+            is_content_social=False,
+        )
+
+        self.http_request(self.user, 'delete', f'articles/{target_article.id}')
+
+        new_content = "attempt to modify deleted article"
+        res = self.http_request(self.user, 'put', f'articles/{target_article.id}', {
+            "title": new_content,
+            "content": new_content,
+            "content_text": new_content,
+        })
+
+        assert res.status_code == 404
+
+    def test_modify_report_hidden_article(self):
+        target_article = self._article_factory(
+            is_content_sexual=False,
+            is_content_social=False,
+            report_count=1000000,
+            hidden_at=timezone.now()
+        )
+
+        new_content = "attempt to modify hidden article"
+        res = self.http_request(self.user, 'put', f'articles/{target_article.id}', {
+            "title": new_content,
+            "content": new_content,
+            "content_text": new_content,
+        })
+
+        assert res.status_code == 403
