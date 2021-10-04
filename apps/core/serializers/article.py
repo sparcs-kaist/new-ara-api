@@ -389,6 +389,15 @@ class BestArticleListActionSerializer(BaseArticleSerializer):
     created_by = serializers.SerializerMethodField(
         read_only=True,
     )
+    is_hidden = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    why_hidden = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    can_override_hidden = serializers.SerializerMethodField(
+        read_only=True,
+    )
 
 
 class ArticleCreateActionSerializer(BaseArticleSerializer):
