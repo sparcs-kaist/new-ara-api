@@ -12,6 +12,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext
 
 from apps.user.views.viewsets import NOUNS, make_random_profile_picture
+from ara.classes.decorator import cache_by_user
 from ara.db.models import MetaDataModel, MetaDataQuerySet
 from ara.sanitizer import sanitize
 from ara.settings import HASH_SECRET_VALUE
@@ -184,6 +185,7 @@ class Comment(MetaDataModel):
                 }
             }
 
+    @cache_by_user
     def hidden_reasons(self, user: settings.AUTH_USER_MODEL) -> typing.List:
         reasons: typing.List[CommentHiddenReason] = []
 

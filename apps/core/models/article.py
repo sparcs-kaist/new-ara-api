@@ -12,6 +12,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext
 
 from apps.user.views.viewsets import make_random_profile_picture, hashlib
+from ara.classes.decorator import cache_by_user
 from ara.db.models import MetaDataModel
 from ara.sanitizer import sanitize
 from ara.settings import HASH_SECRET_VALUE
@@ -224,7 +225,7 @@ class Article(MetaDataModel):
                 },
             }
 
-    # @cache_by_user
+    @cache_by_user
     def hidden_reasons(self, user: settings.AUTH_USER_MODEL) -> typing.List:
         reasons = []
         if Block.is_blocked(blocked_by=user, user=self.created_by):
