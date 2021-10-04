@@ -3,7 +3,7 @@ from datetime import timedelta
 import pytest
 from django.contrib.auth.models import User
 from django.utils import timezone
-from apps.core.models import Article, Topic, Board, Comment, Block
+from apps.core.models import Article, Topic, Board, Comment, Block, Vote
 from tests.conftest import RequestSetting, TestCase
 
 
@@ -358,11 +358,19 @@ class TestHiddenComments(TestCase, RequestSetting):
         assert 'BLOCKED_USER_CONTENT' in res.get('why_hidden')
         self._test_can_override(self.user, comment2, True)
 
-    def test_reported_comment_block(self):
-        target_comment = self._comment_factory(
+    def _create_report_hidden_comment(self):
+        return self._comment_factory(
             report_count=1000000,
             hidden_at=timezone.now()
         )
+
+    def _create_deleted_comment(self):
+        return self._comment_factory(
+            deleted_at=timezone.now()
+        )
+
+    def test_reported_comment_block(self):
+        target_comment = self._create_report_hidden_comment()
 
         res = self.http_request(self.user, 'get', f'comments/{target_comment.id}').data
         assert not res.get('can_override_hidden')
@@ -375,9 +383,7 @@ class TestHiddenComments(TestCase, RequestSetting):
         self._test_can_override(self.user, target_comment, False)
 
     def test_deleted_comment_block(self):
-        target_comment = self._comment_factory(
-            deleted_at=timezone.now()
-        )
+        target_comment = self._create_deleted_comment()
 
         res = self.http_request(self.user, 'get', f'comments/{target_comment.id}').data
         assert not res.get('can_override_hidden')
@@ -405,9 +411,7 @@ class TestHiddenComments(TestCase, RequestSetting):
         assert res.get('why_hidden') == ['DELETED_CONTENT', 'REPORTED_CONTENT', 'BLOCKED_USER_CONTENT']
 
     def test_modify_deleted_comment(self):
-        target_comment = self._comment_factory(
-            deleted_at=timezone.now()
-        )
+        target_comment = self._create_deleted_comment()
 
         res = self.http_request(self.user, 'patch', f'comments/{target_comment.id}', {
             'content': 'attempt to modify deleted comment',
@@ -415,13 +419,96 @@ class TestHiddenComments(TestCase, RequestSetting):
 
         assert res.status_code == 403
 
-    def test_modify_report_hidden_article(self):
-        target_comment = self._comment_factory(
-            report_count=1000000,
-            hidden_at=timezone.now()
-        )
+    def test_modify_report_hidden_comment(self):
+        target_comment = self._create_report_hidden_comment()
 
         res = self.http_request(self.user, 'patch', f'comments/{target_comment.id}', {
             'content': 'attempt to modify hidden comment'
         })
         assert res.status_code == 403
+
+    def test_delete_already_deleted_comment(self):
+        target_comment = self._create_deleted_comment()
+        res = self.http_request(self.user, 'delete', f'comments/{target_comment.id}')
+        assert res.status_code == 403
+
+    def test_delete_report_hidden_comment(self):
+        target_comment = self._create_report_hidden_comment()
+        res = self.http_request(self.user, 'delete', f'comments/{target_comment.id}')
+        assert res.status_code == 403
+
+    def test_vote_deleted_comment(self):
+        target_comment = self._create_deleted_comment()
+
+        positive_vote_result = self.http_request(self.user2, 'post', f'comments/{target_comment.id}/vote_positive')
+        assert positive_vote_result.status_code == 403
+
+        negative_vote_result = self.http_request(self.user2, 'post', f'comments/{target_comment.id}/vote_negative')
+        assert negative_vote_result.status_code == 403
+
+        cancel_vote_result = self.http_request(self.user2, 'post', f'comments/{target_comment.id}/vote_positive')
+        assert cancel_vote_result.status_code == 403
+
+    def test_vote_report_hidden_article(self):
+        target_comment = self._create_report_hidden_comment()
+
+        positive_vote_result = self.http_request(self.user2, 'post', f'comments/{target_comment.id}/vote_positive')
+        assert positive_vote_result.status_code == 403
+
+        negative_vote_result = self.http_request(self.user2, 'post', f'comments/{target_comment.id}/vote_negative')
+        assert negative_vote_result.status_code == 403
+
+        Vote.objects.create(
+            voted_by=self.user2,
+            parent_comment=target_comment,
+            is_positive=True,
+        )
+        target_comment.update_vote_status()
+
+        cancel_vote_result = self.http_request(self.user2, 'post', f'comments/{target_comment.id}/vote_positive')
+        assert cancel_vote_result.status_code == 403
+        assert Comment.objects.get(id=target_comment.id).positive_vote_count == 1
+
+    def test_report_deleted_article(self):
+        target_comment = self._create_deleted_comment()
+
+        res = self.http_request(self.user2, 'post', 'reports', {
+            'content': 'This is a report',
+            'parent_article': target_comment.id,
+        })
+
+        assert res.status_code == 403
+
+    def test_report_already_hidden_comment(self):
+        target_comment = self._create_report_hidden_comment()
+
+        res = self.http_request(self.user2, 'post', 'reports', {
+            'content': 'This is a report',
+            'parent_article': target_comment.id,
+        })
+
+        assert res.status_code == 403
+
+    def test_subcomment_on_deleted_comment(self):
+        target_comment = self._create_deleted_comment()
+
+        subcomment_str = 'this is subcomment'
+        res = self.http_request(self.user, 'post', 'comments', {
+            'content': subcomment_str,
+            'parent_comment': target_comment.id
+        })
+
+        assert res.status_code == 201
+        assert Comment.objects.filter(content=subcomment_str, parent_comment=target_comment.id)
+
+    def test_subcomment_on_report_hidden_comment(self):
+        target_comment = self._create_report_hidden_comment()
+
+        subcomment_str = 'this is subcomment'
+        res = self.http_request(self.user, 'post', 'comments', {
+            'content': subcomment_str,
+            'parent_comment': target_comment.id
+        })
+
+        assert res.status_code == 201
+        assert Comment.objects.filter(content=subcomment_str, parent_comment=target_comment.id)

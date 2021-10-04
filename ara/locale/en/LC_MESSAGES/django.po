@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-04 19:08+0900\n"
+"POT-Creation-Date: 2021-10-04 23:18+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -55,11 +55,11 @@ msgstr ""
 msgid "This article is never read by user."
 msgstr ""
 
-#: apps/core/serializers/article.py:410
+#: apps/core/serializers/article.py:419
 msgid "This board is read only."
 msgstr ""
 
-#: apps/core/serializers/article.py:412
+#: apps/core/serializers/article.py:421
 msgid "This board is only for KAIST members."
 msgstr ""
 
@@ -83,8 +83,52 @@ msgstr ""
 msgid "Cannot modify articles hidden by reports"
 msgstr ""
 
+#: apps/core/views/viewsets/article.py:149
+msgid "Cannot delete articles hidden by reports"
+msgstr ""
+
+#: apps/core/views/viewsets/article.py:185
+msgid "Cannot cancel vote on articles hidden by reports"
+msgstr ""
+
+#: apps/core/views/viewsets/article.py:215
+#: apps/core/views/viewsets/article.py:244
+msgid "Cannot vote on your own article"
+msgstr ""
+
+#: apps/core/views/viewsets/article.py:219
+#: apps/core/views/viewsets/article.py:248
+msgid "Cannot vote on articles hidden by reports"
+msgstr ""
+
 #: apps/core/views/viewsets/comment.py:62
 msgid "Cannot modify hidden or deleted comments"
+msgstr ""
+
+#: apps/core/views/viewsets/comment.py:84
+msgid "Cannot delete hidden or deleted comments"
+msgstr ""
+
+#: apps/core/views/viewsets/comment.py:102
+msgid "Cannot cancel vote on comments that are deleted or hidden by reports"
+msgstr ""
+
+#: apps/core/views/viewsets/comment.py:119
+#: apps/core/views/viewsets/comment.py:143
+msgid "Cannot vote on your own comment"
+msgstr ""
+
+#: apps/core/views/viewsets/comment.py:123
+#: apps/core/views/viewsets/comment.py:147
+msgid "Cannot vote on comments that are deleted or hidden by reports"
+msgstr ""
+
+#: apps/core/views/viewsets/report.py:69
+msgid "Cannot report articles that are deleted or hidden by reports"
+msgstr ""
+
+#: apps/core/views/viewsets/report.py:74
+msgid "Cannot report comments that are deleted or hidden by reports"
 msgstr ""
 
 #: apps/user/models/user_profile.py:23

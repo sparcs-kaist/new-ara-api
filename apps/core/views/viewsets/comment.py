@@ -103,6 +103,16 @@ class CommentViewSet(mixins.CreateModelMixin,
 
         return super().perform_update(serializer)
 
+    def destroy(self, request, *args, **kwargs):
+        print('enter destroy comment')
+        comment = self.get_object()
+
+        if comment.is_hidden_by_reported() or comment.is_deleted():
+            return response.Response({'message': gettext('Cannot delete hidden or deleted comments')},
+                                     status=status.HTTP_403_FORBIDDEN)
+
+        return super().destroy(request, *args, **kwargs)
+
     def perform_destroy(self, instance):
         CommentDeleteLog.objects.create(
             deleted_by=self.request.user,
@@ -114,6 +124,10 @@ class CommentViewSet(mixins.CreateModelMixin,
     @decorators.action(detail=True, methods=['post'])
     def vote_cancel(self, request, *args, **kwargs):
         comment = self.get_object()
+
+        if comment.is_hidden_by_reported() or comment.is_deleted():
+            return response.Response({'message': gettext('Cannot cancel vote on comments that are deleted or hidden by reports')},
+                                     status=status.HTTP_403_FORBIDDEN)
 
         Vote.objects.filter(
             voted_by=request.user,
@@ -127,6 +141,14 @@ class CommentViewSet(mixins.CreateModelMixin,
     @decorators.action(detail=True, methods=['post'])
     def vote_positive(self, request, *args, **kwargs):
         comment = self.get_object()
+
+        if comment.created_by_id == request.user.id:
+            return response.Response({'message': gettext('Cannot vote on your own comment')},
+                                     status=status.HTTP_403_FORBIDDEN)
+
+        if comment.is_hidden_by_reported() or comment.is_deleted():
+            return response.Response({'message': gettext('Cannot vote on comments that are deleted or hidden by reports')},
+                                     status=status.HTTP_403_FORBIDDEN)
 
         Vote.objects.update_or_create(
             voted_by=request.user,
@@ -143,6 +165,14 @@ class CommentViewSet(mixins.CreateModelMixin,
     @decorators.action(detail=True, methods=['post'])
     def vote_negative(self, request, *args, **kwargs):
         comment = self.get_object()
+
+        if comment.created_by_id == request.user.id:
+            return response.Response({'message': gettext('Cannot vote on your own comment')},
+                                     status=status.HTTP_403_FORBIDDEN)
+
+        if comment.is_hidden_by_reported() or comment.is_deleted():
+            return response.Response({'message': gettext('Cannot vote on comments that are deleted or hidden by reports')},
+                                     status=status.HTTP_403_FORBIDDEN)
 
         Vote.objects.update_or_create(
             voted_by=request.user,
