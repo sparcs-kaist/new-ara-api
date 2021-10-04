@@ -583,4 +583,4 @@ class TestHiddenArticles(TestCase, RequestSetting):
             "content_text": new_content,
         })
 
-        assert res.status_code == 405
+        assert res.status_code == 403

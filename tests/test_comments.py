@@ -391,7 +391,7 @@ class TestHiddenComments(TestCase, RequestSetting):
             'content': 'attempt to modify deleted comment',
         })
 
-        assert res.status_code == 405
+        assert res.status_code == 403
 
     def test_modify_report_hidden_article(self):
         target_comment = self._comment_factory(
@@ -402,4 +402,4 @@ class TestHiddenComments(TestCase, RequestSetting):
         res = self.http_request(self.user, 'patch', f'comments/{target_comment.id}', {
             'content': 'attempt to modify hidden comment'
         })
-        assert res.status_code == 405
+        assert res.status_code == 403
