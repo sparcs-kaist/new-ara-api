@@ -1,7 +1,8 @@
+import bs4
+import typing
 from enum import Enum
 from typing import Dict, Union
 
-import bs4
 from django.core.files.storage import default_storage
 
 from django.db import models, IntegrityError, transaction
@@ -11,9 +12,11 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext
 
 from apps.user.views.viewsets import make_random_profile_picture, hashlib
+from ara.classes.decorator import cache_by_user
 from ara.db.models import MetaDataModel
 from ara.sanitizer import sanitize
 from ara.settings import HASH_SECRET_VALUE
+from .block import Block
 from .report import Report
 from .comment import Comment
 
@@ -222,3 +225,19 @@ class Article(MetaDataModel):
                 },
             }
 
+    @cache_by_user
+    def hidden_reasons(self, user: settings.AUTH_USER_MODEL) -> typing.List:
+        reasons = []
+        if Block.is_blocked(blocked_by=user, user=self.created_by):
+            reasons.append(ArticleHiddenReason.BLOCKED_USER_CONTENT)
+        if self.is_content_sexual and not user.profile.see_sexual:
+            reasons.append(ArticleHiddenReason.ADULT_CONTENT)
+        if self.is_content_social and not user.profile.see_social:
+            reasons.append(ArticleHiddenReason.SOCIAL_CONTENT)
+        # 혹시 몰라 여기 두기는 하는데 여기 오기전에 Permission에서 막혀야 함
+        if not self.parent_board.group_has_access(user.profile.group):
+            reasons.append(ArticleHiddenReason.ACCESS_DENIED_CONTENT)
+        if self.is_hidden_by_reported():
+            reasons.append(ArticleHiddenReason.REPORTED_CONTENT)
+
+        return reasons
