@@ -64,17 +64,20 @@ def _login_kaist_portal():
                 "otp": _make_2fa_token()
             },
         )
-    k_uid = login_response.json()["dataMap"]["USER_INFO"]["kaist_uid"]
-    state = login_response.json()["dataMap"]["state"]
+
+    k_uid = login_response.json()['dataMap']['encKaistUid']
+    result = login_response.json()['dataMap']['encData']
+    state = login_response.json()['dataMap']['state']
 
     session.post(
         "https://portal.kaist.ac.kr/statics/redirectUri.jsp",
         data={
-            "k_uid": k_uid,
-            "state": state,
-            "success": "true",
-            "result": login_response.text,
-            "user_id": PORTAL_ID,
+            'k_uid': k_uid,
+            'result': result,
+            'state': state,
+            'success': 'true',
+            'enc': 'true',
+            'user_id': PORTAL_ID,
         },
     )
 
