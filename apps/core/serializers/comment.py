@@ -1,13 +1,19 @@
-from rest_framework import serializers, exceptions
+from rest_framework import serializers
 import typing
 
+from apps.core.serializers.mixins.hidden import HiddenSerializerFieldMixin, HiddenSerializerMixin
 from ara.classes.serializers import MetaDataModelSerializer
 from apps.user.serializers.user import PublicUserSerializer
-from apps.core.models import Comment, Block
-from django.utils.translation import gettext
+from apps.core.models import Comment, Block, CommentHiddenReason
 
 
-class BaseCommentSerializer(MetaDataModelSerializer):
+class BaseCommentSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.CAN_OVERRIDE_REASONS = [
+            CommentHiddenReason.BLOCKED_USER_CONTENT
+        ]
+
     class Meta:
         model = Comment
         exclude = ('attachment', )
@@ -21,50 +27,10 @@ class BaseCommentSerializer(MetaDataModelSerializer):
 
         return my_vote.is_positive
 
-    def get_is_mine(self, obj) -> bool:
-        return self.context['request'].user == obj.created_by
-
-    def get_is_hidden(self, obj) -> bool:
-        if obj.is_hidden_by_reported():
-            return False
-        elif self.validate_hidden(obj):
-            return True
-
-        return False
-
-    def get_why_hidden(self, obj) -> typing.List[dict]:
-        errors = self.validate_hidden(obj)
-
-        return [
-            {
-                'detail': error.detail,
-            } for error in errors
-        ]
-
-    def get_content(self, obj) -> typing.Union[str, list]:
-        if obj.is_deleted():
-            return gettext('This comment is deleted')
-
-        if obj.is_hidden_by_reported():
-            return gettext('This comment is hidden because it received multiple reports')
-
-        errors = self.validate_hidden(obj)
-
-        if errors:
-            return [error.detail for error in errors]
-
-        return obj.content
-
-    def get_hidden_content(self, obj) -> str:
-        if obj.is_deleted():
-            return gettext('This comment is deleted')
-            
-        if obj.is_hidden_by_reported():
-            return gettext('This comment is hidden because it received multiple reports')
-        elif self.validate_hidden(obj):
+    def get_content(self, obj) -> typing.Optional[str]:
+        if self.visible_verdict(obj):
             return obj.content
-
-        return ''
+        return None
 
     def get_created_by(self, obj) -> dict:
         if obj.is_anonymous:
@@ -74,16 +40,8 @@ class BaseCommentSerializer(MetaDataModelSerializer):
             data['is_blocked'] = Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by)
             return data
 
-    def validate_hidden(self, obj) -> typing.List[exceptions.ValidationError]:
-        errors = []
 
-        if Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by):
-            errors.append(exceptions.ValidationError(gettext('This article is written by a user you blocked.')))
-
-        return errors
-
-
-class CommentSerializer(BaseCommentSerializer):
+class CommentSerializer(HiddenSerializerFieldMixin, BaseCommentSerializer):
     from apps.user.serializers.user import PublicUserSerializer
     created_by = PublicUserSerializer(
         read_only=True,
@@ -94,16 +52,7 @@ class CommentSerializer(BaseCommentSerializer):
     is_mine = serializers.SerializerMethodField(
         read_only=True,
     )
-    is_hidden = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    why_hidden = serializers.SerializerMethodField(
-        read_only=True,
-    )
     content = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    hidden_content = serializers.SerializerMethodField(
         read_only=True,
     )
     created_by = serializers.SerializerMethodField(
@@ -111,7 +60,7 @@ class CommentSerializer(BaseCommentSerializer):
     )
 
 
-class CommentListActionSerializer(BaseCommentSerializer):
+class CommentListActionSerializer(HiddenSerializerFieldMixin, BaseCommentSerializer):
     from apps.user.serializers.user import PublicUserSerializer
     created_by = PublicUserSerializer(
         read_only=True,
@@ -122,16 +71,7 @@ class CommentListActionSerializer(BaseCommentSerializer):
     is_mine = serializers.SerializerMethodField(
         read_only=True,
     )
-    is_hidden = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    why_hidden = serializers.SerializerMethodField(
-        read_only=True,
-    )
     content = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    hidden_content = serializers.SerializerMethodField(
         read_only=True,
     )
     created_by = serializers.SerializerMethodField(
