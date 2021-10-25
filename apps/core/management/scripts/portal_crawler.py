@@ -263,7 +263,7 @@ def crawl_hour(day=None):
         prev_title = article.title
 
     # DB의 마지막 포탈글과 방금 크롤링한 글 중 가장 이른 글을 비교
-    if len(new_articles) == 0:
+    if not new_articles:
         return
     earliest_new_article = new_articles[-1]
     is_same_day = last_portal_article_in_db.created_at.date() == earliest_new_article.created_at.date()
