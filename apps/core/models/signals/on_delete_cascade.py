@@ -19,7 +19,7 @@ def cascade_soft_deletion_article(instance, **kwargs):
             instance.article_delete_log_set.all().delete()
             instance.best_set.all().delete()
 
-            comments = instance.comment_set.all().delete()
+            comments = instance.comment_set.filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)).delete()
             if comments:
                 instance.update_comment_count()
 
