@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from django.utils.translation import gettext
 from rest_framework import mixins, status, response, decorators, serializers, permissions
 
@@ -7,6 +9,7 @@ from apps.core.models import (
     Comment,
     CommentDeleteLog,
     Vote,
+    Article,
 )
 from apps.core.filters.comment import CommentFilter
 from apps.core.permissions.comment import CommentPermission
@@ -49,6 +52,16 @@ class CommentViewSet(mixins.CreateModelMixin,
             permissions.IsAuthenticated,
         ),
     }
+
+    def create(self, request, *args, **kwargs):
+
+        if request.POST.get('is_anonymous') and not Article.objects.get(pk=request.POST.get('parent_article')).is_anonymous:
+            return response.Response(
+                {'message': 'Anonymous breakout detected'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         serializer.save(
