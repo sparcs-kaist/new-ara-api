@@ -193,7 +193,7 @@ class TestArticle(TestCase, RequestSetting):
             "title": "article for test_create",
             "content": "content for test_create",
             "content_text": "content_text for test_create",
-            "is_anonymous": True,
+            "is_anonymous": False,
             "is_content_sexual": False,
             "is_content_social": False,
             "parent_topic": self.topic.id,
@@ -355,7 +355,7 @@ class TestArticle(TestCase, RequestSetting):
             "title": "article for test_create",
             "content": "content for test_create",
             "content_text": "content_text for test_create",
-            "is_anonymous": True,
+            "is_anonymous": False,
             "is_content_sexual": False,
             "is_content_social": False,
             "parent_board": self.readonly_board.id

@@ -1,6 +1,7 @@
 import time
 
 from django.db import models
+from django.conf import settings
 from django.utils.translation import gettext
 from rest_framework import status, viewsets, response, decorators, serializers, permissions
 from rest_framework.response import Response
@@ -116,6 +117,16 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             )
 
         return queryset
+
+    def create(self, request, *args, **kwargs):
+
+        if request.data['is_anonymous'] and request.data['parent_board'] != settings.ANONYMOUS_BOARD_ID :
+            return response.Response(
+                {'message': 'Anonymous breakout detected'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         serializer.save(
