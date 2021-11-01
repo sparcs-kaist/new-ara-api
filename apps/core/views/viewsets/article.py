@@ -120,7 +120,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
     def create(self, request, *args, **kwargs):
 
-        if request.data['is_anonymous'] and request.data['parent_board'] != settings.ANONYMOUS_BOARD_ID :
+        if request.POST.get('is_anonymous') and request.POST.get('parent_board') != settings.ANONYMOUS_BOARD_ID :
             return response.Response(
                 {'message': 'Anonymous breakout detected'},
                 status=status.HTTP_403_FORBIDDEN
