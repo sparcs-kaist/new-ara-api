@@ -104,7 +104,6 @@ class CommentViewSet(mixins.CreateModelMixin,
         return super().perform_update(serializer)
 
     def destroy(self, request, *args, **kwargs):
-        print('enter destroy comment')
         comment = self.get_object()
 
         if comment.is_hidden_by_reported() or comment.is_deleted():
