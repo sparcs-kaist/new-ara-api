@@ -551,6 +551,22 @@ class TestHiddenArticles(TestCase, RequestSetting):
         assert 'REPORTED_CONTENT' in res.get('why_hidden')
         self._test_can_override(self.clean_mind_user, target_article, False)
 
+    def test_block_reason_order(self):
+        target_article = self._article_factory(
+            is_content_sexual=True,
+            is_content_social=True,
+            report_count=1000000,
+            hidden_at=timezone.now()
+        )
+        Block.objects.create(
+            blocked_by=self.clean_mind_user,
+            user=self.user
+        )
+
+        res = self.http_request(self.clean_mind_user, 'get', f'articles/{target_article.id}').data
+        assert res.get('is_hidden')
+        assert res.get('why_hidden') == ['REPORTED_CONTENT', 'BLOCKED_USER_CONTENT', 'ADULT_CONTENT', 'SOCIAL_CONTENT']
+
     def test_modify_deleted_article(self):
         target_article = self._article_factory(
             is_content_sexual=False,
