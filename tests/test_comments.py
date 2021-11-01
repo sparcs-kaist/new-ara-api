@@ -86,7 +86,7 @@ def set_comments(request):
     )
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_topic', 'set_articles', 'set_comments')
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_client3', 'set_board', 'set_topic', 'set_articles', 'set_comments')
 class TestComments(TestCase, RequestSetting):
     # comment 개수를 확인하는 테스트
     def test_comment_list(self):
@@ -273,8 +273,8 @@ class TestComments(TestCase, RequestSetting):
     # 댓글 좋아요 확인
     def test_positive_vote(self):
         # 좋아요 2표
-        self.http_request(self.user, 'post', f'comments/{self.comment.id}/vote_positive')
         self.http_request(self.user2, 'post', f'comments/{self.comment.id}/vote_positive')
+        self.http_request(self.user3, 'post', f'comments/{self.comment.id}/vote_positive')
 
         comment = Comment.objects.get(id=self.comment.id)
         assert comment.positive_vote_count == 2
@@ -283,8 +283,8 @@ class TestComments(TestCase, RequestSetting):
     # 댓글 싫어요 확인
     def test_negative_vote(self):
         # 싫어요 2표
-        self.http_request(self.user, 'post', f'comments/{self.comment.id}/vote_negative')
         self.http_request(self.user2, 'post', f'comments/{self.comment.id}/vote_negative')
+        self.http_request(self.user3, 'post', f'comments/{self.comment.id}/vote_negative')
 
         comment = Comment.objects.get(id=self.comment.id)
         assert comment.positive_vote_count == 0
@@ -292,24 +292,24 @@ class TestComments(TestCase, RequestSetting):
 
     # 투표 취소 후 재투표 가능한 것 확인
     def test_vote_undo_and_redo(self):
-        self.http_request(self.user, 'post', f'comments/{self.comment.id}/vote_positive')
+        self.http_request(self.user2, 'post', f'comments/{self.comment.id}/vote_positive')
 
         # 투표 취소
-        self.http_request(self.user, 'post', f'comments/{self.comment.id}/vote_cancel')
+        self.http_request(self.user2, 'post', f'comments/{self.comment.id}/vote_cancel')
         comment = Comment.objects.get(id=self.comment.id)
         assert comment.positive_vote_count == 0
         assert comment.negative_vote_count == 0
 
         # 재투표
-        self.http_request(self.user, 'post', f'comments/{self.comment.id}/vote_positive')
+        self.http_request(self.user2, 'post', f'comments/{self.comment.id}/vote_positive')
         comment = Comment.objects.get(id=self.comment.id)
         assert comment.positive_vote_count == 1
         assert comment.negative_vote_count == 0
 
     # 댓글 중복 투표 안되는 것 확인. 중복투표시, 맨 마지막 투표 결과만 유효함
     def test_cannot_vote_both(self):
-        self.http_request(self.user, 'post', f'comments/{self.comment.id}/vote_positive')
-        self.http_request(self.user, 'post', f'comments/{self.comment.id}/vote_negative')
+        self.http_request(self.user2, 'post', f'comments/{self.comment.id}/vote_positive')
+        self.http_request(self.user2, 'post', f'comments/{self.comment.id}/vote_negative')
         comment = Comment.objects.get(id=self.comment.id)
         assert comment.positive_vote_count == 0
         assert comment.negative_vote_count == 1

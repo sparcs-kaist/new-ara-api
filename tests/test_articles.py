@@ -437,15 +437,15 @@ class TestHiddenArticles(TestCase, RequestSetting):
             {'nickname': 'kbdwarrior', 'see_social': True, 'see_sexual': True}
         )
 
-    def _article_factory(self, **article_kwargs):
+    def _article_factory(self, is_content_sexual=False, is_content_social=False, **article_kwargs):
         return Article.objects.create(
             title="example article",
             content="example content",
             content_text="example content text",
             is_anonymous=False,
             hit_count=0,
-            is_content_sexual=False,
-            is_content_social=False,
+            is_content_sexual=is_content_sexual,
+            is_content_social=is_content_social,
             positive_vote_count=0,
             negative_vote_count=0,
             created_by=self.user,
