@@ -55,10 +55,10 @@ class CommentViewSet(mixins.CreateModelMixin,
 
     def create(self, request, *args, **kwargs):
 
-        if request.POST['is_anonymous']:
+        if request.data['is_anonymous']:
 
-            parent_article_id = request.POST['parent_article']
-            parent_comment_id = request.POST['parent_comment']
+            parent_article_id = request.data['parent_article']
+            parent_comment_id = request.data['parent_comment']
 
             if any((parent_article_id and not Article.objects.get(pk=parent_article_id).is_anonymous, 
                     parent_comment_id and not Article.objects.get(pk=parent_comment_id).is_anonymous)):

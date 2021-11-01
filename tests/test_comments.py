@@ -116,6 +116,9 @@ class TestComments(TestCase, RequestSetting):
         comment_data = {
             'content': comment_str,
             'parent_article': self.article.id,
+            'parent_comment': None,
+            'is_anonymous': False,
+            'attachment': None,
         }
         self.http_request(self.user, 'post', 'comments', comment_data)
         assert Comment.objects.filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)).filter(content=comment_str)
@@ -126,6 +129,9 @@ class TestComments(TestCase, RequestSetting):
         subcomment_data = {
             'content': subcomment_str,
             'parent_comment': self.comment.id,
+            'parent_article': None,
+            'is_anonymous': False,
+            'attachment': None,
         }
         self.http_request(self.user, 'post', 'comments', subcomment_data)
         assert Comment.objects.filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)).filter(content=subcomment_str, parent_comment=self.comment.id)
