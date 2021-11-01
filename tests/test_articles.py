@@ -2,7 +2,7 @@ import pytest
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-from apps.core.models import Article, Topic, Board, Block
+from apps.core.models import Article, Topic, Board, Block, Comment
 from apps.user.models import UserProfile
 from tests.conftest import RequestSetting, TestCase
 
@@ -389,6 +389,26 @@ class TestArticle(TestCase, RequestSetting):
 
         res2 = self.http_request(self.user2, 'get', 'articles')
         assert res2.data['results'][0]['read_status'] == 'U'
+
+    # See #269
+    def test_deleting_with_comments(self):
+        self.article.comment_count = 1
+        self.article.save()
+        Comment.objects.create(
+            content='this is a test comment',
+            is_anonymous=False,
+            created_by=self.user,
+            parent_article=self.article
+        )
+
+        self.http_request(self.user, 'delete', f'articles/{self.article.id}')
+        self.article.refresh_from_db()
+
+        assert Comment.objects.filter(
+            parent_article=self.article,
+            deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)
+        ).count() == 0
+        assert self.article.comment_count == 0
 
 
 @pytest.mark.usefixtures('set_user_client', 'set_board', 'set_topic', 'set_article')
