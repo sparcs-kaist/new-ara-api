@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import pytest
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -334,7 +336,6 @@ class TestHiddenComments(TestCase, RequestSetting):
             blocked_by=self.user,
             user=self.user2
         )
-
         comment2 = Comment.objects.create(
             content='example comment',
             is_anonymous=False,
@@ -381,6 +382,21 @@ class TestHiddenComments(TestCase, RequestSetting):
         assert res.get('hidden_content') is None
         assert 'DELETED_CONTENT' in res.get('why_hidden')
         self._test_can_override(self.user, target_comment, False)
+
+    def test_block_reason_order(self):
+        target_article = self._comment_factory(
+            report_count=1000000,
+            hidden_at=timezone.now(),
+            deleted_at=timezone.now() + timedelta(days=1)
+        )
+        Block.objects.create(
+            blocked_by=self.user2,
+            user=self.user
+        )
+
+        res = self.http_request(self.user2, 'get', f'comments/{target_article.id}').data
+        assert res.get('is_hidden')
+        assert res.get('why_hidden') == ['DELETED_CONTENT', 'REPORTED_CONTENT', 'BLOCKED_USER_CONTENT']
 
     def test_modify_deleted_comment(self):
         target_comment = self._comment_factory(

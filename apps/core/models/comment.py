@@ -189,12 +189,12 @@ class Comment(MetaDataModel):
     def hidden_reasons(self, user: settings.AUTH_USER_MODEL) -> typing.List:
         reasons: typing.List[CommentHiddenReason] = []
 
-        if Block.is_blocked(blocked_by=user, user=self.created_by):
-            reasons.append(CommentHiddenReason.BLOCKED_USER_CONTENT)
-        if self.is_hidden_by_reported():
-            reasons.append(CommentHiddenReason.REPORTED_CONTENT)
         if self.is_deleted():
             reasons.append(CommentHiddenReason.DELETED_CONTENT)
+        if self.is_hidden_by_reported():
+            reasons.append(CommentHiddenReason.REPORTED_CONTENT)
+        if Block.is_blocked(blocked_by=user, user=self.created_by):
+            reasons.append(CommentHiddenReason.BLOCKED_USER_CONTENT)
 
         return reasons
 

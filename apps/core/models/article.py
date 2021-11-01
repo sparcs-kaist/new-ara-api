@@ -173,7 +173,7 @@ class Article(MetaDataModel):
         self.save()
 
     def update_comment_count(self):
-        self.comment_count = Comment.objects.filter(deleted_at = timezone.datetime.min.replace(tzinfo=timezone.utc)).filter(
+        self.comment_count = Comment.objects.filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)).filter(
             models.Q(parent_article=self) |
             models.Q(parent_comment__parent_article=self)
         ).count()
@@ -228,6 +228,8 @@ class Article(MetaDataModel):
     @cache_by_user
     def hidden_reasons(self, user: settings.AUTH_USER_MODEL) -> typing.List:
         reasons = []
+        if self.is_hidden_by_reported():
+            reasons.append(ArticleHiddenReason.REPORTED_CONTENT)
         if Block.is_blocked(blocked_by=user, user=self.created_by):
             reasons.append(ArticleHiddenReason.BLOCKED_USER_CONTENT)
         if self.is_content_sexual and not user.profile.see_sexual:
@@ -237,7 +239,5 @@ class Article(MetaDataModel):
         # 혹시 몰라 여기 두기는 하는데 여기 오기전에 Permission에서 막혀야 함
         if not self.parent_board.group_has_access(user.profile.group):
             reasons.append(ArticleHiddenReason.ACCESS_DENIED_CONTENT)
-        if self.is_hidden_by_reported():
-            reasons.append(ArticleHiddenReason.REPORTED_CONTENT)
 
         return reasons

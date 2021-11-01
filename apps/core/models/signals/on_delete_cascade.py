@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.db import models
+from django.db import models, transaction
 from django.dispatch import receiver
 from django.utils import timezone
 
@@ -13,22 +13,21 @@ def cascade_soft_deletion_article(instance, **kwargs):
     deleted = instance.deleted_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
 
     if deleted:
-        instance.article_read_log_set.all().delete()
-        instance.article_update_log_set.all().delete()
-        instance.article_delete_log_set.all().delete()
-        instance.best_set.all().delete()
+        with transaction.atomic():
+            instance.article_read_log_set.all().delete()
+            instance.article_update_log_set.all().delete()
+            instance.article_delete_log_set.all().delete()
+            instance.best_set.all().delete()
 
-        comments = instance.comment_set.all().delete()
-        if comments:
-            instance.update_comment_count()
+            comments = instance.comment_set.filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)).delete()
+            if comments:
+                instance.update_comment_count()
 
-        instance.notification_set.all().delete()
-        instance.report_set.all().delete()
-        instance.scrap_set.all().delete()
-
-        votes = instance.vote_set.all().delete()
-
-        instance.attachments.all().delete()
+            instance.notification_set.all().delete()
+            instance.report_set.all().delete()
+            instance.scrap_set.all().delete()
+            instance.vote_set.all().delete()
+            instance.attachments.all().delete()
 
 
 @receiver(models.signals.post_save, sender=Board)
@@ -36,8 +35,9 @@ def cascade_soft_deletion_board(instance, **kwargs):
     deleted = instance.deleted_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
 
     if deleted:
-        instance.article_set.all().delete()
-        instance.topic_set.all().delete()
+        with transaction.atomic():
+            instance.article_set.all().delete()
+            instance.topic_set.all().delete()
 
 
 @receiver(models.signals.post_save, sender=Comment)
@@ -45,15 +45,15 @@ def cascade_soft_deletion_comment(instance, **kwargs):
     deleted = instance.deleted_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
 
     if deleted:
-        instance.comment_update_log_set.all().delete()
-        instance.comment_delete_log_set.all().delete()
-        instance.notification_set.all().delete()
-        instance.report_set.all().delete()
+        with transaction.atomic():
+            instance.comment_update_log_set.all().delete()
+            instance.comment_delete_log_set.all().delete()
+            instance.notification_set.all().delete()
+            instance.report_set.all().delete()
+            instance.vote_set.all().delete()
 
-        votes = instance.vote_set.all().delete()
-
-        if instance.attachment:
-            instance.attachment.delete()
+            if instance.attachment:
+                instance.attachment.delete()
 
 
 @receiver(models.signals.post_save, sender=Notification)

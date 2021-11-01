@@ -2,7 +2,7 @@ import pytest
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-from apps.core.models import Article, Topic, Board, Block
+from apps.core.models import Article, Topic, Board, Block, Comment
 from apps.user.models import UserProfile
 from tests.conftest import RequestSetting, TestCase
 
@@ -390,6 +390,26 @@ class TestArticle(TestCase, RequestSetting):
         res2 = self.http_request(self.user2, 'get', 'articles')
         assert res2.data['results'][0]['read_status'] == 'U'
 
+    # See #269
+    def test_deleting_with_comments(self):
+        self.article.comment_count = 1
+        self.article.save()
+        Comment.objects.create(
+            content='this is a test comment',
+            is_anonymous=False,
+            created_by=self.user,
+            parent_article=self.article
+        )
+
+        self.http_request(self.user, 'delete', f'articles/{self.article.id}')
+        self.article.refresh_from_db()
+
+        assert Comment.objects.filter(
+            parent_article=self.article,
+            deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)
+        ).count() == 0
+        assert self.article.comment_count == 0
+
 
 @pytest.mark.usefixtures('set_user_client', 'set_board', 'set_topic', 'set_article')
 class TestHiddenArticles(TestCase, RequestSetting):
@@ -550,6 +570,22 @@ class TestHiddenArticles(TestCase, RequestSetting):
         assert res.get('hidden_content') is None
         assert 'REPORTED_CONTENT' in res.get('why_hidden')
         self._test_can_override(self.clean_mind_user, target_article, False)
+
+    def test_block_reason_order(self):
+        target_article = self._article_factory(
+            is_content_sexual=True,
+            is_content_social=True,
+            report_count=1000000,
+            hidden_at=timezone.now()
+        )
+        Block.objects.create(
+            blocked_by=self.clean_mind_user,
+            user=self.user
+        )
+
+        res = self.http_request(self.clean_mind_user, 'get', f'articles/{target_article.id}').data
+        assert res.get('is_hidden')
+        assert res.get('why_hidden') == ['REPORTED_CONTENT', 'BLOCKED_USER_CONTENT', 'ADULT_CONTENT', 'SOCIAL_CONTENT']
 
     def test_modify_deleted_article(self):
         target_article = self._article_factory(
