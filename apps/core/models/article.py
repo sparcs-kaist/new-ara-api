@@ -28,7 +28,7 @@ class ArticleHiddenReason(Enum):
     BLOCKED_USER_CONTENT = 'BLOCKED_USER_CONTENT'
     ACCESS_DENIED_CONTENT = 'ACCESS_DENIED_CONTENT'
 
-
+# temp comment for testing
 class Article(MetaDataModel):
     class Meta(MetaDataModel.Meta):
         verbose_name = '게시물'
