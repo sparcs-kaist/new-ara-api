@@ -475,6 +475,7 @@ class TestHiddenComments(TestCase, RequestSetting):
         res = self.http_request(self.user2, 'post', 'reports', {
             'content': 'This is a report',
             'parent_article': target_comment.id,
+            'is_anonymous': False,
         })
 
         assert res.status_code == 403
@@ -485,6 +486,7 @@ class TestHiddenComments(TestCase, RequestSetting):
         res = self.http_request(self.user2, 'post', 'reports', {
             'content': 'This is a report',
             'parent_article': target_comment.id,
+            'is_anonymous': False,
         })
 
         assert res.status_code == 403
@@ -495,7 +497,8 @@ class TestHiddenComments(TestCase, RequestSetting):
         subcomment_str = 'this is subcomment'
         res = self.http_request(self.user, 'post', 'comments', {
             'content': subcomment_str,
-            'parent_comment': target_comment.id
+            'parent_comment': target_comment.id,
+            'is_anonymous': False,
         })
 
         assert res.status_code == 201
@@ -507,7 +510,8 @@ class TestHiddenComments(TestCase, RequestSetting):
         subcomment_str = 'this is subcomment'
         res = self.http_request(self.user, 'post', 'comments', {
             'content': subcomment_str,
-            'parent_comment': target_comment.id
+            'parent_comment': target_comment.id,
+            'is_anonymous': False,
         })
 
         assert res.status_code == 201

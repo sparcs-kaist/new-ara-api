@@ -686,7 +686,8 @@ class TestHiddenArticles(TestCase, RequestSetting):
 
         res = self.http_request(self.user, 'post', 'comments', {
             'content': 'This is a comment',
-            'parent_article': target_article.id
+            'parent_article': target_article.id,
+            'is_anonymous': False,
         })
 
         assert res.status_code == 400
@@ -696,7 +697,8 @@ class TestHiddenArticles(TestCase, RequestSetting):
 
         res = self.http_request(self.user, 'post', 'comments', {
             'content': 'This is a comment',
-            'parent_article': target_article.id
+            'parent_article': target_article.id,
+            'is_anonymous': False,
         })
 
         assert res.status_code == 201
