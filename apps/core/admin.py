@@ -101,11 +101,13 @@ class ArticleAdmin(MetaDataModelAdmin):
         'is_anonymous',
         'is_content_sexual',
         'is_content_social',
+        'report_count',
+        'hidden_at',
+    )
+    raw_id_fields = (
         'created_by',
         'parent_topic',
         'parent_board',
-        'report_count',
-        'hidden_at',
     )
     search_fields = (
         'title',
@@ -134,11 +136,12 @@ class CommentAdmin(MetaDataModelAdmin):
         'positive_vote_count',
         'negative_vote_count',
         'is_anonymous',
-        'created_by',
-        'parent_article',
-        'parent_comment',
         'report_count',
         'hidden_at',
+    )
+    raw_id_fields = ('created_by',
+                     'parent_article',
+                     'parent_comment',
     )
     search_fields = (
         'content',
