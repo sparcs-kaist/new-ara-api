@@ -475,6 +475,7 @@ class TestHiddenComments(TestCase, RequestSetting):
         res = self.http_request(self.user2, 'post', 'reports', {
             'content': 'This is a report',
             'parent_article': target_comment.id,
+            'parent_comment': None,
             'is_anonymous': False,
         })
 
@@ -486,6 +487,7 @@ class TestHiddenComments(TestCase, RequestSetting):
         res = self.http_request(self.user2, 'post', 'reports', {
             'content': 'This is a report',
             'parent_article': target_comment.id,
+            'parent_comment': None,
             'is_anonymous': False,
         })
 
@@ -497,6 +499,7 @@ class TestHiddenComments(TestCase, RequestSetting):
         subcomment_str = 'this is subcomment'
         res = self.http_request(self.user, 'post', 'comments', {
             'content': subcomment_str,
+            'parent_article': None,
             'parent_comment': target_comment.id,
             'is_anonymous': False,
         })
@@ -510,6 +513,7 @@ class TestHiddenComments(TestCase, RequestSetting):
         subcomment_str = 'this is subcomment'
         res = self.http_request(self.user, 'post', 'comments', {
             'content': subcomment_str,
+            'parent_article': None,
             'parent_comment': target_comment.id,
             'is_anonymous': False,
         })
