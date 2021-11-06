@@ -154,6 +154,13 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         return super().perform_update(serializer)
 
+    def destroy(self, request, *args, **kwargs):
+        article = self.get_object()
+        if article.is_hidden_by_reported():
+            return response.Response({'message': gettext('Cannot delete articles hidden by reports')},
+                                     status=status.HTTP_403_FORBIDDEN)
+        return super().destroy(request, *args, **kwargs)
+
     def perform_destroy(self, instance):
         ArticleDeleteLog.objects.create(
             deleted_by=self.request.user,
@@ -185,6 +192,10 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def vote_cancel(self, request, *args, **kwargs):
         article = self.get_object()
 
+        if article.is_hidden_by_reported():
+            return response.Response({'message': gettext('Cannot cancel vote on articles hidden by reports')},
+                                     status=status.HTTP_403_FORBIDDEN)
+
         if not Vote.objects.filter(
             voted_by=request.user,
             parent_article=article,
@@ -212,7 +223,12 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         article = self.get_object()
 
         if article.created_by_id == request.user.id:
-            return response.Response({'message': '본인 글에는 좋아요를 누를 수 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+            return response.Response({'message': gettext('Cannot vote on your own article')},
+                                     status=status.HTTP_403_FORBIDDEN)
+
+        if article.is_hidden_by_reported():
+            return response.Response({'message': gettext('Cannot vote on articles hidden by reports')},
+                                     status=status.HTTP_403_FORBIDDEN)
 
         Vote.objects.update_or_create(
             voted_by=request.user,
@@ -236,7 +252,12 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         article = self.get_object()
 
         if article.created_by_id == request.user.id:
-            return response.Response({'message': '본인 글에는 싫어요를 누를 수 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+            return response.Response({'message': gettext('Cannot vote on your own article')},
+                                     status=status.HTTP_403_FORBIDDEN)
+
+        if article.is_hidden_by_reported():
+            return response.Response({'message': gettext('Cannot vote on articles hidden by reports')},
+                                     status=status.HTTP_403_FORBIDDEN)
 
         Vote.objects.update_or_create(
             voted_by=request.user,
