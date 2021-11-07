@@ -40,12 +40,15 @@ class BlockViewSet(mixins.ListModelMixin,
 
         return queryset
 
-    def perform_create(self, serializer):
+    def create(self, request, *args, **kwargs):
         # 하루 block 제한 10개
         block_num = Block.objects.queryset_with_deleted.filter(created_at__gte=(timezone.now() - relativedelta(days=1))).filter(blocked_by=self.request.user).count()
         if(block_num >= 10):
-            return response.Response({'message': gettext('Cannot block anymore. 10 block allowed for 24 hours')},
-                                        status=status.HTTP_403_FORBIDDEN)
+            return response.Response({'message': gettext('Cannot block anymore. 10 block allowed for 24 hours')},status=status.HTTP_403_FORBIDDEN)
+        else:
+            return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
         serializer.save(
             blocked_by=self.request.user,
         )

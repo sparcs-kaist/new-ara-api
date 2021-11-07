@@ -315,7 +315,7 @@ class TestBlock(TestCase, RequestSetting):
                 blocked_by=self.user,
                 user=self.user3,
             )
-            self.http_request(self.user, 'delete', f'blocks/{block.id}')
+            res =self.http_request(self.user, 'delete', f'blocks/{block.id}')
 
         # 4시간 이내에 총 10개의 block이력 확인
         res = self.http_request(self.user, 'get', 'blocks')
@@ -324,8 +324,23 @@ class TestBlock(TestCase, RequestSetting):
 
         # 더이상 block추가 안됨 확인
         res = self.http_request(self.user, 'post', 'blocks', {'user':self.user2.id})
+        assert res.status_code == 403
         res = self.http_request(self.user, 'get', 'blocks')
         assert res.data.get('num_items') == 0
+
+        # 24시간이 지났을때 다시 block추가 가능
+        block = Block.objects.queryset_with_deleted.filter(created_at__gte=(timezone.now() - relativedelta(days=1))).filter(blocked_by=self.user).first()
+        block.created_at = timezone.now() - relativedelta(days=1)
+        block.save()
+
+        assert Block.objects.queryset_with_deleted.filter(created_at__gte=(timezone.now() - relativedelta(days=1))).filter(blocked_by=self.user).count() == 9
+        res = self.http_request(self.user, 'post', 'blocks',{'user':self.user2.id})
+        assert res.status_code == 201
+        res = self.http_request(self.user, 'get', 'blocks')
+        assert res.data.get('num_items') == 1
+
+
+
 
 
 
