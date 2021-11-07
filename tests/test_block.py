@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.db.utils import IntegrityError
 from apps.core.models import Article, Topic, Board, Comment, Block
 from tests.conftest import RequestSetting, TestCase
+from dateutil.relativedelta import relativedelta
 
 
 @pytest.fixture(scope='class')
@@ -299,3 +300,33 @@ class TestBlock(TestCase, RequestSetting):
             assert True
         else:
             assert False
+
+    # 유저가 24시간 이내에 10번보다 많이 차단할 수 없는 것 확인
+    def test_block_rate_limit(self):
+        for i in range(5):
+            # user가 user2를 차단 및 차단해제
+            block = Block.objects.create(
+                blocked_by=self.user,
+                user=self.user2,
+            )
+            self.http_request(self.user, 'delete', f'blocks/{block.id}')
+            # user가 user3를 차단 및 차단해제
+            block = Block.objects.create(
+                blocked_by=self.user,
+                user=self.user3,
+            )
+            self.http_request(self.user, 'delete', f'blocks/{block.id}')
+
+        # 4시간 이내에 총 10개의 block이력 확인
+        res = self.http_request(self.user, 'get', 'blocks')
+        assert res.data.get('num_items') == 0
+        assert Block.objects.queryset_with_deleted.filter(created_at__gte=(timezone.now() - relativedelta(days=1))).filter(blocked_by=self.user).count() == 10
+
+        # 더이상 block추가 안됨 확인
+        res = self.http_request(self.user, 'post', 'blocks', {'user':self.user2.id})
+        res = self.http_request(self.user, 'get', 'blocks')
+        assert res.data.get('num_items') == 0
+
+
+
+        
