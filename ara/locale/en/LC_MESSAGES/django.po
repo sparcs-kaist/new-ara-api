@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-04 19:08+0900\n"
+"POT-Creation-Date: 2021-11-07 20:13+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,36 +30,36 @@ msgstr ""
 msgid "Restore hidden comments"
 msgstr ""
 
-#: apps/core/management/scripts/portal_crawler.py:154
+#: apps/core/management/scripts/portal_crawler.py:156
 msgid "No content for portal article"
 msgstr ""
 
-#: apps/core/models/article.py:217 apps/core/models/article.py:220
-#: apps/core/models/article.py:221
+#: apps/core/models/article.py:220 apps/core/models/article.py:223
+#: apps/core/models/article.py:224
 msgid "anonymous"
 msgstr ""
 
-#: apps/core/models/comment.py:171
+#: apps/core/models/comment.py:174
 msgid "author"
 msgstr ""
 
-#: apps/core/serializers/article.py:201
+#: apps/core/serializers/article.py:150
 msgid "This article is not in user's scrap list."
 msgstr ""
 
-#: apps/core/serializers/article.py:218
+#: apps/core/serializers/article.py:167
 msgid "Wrong value for parameter 'from_view'."
 msgstr ""
 
-#: apps/core/serializers/article.py:291
+#: apps/core/serializers/article.py:240
 msgid "This article is never read by user."
 msgstr ""
 
-#: apps/core/serializers/article.py:410
+#: apps/core/serializers/article.py:344
 msgid "This board is read only."
 msgstr ""
 
-#: apps/core/serializers/article.py:412
+#: apps/core/serializers/article.py:346
 msgid "This board is only for KAIST members."
 msgstr ""
 
@@ -83,7 +83,11 @@ msgstr ""
 msgid "Cannot modify articles hidden by reports"
 msgstr ""
 
-#: apps/core/views/viewsets/comment.py:62
+#: apps/core/views/viewsets/block.py:47
+msgid "Cannot block anymore. 10 block allowed for 24 hours"
+msgstr ""
+
+#: apps/core/views/viewsets/comment.py:69
 msgid "Cannot modify hidden or deleted comments"
 msgstr ""
 
