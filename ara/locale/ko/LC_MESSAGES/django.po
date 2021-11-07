@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-07 20:13+0900\n"
+"POT-Creation-Date: 2021-11-07 22:24+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -85,7 +85,9 @@ msgstr "다수의 신고로 숨겨진 게시글은 수정할 수 없습니다."
 
 #: apps/core/views/viewsets/block.py:47
 msgid "Cannot block anymore. 10 block allowed for 24 hours"
-msgstr "하루 최대 차단 횟수를 초과하셨습니다. 최근 24시간동안 최대 10명의 사용자만 차단할 수 있습니다."
+msgstr ""
+"하루 최대 차단 횟수를 초과하셨습니다. 최근 24시간동안 최대 10명의 사용자만 차"
+"단할 수 있습니다."
 
 #: apps/core/views/viewsets/comment.py:69
 msgid "Cannot modify hidden or deleted comments"
