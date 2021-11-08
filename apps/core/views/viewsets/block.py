@@ -3,7 +3,7 @@ from rest_framework import mixins, decorators, status, response
 from apps.core.permissions.block import BlockPermission
 from ara.classes.viewset import ActionAPIViewSet
 
-from apps.core.models import Block, block
+from apps.core.models import Block
 from apps.core.serializers.block import (
     BlockSerializer,
     BlockCreateActionSerializer,
@@ -42,8 +42,8 @@ class BlockViewSet(mixins.ListModelMixin,
 
     def create(self, request, *args, **kwargs):
         # 하루 block 제한 10개
-        block_num = Block.objects.queryset_with_deleted.filter(created_at__gte=(timezone.now() - relativedelta(days=1))).filter(blocked_by=self.request.user).count()
-        if(block_num >= 10):
+        num_recent_block = Block.objects.queryset_with_deleted.filter(created_at__gt=(timezone.now() - relativedelta(days=1))).filter(blocked_by=self.request.user).count()
+        if(num_recent_block >= 10):
             return response.Response({'message': gettext('Cannot block anymore. 10 block allowed for 24 hours')},status=status.HTTP_403_FORBIDDEN)
         else:
             return super().create(request, *args, **kwargs)

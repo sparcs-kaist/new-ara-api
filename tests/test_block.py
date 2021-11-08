@@ -303,24 +303,21 @@ class TestBlock(TestCase, RequestSetting):
 
     # 유저가 24시간 이내에 10번보다 많이 차단할 수 없는 것 확인
     def test_block_rate_limit(self):
+        now = timezone.now()
+        # 10번의 차단 시도
         for i in range(5):
             # user가 user2를 차단 및 차단해제
             block = Block.objects.create(
                 blocked_by=self.user,
                 user=self.user2,
             )
-            self.http_request(self.user, 'delete', f'blocks/{block.id}')
+            block.delete()
             # user가 user3를 차단 및 차단해제
             block = Block.objects.create(
                 blocked_by=self.user,
                 user=self.user3,
             )
-            res =self.http_request(self.user, 'delete', f'blocks/{block.id}')
-
-        # 4시간 이내에 총 10개의 block이력 확인
-        res = self.http_request(self.user, 'get', 'blocks')
-        assert res.data.get('num_items') == 0
-        assert Block.objects.queryset_with_deleted.filter(created_at__gte=(timezone.now() - relativedelta(days=1))).filter(blocked_by=self.user).count() == 10
+            block.delete()
 
         # 더이상 block추가 안됨 확인
         res = self.http_request(self.user, 'post', 'blocks', {'user':self.user2.id})
@@ -329,19 +326,12 @@ class TestBlock(TestCase, RequestSetting):
         assert res.data.get('num_items') == 0
 
         # 24시간이 지났을때 다시 block추가 가능
-        block = Block.objects.queryset_with_deleted.filter(created_at__gte=(timezone.now() - relativedelta(days=1))).filter(blocked_by=self.user).first()
-        block.created_at = timezone.now() - relativedelta(days=1)
+        block = Block.objects.queryset_with_deleted.filter(created_at__gt=(now - relativedelta(days=1))).filter(blocked_by=self.user).first()
+        block.created_at = now - relativedelta(days=1)
         block.save()
 
-        assert Block.objects.queryset_with_deleted.filter(created_at__gte=(timezone.now() - relativedelta(days=1))).filter(blocked_by=self.user).count() == 9
+        assert Block.objects.queryset_with_deleted.filter(created_at__gt=(now - relativedelta(days=1))).filter(blocked_by=self.user).count() == 9
         res = self.http_request(self.user, 'post', 'blocks',{'user':self.user2.id})
         assert res.status_code == 201
         res = self.http_request(self.user, 'get', 'blocks')
         assert res.data.get('num_items') == 1
-
-
-
-
-
-
-        
