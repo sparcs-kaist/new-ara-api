@@ -29,7 +29,7 @@ REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] = (
 
 LOGGING['disable_existing_loggers'] = False
 
-REPORT_THRESHOLD = 3
+REPORT_THRESHOLD = 4
 
 try:
     from .local_settings import *

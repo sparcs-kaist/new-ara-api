@@ -80,7 +80,7 @@ def set_comment_report(request):
     )
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_client3', 'set_board', 'set_topic', 'set_article', 'set_comment',
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_client3', 'set_user_client4', 'set_board', 'set_topic', 'set_article', 'set_comment',
                          'set_article_report', 'set_comment_report')
 class TestReport(TestCase, RequestSetting):
     # report 개수를 확인하는 테스트
@@ -155,8 +155,13 @@ class TestReport(TestCase, RequestSetting):
             reported_by=self.user3,
             content='test report 3'
         )
+        Report.objects.create(
+            parent_article=self.article,
+            reported_by=self.user4,
+            content='test report 4'
+        )
 
-        # 신고가 threshold 이상인 경우 읽을 수 없음 (현재 총 3번 신고됨, 현재 threshold 1)
+        # 신고가 threshold 이상인 경우 읽을 수 없음 (현재 총 4번 신고됨, 현재 threshold 4)
         res2 = self.http_request(self.user, 'get', f'articles/{self.article.id}').data
         assert res2.get('title') != self.article.title
         assert res2.get('content') != self.article.content
@@ -182,7 +187,13 @@ class TestReport(TestCase, RequestSetting):
             content='test report 3'
         )
 
-        # 신고가 threshold 이상인 경우 읽을 수 없음 (현재 총 3번 신고됨, 현재 threshold 1)
+        Report.objects.create(
+            parent_comment=self.comment,
+            reported_by=self.user4,
+            content='test report 4'
+        )
+
+        # 신고가 threshold 이상인 경우 읽을 수 없음 (현재 총 4번 신고됨, 현재 threshold 4)
         res2 = self.http_request(self.user, 'get', f'comments/{self.comment.id}').data
         assert res2.get('content') != self.comment.content
         assert res2.get('content') is None
