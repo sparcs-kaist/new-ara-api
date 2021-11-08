@@ -120,7 +120,11 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
 
     @staticmethod
     def search_articles(queryset, search):
-        return queryset.filter(id__in=ArticleDocument.get_main_search_id_set(search))
+        return queryset.filter(id__in=ArticleSerializer.search_article_id_set(search))
+
+    @staticmethod
+    def search_article_id_set(search):
+        return ArticleDocument.get_main_search_id_set(search)
 
     @staticmethod
     def filter_articles(obj, request):
@@ -206,56 +210,60 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
     def get_side_articles_of_recent_article(self, obj, request):
         article_user_read_log_set = obj.article_read_log_set.filter(
             read_by=request.user,
-        ).order_by('-created_at')
+        ).order_by('-created_at')[:2]
 
-        # abort if there is not enough recent articles
-        if article_user_read_log_set.count() <= 1:
+        if len(article_user_read_log_set) < 2:
             return None, None
+        curr_read_log_of_obj, last_read_log_of_obj = article_user_read_log_set
 
-        # 현재 ArticleReadLog
-        curr_read_log_of_obj = article_user_read_log_set[0]
-
-        # 직전 ArticleReadLog
-        last_read_log_of_obj = article_user_read_log_set[1]
-
-        # 특정 글의 마지막 ArticleReadLog 를 찾기 위한 Subquery
-        last_read_log_of_article = ArticleReadLog.objects.filter(
-            article=models.OuterRef('pk')
-        ).order_by('-created_at')
-
-        # 특정 글의 마지막 Article created_at 을 last_read_at 으로 annotate 하고, last_read_at 기준으로 정렬
-        recent_articles = Article.objects.filter(
-            article_read_log_set__read_by=request.user,
-        ).annotate(
-            last_read_at=models.Subquery(
-                queryset=last_read_log_of_article.exclude(
-                    id=curr_read_log_of_obj.id,  # 무한루프 방지를 위해서 마지막(현재 request) 조회 기록은 제외한다.
-                ).values('created_at')[:1],
-            ),
-        ).order_by(
-            '-last_read_at'
-        ).distinct()
-
-        if not recent_articles.filter(id=obj.id).exists():
-            raise serializers.ValidationError(gettext('This article is never read by user.'))
-
+        search_restriction_sql = ''
         if request.query_params.get('search_query'):
-            recent_articles = self.search_articles(recent_articles, request.query_params.get('search_query'))
+            recent_articles = self.search_article_id_set(request.query_params.get('search_query'))
+            search_restriction_sql = 'AND `core_articlereadlog`.`article_id` IN %s'
+            query_params = [request.user.id, obj.id, recent_articles, last_read_log_of_obj.created_at]
+        else:
+            query_params = [request.user.id, obj.id, last_read_log_of_obj.created_at]
 
-        recent_articles = recent_articles.exclude(
-            id=obj.id,  # 자기 자신 제거
-        )
+        before_query = f'''
+        SELECT * FROM `core_article`
+        JOIN (
+            SELECT `core_articlereadlog`.`article_id`, MAX(`core_articlereadlog`.`created_at`) AS my_last_read_at
+            FROM `core_articlereadlog`
+            WHERE (
+                `core_articlereadlog`.`deleted_at` = '0001-01-01 00:00:00' AND
+                `core_articlereadlog`.`read_by_id` = %s AND
+                `core_articlereadlog`.`article_id` <> %s
+                {search_restriction_sql}
+            )
+            GROUP BY `core_articlereadlog`.`article_id`
+            ORDER BY my_last_read_at desc
+        ) recents ON recents.article_id = `core_article`.id
+        WHERE recents.my_last_read_at <= %s
+        ORDER BY recents.my_last_read_at desc LIMIT 1
+        '''
 
-        # 사용자가 현재 읽고 있는 글의 바로 직전 조회 기록보다 먼저 읽은 것 중 첫 번째
-        before = recent_articles.filter(
-            last_read_at__lte=last_read_log_of_obj.created_at,
-        ).order_by('-last_read_at').first()
+        after_query = f'''
+        SELECT * FROM `core_article`
+        JOIN (
+            SELECT `core_articlereadlog`.`article_id`, MAX(`core_articlereadlog`.`created_at`) AS my_last_read_at
+            FROM `core_articlereadlog`
+            WHERE (
+                `core_articlereadlog`.`deleted_at` = '0001-01-01 00:00:00' AND
+                `core_articlereadlog`.`read_by_id` = %s AND
+                `core_articlereadlog`.`article_id` <> %s
+                {search_restriction_sql}
+            )
+            GROUP BY `core_articlereadlog`.`article_id`
+            ORDER BY my_last_read_at desc
+        ) recents ON recents.article_id = `core_article`.id
+        WHERE recents.my_last_read_at >= %s
+        ORDER BY recents.my_last_read_at asc LIMIT 1
+        '''
 
-        # 사용자가 현재 읽고 있는 글의 바로 직전 조회 기록보다 늦게 읽은 것 중 첫 번째
-        after = recent_articles.filter(
-            last_read_at__gte=last_read_log_of_obj.created_at,
-        ).order_by('last_read_at').first()
-
+        before = [v for v in Article.objects.raw(before_query, query_params)]
+        before = None if len(before) == 0 else before[0]
+        after = [v for v in Article.objects.raw(after_query, query_params)]
+        after = None if len(after) == 0 else after[0]
         return after, before
 
     parent_topic = TopicSerializer(

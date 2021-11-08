@@ -1,7 +1,10 @@
-from rest_framework import mixins, status
+from django.utils.translation import gettext
+from rest_framework import mixins
 from django.core.mail import send_mail
 from apps.core.models import Article, Comment
 from ara.classes.viewset import ActionAPIViewSet
+from rest_framework import status
+from rest_framework.response import Response
 
 from apps.core.models import (
     ArticleReadLog,
@@ -57,6 +60,20 @@ class ReportViewSet(mixins.ListModelMixin,
         )
 
     def create(self, request, *args, **kwargs):
+        parent_article_id = request.data.get('parent_article')
+        parent_comment_id = request.data.get('parent_comment')
+
+        if parent_article_id:
+            parent_article = Article.objects.filter(id=parent_article_id).first()
+            if not parent_article or parent_article.is_hidden_by_reported():
+                return Response({'message': gettext('Cannot report articles that are deleted or hidden by reports')},
+                                status=status.HTTP_403_FORBIDDEN)
+        elif parent_comment_id:
+            parent_comment = Comment.objects.filter(id=parent_comment_id).first()
+            if not parent_comment or parent_comment.is_deleted() or parent_comment.is_hidden_by_reported():
+                return Response({'message': gettext('Cannot report comments that are deleted or hidden by reports')},
+                                status=status.HTTP_403_FORBIDDEN)
+
         response = super().create(request, *args, **kwargs)
 
         if response.status_code == status.HTTP_201_CREATED:

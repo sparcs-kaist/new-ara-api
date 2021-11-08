@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-04 19:08+0900\n"
+"POT-Creation-Date: 2021-10-04 23:18+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -55,11 +55,11 @@ msgstr "from_view 쿼리 파라미터 value값이 틀렸습니다."
 msgid "This article is never read by user."
 msgstr "읽은적이 없는 게시물입니다."
 
-#: apps/core/serializers/article.py:410
+#: apps/core/serializers/article.py:419
 msgid "This board is read only."
 msgstr "읽기 전용 게시판입니다."
 
-#: apps/core/serializers/article.py:412
+#: apps/core/serializers/article.py:421
 msgid "This board is only for KAIST members."
 msgstr "카이스트 구성원만 이용할 수 있는 게시판입니다."
 
@@ -83,9 +83,69 @@ msgstr "이미 스크랩한 게시글입니다."
 msgid "Cannot modify articles hidden by reports"
 msgstr "다수의 신고로 숨겨진 게시글은 수정할 수 없습니다."
 
+#: apps/core/views/viewsets/article.py:149
+#, fuzzy
+#| msgid "Cannot modify articles hidden by reports"
+msgid "Cannot delete articles hidden by reports"
+msgstr "다수의 신고로 숨겨진 게시글은 삭제할 수 없습니다."
+
+#: apps/core/views/viewsets/article.py:185
+#, fuzzy
+#| msgid "Cannot modify articles hidden by reports"
+msgid "Cannot cancel vote on articles hidden by reports"
+msgstr "다수의 신고로 숨겨진 게시글에 대한 좋아요/싫어요는 취소할 수 없습니다."
+
+#: apps/core/views/viewsets/article.py:215
+#: apps/core/views/viewsets/article.py:244
+msgid "Cannot vote on your own article"
+msgstr "본인의 글에 좋아요/싫어요를 할 수 없습니다."
+
+#: apps/core/views/viewsets/article.py:219
+#: apps/core/views/viewsets/article.py:248
+#, fuzzy
+#| msgid "Cannot modify articles hidden by reports"
+msgid "Cannot vote on articles hidden by reports"
+msgstr "다수의 신고로 숨겨진 게시글은 좋아요/싫어요 할 수 없습니다."
+
 #: apps/core/views/viewsets/comment.py:62
 msgid "Cannot modify hidden or deleted comments"
 msgstr "삭제되거나 다수의 신고로 숨겨진 댓글은 수정할 수 없습니다."
+
+#: apps/core/views/viewsets/comment.py:84
+#, fuzzy
+#| msgid "Cannot modify hidden or deleted comments"
+msgid "Cannot delete hidden or deleted comments"
+msgstr "삭제되거나 다수의 신고로 숨겨진 댓글은 삭제할 수 없습니다."
+
+#: apps/core/views/viewsets/comment.py:102
+msgid "Cannot cancel vote on comments that are deleted or hidden by reports"
+msgstr "삭제되거나 다수의 신고로 숨겨진 댓글에 대한 좋아요/싫어요를 취소할 수 없습니다."
+
+#: apps/core/views/viewsets/comment.py:119
+#: apps/core/views/viewsets/comment.py:143
+#, fuzzy
+#| msgid "Cannot modify hidden or deleted comments"
+msgid "Cannot vote on your own comment"
+msgstr "본인의 댓글에 좋아요/싫어요 할 수 없습니다."
+
+#: apps/core/views/viewsets/comment.py:123
+#: apps/core/views/viewsets/comment.py:147
+#, fuzzy
+#| msgid "Cannot modify articles hidden by reports"
+msgid "Cannot vote on comments that are deleted or hidden by reports"
+msgstr "삭제되거나 다수의 신고로 숨겨진 댓글은 좋아요/싫어요 할 수 없습니다."
+
+#: apps/core/views/viewsets/report.py:69
+#, fuzzy
+#| msgid "Cannot modify articles hidden by reports"
+msgid "Cannot report articles that are deleted or hidden by reports"
+msgstr "삭제되거나 다수의 신고로 숨겨진 게시글은 신고할 수 없습니다."
+
+#: apps/core/views/viewsets/report.py:74
+#, fuzzy
+#| msgid "Cannot modify articles hidden by reports"
+msgid "Cannot report comments that are deleted or hidden by reports"
+msgstr "삭제되거나 다수의 신고로 숨겨진 댓글은 신고할 수 없습니다."
 
 #: apps/user/models/user_profile.py:23
 msgid "Unauthorized user"
