@@ -25,4 +25,4 @@ REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = (
     'rest_framework.renderers.JSONRenderer',
 )
 
-REPORT_THRESHOLD = 10
+REPORT_THRESHOLD = 4
