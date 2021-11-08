@@ -1,6 +1,7 @@
 import time
 
 from django.db import models
+from django.conf import settings
 from django.utils.translation import gettext
 from rest_framework import status, viewsets, response, decorators, serializers, permissions
 from rest_framework.response import Response
@@ -68,6 +69,11 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             created_by = self.request.query_params.get('created_by')
             if created_by and int(created_by) != self.request.user.id:
                 queryset = queryset.exclude(is_anonymous=True)
+
+            if self.request.query_params.get('parent_board') == settings.ANONYMOUS_BOARD_ID:
+                queryset = queryset.exclude(
+                    created_by__id__in=self.request.user.block_set.values('user')
+                )
 
             # optimizing queryset for list action
             queryset = queryset.select_related(
