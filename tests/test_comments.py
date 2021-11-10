@@ -270,6 +270,31 @@ class TestComments(TestCase, RequestSetting):
         comment_auther_id2 = r_comment2.get('created_by')['id']
         assert article_auther_id2 == comment_auther_id2
 
+    def test_comment_on_anonymous_parent(self):
+        # 익명글의 댓글은 is_anonymous 필드를 잘못 주어도 익명으로 생성
+        content1 = 'content for anonymous comment'
+        comment_data = {
+            'content': content1,
+            'parent_article': self.article_anonymous.id,
+            'parent_comment': None,
+            'is_anonymous': False,
+            'attachment': None,
+        }
+        self.http_request(self.user, 'post', 'comments', comment_data)
+        assert Comment.objects.filter(content=content1).first().is_anonymous
+
+        # 익명글의 대댓글은 is_anonymous 필드를 잘못 주어도 익명으로 생성
+        content2 = 'content for anonymous subcomment'
+        subcomment_data = {
+            'content': content2,
+            'parent_comment': self.comment_anonymous.id,
+            'parent_article': None,
+            'is_anonymous': False,
+            'attachment': None,
+        }
+        self.http_request(self.user, 'post', 'comments', subcomment_data)
+        assert Comment.objects.filter(content=content2).first().is_anonymous
+
     # 댓글 좋아요 확인
     def test_positive_vote(self):
         # 좋아요 2표
