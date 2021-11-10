@@ -54,14 +54,20 @@ class CommentViewSet(mixins.CreateModelMixin,
     }
 
     def create(self, request, *args, **kwargs):
+        parent_article_id = request.data.get('parent_article')
+        parent_comment_id = request.data.get('parent_comment')
+
+        parent_article = parent_article_id and Article.objects.filter(id=parent_article_id).first()
+        parent_comment = parent_comment_id and Comment.objects.filter(id=parent_comment_id).first()
+
+        parent_article_is_anonymous = parent_article and parent_article.is_anonymous
+        parent_comment_is_anonymous = parent_comment and parent_comment.is_anonymous
+
+        if parent_article_is_anonymous or parent_comment_is_anonymous:
+            request.data['is_anonymous'] = True
 
         if request.data['is_anonymous']:
-
-            parent_article_id = request.data['parent_article']
-            parent_comment_id = request.data['parent_comment']
-
-            if any((parent_article_id and not Article.objects.get(pk=parent_article_id).is_anonymous, 
-                    parent_comment_id and not Comment.objects.get(pk=parent_comment_id).is_anonymous)):
+            if (not parent_article_is_anonymous) and (not parent_comment_is_anonymous):
 
                 return response.Response(
                     {'message': 'Anonymous breakout detected'},
