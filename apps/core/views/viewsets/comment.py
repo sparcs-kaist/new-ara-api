@@ -67,7 +67,7 @@ class CommentViewSet(mixins.CreateModelMixin,
             request.data['is_anonymous'] = True
 
         if request.data['is_anonymous']:
-            if (not parent_article_is_anonymous) and (not parent_comment_is_anonymous):
+            if not (parent_article_is_anonymous or parent_comment_is_anonymous):
 
                 return response.Response(
                     {'message': 'Anonymous breakout detected'},
