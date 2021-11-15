@@ -42,9 +42,9 @@ class BlockViewSet(mixins.ListModelMixin,
 
     def create(self, request, *args, **kwargs):
         # 하루 block 제한 10개
-        num_recent_block = Block.objects.queryset_with_deleted.filter(created_at__gt=(timezone.now() - relativedelta(days=1))).filter(blocked_by=self.request.user).count()
-        if(num_recent_block >= 10):
-            return response.Response({'message': gettext('Cannot block anymore. 10 block allowed for 24 hours')},status=status.HTTP_403_FORBIDDEN)
+        recent_block_count = Block.objects.queryset_with_deleted.filter(created_at__gt=(timezone.now() - relativedelta(days=1))).filter(blocked_by=self.request.user).count()
+        if(recent_block_count >= 10):
+            return response.Response({'message': '더 이상 사용자를 차단할 수 없습니다. 24시간 내에 최대 10번 차단할 수 있습니다'},status=status.HTTP_403_FORBIDDEN)
         else:
             return super().create(request, *args, **kwargs)
 

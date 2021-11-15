@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-07 22:24+0900\n"
+"POT-Creation-Date: 2021-10-04 19:08+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,36 +30,36 @@ msgstr "(선택된) 숨겨진 게시물 목록을 복구합니다."
 msgid "Restore hidden comments"
 msgstr "(선택된) 숨겨진 댓글 목록을 복구합니다."
 
-#: apps/core/management/scripts/portal_crawler.py:156
+#: apps/core/management/scripts/portal_crawler.py:154
 msgid "No content for portal article"
 msgstr ""
 
-#: apps/core/models/article.py:220 apps/core/models/article.py:223
-#: apps/core/models/article.py:224
+#: apps/core/models/article.py:217 apps/core/models/article.py:220
+#: apps/core/models/article.py:221
 msgid "anonymous"
 msgstr "익명"
 
-#: apps/core/models/comment.py:174
+#: apps/core/models/comment.py:171
 msgid "author"
 msgstr "글쓴이"
 
-#: apps/core/serializers/article.py:150
+#: apps/core/serializers/article.py:201
 msgid "This article is not in user's scrap list."
 msgstr "사용자가 스크랩하지 않은 글입니다."
 
-#: apps/core/serializers/article.py:167
+#: apps/core/serializers/article.py:218
 msgid "Wrong value for parameter 'from_view'."
 msgstr "from_view 쿼리 파라미터 value값이 틀렸습니다."
 
-#: apps/core/serializers/article.py:240
+#: apps/core/serializers/article.py:291
 msgid "This article is never read by user."
 msgstr "읽은적이 없는 게시물입니다."
 
-#: apps/core/serializers/article.py:344
+#: apps/core/serializers/article.py:410
 msgid "This board is read only."
 msgstr "읽기 전용 게시판입니다."
 
-#: apps/core/serializers/article.py:346
+#: apps/core/serializers/article.py:412
 msgid "This board is only for KAIST members."
 msgstr "카이스트 구성원만 이용할 수 있는 게시판입니다."
 
@@ -83,13 +83,7 @@ msgstr "이미 스크랩한 게시글입니다."
 msgid "Cannot modify articles hidden by reports"
 msgstr "다수의 신고로 숨겨진 게시글은 수정할 수 없습니다."
 
-#: apps/core/views/viewsets/block.py:47
-msgid "Cannot block anymore. 10 block allowed for 24 hours"
-msgstr ""
-"하루 최대 차단 횟수를 초과하셨습니다. 최근 24시간동안 최대 10명의 사용자만 차"
-"단할 수 있습니다."
-
-#: apps/core/views/viewsets/comment.py:69
+#: apps/core/views/viewsets/comment.py:62
 msgid "Cannot modify hidden or deleted comments"
 msgstr "삭제되거나 다수의 신고로 숨겨진 댓글은 수정할 수 없습니다."
 
