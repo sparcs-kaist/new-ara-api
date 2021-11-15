@@ -6,7 +6,6 @@ authors = []
 
 [tool.poetry.dependencies]
 python = "^3.7"
-django = "3.2.4"
 djangorestframework = "^3.12"
 django-s3-storage = "0.13.3"
 django-cors-headers = "^3.1"
@@ -41,6 +40,7 @@ sentry-sdk = "0.19.4"
 django-elasticsearch-dsl = "^7.1.4"
 html5lib = "^1.1"
 pyotp = "^2.6.0"
+Django = "^3.2.9"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
