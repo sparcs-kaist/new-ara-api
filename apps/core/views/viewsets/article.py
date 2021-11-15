@@ -119,6 +119,8 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         return queryset
 
     def create(self, request, *args, **kwargs):
+        if request.data['parent_board'] == settings.ANONYMOUS_BOARD_ID:
+            request.data['is_anonymous'] = True
 
         if request.data['is_anonymous'] and request.data['parent_board'] != settings.ANONYMOUS_BOARD_ID :
             return response.Response(

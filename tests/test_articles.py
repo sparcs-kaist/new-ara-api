@@ -5,6 +5,7 @@ from django.utils import timezone
 from apps.core.models import Article, Topic, Board, Block, Vote, Comment
 from apps.user.models import UserProfile
 from tests.conftest import RequestSetting, TestCase
+from django.conf import settings
 
 
 @pytest.fixture(scope='class')
@@ -17,6 +18,14 @@ def set_board(request):
         en_description="This is a board for testing"
     )
 
+    request.cls.anonymous_board = Board.objects.create(
+        id = settings.ANONYMOUS_BOARD_ID,
+        slug = "anonymous board",
+        ko_name = "익명 게시판",
+        en_name = "Anonymous Board",
+        ko_description = "익명 게시판입니다",
+        en_description = "This is a board for anonymous"
+    )
 
 @pytest.fixture(scope='class')
 def set_topic(request):
@@ -202,6 +211,23 @@ class TestArticle(TestCase, RequestSetting):
         # convert user data to JSON
         self.http_request(self.user, 'post', 'articles', user_data)
         assert Article.objects.filter(title='article for test_create')
+
+    # is_anonymous를 False로 주어도 board==9면 익명으로 생성되는 것 확인
+    def test_create_in_anonymous_board(self):
+        user_data = {
+            "title": 'attempt to create nonanonymous article on anon board',
+            "content": "attempt to create nonanonymous article on anon board",
+            "content_text": "attempt to create nonanonymous article on anon board",
+            "is_anonymous": False,
+            "is_content_sexual": False,
+            "is_content_social": False,
+            "parent_board": self.anonymous_board.id
+        }
+
+        # convert user data to JSON
+        self.http_request(self.user, 'post', 'articles', user_data)
+        assert Article.objects.filter(title='attempt to create nonanonymous article on anon board').first().is_anonymous
+
 
     def test_update_cache_sync(self):
         new_title = 'title changed!'
