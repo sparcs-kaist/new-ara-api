@@ -2,6 +2,8 @@ import pytest
 from django.db import transaction
 from django.utils import timezone
 from django.db.utils import IntegrityError
+from django.conf import settings
+
 from apps.core.models import Article, Topic, Board, Comment, Block
 from tests.conftest import RequestSetting, TestCase
 
@@ -14,6 +16,18 @@ def set_board(request):
         en_name='Test Board',
         ko_description='테스트 게시판입니다',
         en_description='This is a board for testing'
+    )
+
+
+@pytest.fixture(scope='class')
+def set_anon_board(request):
+    request.cls.anon_board = Board.objects.create(
+        id=settings.ANONYMOUS_BOARD_ID,
+        slug="anonymous",
+        ko_name="익명 게시판",
+        en_name="Anonymous",
+        ko_description="익명 게시판",
+        en_description="Anonymous"
     )
 
 
@@ -82,8 +96,8 @@ def set_articles(request):
     )
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_client3', 'set_board', 'set_topic',
-                         'set_articles')
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_client3', 
+                         'set_board', 'set_anon_board', 'set_topic', 'set_articles')
 class TestBlock(TestCase, RequestSetting):
     # block 개수를 확인
     def test_block_list(self):
@@ -210,15 +224,15 @@ class TestBlock(TestCase, RequestSetting):
                             title='Test Article',
                             content='Content of test article',
                             content_text='Content of test article in text',
-                            is_anonymous=False,
+                            is_anonymous=True,
                             is_content_sexual=False,
                             is_content_social=False,
                             hit_count=0,
                             positive_vote_count=0,
                             negative_vote_count=0,
                             created_by=self.user2,
-                            parent_topic=self.topic,
-                            parent_board=self.board,
+                            parent_topic=None,
+                            parent_board=self.anon_board,
                             commented_at=timezone.now()
                         )
 
@@ -228,16 +242,14 @@ class TestBlock(TestCase, RequestSetting):
             user=self.user2,
         )
 
-        # user가 글을 가져오면, 차단된 user2의 익명글도 hidden 처리 되는지 확인
+        # user가 글을 가져오면, 차단된 user2의 익명글은 보이지 않는지 확인
         res = self.http_request(self.user, 'get', 'articles').data
         found = False
         for post in res.get('results'):
             if post.get('id') == anon_article.id:
-                assert post.get('is_hidden')
                 found = True
-                break
 
-        assert found
+        assert not found
 
     # 차단한 유저의 댓글이 보이지 않음을 확인
     def test_comment_by_blocked_user(self):
