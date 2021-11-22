@@ -2,7 +2,7 @@ import pytest
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-from apps.core.models import Article, Topic, Board, Block, Comment
+from apps.core.models import Article, Topic, Board, Block, Vote, Comment
 from apps.user.models import UserProfile
 from tests.conftest import RequestSetting, TestCase
 
@@ -193,7 +193,7 @@ class TestArticle(TestCase, RequestSetting):
             "title": "article for test_create",
             "content": "content for test_create",
             "content_text": "content_text for test_create",
-            "is_anonymous": True,
+            "is_anonymous": False,
             "is_content_sexual": False,
             "is_content_social": False,
             "parent_topic": self.topic.id,
@@ -355,7 +355,7 @@ class TestArticle(TestCase, RequestSetting):
             "title": "article for test_create",
             "content": "content for test_create",
             "content_text": "content_text for test_create",
-            "is_anonymous": True,
+            "is_anonymous": False,
             "is_content_sexual": False,
             "is_content_social": False,
             "parent_board": self.readonly_board.id
@@ -411,7 +411,7 @@ class TestArticle(TestCase, RequestSetting):
         assert self.article.comment_count == 0
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_board', 'set_topic', 'set_article')
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_topic', 'set_article')
 class TestHiddenArticles(TestCase, RequestSetting):
     @staticmethod
     def _user_factory(user_kwargs, profile_kwargs):
@@ -437,13 +437,15 @@ class TestHiddenArticles(TestCase, RequestSetting):
             {'nickname': 'kbdwarrior', 'see_social': True, 'see_sexual': True}
         )
 
-    def _article_factory(self, **article_kwargs):
+    def _article_factory(self, is_content_sexual=False, is_content_social=False, **article_kwargs):
         return Article.objects.create(
             title="example article",
             content="example content",
             content_text="example content text",
             is_anonymous=False,
             hit_count=0,
+            is_content_sexual=is_content_sexual,
+            is_content_social=is_content_social,
             positive_vote_count=0,
             negative_vote_count=0,
             created_by=self.user,
@@ -553,13 +555,19 @@ class TestHiddenArticles(TestCase, RequestSetting):
         assert 'BLOCKED_USER_CONTENT' in res.get('why_hidden')
         self._test_can_override(self.clean_mind_user, target_article, True)
 
-    def test_reported_article_block(self):
-        target_article = self._article_factory(
-            is_content_sexual=False,
-            is_content_social=False,
+    def _create_report_hidden_article(self):
+        return self._article_factory(
             report_count=1000000,
             hidden_at=timezone.now()
         )
+
+    def _create_deleted_article(self):
+        return self._article_factory(
+            deleted_at=timezone.now()
+        )
+
+    def test_reported_article_block(self):
+        target_article = self._create_report_hidden_article()
 
         res = self.http_request(self.clean_mind_user, 'get', f'articles/{target_article.id}').data
         assert not res.get('can_override_hidden')
@@ -588,12 +596,7 @@ class TestHiddenArticles(TestCase, RequestSetting):
         assert res.get('why_hidden') == ['REPORTED_CONTENT', 'BLOCKED_USER_CONTENT', 'ADULT_CONTENT', 'SOCIAL_CONTENT']
 
     def test_modify_deleted_article(self):
-        target_article = self._article_factory(
-            is_content_sexual=False,
-            is_content_social=False,
-        )
-
-        self.http_request(self.user, 'delete', f'articles/{target_article.id}')
+        target_article = self._create_deleted_article()
 
         new_content = "attempt to modify deleted article"
         res = self.http_request(self.user, 'put', f'articles/{target_article.id}', {
@@ -605,12 +608,7 @@ class TestHiddenArticles(TestCase, RequestSetting):
         assert res.status_code == 404
 
     def test_modify_report_hidden_article(self):
-        target_article = self._article_factory(
-            is_content_sexual=False,
-            is_content_social=False,
-            report_count=1000000,
-            hidden_at=timezone.now()
-        )
+        target_article = self._create_report_hidden_article()
 
         new_content = "attempt to modify hidden article"
         res = self.http_request(self.user, 'put', f'articles/{target_article.id}', {
@@ -620,3 +618,87 @@ class TestHiddenArticles(TestCase, RequestSetting):
         })
 
         assert res.status_code == 403
+
+    def test_delete_already_deleted_article(self):
+        target_article = self._create_deleted_article()
+        res = self.http_request(self.user, 'delete', f'articles/{target_article.id}')
+        assert res.status_code == 404
+
+    def test_delete_report_hidden_article(self):
+        target_article = self._create_report_hidden_article()
+        res = self.http_request(self.user, 'delete', f'articles/{target_article.id}')
+        assert res.status_code == 403
+
+    def test_vote_deleted_article(self):
+        target_article = self._create_deleted_article()
+
+        positive_vote_result = self.http_request(self.user2, 'post', f'articles/{target_article.id}/vote_positive')
+        assert positive_vote_result.status_code == 404
+
+        negative_vote_result = self.http_request(self.user2, 'post', f'articles/{target_article.id}/vote_negative')
+        assert negative_vote_result.status_code == 404
+
+        cancel_vote_result = self.http_request(self.user2, 'post', f'articles/{target_article.id}/vote_positive')
+        assert cancel_vote_result.status_code == 404
+
+    def test_vote_report_hidden_article(self):
+        target_article = self._create_report_hidden_article()
+
+        positive_vote_result = self.http_request(self.user2, 'post', f'articles/{target_article.id}/vote_positive')
+        assert positive_vote_result.status_code == 403
+
+        negative_vote_result = self.http_request(self.user2, 'post', f'articles/{target_article.id}/vote_negative')
+        assert negative_vote_result.status_code == 403
+
+        Vote.objects.create(
+            voted_by=self.user2,
+            parent_article=target_article,
+            is_positive=True,
+        )
+        target_article.update_vote_status()
+
+        cancel_vote_result = self.http_request(self.user2, 'post', f'articles/{target_article.id}/vote_cancel')
+        assert cancel_vote_result.status_code == 403
+        assert Article.objects.get(id=target_article.id).positive_vote_count == 1
+
+    def test_report_deleted_article(self):
+        target_article = self._create_deleted_article()
+
+        res = self.http_request(self.user2, 'post', 'reports', {
+            'content': 'This is a report',
+            'parent_article': target_article.id,
+        })
+
+        assert res.status_code == 403
+
+    def test_report_already_hidden_article(self):
+        target_article = self._create_report_hidden_article()
+
+        res = self.http_request(self.user2, 'post', 'reports', {
+            'content': 'This is a report',
+            'parent_article': target_article.id,
+        })
+
+        assert res.status_code == 403
+
+    def test_comment_on_deleted_article(self):
+        target_article = self._create_deleted_article()
+
+        res = self.http_request(self.user, 'post', 'comments', {
+            'content': 'This is a comment',
+            'parent_article': target_article.id,
+            'is_anonymous': False,
+        })
+
+        assert res.status_code == 400
+
+    def test_comment_on_report_hidden_article(self):
+        target_article = self._create_report_hidden_article()
+
+        res = self.http_request(self.user, 'post', 'comments', {
+            'content': 'This is a comment',
+            'parent_article': target_article.id,
+            'is_anonymous': False,
+        })
+
+        assert res.status_code == 201
