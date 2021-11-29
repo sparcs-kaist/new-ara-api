@@ -70,6 +70,11 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             if created_by and int(created_by) != self.request.user.id:
                 queryset = queryset.exclude(is_anonymous=True)
 
+            queryset = queryset.exclude(
+                created_by__id__in=self.request.user.block_set.values('user'),
+                is_anonymous=True
+            )
+
             # optimizing queryset for list action
             queryset = queryset.select_related(
                 'created_by',
