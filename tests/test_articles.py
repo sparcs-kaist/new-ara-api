@@ -23,12 +23,12 @@ def set_board(request):
 @pytest.fixture(scope='class')
 def set_anon_board(request):
     request.cls.anon_board = Board.objects.create(
-        id=settings.ANONYMOUS_BOARD_ID,
         slug="anonymous",
         ko_name="익명 게시판",
         en_name="Anonymous",
         ko_description="익명 게시판",
-        en_description="Anonymous"
+        en_description="Anonymous",
+        is_anonymous=True
     )
 
 
@@ -222,7 +222,6 @@ class TestArticle(TestCase, RequestSetting):
             "title": "article for test_create",
             "content": "content for test_create",
             "content_text": "content_text for test_create",
-            "is_anonymous": True,
             "is_content_sexual": False,
             "is_content_social": False,
             "parent_topic": None,
@@ -230,14 +229,15 @@ class TestArticle(TestCase, RequestSetting):
         }
 
         result = self.http_request(self.user, 'post', 'articles', user_data)
-        assert result.status_code == 201
+
+        assert result.data['is_anonymous']
 
         user_data.update({
             "parent_topic": self.topic.id,
             "parent_board": self.board.id
         })
         result = self.http_request(self.user, 'post', 'articles', user_data)
-        assert result.status_code == 403
+        assert not result.data['is_anonymous']
 
     def test_update_cache_sync(self):
         new_title = 'title changed!'
