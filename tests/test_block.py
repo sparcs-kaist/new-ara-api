@@ -23,12 +23,12 @@ def set_board(request):
 @pytest.fixture(scope='class')
 def set_anon_board(request):
     request.cls.anon_board = Board.objects.create(
-        id=settings.ANONYMOUS_BOARD_ID,
         slug="anonymous",
         ko_name="익명 게시판",
         en_name="Anonymous",
         ko_description="익명 게시판",
-        en_description="Anonymous"
+        en_description="Anonymous",
+        is_anonymous=True
     )
 
 
