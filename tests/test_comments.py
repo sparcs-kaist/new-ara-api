@@ -117,7 +117,6 @@ class TestComments(TestCase, RequestSetting):
             'content': comment_str,
             'parent_article': self.article.id,
             'parent_comment': None,
-            'is_anonymous': False,
             'attachment': None,
         }
         self.http_request(self.user, 'post', 'comments', comment_data)
@@ -130,7 +129,6 @@ class TestComments(TestCase, RequestSetting):
             'content': subcomment_str,
             'parent_comment': self.comment.id,
             'parent_article': None,
-            'is_anonymous': False,
             'attachment': None,
         }
         self.http_request(self.user, 'post', 'comments', subcomment_data)
@@ -269,6 +267,51 @@ class TestComments(TestCase, RequestSetting):
         r_comment2 = self.http_request(self.user2, 'get', f'comments/{self.comment_anonymous.id}').data
         comment_auther_id2 = r_comment2.get('created_by')['id']
         assert article_auther_id2 == comment_auther_id2
+
+    def test_comment_on_anonymous_parent_article(self):
+        comment_str = 'This is a comment on an anonymous parent article'
+        comment_data = {
+            'content': comment_str,
+            'parent_article': self.article_anonymous.id,
+            'parent_comment': None,
+            'attachment': None,
+        }
+        self.http_request(self.user, 'post', 'comments', comment_data)
+        assert Comment.objects.filter(content=comment_str).first().is_anonymous
+
+    def test_comment_on_anonymous_parent_comment(self):
+        comment_str = 'This is a comment on an anonymous parent comment'
+        comment_data = {
+            'content': comment_str,
+            'parent_article': None,
+            'parent_comment': self.comment_anonymous.id,
+            'attachment': None,
+        }
+        self.http_request(self.user, 'post', 'comments', comment_data)
+        assert Comment.objects.filter(content=comment_str).first().is_anonymous
+
+    def test_comment_on_nonanonymous_parent_article(self):
+        comment_str = 'This is a comment on an non-anonymous parent article'
+        comment_data = {
+            'content': comment_str,
+            'parent_article': self.article.id,
+            'parent_comment': None,
+            'attachment': None,
+        }
+        self.http_request(self.user, 'post', 'comments', comment_data)
+        Comment.objects.filter(content=comment_str).first()
+        assert not Comment.objects.filter(content=comment_str).first().is_anonymous
+
+    def test_comment_on_nonanonymous_parent_comment(self):
+        comment_str = 'This is a comment on an non-anonymous parent comment'
+        comment_data = {
+            'content': comment_str,
+            'parent_article': None,
+            'parent_comment': self.comment.id,
+            'attachment': None,
+        }
+        self.http_request(self.user, 'post', 'comments', comment_data)
+        assert not Comment.objects.filter(content=comment_str).first().is_anonymous
 
     # 댓글 좋아요 확인
     def test_positive_vote(self):
@@ -476,7 +519,6 @@ class TestHiddenComments(TestCase, RequestSetting):
             'content': 'This is a report',
             'parent_article': target_comment.id,
             'parent_comment': None,
-            'is_anonymous': False,
         })
 
         assert res.status_code == 403
@@ -488,7 +530,6 @@ class TestHiddenComments(TestCase, RequestSetting):
             'content': 'This is a report',
             'parent_article': target_comment.id,
             'parent_comment': None,
-            'is_anonymous': False,
         })
 
         assert res.status_code == 403
@@ -501,7 +542,6 @@ class TestHiddenComments(TestCase, RequestSetting):
             'content': subcomment_str,
             'parent_article': None,
             'parent_comment': target_comment.id,
-            'is_anonymous': False,
         })
 
         assert res.status_code == 201
@@ -515,7 +555,6 @@ class TestHiddenComments(TestCase, RequestSetting):
             'content': subcomment_str,
             'parent_article': None,
             'parent_comment': target_comment.id,
-            'is_anonymous': False,
         })
 
         assert res.status_code == 201

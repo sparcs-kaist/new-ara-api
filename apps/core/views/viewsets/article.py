@@ -14,6 +14,7 @@ from apps.core.models import (
     ArticleReadLog,
     ArticleUpdateLog,
     ArticleDeleteLog,
+    Board,
     Comment,
     Vote,
     Scrap,
@@ -70,6 +71,11 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             if created_by and int(created_by) != self.request.user.id:
                 queryset = queryset.exclude(is_anonymous=True)
 
+            queryset = queryset.exclude(
+                created_by__id__in=self.request.user.block_set.values('user'),
+                is_anonymous=True
+            )
+
             # optimizing queryset for list action
             queryset = queryset.select_related(
                 'created_by',
@@ -118,19 +124,10 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         return queryset
 
-    def create(self, request, *args, **kwargs):
-
-        if request.data['is_anonymous'] and request.data['parent_board'] != settings.ANONYMOUS_BOARD_ID :
-            return response.Response(
-                {'message': 'Anonymous breakout detected'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
-        return super().create(request, *args, **kwargs)
-
     def perform_create(self, serializer):
         serializer.save(
             created_by=self.request.user,
+            is_anonymous=Board.objects.get(pk=self.request.data['parent_board']).is_anonymous
         )
 
     def update(self, request, *args, **kwargs):

@@ -2,6 +2,8 @@ import pytest
 from django.contrib.auth.models import User
 from django.utils import timezone
 
+from django.conf import settings
+
 from apps.core.models import Article, Topic, Board, Block, Vote, Comment
 from apps.user.models import UserProfile
 from tests.conftest import RequestSetting, TestCase
@@ -15,6 +17,18 @@ def set_board(request):
         en_name="Test Board",
         ko_description="테스트 게시판입니다",
         en_description="This is a board for testing"
+    )
+
+
+@pytest.fixture(scope='class')
+def set_anon_board(request):
+    request.cls.anon_board = Board.objects.create(
+        slug="anonymous",
+        ko_name="익명 게시판",
+        en_name="Anonymous",
+        ko_description="익명 게시판",
+        en_description="Anonymous",
+        is_anonymous=True
     )
 
 
@@ -102,7 +116,7 @@ def set_readonly_board(request):
     request.cls.readonly_board.delete()
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_topic', 'set_article')
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_anon_board', 'set_topic', 'set_article')
 class TestArticle(TestCase, RequestSetting):
     def test_list(self):
         # article 개수를 확인하는 테스트
@@ -172,8 +186,8 @@ class TestArticle(TestCase, RequestSetting):
             positive_vote_count=0,
             negative_vote_count=0,
             created_by=self.user,
-            parent_topic=self.topic,
-            parent_board=self.board,
+            parent_topic=None,
+            parent_board=self.anon_board,
             commented_at=timezone.now()
         )
 
@@ -203,6 +217,28 @@ class TestArticle(TestCase, RequestSetting):
         self.http_request(self.user, 'post', 'articles', user_data)
         assert Article.objects.filter(title='article for test_create')
 
+    def test_create_anonymous(self):
+        user_data = {
+            "title": "article for test_create",
+            "content": "content for test_create",
+            "content_text": "content_text for test_create",
+            "is_content_sexual": False,
+            "is_content_social": False,
+            "parent_topic": None,
+            "parent_board": self.anon_board.id
+        }
+
+        result = self.http_request(self.user, 'post', 'articles', user_data)
+
+        assert result.data['is_anonymous']
+
+        user_data.update({
+            "parent_topic": self.topic.id,
+            "parent_board": self.board.id
+        })
+        result = self.http_request(self.user, 'post', 'articles', user_data)
+        assert not result.data['is_anonymous']
+
     def test_update_cache_sync(self):
         new_title = 'title changed!'
         new_content = 'content changed!'
@@ -210,7 +246,7 @@ class TestArticle(TestCase, RequestSetting):
             title="example article",
             content="example content",
             content_text="example content text",
-            is_anonymous=True,
+            is_anonymous=False,
             is_content_sexual=False,
             is_content_social=False,
             hit_count=0,
