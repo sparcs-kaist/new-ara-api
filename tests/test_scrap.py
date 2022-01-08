@@ -164,3 +164,11 @@ class TestScrap(TestCase, RequestSetting):
 
         res1 = self.http_request(self.user, 'get', f'articles/{self.article.id}', querystring = 'from_view=scrap')
         assert res1.data['side_articles']['after']['id'] == self.article2.id
+
+    def test_scrap_cascade_delete_when_article_delete(self):
+        Scrap.objects.create(parent_article=self.article2, scrapped_by=self.user)
+        Scrap.objects.create(parent_article=self.article2, scrapped_by=self.user2)
+
+        assert Scrap.objects.filter(parent_article=self.article2).count() == 2
+        self.http_request(self.user2, 'delete', f'articles/{self.article2.id}')  # 작성자가 article2 삭제
+        assert Scrap.objects.filter(parent_article=self.article2).count() == 0
