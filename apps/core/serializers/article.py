@@ -266,10 +266,19 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
         after = None if len(after) == 0 else after[0]
         return after, before
 
+    def get_attachments(self, obj): # -> typing.Optional[list]:
+        if self.visible_verdict(obj):
+            return obj.attachments.all().values_list('id')
+        return None
+
     parent_topic = TopicSerializer(
         read_only=True,
     )
     parent_board = BoardSerializer(
+        read_only=True,
+    )
+
+    attachments = serializers.SerializerMethodField(
         read_only=True,
     )
 
