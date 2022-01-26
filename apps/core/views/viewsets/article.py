@@ -1,7 +1,6 @@
 import time
 
 from django.db import models
-from django.conf import settings
 from django.utils.translation import gettext
 from rest_framework import status, viewsets, response, decorators, serializers, permissions
 from rest_framework.response import Response
@@ -66,7 +65,10 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
 
-        if self.action == 'list':
+        if self.action == 'destroy':
+            pass
+
+        elif self.action == 'list':
             created_by = self.request.query_params.get('created_by')
             if created_by and int(created_by) != self.request.user.id:
                 queryset = queryset.exclude(is_anonymous=True)
