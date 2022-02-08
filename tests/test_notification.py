@@ -37,14 +37,14 @@ def set_comment(request):
     )
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_articles')
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_articles', 'set_comment')
 class TestNotification(TestCase, RequestSetting):
-    @pytest.mark.usefixtures('set_comment')
     def test_notification_article_commented(self):
         notifications = self.http_request(self.user, 'get', 'notifications')
 
         # user에게 알림: user의 글에 user2가 댓글을 달아서
         assert notifications.status_code == 200
+        assert notifications.data.get('results')[0].get('related_article')['id'] == self.article.id
         assert Notification.objects.all().count() == 1
 
         assert notifications.data.get('num_items') == 1
@@ -60,7 +60,8 @@ class TestNotification(TestCase, RequestSetting):
 
         # user2에게 알림: user2의 댓글에 user가 대댓글을 달아서
         assert notifications.status_code == 200
-        assert Notification.objects.filter(related_comment=cc).count() == 1
+        assert notifications.data.get('results')[0].get('related_comment')['id'] == self.comment.id
+        assert Notification.objects.filter(related_comment=self.comment).count() == 1
 
         assert notifications.data.get('num_items') == 1
 
