@@ -1,6 +1,7 @@
 import time
 
 from django.db import models
+from django.http import Http404
 from django.utils.translation import gettext
 from rest_framework import status, viewsets, response, decorators, serializers, permissions
 from rest_framework.response import Response
@@ -169,7 +170,14 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         return super().perform_destroy(instance)
 
     def retrieve(self, request, *args, **kwargs):
-        article = self.get_object()
+        try:
+            article = self.get_object()
+        except Http404 as e:
+            if Article.objects.queryset_with_deleted.filter(id=kwargs['pk']).exists():
+                return response.Response(status=status.HTTP_410_GONE)
+            else:
+                raise e
+
         override_hidden = 'override_hidden' in self.request.query_params
 
         ArticleReadLog.objects.create(
