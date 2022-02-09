@@ -21,7 +21,7 @@ from .report import Report
 from .comment import Comment
 
 
-class ArticleHiddenReason(Enum):
+class ArticleHiddenReason(str, Enum):
     ADULT_CONTENT = 'ADULT_CONTENT'
     SOCIAL_CONTENT = 'SOCIAL_CONTENT'
     REPORTED_CONTENT = 'REPORTED_CONTENT'
