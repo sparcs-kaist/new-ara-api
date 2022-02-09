@@ -332,6 +332,13 @@ class ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSeriali
         read_only=True,
     )
 
+    has_attachments = serializers.SerializerMethodField(
+        read_only=True,
+    )
+
+    def get_has_attachments(self, obj) -> bool:
+        return self.visible_verdict(obj) and obj.attachments.exists()
+
 
 class BestArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
     title = serializers.SerializerMethodField(
