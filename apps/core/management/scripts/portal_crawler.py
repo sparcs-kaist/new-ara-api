@@ -1,4 +1,6 @@
+import hashlib
 import re
+import boto3
 import uuid
 from datetime import datetime
 
@@ -14,7 +16,7 @@ from tqdm import tqdm
 
 from apps.core.models import Article
 from apps.user.models import UserProfile
-from ara.settings import PORTAL_ID, PORTAL_PASSWORD, PORTAL_2FA_KEY
+from ara.settings import PORTAL_ID, PORTAL_PASSWORD, PORTAL_2FA_KEY, AWS_S3_BUCKET_NAME
 
 LOGIN_INFO_SSO2 = {
     'userid': PORTAL_ID,
@@ -120,6 +122,28 @@ def _get_article(url, session):
 
         return new_string
 
+    def _get_new_url_and_save_to_s3(url, session):
+        enc = hashlib.md5()
+        enc.update(url.encode())
+        hash = enc.hexdigest()[:20]
+        filename = f'files/portal_image_{hash}.{url.split("_")[-1]}'
+        
+        r = session.get(url, stream=True)
+        if r.status_code == 200:
+            s3 = boto3.client('s3')
+            s3.upload_fileobj(r.raw, Bucket = AWS_S3_BUCKET_NAME, Key = filename)
+
+        return f'https://{AWS_S3_BUCKET_NAME}.s3.amazonaws.com/{filename}'
+
+    def _save_portal_image(html, session):
+        soup = bs(html, 'lxml')
+        for child in soup.find_all('img', {}):
+            old_url = child.attrs.get('src')
+            new_url = _get_new_url_and_save_to_s3(old_url, session)
+            child["src"] = new_url
+
+        return str(soup)
+
     article_req = session.get(url)
     soup = bs(article_req.text, 'lxml')
 
@@ -150,6 +174,7 @@ def _get_article(url, session):
             html = tr.find('td').prettify()
             break
 
+    html = _save_portal_image(html, session)
     html = _enable_hyperlink(html)
 
     if html is None:
