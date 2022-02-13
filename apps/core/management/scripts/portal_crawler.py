@@ -123,6 +123,8 @@ def _get_article(url, session):
         return new_string
 
     def _get_new_url_and_save_to_s3(url, session):
+        if '.' in url.split('/')[-1]: # not a portal image
+            return url
         enc = hashlib.md5()
         enc.update(url.encode())
         hash = enc.hexdigest()[:20]
@@ -140,7 +142,7 @@ def _get_article(url, session):
         for child in soup.find_all('img', {}):
             old_url = child.attrs.get('src')
             new_url = _get_new_url_and_save_to_s3(old_url, session)
-            child["src"] = new_url
+            child['src'] = new_url
 
         return str(soup)
 
