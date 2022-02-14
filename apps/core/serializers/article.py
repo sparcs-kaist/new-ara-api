@@ -1,11 +1,10 @@
 import typing
 
-from django.db import models
+from enum import Enum
 from django.utils.translation import gettext
 from rest_framework import serializers
-
 from apps.core.documents import ArticleDocument
-from apps.core.models import Article, ArticleReadLog, Board, Block, Scrap, ArticleHiddenReason
+from apps.core.models import Article, Board, Block, Scrap, ArticleHiddenReason
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.mixins.hidden import HiddenSerializerMixin, HiddenSerializerFieldMixin
 from apps.core.serializers.topic import TopicSerializer
@@ -315,6 +314,13 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
     )
 
 
+class ArticleAttachmentType(Enum):
+    NONE = 'NONE'
+    IMAGE = 'IMAGE'
+    NON_IMAGE = 'NON_IMAGE'
+    BOTH = 'BOTH'
+
+
 class ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
     parent_topic = TopicSerializer(
         read_only=True,
@@ -331,6 +337,29 @@ class ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSeriali
     read_status = serializers.SerializerMethodField(
         read_only=True,
     )
+
+    attachment_type = serializers.SerializerMethodField(
+        read_only=True,
+    )
+
+    def get_attachment_type(self, obj) -> str:
+        if not self.visible_verdict(obj):
+            return ArticleAttachmentType.NONE.value
+
+        has_image = False
+        has_non_image = False
+        for att in obj.attachments.all():
+            if att.mimetype[:5] == 'image':
+                has_image = True
+            else:
+                has_non_image = True
+        if has_image and has_non_image:
+            return ArticleAttachmentType.BOTH.value
+        if has_image:
+            return ArticleAttachmentType.IMAGE.value
+        if has_non_image:
+            return ArticleAttachmentType.NON_IMAGE.value
+        return ArticleAttachmentType.NONE.value
 
 
 class BestArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):

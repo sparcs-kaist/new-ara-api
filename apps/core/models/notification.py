@@ -60,27 +60,27 @@ class Notification(MetaDataModel):
     def notify_commented(cls, comment):
         from apps.core.models import NotificationReadLog
 
-        def notify_article_commented(_article, _comment):
+        def notify_article_commented(_parent_article, _comment):
             NotificationReadLog.objects.create(
-                read_by=_article.created_by,
+                read_by=_parent_article.created_by,
                 notification=cls.objects.create(
                     type='article_commented',
                     title='회원님의 게시물에 새로운 댓글이 작성되었습니다.',
                     content=_comment.content[:32],
-                    related_article=_article,
-                    related_comment=_comment,
+                    related_article=_parent_article,
+                    related_comment=None,
                 ),
             )
 
-        def notify_comment_commented(_article, _comment):
+        def notify_comment_commented(_parent_article, _comment):
             NotificationReadLog.objects.create(
                 read_by=_comment.parent_comment.created_by,
                 notification=cls.objects.create(
                     type='comment_commented',
                     title='회원님의 댓글에 새로운 댓글이 작성되었습니다.',
                     content=_comment.content[:32],
-                    related_article=_article,
-                    related_comment=_comment,
+                    related_article=_parent_article,
+                    related_comment=_comment.parent_comment,
                 ),
             )
 

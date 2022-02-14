@@ -655,6 +655,21 @@ class TestHiddenArticles(TestCase, RequestSetting):
 
         assert res.status_code == 403
 
+    def test_get_deleted_article(self):
+        target_article = self._create_deleted_article()
+
+        res = self.http_request(self.user2, 'get', f'articles/{target_article.id}')
+        assert res.status_code == 410
+
+    def test_exclude_deleted_article_from_list(self):
+        target_article = self._create_deleted_article()
+
+        res = self.http_request(self.user2, 'get', f'articles').data
+
+        # user가 글 목록을 가져올 때, 삭제된 글이 목록에 없는 것 확인
+        for post in res.get('results'):
+            assert post.get('id') != target_article.id
+
     def test_delete_already_deleted_article(self):
         target_article = self._create_deleted_article()
         res = self.http_request(self.user, 'delete', f'articles/{target_article.id}')
