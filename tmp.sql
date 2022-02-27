@@ -28,6 +28,23 @@ INSERT INTO new_ara.core_board (created_at, updated_at, deleted_at, slug, ko_nam
 VALUES ('2022-02-24 21:41:37.000000', '2022-02-24 21:41:39.000000', '0001-01-01 00:00:00.000000', 'with-newara',
         '뉴아라팀과의 게시판', 'With Newara', '뉴아라팀과의 게시판', 'With Newara', 0, 2, 0, 0);
 
+create table new_ara.core_board_group
+(
+    id      int auto_increment
+        primary key,
+    slug    varchar(30) not null,
+    ko_name varchar(30) not null,
+    en_name varchar(30) not null
+);
+
+INSERT INTO new_ara.core_board_group (id, slug, ko_name, en_name) VALUES (1, 'all', '모아보기', 'All');
+INSERT INTO new_ara.core_board_group (id, slug, ko_name, en_name) VALUES (2, 'notice', '공지', 'Notice');
+INSERT INTO new_ara.core_board_group (id, slug, ko_name, en_name) VALUES (3, 'chat', '잡담', 'Chat');
+INSERT INTO new_ara.core_board_group (id, slug, ko_name, en_name) VALUES (4, 'students', '학생 단체 및 동아리', 'Students');
+INSERT INTO new_ara.core_board_group (id, slug, ko_name, en_name) VALUES (5, 'money', '돈', 'Money');
+INSERT INTO new_ara.core_board_group (id, slug, ko_name, en_name) VALUES (6, 'communication', '소통', 'Communication');
+
+
 -- after migration
 UPDATE new_ara.core_board t SET t.group_id = 4 WHERE t.id = 3;
 UPDATE new_ara.core_board t SET t.group_id = 4 WHERE t.id = 12;
