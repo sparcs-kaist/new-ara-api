@@ -61,6 +61,11 @@ class Board(MetaDataModel):
         db_index=True
     )
 
+    group_id = models.IntegerField(
+        verbose_name='그룹 ID',
+        default=1
+    )
+
     def __str__(self) -> str:
         return self.ko_name
 
