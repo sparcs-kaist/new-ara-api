@@ -23,7 +23,7 @@ if [ ! -z $GITHUB_REF ]; then
         export CACHE_DOCKER_TAG=prod
     elif [ $TRIGGER_TYPE = "pull" ]; then
         export PUSH=true
-        export DOCKER_TAG="PR$NAME"
+        export DOCKER_TAG="pr$NAME"
         export CACHE_DOCKER_TAG=develop
     fi
 fi

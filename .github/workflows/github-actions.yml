@@ -18,8 +18,6 @@ env:
   SSO_SECRET_KEY: ${{ secrets.SSO_SECRET_KEY }}
   PORTAL_2FA_KEY: ${{ secrets.PORTAL_2FA_KEY }}
   AWS_REGION: ap-northeast-2
-  ECR_REPOSITORY: newara
-  PASS_ALL_TESTS: false
   
 jobs:
   deploy:
@@ -50,7 +48,7 @@ jobs:
         docker pull $ECR/$PROJECT_NAME:$CACHE_DOCKER_TAG || true
     - name: Build
       run: |
-        docker build --build-arg AWS_ACCESS_KEY_ID=$(echo $AWS_ACCESS_KEY_ID) --build-arg AWS_SECRET_ACCESS_KEY=$(echo $AWS_SECRET_ACCESS_KEY) --cache-from $ECR/$PROJECT_NAME:$CACHE_DOCKER_TAG  -t $PROJECT_NAME .
+        docker build --build-arg AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --build-arg AWS_SECRET_ACCESS_KEY=$(echo $AWS_SECRET_ACCESS_KEY) --cache-from $ECR/$PROJECT_NAME:$CACHE_DOCKER_TAG  -t $PROJECT_NAME .
 
     - name: Run test
       run: |
@@ -62,4 +60,3 @@ jobs:
         echo "Start docker image push"
         docker tag $PROJECT_NAME $ECR/$PROJECT_NAME:$DOCKER_TAG && docker push $ECR/$PROJECT_NAME:$DOCKER_TAG
         echo "Finish docker image push"
-        
