@@ -67,10 +67,8 @@ class Board(MetaDataModel):
     )
 
     banner_image = models.ImageField(
-        null=True,
-        blank=True,
-        default=None,
-        upload_to='board/banner_images',
+        default='default_banner.png',
+        upload_to='board_banner_images',
         verbose_name='게시판 배너 이미지',
     )
 
