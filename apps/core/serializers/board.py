@@ -1,5 +1,3 @@
-from rest_framework import serializers
-
 from ara.classes.serializers import MetaDataModelSerializer
 
 from apps.core.models import Board

@@ -66,6 +66,33 @@ class Board(MetaDataModel):
         default=1
     )
 
+    banner_image = models.ImageField(
+        default='default_banner.png',
+        upload_to='board_banner_images',
+        verbose_name='게시판 배너 이미지',
+    )
+
+    ko_banner_description = models.TextField(
+        null=True,
+        blank=True,
+        default=None,
+        verbose_name='게시판 배너에 삽입되는 국문 소개',
+    )
+
+    en_banner_description = models.TextField(
+        null=True,
+        blank=True,
+        default=None,
+        verbose_name='게시판 배너에 삽입되는 영문 소개',
+    )
+
+    banner_url = models.TextField(
+        null=True,
+        blank=True,
+        default=None,
+        verbose_name='게시판 배너를 클릭 시에 이동하는 링크',
+    )
+
     def __str__(self) -> str:
         return self.ko_name
 
