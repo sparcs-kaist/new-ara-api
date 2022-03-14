@@ -86,6 +86,13 @@ class Board(MetaDataModel):
         verbose_name='게시판 배너에 삽입되는 영문 소개',
     )
 
+    banner_url = models.TextField(
+        null=True,
+        blank=True,
+        default=None,
+        verbose_name='게시판 배너를 클릭 시에 이동하는 링크',
+    )
+
     def __str__(self) -> str:
         return self.ko_name
 
