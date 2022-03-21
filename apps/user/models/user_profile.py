@@ -112,6 +112,16 @@ class UserProfile(MetaDataModel):
         verbose_name='활동정지 마감 일시',
     )
 
+    is_official = models.BooleanField(
+        default=False,
+        verbose_name='공식 계정',
+    )
+    
+    is_school_admin = models.BooleanField(
+        default=False,
+        verbose_name='학교 관리자',
+    )
+
     def __str__(self) -> str:
         return self.nickname
 
