@@ -2,6 +2,7 @@ import bs4
 import typing
 from enum import Enum
 from typing import Dict, Union
+import json
 
 from django.core.files.storage import default_storage
 
@@ -46,7 +47,7 @@ class Article(MetaDataModel):
         verbose_name='text 형식 본문',
     )
 
-    is_anonymous = models.BooleanField(
+    is_anonymous = models.SmallIntegerField(
         default=False,
         verbose_name='익명',
     )
@@ -206,9 +207,9 @@ class Article(MetaDataModel):
     # API 상에서 보이는 사용자 (익명일 경우 익명화된 글쓴이, 그 외는 그냥 글쓴이)
     @cached_property
     def postprocessed_created_by(self) -> Union[settings.AUTH_USER_MODEL, Dict]:
-        if not self.is_anonymous:
+        if self.is_anonymous == 0:
             return self.created_by
-        else:
+        elif self.is_anonymous == 1:
             user_unique_num = self.created_by.id + self.id + HASH_SECRET_VALUE
             user_unique_encoding = str(hex(user_unique_num)).encode('utf-8')
             user_hash = hashlib.sha224(user_unique_encoding).hexdigest()
@@ -222,6 +223,19 @@ class Article(MetaDataModel):
                     'picture': default_storage.url(user_profile_picture),
                     'nickname': gettext('anonymous'),
                     'user': gettext('anonymous')
+                },
+            }
+        else:
+            sso_info = self.created_by.profile.sso_user_info
+            user_realname = json.loads(sso_info["kaist_info"])["ku_kname"] if sso_info["kaist_info"] else sso_info["last_name"] + sso_info["first_name"]
+            user_profile_picture = make_random_profile_picture()
+            return {
+                'id': 0,
+                'username': user_realname,
+                'profile': {
+                    'picture': default_storage.url(user_profile_picture),
+                    'nickname': user_realname,
+                    'user': user_realname
                 },
             }
 

@@ -54,10 +54,10 @@ class Board(MetaDataModel):
         db_index=True,
     )
 
-    is_anonymous = models.BooleanField(
+    is_anonymous = models.SmallIntegerField(
         verbose_name='익명 게시판',
         help_text='게시판의 글과 댓글들이 익명이도록 합니다.',
-        default=False,
+        default=0,
         db_index=True
     )
 

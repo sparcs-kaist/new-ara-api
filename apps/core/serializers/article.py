@@ -57,7 +57,7 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
         return None
 
     def get_created_by(self, obj) -> dict:
-        if obj.is_anonymous:
+        if obj.is_anonymous == 1 or obj.is_anonymous == 2:
             return obj.postprocessed_created_by
         else:
             data = PublicUserSerializer(obj.postprocessed_created_by).data
