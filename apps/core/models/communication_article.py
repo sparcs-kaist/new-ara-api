@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 from ara.db.models import MetaDataModel
 
@@ -15,21 +16,18 @@ class CommunicationArticle(MetaDataModel):
         verbose_name='게시물',
     )
 
-    need_answer = models.BooleanField(
-        default=True,
-        verbose_name='답변 요청 여부',
-    )
     response_deadline = models.DateTimeField(
         null=True,
-        default=None,
+        default=timezone.datetime.min.replace(tzinfo=timezone.utc),
         verbose_name='답변 요청 기한',
     )
     
-    is_checked_by_school = models.BooleanField(
-        default=False,
-        verbose_name='학교 답변 여부',
+    confirmed_by_school_at = models.BooleanField(
+        default=timezone.datetime.min.replace(tzinfo=timezone.utc),
+        verbose_name='학교측 문의 확인 시각',
     )
-    is_answered = models.Booleanfield(
-        default=False,
-        verbose_name='답변 완료',
+
+    answered_at = models.BooleanField(
+        default=timezone.datetime.min.replace(tzinfo=timezone.utc),
+        verbose_name='학교측 답변을 받은 시각',
     )
