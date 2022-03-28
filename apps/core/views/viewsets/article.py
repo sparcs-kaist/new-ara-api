@@ -17,7 +17,7 @@ from apps.core.models import (
     Board,
     Comment,
     Vote,
-    Scrap,
+    Scrap, CommunicationArticle,
 )
 from apps.core.filters.article import ArticleFilter
 from apps.core.permissions.article import ArticlePermission, ArticleKAISTPermission
@@ -132,6 +132,13 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             created_by=self.request.user,
             is_anonymous=Board.objects.get(pk=self.request.data['parent_board']).is_anonymous
         )
+
+        instance = serializer.instance
+        if Board.objects.get(pk=self.request.data['parent_board']).is_school_communication:
+            # create communication article
+            CommunicationArticle.objects.create(
+                article=instance,
+            )
 
     def update(self, request, *args, **kwargs):
         article = self.get_object()
