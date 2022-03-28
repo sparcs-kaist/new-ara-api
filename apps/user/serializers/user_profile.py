@@ -60,7 +60,9 @@ class PublicUserProfileSerializer(BaseUserProfileSerializer):
         fields = (
             'picture',
             'nickname',
-            'user'
+            'user',
+            'is_official',
+            'is_school_admin',
         )
 
 
