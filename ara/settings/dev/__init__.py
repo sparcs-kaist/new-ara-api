@@ -30,6 +30,7 @@ REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] = (
 LOGGING['disable_existing_loggers'] = False
 
 REPORT_THRESHOLD = 4
+SCHOOL_RESPONSE_VOTE_THRESHOLD = 3
 
 try:
     from .local_settings import *
