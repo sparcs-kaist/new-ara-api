@@ -3,9 +3,12 @@ import typing
 from enum import Enum
 from django.utils.translation import gettext
 from rest_framework import serializers
+from django.utils import timezone
+
 from apps.core.documents import ArticleDocument
 from apps.core.models import Article, Board, Block, Scrap, ArticleHiddenReason
 from apps.core.serializers.board import BoardSerializer
+from apps.core.serializers.communication_article import CommunicationArticleSerializer
 from apps.core.serializers.mixins.hidden import HiddenSerializerMixin, HiddenSerializerFieldMixin
 from apps.core.serializers.topic import TopicSerializer
 from apps.user.serializers.user import PublicUserSerializer
@@ -312,7 +315,15 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
     side_articles = serializers.SerializerMethodField(
         read_only=True,
     )
+    communication_article_status = serializers.SerializerMethodField(
+        read_only=True,
+    )
 
+    @staticmethod
+    def get_communication_article_status(obj) -> int:
+        if hasattr(obj, 'communication_article'):
+            return obj.communication_article.get_status()
+        return None
 
 class ArticleAttachmentType(Enum):
     NONE = 'NONE'
@@ -342,6 +353,10 @@ class ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSeriali
         read_only=True,
     )
 
+    communication_article_status = serializers.SerializerMethodField(
+        read_only=True,
+    )
+
     def get_attachment_type(self, obj) -> str:
         if not self.visible_verdict(obj):
             return ArticleAttachmentType.NONE.value
@@ -360,6 +375,12 @@ class ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSeriali
         if has_non_image:
             return ArticleAttachmentType.NON_IMAGE.value
         return ArticleAttachmentType.NONE.value
+
+    @staticmethod
+    def get_communication_article_status(obj) -> int:
+        if hasattr(obj, 'communication_article'):
+            return obj.communication_article.get_status()
+        return None
 
 
 class BestArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
