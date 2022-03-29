@@ -12,7 +12,7 @@ from django.db import transaction
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
 
-from apps.user.views.viewsets import NOUNS, make_random_profile_picture
+from apps.user.views.viewsets import NOUNS, get_profile_picture
 from ara.classes.decorator import cache_by_user
 from ara.db.models import MetaDataModel, MetaDataQuerySet
 from ara.sanitizer import sanitize
@@ -158,19 +158,20 @@ class Comment(MetaDataModel):
     def postprocessed_created_by(self) -> Union[settings.AUTH_USER_MODEL, Dict]:
         if self.is_anonymous == 0:
             return self.created_by
-        elif self.is_anonymous == 1:
-            parent_article = self.get_parent_article()
-            parent_article_id = parent_article.id
-            parent_article_created_by_id = parent_article.created_by.id
-            comment_created_by_id = self.created_by.id
+        
+        parent_article = self.get_parent_article()
+        parent_article_id = parent_article.id
+        parent_article_created_by_id = parent_article.created_by.id
+        comment_created_by_id = self.created_by.id
+        
+        # 댓글 작성자는 (작성자 id + parent article id + 시크릿)을 해시한 값으로 구별합니다.
+        user_unique_num = comment_created_by_id + parent_article_id + HASH_SECRET_VALUE
+        user_unique_encoding = str(hex(user_unique_num)).encode('utf-8')
+        user_hash = hashlib.sha224(user_unique_encoding).hexdigest()
+        user_hash_int = int(user_hash[-4:], 16)
+        user_profile_picture = get_profile_picture(user_hash_int)
 
-            # 댓글 작성자는 (작성자 id + parent article id + 시크릿)을 해시한 값으로 구별합니다.
-            user_unique_num = comment_created_by_id + parent_article_id + HASH_SECRET_VALUE
-            user_unique_encoding = str(hex(user_unique_num)).encode('utf-8')
-            user_hash = hashlib.sha224(user_unique_encoding).hexdigest()
-            user_hash_int = int(user_hash[-4:], 16)
-            user_profile_picture = make_random_profile_picture(user_hash_int)
-
+        if self.is_anonymous == 1:
             if parent_article_created_by_id == comment_created_by_id:
                 user_name = gettext('author')
             else:
@@ -185,10 +186,11 @@ class Comment(MetaDataModel):
                     'user': user_hash
                 }
             }
-        else:
+        
+        if self.is_anonymous == 2:
             sso_info = self.created_by.profile.sso_user_info
             user_realname = json.loads(sso_info["kaist_info"])["ku_kname"] if sso_info["kaist_info"] else sso_info["last_name"] + sso_info["first_name"]
-            user_profile_picture = make_random_profile_picture()
+
             return {
                 'id': 0,
                 'username': user_realname,

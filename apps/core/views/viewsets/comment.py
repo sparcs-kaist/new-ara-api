@@ -58,16 +58,22 @@ class CommentViewSet(mixins.CreateModelMixin,
 
     def perform_create(self, serializer):
         parent_article_id = self.request.data.get('parent_article')
-        parent_article = parent_article_id and Article.objects.filter(id=parent_article_id).first()
-        parent_article_is_anonymous = (parent_article and parent_article.is_anonymous) or False
+        parent_article = parent_article_id and Article.objects.get(id=parent_article_id)
+        parent_article_is_anonymous = (parent_article and parent_article.is_anonymous) or 0
 
         parent_comment_id = self.request.data.get('parent_comment')
-        parent_comment = parent_comment_id and Comment.objects.filter(id=parent_comment_id).first()
-        parent_comment_is_anonymous = (parent_comment and parent_comment.is_anonymous) or False
+        parent_comment = parent_comment_id and Comment.objects.get(id=parent_comment_id)
+        parent_comment_is_anonymous = (parent_comment and parent_comment.is_anonymous) or 0
+
+        anonymous_status = 0
+        for stat in (1, 2):
+            if parent_article_is_anonymous == stat or parent_comment_is_anonymous == stat:
+                anonymous_status = stat
+                break
 
         serializer.save(
             created_by=self.request.user,
-            is_anonymous=parent_article_is_anonymous or parent_comment_is_anonymous,
+            is_anonymous=anonymous_status,
         )
 
     def retrieve(self, request, *args, **kwargs):

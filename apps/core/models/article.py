@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
 
-from apps.user.views.viewsets import make_random_profile_picture, hashlib
+from apps.user.views.viewsets import get_profile_picture, hashlib
 from ara.classes.decorator import cache_by_user
 from ara.db.models import MetaDataModel
 from ara.sanitizer import sanitize
@@ -209,13 +209,14 @@ class Article(MetaDataModel):
     def postprocessed_created_by(self) -> Union[settings.AUTH_USER_MODEL, Dict]:
         if self.is_anonymous == 0:
             return self.created_by
-        elif self.is_anonymous == 1:
-            user_unique_num = self.created_by.id + self.id + HASH_SECRET_VALUE
-            user_unique_encoding = str(hex(user_unique_num)).encode('utf-8')
-            user_hash = hashlib.sha224(user_unique_encoding).hexdigest()
-            user_hash_int = int(user_hash[-4:], 16)
-            user_profile_picture = make_random_profile_picture(user_hash_int)
+        
+        user_unique_num = self.created_by.id + self.id + HASH_SECRET_VALUE
+        user_unique_encoding = str(hex(user_unique_num)).encode('utf-8')
+        user_hash = hashlib.sha224(user_unique_encoding).hexdigest()
+        user_hash_int = int(user_hash[-4:], 16)
+        user_profile_picture = get_profile_picture(user_hash_int)
 
+        if self.is_anonymous == 1:
             return {
                 'id': user_hash,
                 'username': gettext('anonymous'),
@@ -225,10 +226,11 @@ class Article(MetaDataModel):
                     'user': gettext('anonymous')
                 },
             }
-        else:
+        
+        if self.is_anonymous == 2:
             sso_info = self.created_by.profile.sso_user_info
             user_realname = json.loads(sso_info["kaist_info"])["ku_kname"] if sso_info["kaist_info"] else sso_info["last_name"] + sso_info["first_name"]
-            user_profile_picture = make_random_profile_picture()
+
             return {
                 'id': 0,
                 'username': user_realname,
