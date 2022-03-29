@@ -2,6 +2,7 @@ import typing
 from enum import Enum
 from typing import Dict, Union
 import hashlib
+import json
 
 from django.core.files.storage import default_storage
 from django.db import models, IntegrityError
@@ -38,8 +39,8 @@ class Comment(MetaDataModel):
         verbose_name='본문',
     )
 
-    is_anonymous = models.BooleanField(
-        default=False,
+    is_anonymous = models.SmallIntegerField(
+        default=0,
         verbose_name='익명',
     )
 
@@ -155,9 +156,9 @@ class Comment(MetaDataModel):
     # API 상에서 보이는 사용자 (익명일 경우 익명화된 글쓴이, 그 외는 그냥 글쓴이)
     @cached_property
     def postprocessed_created_by(self) -> Union[settings.AUTH_USER_MODEL, Dict]:
-        if not self.is_anonymous:
+        if self.is_anonymous == 0:
             return self.created_by
-        else:
+        elif self.is_anonymous == 1:
             parent_article = self.get_parent_article()
             parent_article_id = parent_article.id
             parent_article_created_by_id = parent_article.created_by.id
@@ -184,6 +185,20 @@ class Comment(MetaDataModel):
                     'user': user_hash
                 }
             }
+        else:
+            sso_info = self.created_by.profile.sso_user_info
+            user_realname = json.loads(sso_info["kaist_info"])["ku_kname"] if sso_info["kaist_info"] else sso_info["last_name"] + sso_info["first_name"]
+            user_profile_picture = make_random_profile_picture()
+            return {
+                'id': 0,
+                'username': user_realname,
+                'profile': {
+                    'picture': default_storage.url(user_profile_picture),
+                    'nickname': user_realname,
+                    'user': user_realname
+                },
+            }
+
 
     @cache_by_user
     def hidden_reasons(self, user: settings.AUTH_USER_MODEL) -> typing.List:
