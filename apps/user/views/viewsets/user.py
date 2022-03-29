@@ -46,22 +46,19 @@ def _make_random_name() -> str:
     return temp_nickname
 
 
-def make_random_profile_picture(hash_val=None) -> str:
-    colors = ['blue', 'red', 'gray']
-    numbers = ['1', '2', '3']
-
-    if hash_val:
-        col = hash_val % len(colors)
-        num = (hash_val // 3) % len(numbers)
-    else:
-        col = random.randrange(len(colors))
-        num = random.randrange(len(numbers))
-
-    temp_color = colors[col]
-    temp_num = numbers[num]
-    default_picture = f'user_profiles/default_pictures/{temp_color}-default{temp_num}.png'
-
-    return default_picture
+def get_profile_picture(hash_val=None) -> str:
+	colors = ['blue', 'red', 'gray']
+	numbers = ['1', '2', '3']
+	
+	if hash_val is None:
+		col = random.choice(colors)
+		num = random.choice(numbers)
+	else:
+		nidx, cidx = divmod(hash_val, len(colors))
+		col = colors[cidx]
+		num = numbers[nidx % len(numbers)]
+	
+	return f'user_profiles/default_pictures/{col}-default{num}.png'
 
 
 class UserViewSet(ActionAPIViewSet):
@@ -165,7 +162,7 @@ class UserViewSet(ActionAPIViewSet):
 
         except UserProfile.DoesNotExist:  # 회원가입
             user_nickname = _make_random_name()
-            user_profile_picture = make_random_profile_picture()
+            user_profile_picture = get_profile_picture()
             email = user_info['email']
 
             if email.split('@')[-1] == 'sso.sparcs.org':  # sso에서 random하게 만든 이메일인 경우
