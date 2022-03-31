@@ -192,7 +192,7 @@ class Comment(MetaDataModel):
             user_realname = json.loads(sso_info["kaist_info"])["ku_kname"] if sso_info["kaist_info"] else sso_info["last_name"] + sso_info["first_name"]
 
             return {
-                'id': 0,
+                'id': user_unique_num,
                 'username': user_realname,
                 'profile': {
                     'picture': default_storage.url(user_profile_picture),

@@ -215,6 +215,7 @@ class Article(MetaDataModel):
         user_hash = hashlib.sha224(user_unique_encoding).hexdigest()
         user_hash_int = int(user_hash[-4:], 16)
         user_profile_picture = get_profile_picture(user_hash_int)
+        user_profile_picture_realname = get_profile_picture(self.created_by.id + HASH_SECRET_VALUE)
 
         if self.is_anonymous == 1:
             return {
@@ -232,10 +233,10 @@ class Article(MetaDataModel):
             user_realname = json.loads(sso_info["kaist_info"])["ku_kname"] if sso_info["kaist_info"] else sso_info["last_name"] + sso_info["first_name"]
 
             return {
-                'id': 0,
+                'id': user_unique_num,
                 'username': user_realname,
                 'profile': {
-                    'picture': default_storage.url(user_profile_picture),
+                    'picture': default_storage.url(user_profile_picture_realname),
                     'nickname': user_realname,
                     'user': user_realname
                 },
