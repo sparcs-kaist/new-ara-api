@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib import admin
 
 from ara.db.models import MetaDataModel
 
@@ -33,10 +34,20 @@ class CommunicationArticle(MetaDataModel):
     )
 
     def get_status(self) -> int:
-        if self.response_deadline == timezone.datetime.min.replace(tzinfo=timezone.utc):
+        min_time = timezone.datetime.min.replace(tzinfo=timezone.utc)
+        if self.response_deadline == min_time:
             return 0
-        if self.confirmed_by_school_at == timezone.datetime.min.replace(tzinfo=timezone.utc):
+        if self.confirmed_by_school_at == min_time:
             return 1
-        if self.answered_at == timezone.datetime.min.replace(tzinfo=timezone.utc):
+        if self.answered_at == min_time:
             return 2
         return 3
+    
+    @admin.display(description='진행 상황')
+    def get_status_string(self) -> str:
+        status_list = ['소통 중', '답변 대기 중', '답변 준비 중', '답변 완료']
+        status = self.get_status()
+        return status_list[status]
+    
+    def __str__(self):
+        return self.article.title
