@@ -33,21 +33,15 @@ class CommunicationArticle(MetaDataModel):
         verbose_name='학교측 답변을 받은 시각',
     )
 
-    def get_status(self) -> int:
-        min_time = timezone.datetime.min.replace(tzinfo=timezone.utc)
-        if self.response_deadline == min_time:
-            return 0
-        if self.confirmed_by_school_at == min_time:
-            return 1
-        if self.answered_at == min_time:
-            return 2
-        return 3
+    school_response_status = models.SmallIntegerField(
+        default=0,
+        verbose_name='답변 진행 상황',
+    )
     
     @admin.display(description='진행 상황')
     def get_status_string(self) -> str:
         status_list = ['소통 중', '답변 대기 중', '답변 준비 중', '답변 완료']
-        status = self.get_status()
-        return status_list[status]
+        return status_list[self.school_response_status]
     
     def __str__(self):
         return self.article.title
