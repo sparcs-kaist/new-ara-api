@@ -1,7 +1,28 @@
 import pytest
 from django.utils import timezone
-from apps.core.models import Article, Board, CommunicationArticle
+from django.contrib.auth.models import User
+
+from apps.core.models import Article, Board, Comment, CommunicationArticle
+from apps.user.models import UserProfile
+
 from tests.conftest import RequestSetting, TestCase
+from rest_framework.test import APIClient
+
+
+@pytest.fixture(scope='class')
+def set_school_admin(request):
+    request.cls.school_admin, _ = User.objects.get_or_create(
+        username='School Admin',
+        email='schooladmin@sparcs.org'
+    )
+    if not hasattr(request.cls.school_admin, 'profile'):
+        UserProfile.objects.get_or_create(
+            user=request.cls.school_admin,
+            nickname='School Admin',
+            agree_terms_of_service_at=timezone.now(),
+            is_school_admin=True
+        )
+    request.cls.api_client = APIClient()
 
 
 @pytest.fixture(scope='class')
@@ -44,8 +65,8 @@ def set_communication_article(request):
     )
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_client3',
-                         'set_user_client4', 'set_board', 'set_article', 'set_communication_article')
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_client3', 'set_user_client4',
+                         'set_school_admin', 'set_board', 'set_article', 'set_communication_article')
 class TestCommunicationArticle(TestCase, RequestSetting):
     # 소통 게시물이 communication_article 필드 가지는지 확인
     def test_article_has_communication_article(self):
@@ -61,8 +82,8 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             self.communication_article.answered_at == min_time
         ])
 
-    # get_status 메소드 동작 확인
-    def test_get_status(self):
+    # school_response_status 업데이트 확인
+    def test_school_response_status(self):
         # vote 개수가 SCHOOL_RESPONSE_VOTE_THRESHOLD보다 작으면 status == 0
         res = self.http_request(self.user, 'get', f'articles/{self.article.id}').data
         assert res.get('communication_article_status') == 0
@@ -83,3 +104,19 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         min_time = timezone.datetime.min.replace(tzinfo=timezone.utc)
         self.communication_article.refresh_from_db()
         assert self.communication_article.response_deadline != min_time
+
+        # is_school_admin = True인 사용자가 코멘트 작성
+        Comment.objects.create(
+            content = 'School Official Comment',
+            is_anonymous = False,
+            created_by = self.school_admin,
+            parent_article = self.article
+        )
+
+        # school admin이 코멘트 작성했으므로 status == 3
+        res = self.http_request(self.user, 'get', f'articles/{self.article.id}').data
+        assert res.get('communication_article_status') == 3
+
+        # answered_at 업데이트 확인
+        self.communication_article.refresh_from_db()
+        assert self.communication_article.answered_at != min_time
