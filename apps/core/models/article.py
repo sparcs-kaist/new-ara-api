@@ -194,8 +194,10 @@ class Article(MetaDataModel):
         self.positive_vote_count = self.vote_set.filter(is_positive=True).count() + self.migrated_positive_vote_count
         self.negative_vote_count = self.vote_set.filter(is_positive=False).count() + self.migrated_negative_vote_count
 
-        if self.positive_vote_count >= SCHOOL_RESPONSE_VOTE_THRESHOLD:
+        if self.parent_board.is_school_communication and self.positive_vote_count >= SCHOOL_RESPONSE_VOTE_THRESHOLD:
             self.communication_article.response_deadline = timezone.now() + timezone.timedelta(days=14)
+            if self.communication_article.school_response_status < 1:
+                self.communication_article.school_response_status = 1
             self.communication_article.save()
 
         self.save()
