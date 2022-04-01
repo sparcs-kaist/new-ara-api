@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'cacheops',
     'django_elasticsearch_dsl',
+    'django_filters',
 
     'apps.core',
     'apps.user',
