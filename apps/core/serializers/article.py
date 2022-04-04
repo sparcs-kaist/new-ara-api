@@ -320,7 +320,7 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
     )
 
     @staticmethod
-    def get_communication_article_status(obj) -> int:
+    def get_communication_article_status(obj):
         if hasattr(obj, 'communication_article'):
             return obj.communication_article.school_response_status
         return None
@@ -377,7 +377,7 @@ class ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSeriali
         return ArticleAttachmentType.NONE.value
 
     @staticmethod
-    def get_communication_article_status(obj) -> int:
+    def get_communication_article_status(obj):
         if hasattr(obj, 'communication_article'):
             return obj.communication_article.school_response_status
         return None

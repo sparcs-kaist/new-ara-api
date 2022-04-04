@@ -2,7 +2,8 @@ import pytest
 from django.utils import timezone
 from django.contrib.auth.models import User
 
-from apps.core.models import Article, Board, Comment, CommunicationArticle
+from apps.core.models import Article, Board, Comment
+from apps.core.models.communication_article import CommunicationArticle, SchoolResponseStatus
 from apps.user.models import UserProfile
 
 from tests.conftest import RequestSetting, TestCase
@@ -84,9 +85,9 @@ class TestCommunicationArticle(TestCase, RequestSetting):
 
     # school_response_status 업데이트 확인
     def test_school_response_status(self):
-        # vote 개수가 SCHOOL_RESPONSE_VOTE_THRESHOLD보다 작으면 status == 0
+        # vote 개수가 SCHOOL_RESPONSE_VOTE_THRESHOLD보다 작으면 status == SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD
         res = self.http_request(self.user, 'get', f'articles/{self.article.id}').data
-        assert res.get('communication_article_status') == 0
+        assert res.get('communication_article_status') == SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD
 
         # 게시물에 좋아요 3개 추가 (작성일 기준 SCHOOL_RESPONSE_VOTE_THRESHOLD == 3)
         users_tuple = (self.user2, self.user3, self.user4)
@@ -97,8 +98,8 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         res = self.http_request(self.user, 'get', f'articles/{self.article.id}').data
         assert res.get('positive_vote_count') == len(users_tuple)
 
-        # 좋아요 개수가 SCHOOL_RESPONSE_VOTE_THRESHOLD 이상이므로 status == 1
-        assert res.get('communication_article_status') == 1
+        # 좋아요 개수가 SCHOOL_RESPONSE_VOTE_THRESHOLD 이상이므로 status == SchoolResponseStatus.BEFORE_SCHOOL_CONFIRM
+        assert res.get('communication_article_status') == SchoolResponseStatus.BEFORE_SCHOOL_CONFIRM
 
         # response_deadline 업데이트 확인
         min_time = timezone.datetime.min.replace(tzinfo=timezone.utc)
@@ -113,9 +114,9 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             parent_article = self.article
         )
 
-        # school admin이 코멘트 작성했으므로 status == 3
+        # school admin이 코멘트 작성했으므로 status == SchoolResponseStatus.ANSWER_DONE
         res = self.http_request(self.user, 'get', f'articles/{self.article.id}').data
-        assert res.get('communication_article_status') == 3
+        assert res.get('communication_article_status') == SchoolResponseStatus.ANSWER_DONE
 
         # answered_at 업데이트 확인
         self.communication_article.refresh_from_db()

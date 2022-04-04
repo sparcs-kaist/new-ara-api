@@ -19,6 +19,7 @@ from ara.settings import HASH_SECRET_VALUE, SCHOOL_RESPONSE_VOTE_THRESHOLD
 from .block import Block
 from .report import Report
 from .comment import Comment
+from .communication_article import SchoolResponseStatus
 
 
 class ArticleHiddenReason(str, Enum):
@@ -196,8 +197,8 @@ class Article(MetaDataModel):
 
         if self.parent_board.is_school_communication and self.positive_vote_count >= SCHOOL_RESPONSE_VOTE_THRESHOLD:
             self.communication_article.response_deadline = timezone.now() + timezone.timedelta(days=14)
-            if self.communication_article.school_response_status < 1:
-                self.communication_article.school_response_status = 1
+            if self.communication_article.school_response_status == SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD:
+                self.communication_article.school_response_status = SchoolResponseStatus.BEFORE_SCHOOL_CONFIRM
             self.communication_article.save()
 
         self.save()

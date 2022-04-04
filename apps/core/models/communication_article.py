@@ -4,6 +4,15 @@ from django.contrib import admin
 
 from ara.db.models import MetaDataModel
 
+from enum import IntEnum
+
+
+class SchoolResponseStatus(IntEnum):
+    BEFORE_UPVOTE_THRESHOLD = 0
+    BEFORE_SCHOOL_CONFIRM = 1
+    PREPARING_ANSWER = 2
+    ANSWER_DONE = 3
+
 
 class CommunicationArticle(MetaDataModel):
     class Meta(MetaDataModel.Meta):
@@ -34,7 +43,7 @@ class CommunicationArticle(MetaDataModel):
     )
 
     school_response_status = models.SmallIntegerField(
-        default=0,
+        default=SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD,
         verbose_name='답변 진행 상황',
     )
     
