@@ -60,14 +60,14 @@ class CommentViewSet(mixins.CreateModelMixin,
     def perform_create(self, serializer):
         parent_article_id = self.request.data.get('parent_article')
         parent_article = parent_article_id and Article.objects.get(id=parent_article_id)
-        parent_article_name_type = (parent_article and parent_article.name_type == BoardNameType.ANONYMOUS) or 0
+        parent_article_name_type = parent_article and parent_article.name_type != BoardNameType.REGULAR
 
         parent_comment_id = self.request.data.get('parent_comment')
         parent_comment = parent_comment_id and Comment.objects.get(id=parent_comment_id)
-        parent_comment_name_type = (parent_comment and parent_comment.name_type == BoardNameType.ANONYMOUS) or 0
+        parent_comment_name_type = parent_comment and parent_comment.name_type != BoardNameType.REGULAR
 
         anonymous_status = 0
-        for stat in (1, 2):
+        for stat in (BoardNameType.ANONYMOUS, BoardNameType.REALNAME):
             if parent_article_name_type == stat or parent_comment_name_type == stat:
                 anonymous_status = stat
                 break
