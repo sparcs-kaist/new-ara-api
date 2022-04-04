@@ -1,15 +1,23 @@
+from django.utils.translation import gettext
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, viewsets
+from rest_framework import status, filters, viewsets, response, permissions
 
 from ara.classes.viewset import ActionAPIViewSet
 
 from apps.core.models.communication_article import CommunicationArticle
-from apps.core.serializers.communication_article import CommunicationArticleSerializer
+from apps.core.serializers.communication_article import CommunicationArticleSerializer, CommunicationArticleUpdateActionSerializer
 
 
-class CommunicationArticleViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
+class CommunicationArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     queryset = CommunicationArticle.objects.all()
     serializer_class = CommunicationArticleSerializer
+    action_serializer_class = {
+        'update': CommunicationArticleUpdateActionSerializer,
+    }
+    permission_classes = (
+        permissions.IsAuthenticated,
+    )
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
 
     # usage: /api/communication_articles/?ordering=created_at
@@ -18,3 +26,19 @@ class CommunicationArticleViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSe
 
     # usage: /api/communication_articles/?school_response_status=1
     filterset_fields = ['school_response_status']
+
+    # 학교 담당자가 신문고 게시글에 대해 `확인했습니다` 버튼을 누른 경우
+    def update(self, request, *args, **kwargs):
+        # user가 학교 담당자인지 확인
+        if not self.request.user.profile.is_school_admin:
+            return response.Response({'message': gettext('You are not authorized to access this feature')},
+                                     status=status.HTTP_403_FORBIDDEN)
+        elif self.get_object().confirmed_by_school_at != timezone.datetime.min.replace(tzinfo=timezone.utc):
+            return response.Response(status=status.HTTP_200_OK)
+        return super().update(request, *args, **kwargs)
+
+    def perform_update(self, serializer):
+        serializer.save(
+            confirmed_by_school_at=timezone.now(),
+        )
+        return super().perform_update(serializer)
