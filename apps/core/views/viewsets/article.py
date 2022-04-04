@@ -5,6 +5,7 @@ from django.http import Http404
 from django.utils.translation import gettext
 from rest_framework import status, viewsets, response, decorators, serializers, permissions
 from rest_framework.response import Response
+from apps.core.models.board import BoardNameType
 
 from ara import redis
 from ara.classes.viewset import ActionAPIViewSet
@@ -72,11 +73,13 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         elif self.action == 'list':
             created_by = self.request.query_params.get('created_by')
             if created_by and int(created_by) != self.request.user.id:
-                queryset = queryset.exclude(is_anonymous=True)
+                # exclude someone's anonymous or realname article in one's profile
+                queryset = queryset.exclude(name_type=BoardNameType.ANONYMOUS).exclude(name_type=BoardNameType.REALNAME)
 
+            # exclude article written by blocked users in anonymous board
             queryset = queryset.exclude(
                 created_by__id__in=self.request.user.block_set.values('user'),
-                is_anonymous=True
+                name_type=BoardNameType.ANONYMOUS
             )
 
             # optimizing queryset for list action
@@ -130,7 +133,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def perform_create(self, serializer):
         serializer.save(
             created_by=self.request.user,
-            is_anonymous=Board.objects.get(pk=self.request.data['parent_board']).is_anonymous
+            name_type=Board.objects.get(pk=self.request.data['parent_board']).name_type
         )
 
     def update(self, request, *args, **kwargs):

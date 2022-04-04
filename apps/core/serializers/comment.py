@@ -1,5 +1,6 @@
 from rest_framework import serializers
 import typing
+from apps.core.models.board import BoardNameType
 
 from apps.core.serializers.mixins.hidden import HiddenSerializerFieldMixin, HiddenSerializerMixin
 from ara.classes.serializers import MetaDataModelSerializer
@@ -33,7 +34,7 @@ class BaseCommentSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
         return None
 
     def get_created_by(self, obj) -> dict:
-        if obj.is_anonymous == 1 or obj.is_anonymous == 2:
+        if obj.name_type == BoardNameType.ANONYMOUS or obj.name_type == BoardNameType.REALNAME:
             return obj.postprocessed_created_by
         else:
             data = PublicUserSerializer(obj.postprocessed_created_by).data
@@ -108,7 +109,7 @@ class CommentCreateActionSerializer(BaseCommentSerializer):
 class CommentUpdateActionSerializer(BaseCommentSerializer):
     class Meta(BaseCommentSerializer.Meta):
         read_only_fields = (
-            'is_anonymous',
+            'name_type',
             'positive_vote_count',
             'negative_vote_count',
             'created_by',

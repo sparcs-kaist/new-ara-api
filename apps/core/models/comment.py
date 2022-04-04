@@ -19,6 +19,7 @@ from ara.sanitizer import sanitize
 from ara.settings import HASH_SECRET_VALUE
 from .block import Block
 from .report import Report
+from .board import BoardNameType
 
 
 class CommentHiddenReason(Enum):
@@ -39,9 +40,9 @@ class Comment(MetaDataModel):
         verbose_name='본문',
     )
 
-    is_anonymous = models.SmallIntegerField(
-        default=0,
-        verbose_name='익명',
+    name_type = models.SmallIntegerField(
+        default=BoardNameType.REGULAR,
+        verbose_name='익명 혹은 실명',
     )
 
     report_count = models.IntegerField(
@@ -156,7 +157,7 @@ class Comment(MetaDataModel):
     # API 상에서 보이는 사용자 (익명일 경우 익명화된 글쓴이, 그 외는 그냥 글쓴이)
     @cached_property
     def postprocessed_created_by(self) -> Union[settings.AUTH_USER_MODEL, Dict]:
-        if self.is_anonymous == 0:
+        if self.name_type == BoardNameType.REGULAR:
             return self.created_by
         
         parent_article = self.get_parent_article()
@@ -171,7 +172,7 @@ class Comment(MetaDataModel):
         user_hash_int = int(user_hash[-4:], 16)
         user_profile_picture = get_profile_picture(user_hash_int)
 
-        if self.is_anonymous == 1:
+        if self.name_type == BoardNameType.ANONYMOUS:
             if parent_article_created_by_id == comment_created_by_id:
                 user_name = gettext('author')
             else:
@@ -187,7 +188,7 @@ class Comment(MetaDataModel):
                 }
             }
         
-        if self.is_anonymous == 2:
+        if self.name_type == BoardNameType.REALNAME:
             sso_info = self.created_by.profile.sso_user_info
             user_realname = json.loads(sso_info["kaist_info"])["ku_kname"] if sso_info["kaist_info"] else sso_info["last_name"] + sso_info["first_name"]
 

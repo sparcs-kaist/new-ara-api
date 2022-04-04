@@ -165,8 +165,7 @@ msgstr "기타 직원"
 
 #: apps/user/serializers/user_profile.py:43
 #, python-format
-msgid ""
-"Nicknames can only be changed every 3 months. (can't change until %(date)s)"
+msgid "Nicknames can only be changed every 3 months. (can't change until %(date)s)"
 msgstr "닉네임은 3개월마다 변경할 수 있습니다. (%(date)s까지 변경 불가)"
 
 #: ara/settings/django.py:96

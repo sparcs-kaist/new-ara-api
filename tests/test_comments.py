@@ -4,6 +4,7 @@ import pytest
 from django.contrib.auth.models import User
 from django.utils import timezone
 from apps.core.models import Article, Topic, Board, Comment, Block, Vote
+from apps.core.models.board import BoardNameType
 from tests.conftest import RequestSetting, TestCase
 
 
@@ -38,7 +39,7 @@ def set_articles(request):
         title='Test Article',
         content='Content of test article',
         content_text='Content of test article in text',
-        is_anonymous=False,
+        name_type=BoardNameType.REGULAR,
         is_content_sexual=False,
         is_content_social=False,
         hit_count=0,
@@ -55,7 +56,7 @@ def set_articles(request):
         title='Anonymous Test Article',
         content='Content of test article',
         content_text='Content of test article in text',
-        is_anonymous=True,
+        name_type=BoardNameType.ANONYMOUS,
         is_content_sexual=False,
         is_content_social=False,
         hit_count=0,
@@ -73,14 +74,14 @@ def set_comments(request):
     """set_article 먼저 적용"""
     request.cls.comment = Comment.objects.create(
         content='this is a test comment',
-        is_anonymous=False,
+        name_type=BoardNameType.REGULAR,
         created_by=request.cls.user,
         parent_article=request.cls.article,
     )
 
     request.cls.comment_anonymous = Comment.objects.create(
         content='this is an anonymous test comment',
-        is_anonymous=True,
+        name_type=BoardNameType.ANONYMOUS,
         created_by=request.cls.user,
         parent_article=request.cls.article_anonymous,
     )
@@ -96,13 +97,13 @@ class TestComments(TestCase, RequestSetting):
 
         comment2 = Comment.objects.create(
                         content='Test comment 2',
-                        is_anonymous=False,
+                        name_type=BoardNameType.REGULAR,
                         created_by=self.user,
                         parent_article=self.article
                     )
         comment3 = Comment.objects.create(
                         content='Test comment 3',
-                        is_anonymous=False,
+                        name_type=BoardNameType.REGULAR,
                         created_by=self.user,
                         parent_article=self.article
                     )
@@ -152,7 +153,7 @@ class TestComments(TestCase, RequestSetting):
 
         subcomment1 = Comment.objects.create(
             content='Test comment 2',
-            is_anonymous=False,
+            name_type=BoardNameType.REGULAR,
             created_by=self.user,
             parent_comment=self.comment
         )
@@ -163,7 +164,7 @@ class TestComments(TestCase, RequestSetting):
 
         subcomment2 = Comment.objects.create(
             content='Test comment 3',
-            is_anonymous=False,
+            name_type=BoardNameType.REGULAR,
             created_by=self.user,
             parent_comment=self.comment
         )
@@ -200,7 +201,7 @@ class TestComments(TestCase, RequestSetting):
     def test_delete_comment_with_subcomment(self):
         subcomment = Comment.objects.create(
             content='Test subcomment',
-            is_anonymous=False,
+            name_type=BoardNameType.REGULAR,
             created_by=self.user,
             parent_comment=self.comment
         )
@@ -232,18 +233,18 @@ class TestComments(TestCase, RequestSetting):
         # 익명 댓글 생성
         anon_comment = Comment.objects.create(
                                 content='Anonymous test comment',
-                                is_anonymous=True,
+                                name_type=BoardNameType.ANONYMOUS,
                                 created_by=self.user,
                                 parent_article=self.article
                             )
 
         # 익명 댓글을 GET할 때, 작성자의 정보가 전달되지 않는 것 확인
         res = self.http_request(self.user, 'get', f'comments/{anon_comment.id}').data
-        assert res.get('is_anonymous')
+        assert res.get('name_type') == BoardNameType.ANONYMOUS
         assert res.get('created_by')['username'] != anon_comment.created_by.username
 
         res2 = self.http_request(self.user2, 'get', f'comments/{anon_comment.id}').data
-        assert res2.get('is_anonymous')
+        assert res2.get('name_type') == BoardNameType.ANONYMOUS
         assert res2.get('created_by')['username'] != anon_comment.created_by.username
 
     # 익명글의 글쓴이가 본인의 글에 남긴 댓글에 대해, user_id가 같은지 확인
@@ -251,7 +252,7 @@ class TestComments(TestCase, RequestSetting):
         # 익명 댓글 생성
         Comment.objects.create(
             content='Anonymous test comment',
-            is_anonymous=True,
+            name_type=BoardNameType.ANONYMOUS,
             created_by=self.user,
             parent_article=self.article
         )
@@ -277,7 +278,7 @@ class TestComments(TestCase, RequestSetting):
             'attachment': None,
         }
         self.http_request(self.user, 'post', 'comments', comment_data)
-        assert Comment.objects.filter(content=comment_str).first().is_anonymous
+        assert Comment.objects.filter(content=comment_str).first().name_type == BoardNameType.ANONYMOUS
 
     def test_comment_on_anonymous_parent_comment(self):
         comment_str = 'This is a comment on an anonymous parent comment'
@@ -288,7 +289,7 @@ class TestComments(TestCase, RequestSetting):
             'attachment': None,
         }
         self.http_request(self.user, 'post', 'comments', comment_data)
-        assert Comment.objects.filter(content=comment_str).first().is_anonymous
+        assert Comment.objects.filter(content=comment_str).first().name_type == BoardNameType.ANONYMOUS
 
     def test_comment_on_nonanonymous_parent_article(self):
         comment_str = 'This is a comment on an non-anonymous parent article'
@@ -300,7 +301,7 @@ class TestComments(TestCase, RequestSetting):
         }
         self.http_request(self.user, 'post', 'comments', comment_data)
         Comment.objects.filter(content=comment_str).first()
-        assert not Comment.objects.filter(content=comment_str).first().is_anonymous
+        assert not Comment.objects.filter(content=comment_str).first().name_type == BoardNameType.ANONYMOUS
 
     def test_comment_on_nonanonymous_parent_comment(self):
         comment_str = 'This is a comment on an non-anonymous parent comment'
@@ -311,7 +312,7 @@ class TestComments(TestCase, RequestSetting):
             'attachment': None,
         }
         self.http_request(self.user, 'post', 'comments', comment_data)
-        assert not Comment.objects.filter(content=comment_str).first().is_anonymous
+        assert not Comment.objects.filter(content=comment_str).first().name_type == BoardNameType.ANONYMOUS
 
     # 댓글 좋아요 확인
     def test_positive_vote(self):
@@ -363,7 +364,7 @@ class TestHiddenComments(TestCase, RequestSetting):
     def _comment_factory(self, **comment_kwargs):
         return Comment.objects.create(
             content='example comment',
-            is_anonymous=False,
+            name_type=BoardNameType.REGULAR,
             created_by=self.user,
             parent_article=self.article,
             **comment_kwargs
@@ -387,7 +388,7 @@ class TestHiddenComments(TestCase, RequestSetting):
         )
         comment2 = Comment.objects.create(
             content='example comment',
-            is_anonymous=False,
+            name_type=BoardNameType.REGULAR,
             created_by=self.user2,
             parent_article=self.article
         )

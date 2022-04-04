@@ -20,6 +20,7 @@ from ara.settings import HASH_SECRET_VALUE
 from .block import Block
 from .report import Report
 from .comment import Comment
+from .board import BoardNameType
 
 
 class ArticleHiddenReason(str, Enum):
@@ -47,9 +48,9 @@ class Article(MetaDataModel):
         verbose_name='text 형식 본문',
     )
 
-    is_anonymous = models.SmallIntegerField(
-        default=False,
-        verbose_name='익명',
+    name_type = models.SmallIntegerField(
+        default=BoardNameType.REGULAR,
+        verbose_name='익명 혹은 실명 여부',
     )
     is_content_sexual = models.BooleanField(
         default=False,
@@ -207,7 +208,7 @@ class Article(MetaDataModel):
     # API 상에서 보이는 사용자 (익명일 경우 익명화된 글쓴이, 그 외는 그냥 글쓴이)
     @cached_property
     def postprocessed_created_by(self) -> Union[settings.AUTH_USER_MODEL, Dict]:
-        if self.is_anonymous == 0:
+        if self.name_type == BoardNameType.REGULAR:
             return self.created_by
         
         user_unique_num = self.created_by.id + self.id + HASH_SECRET_VALUE
@@ -217,7 +218,7 @@ class Article(MetaDataModel):
         user_profile_picture = get_profile_picture(user_hash_int)
         user_profile_picture_realname = get_profile_picture(self.created_by.id + HASH_SECRET_VALUE)
 
-        if self.is_anonymous == 1:
+        if self.name_type == BoardNameType.ANONYMOUS:
             return {
                 'id': user_hash,
                 'username': gettext('anonymous'),
@@ -228,7 +229,7 @@ class Article(MetaDataModel):
                 },
             }
         
-        if self.is_anonymous == 2:
+        if self.name_type == BoardNameType.REALNAME:
             sso_info = self.created_by.profile.sso_user_info
             user_realname = json.loads(sso_info["kaist_info"])["ku_kname"] if sso_info["kaist_info"] else sso_info["last_name"] + sso_info["first_name"]
 
