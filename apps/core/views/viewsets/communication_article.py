@@ -13,7 +13,7 @@ class CommunicationArticleViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSe
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
 
     # usage: /api/communication_articles/?ordering=created_at
-    ordering_fields = ['created_at', 'article__positive_vote_count']
+    ordering_fields = ['article__positive_vote_count']
     ordering = ['-article__positive_vote_count']  # default: 추천수 내림차순
 
     # usage: /api/communication_articles/?school_response_status=1
