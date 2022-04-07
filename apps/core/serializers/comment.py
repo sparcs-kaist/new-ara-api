@@ -34,7 +34,7 @@ class BaseCommentSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
         return None
 
     def get_created_by(self, obj) -> dict:
-        if obj.name_type == BoardNameType.ANONYMOUS or obj.name_type == BoardNameType.REALNAME:
+        if obj.name_type in (BoardNameType.ANONYMOUS, BoardNameType.REALNAME):
             return obj.postprocessed_created_by
         else:
             data = PublicUserSerializer(obj.postprocessed_created_by).data

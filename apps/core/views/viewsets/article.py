@@ -74,7 +74,8 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             created_by = self.request.query_params.get('created_by')
             if created_by and int(created_by) != self.request.user.id:
                 # exclude someone's anonymous or realname article in one's profile
-                queryset = queryset.exclude(name_type=BoardNameType.ANONYMOUS).exclude(name_type=BoardNameType.REALNAME)
+                exclude_list = [BoardNameType.ANONYMOUS, BoardNameType.REALNAME]
+                queryset = queryset.exclude(name_type__in=exclude_list)
 
             # exclude article written by blocked users in anonymous board
             queryset = queryset.exclude(

@@ -60,21 +60,21 @@ class CommentViewSet(mixins.CreateModelMixin,
     def perform_create(self, serializer):
         parent_article_id = self.request.data.get('parent_article')
         parent_article = parent_article_id and Article.objects.get(id=parent_article_id)
-        parent_article_name_type = parent_article and parent_article.name_type != BoardNameType.REGULAR
+        parent_article_name_type = parent_article and parent_article.name_type
 
         parent_comment_id = self.request.data.get('parent_comment')
         parent_comment = parent_comment_id and Comment.objects.get(id=parent_comment_id)
-        parent_comment_name_type = parent_comment and parent_comment.name_type != BoardNameType.REGULAR
+        parent_comment_name_type = parent_comment and parent_comment.name_type
 
-        anonymous_status = 0
-        for stat in (BoardNameType.ANONYMOUS, BoardNameType.REALNAME):
-            if parent_article_name_type == stat or parent_comment_name_type == stat:
-                anonymous_status = stat
+        name_type = BoardNameType.REGULAR
+        for ntype in (BoardNameType.ANONYMOUS, BoardNameType.REALNAME):
+            if parent_article_name_type == ntype or parent_comment_name_type == ntype:
+                name_type = ntype
                 break
 
         serializer.save(
             created_by=self.request.user,
-            name_type=anonymous_status,
+            name_type=name_type,
         )
 
     def retrieve(self, request, *args, **kwargs):
