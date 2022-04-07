@@ -2,6 +2,7 @@ from django.conf import settings
 
 from django.utils.translation import gettext
 from rest_framework import mixins, status, response, decorators, serializers, permissions
+from apps.core.models.board import BoardNameType
 
 from ara.classes.viewset import ActionAPIViewSet
 
@@ -58,16 +59,22 @@ class CommentViewSet(mixins.CreateModelMixin,
 
     def perform_create(self, serializer):
         parent_article_id = self.request.data.get('parent_article')
-        parent_article = parent_article_id and Article.objects.filter(id=parent_article_id).first()
-        parent_article_is_anonymous = (parent_article and parent_article.is_anonymous) or False
+        parent_article = parent_article_id and Article.objects.get(id=parent_article_id)
+        parent_article_name_type = parent_article and parent_article.name_type
 
         parent_comment_id = self.request.data.get('parent_comment')
-        parent_comment = parent_comment_id and Comment.objects.filter(id=parent_comment_id).first()
-        parent_comment_is_anonymous = (parent_comment and parent_comment.is_anonymous) or False
+        parent_comment = parent_comment_id and Comment.objects.get(id=parent_comment_id)
+        parent_comment_name_type = parent_comment and parent_comment.name_type
+
+        name_type = BoardNameType.REGULAR
+        for ntype in (BoardNameType.ANONYMOUS, BoardNameType.REALNAME):
+            if parent_article_name_type == ntype or parent_comment_name_type == ntype:
+                name_type = ntype
+                break
 
         serializer.save(
             created_by=self.request.user,
-            is_anonymous=parent_article_is_anonymous or parent_comment_is_anonymous,
+            name_type=name_type,
         )
 
     def retrieve(self, request, *args, **kwargs):

@@ -86,7 +86,7 @@ class FAQAdmin(MetaDataModelAdmin):
 @admin.register(Article)
 class ArticleAdmin(MetaDataModelAdmin):
     list_filter = (
-        'is_anonymous',
+        'name_type',
         'is_content_sexual',
         'is_content_social',
         'parent_topic',
@@ -98,7 +98,7 @@ class ArticleAdmin(MetaDataModelAdmin):
         'hit_count',
         'positive_vote_count',
         'negative_vote_count',
-        'is_anonymous',
+        'name_type',
         'is_content_sexual',
         'is_content_social',
         'report_count',
@@ -128,14 +128,14 @@ class ArticleAdmin(MetaDataModelAdmin):
 @admin.register(Comment)
 class CommentAdmin(MetaDataModelAdmin):
     list_filter = (
-        'is_anonymous',
+        'name_type',
         HiddenContentListFilter,
     )
     list_display = (
         'content',
         'positive_vote_count',
         'negative_vote_count',
-        'is_anonymous',
+        'name_type',
         'report_count',
         'hidden_at',
     )

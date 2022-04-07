@@ -16,7 +16,7 @@ class CommentFilter(filters.FilterSet):
             'parent_comment': [
                 'exact',
             ],
-            'is_anonymous': [
+            'name_type': [
                 'exact',
             ],
             'created_by': [

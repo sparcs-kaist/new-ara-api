@@ -5,6 +5,7 @@ from django.utils.translation import gettext
 from rest_framework import serializers
 from apps.core.documents import ArticleDocument
 from apps.core.models import Article, Board, Block, Scrap, ArticleHiddenReason
+from apps.core.models.board import BoardNameType
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.mixins.hidden import HiddenSerializerMixin, HiddenSerializerFieldMixin
 from apps.core.serializers.topic import TopicSerializer
@@ -57,7 +58,7 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
         return None
 
     def get_created_by(self, obj) -> dict:
-        if obj.is_anonymous:
+        if obj.name_type in (BoardNameType.ANONYMOUS, BoardNameType.REALNAME):
             return obj.postprocessed_created_by
         else:
             data = PublicUserSerializer(obj.postprocessed_created_by).data
@@ -397,7 +398,7 @@ class ArticleUpdateActionSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
         exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count', 'content_text',)
         read_only_fields = (
-            'is_anonymous',
+            'name_type',
             'hit_count',
             'comment_count',
             'positive_vote_count',

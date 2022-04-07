@@ -2,6 +2,7 @@ import bs4
 import typing
 from enum import Enum
 from typing import Dict, Union
+import json
 
 from django.core.files.storage import default_storage
 
@@ -11,7 +12,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
 
-from apps.user.views.viewsets import make_random_profile_picture, hashlib
+from apps.user.views.viewsets import get_profile_picture, hashlib
 from ara.classes.decorator import cache_by_user
 from ara.db.models import MetaDataModel
 from ara.sanitizer import sanitize
@@ -19,6 +20,7 @@ from ara.settings import HASH_SECRET_VALUE
 from .block import Block
 from .report import Report
 from .comment import Comment
+from .board import BoardNameType
 
 
 class ArticleHiddenReason(str, Enum):
@@ -46,9 +48,9 @@ class Article(MetaDataModel):
         verbose_name='text 형식 본문',
     )
 
-    is_anonymous = models.BooleanField(
-        default=False,
-        verbose_name='익명',
+    name_type = models.SmallIntegerField(
+        default=BoardNameType.REGULAR,
+        verbose_name='익명 혹은 실명 여부',
     )
     is_content_sexual = models.BooleanField(
         default=False,
@@ -206,15 +208,17 @@ class Article(MetaDataModel):
     # API 상에서 보이는 사용자 (익명일 경우 익명화된 글쓴이, 그 외는 그냥 글쓴이)
     @cached_property
     def postprocessed_created_by(self) -> Union[settings.AUTH_USER_MODEL, Dict]:
-        if not self.is_anonymous:
+        if self.name_type == BoardNameType.REGULAR:
             return self.created_by
-        else:
-            user_unique_num = self.created_by.id + self.id + HASH_SECRET_VALUE
-            user_unique_encoding = str(hex(user_unique_num)).encode('utf-8')
-            user_hash = hashlib.sha224(user_unique_encoding).hexdigest()
-            user_hash_int = int(user_hash[-4:], 16)
-            user_profile_picture = make_random_profile_picture(user_hash_int)
+        
+        user_unique_num = self.created_by.id + self.id + HASH_SECRET_VALUE
+        user_unique_encoding = str(hex(user_unique_num)).encode('utf-8')
+        user_hash = hashlib.sha224(user_unique_encoding).hexdigest()
+        user_hash_int = int(user_hash[-4:], 16)
+        user_profile_picture = get_profile_picture(user_hash_int)
+        user_profile_picture_realname = get_profile_picture(self.created_by.id + HASH_SECRET_VALUE)
 
+        if self.name_type == BoardNameType.ANONYMOUS:
             return {
                 'id': user_hash,
                 'username': gettext('anonymous'),
@@ -222,6 +226,20 @@ class Article(MetaDataModel):
                     'picture': default_storage.url(user_profile_picture),
                     'nickname': gettext('anonymous'),
                     'user': gettext('anonymous')
+                },
+            }
+        
+        if self.name_type == BoardNameType.REALNAME:
+            sso_info = self.created_by.profile.sso_user_info
+            user_realname = json.loads(sso_info["kaist_info"])["ku_kname"] if sso_info["kaist_info"] else sso_info["last_name"] + sso_info["first_name"]
+
+            return {
+                'id': user_unique_num,
+                'username': user_realname,
+                'profile': {
+                    'picture': default_storage.url(user_profile_picture_realname),
+                    'nickname': user_realname,
+                    'user': user_realname
                 },
             }
 
