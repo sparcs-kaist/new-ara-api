@@ -216,7 +216,6 @@ class Article(MetaDataModel):
         user_hash = hashlib.sha224(user_unique_encoding).hexdigest()
         user_hash_int = int(user_hash[-4:], 16)
         user_profile_picture = get_profile_picture(user_hash_int)
-        user_profile_picture_realname = get_profile_picture(self.created_by.id + HASH_SECRET_VALUE)
 
         if self.name_type == BoardNameType.ANONYMOUS:
             return {
@@ -237,7 +236,7 @@ class Article(MetaDataModel):
                 'id': user_unique_num,
                 'username': user_realname,
                 'profile': {
-                    'picture': default_storage.url(user_profile_picture_realname),
+                    'picture': default_storage.url(user_profile_picture),
                     'nickname': user_realname,
                     'user': user_realname
                 },
