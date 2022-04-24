@@ -258,16 +258,16 @@ class TestComments(TestCase, RequestSetting):
         )
 
         r_article = self.http_request(self.user, 'get', f'articles/{self.article_anonymous.id}').data
-        article_auther_id = r_article.get('created_by')['id']
+        article_writer_id = r_article.get('created_by')['id']
         r_comment = self.http_request(self.user, 'get', f'comments/{self.comment_anonymous.id}').data
-        comment_auther_id = r_comment.get('created_by')['id']
-        assert article_auther_id == comment_auther_id
+        comment_writer_id = r_comment.get('created_by')['id']
+        assert article_writer_id == comment_writer_id
 
         r_article2 = self.http_request(self.user2, 'get', f'articles/{self.article_anonymous.id}').data
-        article_auther_id2 = r_article2.get('created_by')['id']
+        article_writer_id2 = r_article2.get('created_by')['id']
         r_comment2 = self.http_request(self.user2, 'get', f'comments/{self.comment_anonymous.id}').data
-        comment_auther_id2 = r_comment2.get('created_by')['id']
-        assert article_auther_id2 == comment_auther_id2
+        comment_writer_id2 = r_comment2.get('created_by')['id']
+        assert article_writer_id2 == comment_writer_id2
 
     def test_comment_on_anonymous_parent_article(self):
         comment_str = 'This is a comment on an anonymous parent article'
