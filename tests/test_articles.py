@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.conf import settings
 
 from apps.core.models import Article, Topic, Board, Block, Vote, Comment
+from apps.core.models.board import BoardNameType
 from apps.user.models import UserProfile
 from tests.conftest import RequestSetting, TestCase
 
@@ -28,7 +29,7 @@ def set_anon_board(request):
         en_name="Anonymous",
         ko_description="익명 게시판",
         en_description="Anonymous",
-        is_anonymous=True
+        name_type=BoardNameType.ANONYMOUS
     )
 
 
@@ -52,7 +53,7 @@ def set_article(request):
             title="example article",
             content="example content",
             content_text="example content text",
-            is_anonymous=False,
+            name_type=BoardNameType.REGULAR,
             is_content_sexual=False,
             is_content_social=False,
             hit_count=0,
@@ -87,7 +88,7 @@ def set_kaist_articles(request):
             title="example article",
             content="example content",
             content_text="example content text",
-            is_anonymous=False,
+            name_type=BoardNameType.REGULAR,
             is_content_sexual=False,
             is_content_social=False,
             hit_count=0,
@@ -127,7 +128,7 @@ class TestArticle(TestCase, RequestSetting):
             title="example article",
             content="example content",
             content_text="example content text",
-            is_anonymous=False,
+            name_type=BoardNameType.REGULAR,
             is_content_sexual=False,
             is_content_social=False,
             hit_count=0,
@@ -143,7 +144,7 @@ class TestArticle(TestCase, RequestSetting):
             title="example article",
             content="example content",
             content_text="example content text",
-            is_anonymous=False,
+            name_type=BoardNameType.REGULAR,
             is_content_sexual=False,
             is_content_social=False,
             hit_count=0,
@@ -163,7 +164,7 @@ class TestArticle(TestCase, RequestSetting):
         res = self.http_request(self.user, 'get', f'articles/{self.article.id}').data
         assert res.get('title') == self.article.title
         assert res.get('content') == self.article.content
-        assert res.get('is_anonymous') == self.article.is_anonymous
+        assert res.get('name_type') == self.article.name_type
         assert res.get('is_content_sexual') == self.article.is_content_sexual
         assert res.get('is_content_social') == self.article.is_content_social
         assert res.get('positive_vote_count') == self.article.positive_vote_count
@@ -179,7 +180,7 @@ class TestArticle(TestCase, RequestSetting):
             title="example anonymous article",
             content="example anonymous content",
             content_text="example anonymous content text",
-            is_anonymous=True,
+            name_type=BoardNameType.ANONYMOUS,
             is_content_sexual=False,
             is_content_social=False,
             hit_count=0,
@@ -193,11 +194,11 @@ class TestArticle(TestCase, RequestSetting):
 
         # 익명 게시글을 GET할 때, 작성자의 정보가 전달되지 않는 것 확인
         res = self.http_request(self.user, 'get', f'articles/{anon_article.id}').data
-        assert res.get('is_anonymous')
+        assert res.get('name_type') == BoardNameType.ANONYMOUS
         assert res.get('created_by')['username'] != anon_article.created_by.username
 
         res2 = self.http_request(self.user2, 'get', f'articles/{anon_article.id}').data
-        assert res2.get('is_anonymous')
+        assert res2.get('name_type') == BoardNameType.ANONYMOUS
         assert res2.get('created_by')['username'] != anon_article.created_by.username
 
     def test_create(self):
@@ -207,7 +208,7 @@ class TestArticle(TestCase, RequestSetting):
             "title": "article for test_create",
             "content": "content for test_create",
             "content_text": "content_text for test_create",
-            "is_anonymous": False,
+            "name_type": BoardNameType.REGULAR,
             "is_content_sexual": False,
             "is_content_social": False,
             "parent_topic": self.topic.id,
@@ -230,14 +231,14 @@ class TestArticle(TestCase, RequestSetting):
 
         result = self.http_request(self.user, 'post', 'articles', user_data)
 
-        assert result.data['is_anonymous']
+        assert result.data['name_type'] == BoardNameType.ANONYMOUS
 
         user_data.update({
             "parent_topic": self.topic.id,
             "parent_board": self.board.id
         })
         result = self.http_request(self.user, 'post', 'articles', user_data)
-        assert not result.data['is_anonymous']
+        assert not result.data['name_type'] == BoardNameType.ANONYMOUS
 
     def test_update_cache_sync(self):
         new_title = 'title changed!'
@@ -246,7 +247,7 @@ class TestArticle(TestCase, RequestSetting):
             title="example article",
             content="example content",
             content_text="example content text",
-            is_anonymous=False,
+            name_type=BoardNameType.REGULAR,
             is_content_sexual=False,
             is_content_social=False,
             hit_count=0,
@@ -391,7 +392,7 @@ class TestArticle(TestCase, RequestSetting):
             "title": "article for test_create",
             "content": "content for test_create",
             "content_text": "content_text for test_create",
-            "is_anonymous": False,
+            "name_type": BoardNameType.REGULAR,
             "is_content_sexual": False,
             "is_content_social": False,
             "parent_board": self.readonly_board.id
@@ -432,7 +433,7 @@ class TestArticle(TestCase, RequestSetting):
         self.article.save()
         Comment.objects.create(
             content='this is a test comment',
-            is_anonymous=False,
+            name_type=BoardNameType.REGULAR,
             created_by=self.user,
             parent_article=self.article
         )
@@ -478,7 +479,7 @@ class TestHiddenArticles(TestCase, RequestSetting):
             title="example article",
             content="example content",
             content_text="example content text",
-            is_anonymous=False,
+            name_type=BoardNameType.REGULAR,
             hit_count=0,
             is_content_sexual=is_content_sexual,
             is_content_social=is_content_social,
@@ -738,7 +739,7 @@ class TestHiddenArticles(TestCase, RequestSetting):
         res = self.http_request(self.user, 'post', 'comments', {
             'content': 'This is a comment',
             'parent_article': target_article.id,
-            'is_anonymous': False,
+            'name_type': BoardNameType.REGULAR,
         })
 
         assert res.status_code == 400
@@ -749,7 +750,7 @@ class TestHiddenArticles(TestCase, RequestSetting):
         res = self.http_request(self.user, 'post', 'comments', {
             'content': 'This is a comment',
             'parent_article': target_article.id,
-            'is_anonymous': False,
+            'name_type': BoardNameType.REGULAR,
         })
 
         assert res.status_code == 201

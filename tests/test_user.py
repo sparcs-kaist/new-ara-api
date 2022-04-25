@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.core.validators import URLValidator
 
 from apps.core.models import Board, Article, Comment
+from apps.core.models.board import BoardNameType
 from tests.conftest import RequestSetting, TestCase
 
 
@@ -26,7 +27,7 @@ def set_articles(request):
     common_kwargs = {
         'content': 'example content',
         'content_text': 'example content text',
-        'is_anonymous': False,
+        'name_type': BoardNameType.REGULAR,
         'created_by': request.cls.user2,
         'parent_board': request.cls.board,
         'hit_count': 0,
@@ -75,7 +76,7 @@ def set_anonymous_article(request):
         title='익명글',
         is_content_sexual=False,
         is_content_social=False,
-        is_anonymous=True,
+        name_type=BoardNameType.ANONYMOUS,
         content='example content',
         content_text='example content text',
         created_by=request.cls.user2,
@@ -89,7 +90,7 @@ def set_anonymous_comment(request):
     """set_anonymous_articles 먼저 적용"""
     request.cls.comment_anonymous = Comment.objects.create(
         content='example comment',
-        is_anonymous=True,
+        name_type=BoardNameType.ANONYMOUS,
         created_by=request.cls.user,
         parent_article=request.cls.article_anonymous,
     )

@@ -1,6 +1,7 @@
 import pytest
 from apps.core.models import Article, Topic, Board, Comment, Report
 from django.db.utils import IntegrityError
+from apps.core.models.board import BoardNameType
 from tests.conftest import RequestSetting, TestCase
 from django.utils import timezone
 
@@ -36,7 +37,7 @@ def set_article(request):
         title='Test Article',
         content='Content of test article',
         content_text='Content of test article in text',
-        is_anonymous=False,
+        name_type=BoardNameType.REGULAR,
         is_content_sexual=False,
         is_content_social=False,
         hit_count=0,
@@ -54,7 +55,7 @@ def set_comment(request):
     """set_article 먼저 적용"""
     request.cls.comment = Comment.objects.create(
         content='this is a test comment',
-        is_anonymous=False,
+        name_type=BoardNameType.REGULAR,
         created_by=request.cls.user,
         parent_article=request.cls.article,
     )

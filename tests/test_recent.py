@@ -4,6 +4,7 @@ from collections import OrderedDict
 from django.core.management import call_command
 
 from apps.core.models import Article, Topic, Board
+from apps.core.models.board import BoardNameType
 from tests.conftest import RequestSetting, TestCase
 from django.utils import timezone
 
@@ -40,7 +41,7 @@ def set_articles(request):
             title=f'Test Article{n}',
             content=f'Content of test article {n}',
             content_text=f'Content_text of test article {n}',
-            is_anonymous=False,
+            name_type=BoardNameType.REGULAR,
             is_content_sexual=False,
             is_content_social=False,
             hit_count=0,
