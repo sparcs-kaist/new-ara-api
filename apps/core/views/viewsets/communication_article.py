@@ -3,6 +3,7 @@ from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, filters, viewsets, response, permissions
 
+from apps.core.permissions.communication_article import CommunicationArticleAdminPermission
 from ara.classes.viewset import ActionAPIViewSet
 
 from apps.core.models.communication_article import CommunicationArticle
@@ -17,6 +18,7 @@ class CommunicationArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     }
     permission_classes = (
         permissions.IsAuthenticated,
+        CommunicationArticleAdminPermission,
     )
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
 
@@ -30,10 +32,7 @@ class CommunicationArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     # 학교 담당자가 신문고 게시글에 대해 `확인했습니다` 버튼을 누른 경우
     def update(self, request, *args, **kwargs):
         # user가 학교 담당자인지 확인
-        if not self.request.user.profile.is_school_admin:
-            return response.Response({'message': gettext('You are not authorized to access this feature')},
-                                     status=status.HTTP_403_FORBIDDEN)
-        elif self.get_object().confirmed_by_school_at != timezone.datetime.min.replace(tzinfo=timezone.utc):
+        if self.get_object().confirmed_by_school_at != timezone.datetime.min.replace(tzinfo=timezone.utc):
             return response.Response(status=status.HTTP_200_OK)
         return super().update(request, *args, **kwargs)
 

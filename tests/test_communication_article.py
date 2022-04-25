@@ -21,7 +21,7 @@ def set_school_admin(request):
             user=request.cls.school_admin,
             nickname='School Admin',
             agree_terms_of_service_at=timezone.now(),
-            is_school_admin=True
+            group=UserProfile.UserGroup.COMMUNICATION_BOARD_ADMIN
         )
     request.cls.api_client = APIClient()
 
@@ -106,7 +106,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         self.communication_article.refresh_from_db()
         assert self.communication_article.response_deadline != min_time
 
-        # is_school_admin = True인 사용자가 코멘트 작성
+        # group=COMMUNICATION_BOARD_ADMIN인 사용자가 코멘트 작성
         Comment.objects.create(
             content = 'School Official Comment',
             is_anonymous = False,

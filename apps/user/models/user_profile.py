@@ -20,10 +20,16 @@ class UserProfile(MetaDataModel):
         )
 
     class UserGroup(models.IntegerChoices):
-        UNAUTHORIZED = 0, ugettext_lazy('Unauthorized user')
-        KAIST_MEMBER = 1, ugettext_lazy('KAIST member')
-        FOOD_EMPLOYEE = 2, ugettext_lazy('Restaurant employee')
-        OTHER_EMPLOYEE = 3, ugettext_lazy('Other employee')
+        UNAUTHORIZED = 0, ugettext_lazy('Unauthorized user')  # 뉴아라 계정을 만들지 않은 사람들
+        KAIST_MEMBER = 1, ugettext_lazy('KAIST member')  # 카이스트 메일을 가진 사람 (학생, 교직원)
+        STORE_EMPLOYEE = 2, ugettext_lazy('Store employee')  # 교내 입주 업체 직원
+        OTHER_MEMBER = 3, ugettext_lazy('Other member')  # 카이스트 메일이 없는 개인 (특수한 관련자 등)
+        KAIST_ORG = 4, ugettext_lazy('KAIST organization')  # 교내 학생 단체들
+        EXTERNAL_ORG = 5, ugettext_lazy('External organization')  # 외부인 (홍보 계정 등)
+        COMMUNICATION_BOARD_ADMIN = 6, ugettext_lazy('Communication board admin')  # 소통게시판 관리인
+        NEWS_BOARD_ADMIN = 7, ugettext_lazy('News board admin')  # 뉴스게시판 관리인
+
+    OFFICIAL_GROUPS = [UserGroup.STORE_EMPLOYEE, UserGroup.KAIST_ORG]
 
     uid = models.CharField(
         null=True,
@@ -110,16 +116,6 @@ class UserProfile(MetaDataModel):
         null=True,
         default=None,
         verbose_name='활동정지 마감 일시',
-    )
-
-    is_official = models.BooleanField(
-        default=False,
-        verbose_name='공식 계정',
-    )
-    
-    is_school_admin = models.BooleanField(
-        default=False,
-        verbose_name='학교 관리자',
     )
 
     def __str__(self) -> str:
