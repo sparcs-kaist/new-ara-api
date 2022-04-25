@@ -90,9 +90,8 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             self.http_request(user, 'post', f'articles/{article.id}/vote_positive')
     
     def _add_admin_comment(self, article):
-        comment_str = 'Comment made in factory'
         comment_data = {
-            'content': comment_str,
+            'content': 'Comment made in factory',
             'created_by': self.school_admin.id,
             'parent_article': article.id
         }
@@ -278,8 +277,25 @@ class TestCommunicationArticle(TestCase, RequestSetting):
 
     # 익명 게시물 작성 불가 확인
     def test_anonymous_article(self):
-        pass
+        article_title = 'Anonymous article'
+        article_data = {
+            'title': article_title,
+            'content': 'Content of anonymous article',
+            'content_text': 'Content text of anonymous article',
+            'created_by': self.user.id,
+            'parent_board': self.communication_board.id,
+            'is_anonymous': True
+        }
+        res = self.http_request(self.user, 'post', 'articles', article_data).data
+        assert res.get('is_anonymous') == False
 
     # 익명 댓글 작성 불가 확인
     def test_anonymous_comment(self):
-        pass
+        comment_data = {
+            'content': 'Anonymous comment',
+            'created_by': self.school_admin.id,
+            'parent_article': self.article.id,
+            'is_anonymous': True
+        }
+        res = self.http_request(self.user, 'post', 'comments', comment_data).data
+        assert res.get('is_anonymous') == False
