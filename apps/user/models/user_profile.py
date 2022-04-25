@@ -1,3 +1,5 @@
+import json
+
 from cached_property import cached_property
 from dateutil.relativedelta import relativedelta
 from django.db import models
@@ -132,3 +134,9 @@ class UserProfile(MetaDataModel):
     def email(self) -> str:
         return self.user.email
 
+    @cached_property
+    def get_realname(self) -> str:
+        sso_info = self.sso_user_info
+        user_realname = json.loads(sso_info["kaist_info"])["ku_kname"] if sso_info["kaist_info"] else sso_info["last_name"] + sso_info["first_name"]
+
+        return user_realname
