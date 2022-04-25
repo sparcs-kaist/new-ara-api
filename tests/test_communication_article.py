@@ -29,8 +29,8 @@ def set_school_admin(request):
 
 
 @pytest.fixture(scope='class')
-def set_board(request):
-    request.cls.board = Board.objects.create(
+def set_communication_board(request):
+    request.cls.communication_board = Board.objects.create(
         slug='with-school',
         ko_name='학교와의 게시판 (테스트)',
         en_name='With School (Test)',
@@ -41,38 +41,26 @@ def set_board(request):
 
 
 @pytest.fixture(scope='class')
+def set_non_communication_board(request):
+    request.cls.non_communication_board = Board.objects.create(
+        slug='not with-school',
+        ko_name='학교 아닌 게시판 (테스트)',
+        en_name='Not With School (Test)',
+        ko_description='학교 아닌 게시판 (테스트)',
+        en_description='Not With School (Test)',
+        is_school_communication=False
+    )
+
+
+@pytest.fixture(scope='class')
 def set_article(request):
-    # After defining set_board
+    # After defining set_communication_board
     request.cls.article = Article.objects.create(
-        title='Article Title',
-        content='Article Content',
-        content_text='Article Content Text',
+        title='Communication Article Title',
+        content='Communication Article Content',
+        content_text='Communication Article Content Text',
         created_by=request.cls.user,
-        parent_board=request.cls.board
-    )
-
-
-@pytest.fixture(scope='class')
-def set_article1(request):
-    # After defining set_board
-    request.cls.article1 = Article.objects.create(
-        title='Article1 Title',
-        content='Article1 Content',
-        content_text='Article1 Content Text',
-        created_by=request.cls.user,
-        parent_board=request.cls.board
-    )
-
-
-@pytest.fixture(scope='class')
-def set_article3(request):
-    # After defining set_board
-    request.cls.article3 = Article.objects.create(
-        title='Article3 Title',
-        content='Article3 Content',
-        content_text='Article3 Content Text',
-        created_by=request.cls.user,
-        parent_board=request.cls.board
+        parent_board=request.cls.communication_board
     )
 
 
@@ -84,146 +72,214 @@ def set_communication_article(request):
     )
 
 
-@pytest.fixture(scope='class')
-def set_communication_article1(request):
-    # After defining set_article1
-    request.cls.communication_article1 = CommunicationArticle.objects.create(
-        article=request.cls.article1
-    )
-
-
-@pytest.fixture(scope='class')
-def set_communication_article3(request):
-    # After defining set_article3
-    request.cls.communication_article3 = CommunicationArticle.objects.create(
-        article=request.cls.article3
-    )
-
-
 @pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_client3', 'set_user_client4',
-                         'set_school_admin', 'set_board', 'set_article', 'set_article1', 'set_article3',
-                         'set_communication_article', 'set_communication_article1', 'set_communication_article3')
+                         'set_school_admin', 'set_communication_board', 'set_non_communication_board',
+                         'set_article', 'set_communication_article')
 class TestCommunicationArticle(TestCase, RequestSetting):
-    # 소통 게시물이 communication_article 필드 가지는지 확인
-    def test_article_has_communication_article(self):
-        assert self.article.parent_board.is_school_communication is True
-        assert hasattr(self.article, 'communication_article')
+
+    # ======================================================================= #
+    #                            Helper Functions                             #
+    # ======================================================================= #
+
+    def _get_communication_article_status(self, article):
+        res = self.http_request(self.user, 'get', f'articles/{article.id}').data
+        return res.get('communication_article_status')
+
+    def _add_upvotes(self, article, users):
+        for user in users:
+            self.http_request(user, 'post', f'articles/{article.id}/vote_positive')
     
-    # 필드 디폴트 값 확인
-    def test_default_fields(self):
+    def _add_admin_comment(self, article):
+        comment_str = 'Comment made in factory'
+        comment_data = {
+            'content': comment_str,
+            'created_by': self.school_admin.id,
+            'parent_article': article.id
+        }
+        self.http_request(self.school_admin, 'post', 'comments', comment_data)
+
+    # status를 가지는 communication_article 반환
+    def _create_article_with_status(self, status=SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD):
+        article_title = f'Factory: Article Status {status}'
+        article_data = {
+            'title': article_title,
+            'content': 'Content made in factory',
+            'content_text': 'Content Text made in factory',
+            'created_by': self.user.id,
+            'parent_board': self.communication_board.id,
+        }
+        self.http_request(self.user, 'post', 'articles', article_data)
+
+        article = Article.objects.get(title=article_title)
+
+        if status == SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD:
+            pass
+        elif status == SchoolResponseStatus.BEFORE_SCHOOL_CONFIRM:
+            users_tuple = (self.user2, self.user3, self.user4)
+            self._add_upvotes(article, users_tuple)
+        elif status == SchoolResponseStatus.PREPARING_ANSWER:
+            # 작성일 기준 status 변경 방법이 존재하지 않음
+            article.communication_article.response_deadline = timezone.now()
+            article.communication_article.confirmed_by_school_at = timezone.now()
+            article.communication_article.school_response_status = SchoolResponseStatus.PREPARING_ANSWER
+            article.communication_article.save()
+        elif status == SchoolResponseStatus.ANSWER_DONE:
+            self._add_admin_comment(article)
+        
+        return article
+
+    # ======================================================================= #
+    #                              Creation Test                              #
+    # ======================================================================= #
+
+    # communication_article 생성 확인
+    def test_create_communication_article(self):
+        # 소통 게시물 생성
+        article_title = 'Article for test_create_communication_article'
+        user_data = {
+            'title': article_title,
+            'content': 'Content for test_create_communication_article',
+            'content_text': 'test_create_communication_article',
+            'creted_by': self.user.id,
+            'parent_board': self.communication_board.id
+        }
+        self.http_request(self.user, 'post', 'articles', user_data)
+
+        article = Article.objects.get(title=article_title)
+
+        # 소통 게시물이 생성될 때 communication_article이 함께 생성되는지 확인
+        article_id = article.id
+        communication_article = CommunicationArticle.objects.get(article_id=article_id)
+        assert communication_article
+
+        # 필드 default 값 확인
         min_time = timezone.datetime.min.replace(tzinfo=timezone.utc)
         assert all([
-            self.communication_article.response_deadline == min_time,
-            self.communication_article.confirmed_by_school_at == min_time,
-            self.communication_article.answered_at == min_time
+            communication_article.response_deadline == min_time,
+            communication_article.confirmed_by_school_at == min_time,
+            communication_article.answered_at == min_time,
+            communication_article.school_response_status == SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD
         ])
+    
+    # 소통 게시물이 아닌 게시물에 communication_article 없는지 확인
+    def test_non_communication_article(self):
+        # 비소통 게시물 생성
+        article_title = 'Article for test_non_communication_article'
+        user_data = {
+            'title': article_title,
+            'content': 'Content for test_non_communication_article',
+            'content_text': 'test_non_communication_article',
+            'creted_by': self.user.id,
+            'parent_board': self.non_communication_board.id
+        }
+        self.http_request(self.user, 'post', 'articles', user_data)
 
-    # school_response_status 업데이트 확인
-    def test_school_response_status(self):
-        # vote 개수가 SCHOOL_RESPONSE_VOTE_THRESHOLD보다 작으면 status == SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD
-        res = self.http_request(self.user, 'get', f'articles/{self.article.id}').data
-        assert res.get('communication_article_status') == SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD
+        article_id = Article.objects.get(title=article_title).id
+        communication_article = CommunicationArticle.objects.filter(article_id=article_id).first()
+        assert communication_article is None
 
-        # 게시물에 좋아요 3개 추가 (작성일 기준 SCHOOL_RESPONSE_VOTE_THRESHOLD == 3)
+    # ======================================================================= #
+    #                    SchoolResponseStatus Update Test                     #
+    # ======================================================================= #
+
+    # 0 -> 1
+    def test_BEFORE_UPVOTE_THRESHOLD_to_BEFORE_SCHOOL_CONFIRM(self):
+        from_stauts = SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD
+        to_status = SchoolResponseStatus.BEFORE_SCHOOL_CONFIRM
+
+        article = self._create_article_with_status(from_stauts)
+        assert self._get_communication_article_status(article) == from_stauts
+
         users_tuple = (self.user2, self.user3, self.user4)
-        for user in users_tuple:
-            self.http_request(user, 'post', f'articles/{self.article.id}/vote_positive')
+        self._add_upvotes(article, users_tuple)
+        assert self._get_communication_article_status(article) == to_status
+    
+    # 0 -> 2
+    def test_BEFORE_UPVOTE_THRESHOLD_to_PREPARING_ANSWER(self):
+        # TODO: '답변 준비 중' 버튼 제작 후 마저 작성
+        pass
 
-        # 좋아요 개수 업데이트 확인
-        res = self.http_request(self.user, 'get', f'articles/{self.article.id}').data
-        assert res.get('positive_vote_count') == len(users_tuple)
+    # 0 -> 3
+    def test_BEFORE_UPVOTE_THRESHOLD_to_ANSWER_DONE(self):
+        from_status = SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD
+        to_status = SchoolResponseStatus.ANSWER_DONE
 
-        # 좋아요 개수가 SCHOOL_RESPONSE_VOTE_THRESHOLD 이상이므로 status == SchoolResponseStatus.BEFORE_SCHOOL_CONFIRM
-        assert res.get('communication_article_status') == SchoolResponseStatus.BEFORE_SCHOOL_CONFIRM
+        article = self._create_article_with_status(from_status)
+        assert self._get_communication_article_status(article) == from_status
 
-        # response_deadline 업데이트 확인
-        min_time = timezone.datetime.min.replace(tzinfo=timezone.utc)
-        self.communication_article.refresh_from_db()
-        assert self.communication_article.response_deadline != min_time
+        self._add_admin_comment(article)
+        assert self._get_communication_article_status(article) == to_status
+    
+    # 1 -> 2
+    def test_BEFORE_SCHOOL_CONFIRM_to_PREPARING_ANSWER(self):
+        # TODO: '답변 준비 중' 버튼 제작 후 마저 작성
+        pass
 
-        # is_school_admin = True인 사용자가 코멘트 작성
-        Comment.objects.create(
-            content = 'School Official Comment',
-            is_anonymous = False,
-            created_by = self.school_admin,
-            parent_article = self.article
-        )
+    # 1 -> 3
+    def test_BEFORE_SCHOOL_CONFIRM_to_ANSWER_DONE(self):
+        from_status = SchoolResponseStatus.BEFORE_SCHOOL_CONFIRM
+        to_status = SchoolResponseStatus.ANSWER_DONE
 
-        # school admin이 코멘트 작성했으므로 status == SchoolResponseStatus.ANSWER_DONE
-        res = self.http_request(self.user, 'get', f'articles/{self.article.id}').data
-        assert res.get('communication_article_status') == SchoolResponseStatus.ANSWER_DONE
+        article = self._create_article_with_status(from_status)
+        assert self._get_communication_article_status(article) == from_status
 
-        # answered_at 업데이트 확인
-        self.communication_article.refresh_from_db()
-        assert self.communication_article.answered_at != min_time
+        self._add_admin_comment(article)
+        assert self._get_communication_article_status(article) == to_status
 
-    # school_response_status가 단조 증가하는지 확인
-    def test_school_response_only_increases(self):
-        # status == 3  # SchoolResponseStatus.ANSWER_DONE
-        Comment.objects.create(
-            content = 'School Official Comment',
-            is_anonymous = False,
-            created_by = self.school_admin,
-            parent_article = self.article
-        )
+    # 2 -> 3
+    def test_PREPARING_ANSWER_to_ANSWER_DONE(self):
+        from_status = SchoolResponseStatus.PREPARING_ANSWER
+        to_status = SchoolResponseStatus.ANSWER_DONE
 
-        # article에 좋아요 3개 추가해서 status 업데이트 시도
+        article = self._create_article_with_status(from_status)
+        assert self._get_communication_article_status(article) == from_status
+
+        self._add_admin_comment(article)
+        assert self._get_communication_article_status(article) == to_status
+    
+    # 2 -> 1 (관리자가 '답변 준비 중' 취소하는 경우)
+    def test_PREPARING_ANSWER_to_BEFORE_SCHOOL_CONFIRM(self):
+        # TODO: '답변 준비 중' 버튼 제작 후 마저 작성
+        pass
+    
+    # 3 -> 1
+    def test_ANSWER_DONE_to_BEFORE_SCHOOL_CONFIRM(self):
+        status = SchoolResponseStatus.ANSWER_DONE
+
+        article = self._create_article_with_status(status)
+        assert self._get_communication_article_status(article) == status
+
         users_tuple = (self.user2, self.user3, self.user4)
-        for user in users_tuple:
-            self.http_request(user, 'post', f'articles/{self.article.id}/vote_positive')
-        
-        # status 변화 없는지 확인
-        res = self.http_request(self.user, 'get', f'articles/{self.article.id}').data
-        assert res.get('communication_article_status') == SchoolResponseStatus.ANSWER_DONE
+        self._add_upvotes(article, users_tuple)
+        assert self._get_communication_article_status(article) == status
+    
+    # 3 -> 2
+    def test_ANSWER_DONE_to_PREPARING_ANSWER(self):
+        # TODO: '답변 준비 중' 버튼 제작 후 마저 작성
+        pass
+    
+    # ======================================================================= #
+    #                          Ordering & Filtering                           #
+    # ======================================================================= #
     
     # 좋아요 개수로 정렬 확인
     def test_ordering_by_positive_vote_count(self):
-        # 게시물에 좋아요 추가
-        # [ article : 2개 / article1 : 3개 / article3 : 1개 ]
-        self.http_request(self.user2, 'post', f'articles/{self.article.id}/vote_positive')
-        self.http_request(self.user3, 'post', f'articles/{self.article.id}/vote_positive')
-        self.http_request(self.user2, 'post', f'articles/{self.article1.id}/vote_positive')
-        self.http_request(self.user3, 'post', f'articles/{self.article1.id}/vote_positive')
-        self.http_request(self.user4, 'post', f'articles/{self.article1.id}/vote_positive')
-        self.http_request(self.user2, 'post', f'articles/{self.article3.id}/vote_positive')
-
-        # positive_vote_count 오름차순
-        filtered_res = self.http_request(self.user, 'get', 'communication_articles', querystring='ordering=article__positive_vote_count').data.get('results')
-        filtered_mod = CommunicationArticle.objects.all().order_by('article__positive_vote_count')
-        for fr, fm in zip(filtered_res, filtered_mod):
-            assert fr['id'] == fm.id
-        
-        # positive_vote_count 내림차순
-        filtered_res = self.http_request(self.user, 'get', 'communication_articles', querystring='ordering=-article__positive_vote_count').data.get('results')
-        filtered_mod = CommunicationArticle.objects.all().order_by('-article__positive_vote_count')
-        for fr, fm in zip(filtered_res, filtered_mod):
-            assert fr['id'] == fm.id
+        # TODO: In different branch
+        pass
 
     # 답변 진행 상황 필터링 확인
     def test_filtering_by_status(self):
-        # article1 status == 1  # SchoolResponseStatus.BEFORE_SCHOOL_CONFIRM
-        self.http_request(self.user2, 'post', f'articles/{self.article1.id}/vote_positive')
-        self.http_request(self.user3, 'post', f'articles/{self.article1.id}/vote_positive')
-        self.http_request(self.user4, 'post', f'articles/{self.article1.id}/vote_positive')
+        # TODO: In different branch
+        pass
 
-        # article3 status == 3  # SchoolResponseStatus.ANSWER_DONE
-        Comment.objects.create(
-            content = 'School Official Comment',
-            is_anonymous = False,
-            created_by = self.school_admin,
-            parent_article = self.article3
-        )
+    # ======================================================================= #
+    #                                Anonymous                                #
+    # ======================================================================= #
 
-        # Check filtering
-        status_tuple = (
-            SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD,
-            SchoolResponseStatus.BEFORE_SCHOOL_CONFIRM,
-            SchoolResponseStatus.ANSWER_DONE
-        )
+    # 익명 게시물 작성 불가 확인
+    def test_anonymous_article(self):
+        pass
 
-        for status in status_tuple:
-            querystring = f'school_response_status={status}'
-            filtered_res = self.http_request(self.user, 'get', 'communication_articles', querystring=querystring).data.get('results')
-            filtered_mod = CommunicationArticle.objects.filter(school_response_status=status)        
-            assert len(filtered_res) == 1 and filtered_mod.count() == 1
-            assert filtered_res[0]['school_response_status'] == filtered_mod.first().school_response_status
+    # 익명 댓글 작성 불가 확인
+    def test_anonymous_comment(self):
+        pass

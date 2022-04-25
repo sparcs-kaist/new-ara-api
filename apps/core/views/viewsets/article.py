@@ -135,7 +135,6 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         instance = serializer.instance
         if Board.objects.get(pk=self.request.data['parent_board']).is_school_communication:
-            # create communication article
             CommunicationArticle.objects.create(
                 article=instance,
             )
