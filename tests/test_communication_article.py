@@ -5,7 +5,8 @@ from django.contrib.auth.models import User
 
 from rest_framework.test import APIClient
 
-from apps.core.models import Article, Board, Comment
+from apps.core.models import Article, Board
+from apps.core.models.board import BoardNameType
 from apps.core.models.communication_article import CommunicationArticle, SchoolResponseStatus
 from apps.user.models import UserProfile
 
@@ -23,7 +24,12 @@ def set_school_admin(request):
             user=request.cls.school_admin,
             nickname='School Admin',
             agree_terms_of_service_at=timezone.now(),
-            is_school_admin=True
+            is_school_admin=True,
+            sso_user_info={
+                'kaist_info': '{\"ku_kname\": \"\\ud669\"}',
+                'first_name': 'FirstName',
+                'last_name': 'LastName'
+            }
         )
     request.cls.api_client = APIClient()
 
@@ -36,7 +42,8 @@ def set_communication_board(request):
         en_name='With School (Test)',
         ko_description='학교와의 게시판 (테스트)',
         en_description='With School (Test)',
-        is_school_communication=True
+        is_school_communication=True,
+        name_type=BoardNameType.REALNAME
     )
 
 
@@ -60,7 +67,8 @@ def set_article(request):
         content='Communication Article Content',
         content_text='Communication Article Content Text',
         created_by=request.cls.user,
-        parent_board=request.cls.communication_board
+        parent_board=request.cls.communication_board,
+        name_type=BoardNameType.REALNAME
     )
 
 
@@ -106,6 +114,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             'content_text': 'Content Text made in factory',
             'created_by': self.user.id,
             'parent_board': self.communication_board.id,
+            'name_type': BoardNameType.REALNAME
         }
         self.http_request(self.user, 'post', 'articles', article_data)
 
@@ -284,18 +293,18 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             'content_text': 'Content text of anonymous article',
             'created_by': self.user.id,
             'parent_board': self.communication_board.id,
-            'is_anonymous': True
+            'name_type': BoardNameType.ANONYMOUS
         }
         res = self.http_request(self.user, 'post', 'articles', article_data).data
-        assert res.get('is_anonymous') == False
+        assert res.get('name_type') == BoardNameType.REALNAME
 
     # 익명 댓글 작성 불가 확인
     def test_anonymous_comment(self):
         comment_data = {
             'content': 'Anonymous comment',
-            'created_by': self.school_admin.id,
+            'created_by': self.user.id,
             'parent_article': self.article.id,
-            'is_anonymous': True
+            'name_type': BoardNameType.ANONYMOUS
         }
         res = self.http_request(self.user, 'post', 'comments', comment_data).data
-        assert res.get('is_anonymous') == False
+        assert res.get('name_type') == BoardNameType.REALNAME

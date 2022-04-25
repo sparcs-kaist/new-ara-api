@@ -25,10 +25,17 @@ def set_admin_client(request):
 
 @pytest.fixture(scope='class')
 def set_user_client(request):
-    request.cls.user, _ = User.objects.get_or_create(username='User', email='user@sparcs.org')
+    request.cls.user, _ = User.objects.get_or_create(
+        username='User',
+        email='user@sparcs.org',
+    )
     if not hasattr(request.cls.user, 'profile'):
-        UserProfile.objects.get_or_create(user=request.cls.user, nickname='User',
-                                          group=UserProfile.UserGroup.KAIST_MEMBER, agree_terms_of_service_at=timezone.now())
+        UserProfile.objects.get_or_create(
+            user=request.cls.user,
+            nickname='User',
+            group=UserProfile.UserGroup.KAIST_MEMBER,
+            agree_terms_of_service_at=timezone.now(),
+        )
     client = APIClient()
     request.cls.api_client = client
 
