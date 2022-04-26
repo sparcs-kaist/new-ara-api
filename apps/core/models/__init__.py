@@ -15,5 +15,5 @@ from .report import *
 from .block import *
 from .scrap import *
 from .faq import *
-
+from .communication_article import *
 from .signals import *

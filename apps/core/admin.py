@@ -17,6 +17,7 @@ from apps.core.models import (
     BestSearch,
     Report,
     Comment,
+    CommunicationArticle
 )
 
 
@@ -223,4 +224,23 @@ class ReportAdmin(MetaDataModelAdmin):
         'reported_by',
         'type',
         'content',
+    )
+
+
+@admin.register(CommunicationArticle)
+class CommunicationArticleAdmin(MetaDataModelAdmin):
+    list_filter = (
+        'response_deadline',
+        'confirmed_by_school_at',
+        'answered_at',
+    )
+    list_display = (
+        'article',
+        'get_status_string',
+        'response_deadline',
+        'confirmed_by_school_at',
+        'answered_at',
+    )
+    raw_id_fields = (
+        'article',
     )

@@ -65,6 +65,13 @@ class Board(MetaDataModel):
         db_index=True
     )
 
+    is_school_communication = models.BooleanField(
+        verbose_name='학교와의 소통 게시판',
+        help_text='학교 소통 게시판 글임을 표시',
+        default=False,
+        db_index=True
+    )
+
     group_id = models.IntegerField(
         verbose_name='그룹 ID',
         default=1
