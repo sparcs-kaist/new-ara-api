@@ -35,6 +35,11 @@ def set_user_client(request):
             nickname='User',
             group=UserProfile.UserGroup.KAIST_MEMBER,
             agree_terms_of_service_at=timezone.now(),
+            sso_user_info={
+                'kaist_info': '{\"ku_kname\": \"\\ud669\"}',
+                'first_name': 'FirstName',
+                'last_name': 'LastName'
+            }
         )
     client = APIClient()
     request.cls.api_client = client
