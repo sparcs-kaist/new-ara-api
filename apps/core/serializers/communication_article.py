@@ -7,14 +7,23 @@ from apps.core.models.communication_article import CommunicationArticle
 
 
 class BaseCommunicationArticleSerializer(MetaDataModelSerializer):
-    positive_vote_count = serializers.IntegerField(source='article.positive_vote_count')
     class Meta:
         model = CommunicationArticle
         fields = '__all__'
+        read_only_fields = (
+            'article',
+            'response_deadline',
+            'answered_at',
+            'school_response_status',
+        )
 
 
 class CommunicationArticleSerializer(BaseCommunicationArticleSerializer):
     days_left = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    positive_vote_count = serializers.IntegerField(
+        source='article.positive_vote_count',
         read_only=True,
     )
 
@@ -29,9 +38,4 @@ class CommunicationArticleSerializer(BaseCommunicationArticleSerializer):
 
 class CommunicationArticleUpdateActionSerializer(BaseCommunicationArticleSerializer):
     class Meta(BaseCommunicationArticleSerializer.Meta):
-        read_only_fields = (
-            'article',
-            'response_deadline',
-            'answered_at',
-            'school_response_status'
-        )
+        pass
