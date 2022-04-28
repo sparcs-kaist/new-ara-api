@@ -1,12 +1,13 @@
 from django.utils import timezone
-from rest_framework import serializers
 from datetime import timedelta
-from ara.classes.serializers import MetaDataModelSerializer
+from rest_framework import serializers
 
+from ara.classes.serializers import MetaDataModelSerializer
 from apps.core.models.communication_article import CommunicationArticle
 
 
 class BaseCommunicationArticleSerializer(MetaDataModelSerializer):
+    positive_vote_count = serializers.IntegerField(source='article.positive_vote_count')
     class Meta:
         model = CommunicationArticle
         fields = '__all__'

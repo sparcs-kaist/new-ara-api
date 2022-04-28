@@ -1,9 +1,13 @@
 from django.db import models
-
+from enum import IntEnum
 from django_extensions.db.fields import AutoSlugField
 
 from ara.db.models import MetaDataModel
 
+class BoardNameType(IntEnum):
+    REGULAR = 0
+    ANONYMOUS = 1
+    REALNAME = 2
 
 class Board(MetaDataModel):
     class Meta(MetaDataModel.Meta):
@@ -54,10 +58,10 @@ class Board(MetaDataModel):
         db_index=True,
     )
 
-    is_anonymous = models.BooleanField(
-        verbose_name='익명 게시판',
-        help_text='게시판의 글과 댓글들이 익명이도록 합니다.',
-        default=False,
+    name_type = models.SmallIntegerField(
+        verbose_name='익명/실명 게시판',
+        help_text='게시판의 글과 댓글들이 익명 혹은 실명이도록 합니다.',
+        default=BoardNameType.REGULAR,
         db_index=True
     )
 

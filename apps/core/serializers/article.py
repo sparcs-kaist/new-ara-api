@@ -6,7 +6,8 @@ from rest_framework import serializers
 from django.utils import timezone
 
 from apps.core.documents import ArticleDocument
-from apps.core.models import Article, Board, Block, Scrap, ArticleHiddenReason
+from apps.core.models import Article, Board, Block, Scrap, ArticleHiddenReason, Comment
+from apps.core.models.board import BoardNameType
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.communication_article import BaseCommunicationArticleSerializer
 from apps.core.serializers.mixins.hidden import HiddenSerializerMixin, HiddenSerializerFieldMixin
@@ -60,7 +61,7 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
         return None
 
     def get_created_by(self, obj) -> dict:
-        if obj.is_anonymous:
+        if obj.name_type in (BoardNameType.ANONYMOUS, BoardNameType.REALNAME):
             return obj.postprocessed_created_by
         else:
             data = PublicUserSerializer(obj.postprocessed_created_by).data
@@ -273,6 +274,14 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
             return obj.attachments.all().values_list('id')
         return None
 
+    def get_my_comment_profile(self, obj):  
+        fake_comment = Comment(created_by = self.context['request'].user, name_type = obj.name_type, parent_article = obj)
+        if obj.name_type in (BoardNameType.ANONYMOUS, BoardNameType.REALNAME):
+            return fake_comment.postprocessed_created_by
+        else:
+            data = PublicUserSerializer(fake_comment.postprocessed_created_by).data
+            return data
+
     parent_topic = TopicSerializer(
         read_only=True,
     )
@@ -282,6 +291,10 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
 
     attachments = serializers.SerializerMethodField(
         read_only=True,
+    )
+
+    my_comment_profile = serializers.SerializerMethodField(
+        read_only=True
     )
 
     from apps.core.serializers.comment import ArticleNestedCommentListActionSerializer
@@ -418,7 +431,7 @@ class ArticleUpdateActionSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
         exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count', 'content_text',)
         read_only_fields = (
-            'is_anonymous',
+            'name_type',
             'hit_count',
             'comment_count',
             'positive_vote_count',

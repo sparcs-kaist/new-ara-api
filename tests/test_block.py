@@ -5,6 +5,7 @@ from django.db.utils import IntegrityError
 from django.conf import settings
 
 from apps.core.models import Article, Topic, Board, Comment, Block
+from apps.core.models.board import BoardNameType
 from tests.conftest import RequestSetting, TestCase
 from dateutil.relativedelta import relativedelta
 
@@ -28,7 +29,7 @@ def set_anon_board(request):
         en_name="Anonymous",
         ko_description="익명 게시판",
         en_description="Anonymous",
-        is_anonymous=True
+        name_type=BoardNameType.ANONYMOUS
     )
 
 
@@ -52,7 +53,7 @@ def set_articles(request):
         title='Test Article',
         content='Content of test article',
         content_text='Content of test article in text',
-        is_anonymous=False,
+        name_type=BoardNameType.REGULAR,
         is_content_sexual=False,
         is_content_social=False,
         hit_count=0,
@@ -68,7 +69,7 @@ def set_articles(request):
         title='Test Article 2',
         content='Content of test article 2',
         content_text='Content of test article in text 2',
-        is_anonymous=False,
+        name_type=BoardNameType.REGULAR,
         is_content_sexual=False,
         is_content_social=False,
         hit_count=0,
@@ -84,7 +85,7 @@ def set_articles(request):
         title='Test Article 3',
         content='Content of test article 3',
         content_text='Content of test article in text 3',
-        is_anonymous=False,
+        name_type=BoardNameType.REGULAR,
         is_content_sexual=False,
         is_content_social=False,
         hit_count=0,
@@ -225,7 +226,7 @@ class TestBlock(TestCase, RequestSetting):
                             title='Test Article',
                             content='Content of test article',
                             content_text='Content of test article in text',
-                            is_anonymous=True,
+                            name_type=BoardNameType.ANONYMOUS,
                             is_content_sexual=False,
                             is_content_social=False,
                             hit_count=0,
@@ -257,14 +258,14 @@ class TestBlock(TestCase, RequestSetting):
         # user2가 댓글을 씀
         blocked_comment = Comment.objects.create(
                                 content='this is a test comment',
-                                is_anonymous=False,
+                                name_type=BoardNameType.REGULAR,
                                 created_by=self.user2,
                                 parent_article=self.article,
                             )
 
         not_blocked_comment = Comment.objects.create(
                                     content='this is a test comment',
-                                    is_anonymous=False,
+                                    name_type=BoardNameType.REGULAR,
                                     created_by=self.user3,
                                     parent_article=self.article,
                                 )
