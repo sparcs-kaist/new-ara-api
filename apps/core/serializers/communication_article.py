@@ -1,22 +1,33 @@
+from django.utils import timezone
+from rest_framework import serializers
+from datetime import timedelta
 from ara.classes.serializers import MetaDataModelSerializer
 
 from apps.core.models.communication_article import CommunicationArticle
 
 
-class CommunicationArticleSerializer(MetaDataModelSerializer):
+class BaseCommunicationArticleSerializer(MetaDataModelSerializer):
     class Meta:
         model = CommunicationArticle
         fields = '__all__'
 
-    # TODO: is_confirmed_by_school 등을 timestamp 말고 progress_statues enum으로 바꿔서 프론트 보내주기
-    # 좋아요 30개 달설 전, 달성 후 확인 전, 확인 후 답변전, 답변 완료
 
-# class CommunicationArticleSerializer(BaseCommunicationArticleSerializer):
-#     class Meta(BaseCommunicationArticleSerializer.Meta):
+class CommunicationArticleSerializer(BaseCommunicationArticleSerializer):
+    days_left = serializers.SerializerMethodField(
+        read_only=True,
+    )
+
+    @staticmethod
+    def get_days_left(obj) -> int:
+        no_deadline = 30
+        if obj.response_deadline == timezone.datetime.min.replace(tzinfo=timezone.utc):
+            return no_deadline
+        else:
+            return ((obj.response_deadline + timedelta(hours=9)).date() - timezone.localtime().now().date()).days
 
 
-class CommunicationArticleUpdateActionSerializer(CommunicationArticleSerializer):
-    class Meta(CommunicationArticleSerializer.Meta):
+class CommunicationArticleUpdateActionSerializer(BaseCommunicationArticleSerializer):
+    class Meta(BaseCommunicationArticleSerializer.Meta):
         read_only_fields = (
             'article',
             'response_deadline',

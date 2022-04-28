@@ -7,14 +7,16 @@ from apps.core.permissions.communication_article import CommunicationArticleAdmi
 from ara.classes.viewset import ActionAPIViewSet
 
 from apps.core.models.communication_article import CommunicationArticle
-from apps.core.serializers.communication_article import CommunicationArticleSerializer, CommunicationArticleUpdateActionSerializer
+from apps.core.serializers.communication_article import BaseCommunicationArticleSerializer, \
+    CommunicationArticleUpdateActionSerializer, CommunicationArticleSerializer
 
 
 class CommunicationArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     queryset = CommunicationArticle.objects.all()
-    serializer_class = CommunicationArticleSerializer
+    serializer_class = BaseCommunicationArticleSerializer
     action_serializer_class = {
         'update': CommunicationArticleUpdateActionSerializer,
+        'list': CommunicationArticleSerializer,
     }
     permission_classes = (
         permissions.IsAuthenticated,

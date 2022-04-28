@@ -8,7 +8,7 @@ from django.utils import timezone
 from apps.core.documents import ArticleDocument
 from apps.core.models import Article, Board, Block, Scrap, ArticleHiddenReason
 from apps.core.serializers.board import BoardSerializer
-from apps.core.serializers.communication_article import CommunicationArticleSerializer
+from apps.core.serializers.communication_article import BaseCommunicationArticleSerializer
 from apps.core.serializers.mixins.hidden import HiddenSerializerMixin, HiddenSerializerFieldMixin
 from apps.core.serializers.topic import TopicSerializer
 from apps.user.serializers.user import PublicUserSerializer
