@@ -34,6 +34,18 @@ def set_anon_board(request):
 
 
 @pytest.fixture(scope='class')
+def set_realname_board(request):
+    request.cls.realname_board = Board.objects.create(
+        slug="realname",
+        ko_name="실명 게시판",
+        en_name="Realname Board",
+        ko_description="실명 게시판",
+        en_description="Realname Board",
+        name_type=BoardNameType.REALNAME
+    )
+
+
+@pytest.fixture(scope='class')
 def set_topic(request):
     """set_board 먼저 적용"""
     request.cls.topic = Topic.objects.create(
@@ -117,7 +129,7 @@ def set_readonly_board(request):
     request.cls.readonly_board.delete()
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_anon_board', 'set_topic', 'set_article')
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_client3','set_user_client4','set_board', 'set_anon_board', 'set_realname_board', 'set_topic', 'set_article')
 class TestArticle(TestCase, RequestSetting):
     def test_list(self):
         # article 개수를 확인하는 테스트
@@ -201,6 +213,42 @@ class TestArticle(TestCase, RequestSetting):
         assert res2.get('name_type') == BoardNameType.ANONYMOUS
         assert res2.get('created_by')['username'] != anon_article.created_by.username
 
+    # http get으로 익명 게시글을 retrieve했을 때 작성자가 실명으로 나타나는지 확인
+    def test_realname_article(self):
+        # 실명 게시글 생성
+        realname_article = Article.objects.create(
+            title="example realname article",
+            content="example realname content",
+            content_text="example realname content text",
+            name_type=BoardNameType.REALNAME,
+            is_content_sexual=False,
+            is_content_social=False,
+            hit_count=0,
+            positive_vote_count=0,
+            negative_vote_count=0,
+            created_by=self.user,
+            parent_topic=None,
+            parent_board=self.realname_board,
+            commented_at=timezone.now()
+        )
+
+        # 익명 게시글을 GET할 때, 작성자의 정보가 실명으로 전달되는 것 확인
+        res = self.http_request(self.user, 'get', f'articles/{realname_article.id}').data
+        assert res.get('name_type') == BoardNameType.REALNAME
+        assert res.get('created_by')['username'] == realname_article.created_by.profile.get_realname
+
+        res2 = self.http_request(self.user2, 'get', f'articles/{realname_article.id}').data
+        assert res2.get('name_type') == BoardNameType.REALNAME
+        assert res2.get('created_by')['username'] == realname_article.created_by.profile.get_realname
+
+        res3 = self.http_request(self.user3, 'get', f'articles/{realname_article.id}').data
+        assert res3.get('name_type') == BoardNameType.REALNAME
+        assert res3.get('created_by')['username'] == realname_article.created_by.profile.get_realname
+
+        res4 = self.http_request(self.user4, 'get', f'articles/{realname_article.id}').data
+        assert res4.get('name_type') == BoardNameType.REALNAME
+        assert res4.get('created_by')['username'] == realname_article.created_by.profile.get_realname
+
     def test_create(self):
         # test_create: HTTP request (POST)를 이용해서 생성
         # user data in dict
@@ -239,6 +287,28 @@ class TestArticle(TestCase, RequestSetting):
         })
         result = self.http_request(self.user, 'post', 'articles', user_data)
         assert not result.data['name_type'] == BoardNameType.ANONYMOUS
+
+    def test_create_realname(self):
+        user_data = {
+            "title": "article for test_create",
+            "content": "content for test_create",
+            "content_text": "content_text for test_create",
+            "is_content_sexual": False,
+            "is_content_social": False,
+            "parent_topic": None,
+            "parent_board": self.realname_board.id
+        }
+
+        result = self.http_request(self.user, 'post', 'articles', user_data)
+
+        assert result.data['name_type'] == BoardNameType.REALNAME
+
+        user_data.update({
+            "parent_topic": self.topic.id,
+            "parent_board": self.board.id
+        })
+        result = self.http_request(self.user, 'post', 'articles', user_data)
+        assert not result.data['name_type'] == BoardNameType.REALNAME
 
     def test_update_cache_sync(self):
         new_title = 'title changed!'
