@@ -34,7 +34,10 @@ from apps.core.documents import ArticleDocument
 
 class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     queryset = Article.objects.all()
+    
     filterset_class = ArticleFilter
+    ordering_fields = ['positive_vote_count']
+
     serializer_class = ArticleSerializer
     action_serializer_class = {
         'list': ArticleListActionSerializer,
