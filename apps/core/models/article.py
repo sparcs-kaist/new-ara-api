@@ -229,7 +229,7 @@ class Article(MetaDataModel):
             }
         
         if self.name_type == BoardNameType.REALNAME:
-            user_realname = self.created_by.profile.get_realname
+            user_realname = self.created_by.profile.realname
 
             return {
                 'id': user_unique_num,

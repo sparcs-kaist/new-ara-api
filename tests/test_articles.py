@@ -235,19 +235,19 @@ class TestArticle(TestCase, RequestSetting):
         # 익명 게시글을 GET할 때, 작성자의 정보가 실명으로 전달되는 것 확인
         res = self.http_request(self.user, 'get', f'articles/{realname_article.id}').data
         assert res.get('name_type') == BoardNameType.REALNAME
-        assert res.get('created_by')['username'] == realname_article.created_by.profile.get_realname
+        assert res.get('created_by')['username'] == realname_article.created_by.profile.realname
 
         res2 = self.http_request(self.user2, 'get', f'articles/{realname_article.id}').data
         assert res2.get('name_type') == BoardNameType.REALNAME
-        assert res2.get('created_by')['username'] == realname_article.created_by.profile.get_realname
+        assert res2.get('created_by')['username'] == realname_article.created_by.profile.realname
 
         res3 = self.http_request(self.user3, 'get', f'articles/{realname_article.id}').data
         assert res3.get('name_type') == BoardNameType.REALNAME
-        assert res3.get('created_by')['username'] == realname_article.created_by.profile.get_realname
+        assert res3.get('created_by')['username'] == realname_article.created_by.profile.realname
 
         res4 = self.http_request(self.user4, 'get', f'articles/{realname_article.id}').data
         assert res4.get('name_type') == BoardNameType.REALNAME
-        assert res4.get('created_by')['username'] == realname_article.created_by.profile.get_realname
+        assert res4.get('created_by')['username'] == realname_article.created_by.profile.realname
 
     def test_create(self):
         # test_create: HTTP request (POST)를 이용해서 생성

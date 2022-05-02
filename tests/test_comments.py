@@ -305,19 +305,19 @@ class TestComments(TestCase, RequestSetting):
         # 익명 댓글을 GET할 때, 작성자의 정보가 전달되지 않는 것 확인
         res = self.http_request(self.user, 'get', f'comments/{realname_comment.id}').data
         assert res.get('name_type') == BoardNameType.REALNAME
-        assert res.get('created_by')['username'] != realname_comment.created_by.profile.get_realname
+        assert res.get('created_by')['username'] != realname_comment.created_by.profile.realname
 
         res2 = self.http_request(self.user2, 'get', f'comments/{realname_comment.id}').data
         assert res2.get('name_type') == BoardNameType.REALNAME
-        assert res2.get('created_by')['username'] != realname_comment.created_by.profile.get_realname
+        assert res2.get('created_by')['username'] != realname_comment.created_by.profile.realname
 
         res3 = self.http_request(self.user3, 'get', f'comments/{realname_comment.id}').data
         assert res3.get('name_type') == BoardNameType.REALNAME
-        assert res3.get('created_by')['username'] != realname_comment.created_by.profile.get_realname
+        assert res3.get('created_by')['username'] != realname_comment.created_by.profile.realname
 
         res4 = self.http_request(self.user4, 'get', f'comments/{realname_comment.id}').data
         assert res4.get('name_type') == BoardNameType.REALNAME
-        assert res4.get('created_by')['username'] != realname_comment.created_by.profile.get_realname
+        assert res4.get('created_by')['username'] != realname_comment.created_by.profile.realname
 
     def test_realname_comment_by_article_writer(self):
         # 익명 댓글 생성

@@ -135,7 +135,7 @@ class UserProfile(MetaDataModel):
         return self.user.email
 
     @cached_property
-    def get_realname(self) -> str:
+    def realname(self) -> str:
         sso_info = self.sso_user_info
         user_realname = json.loads(sso_info["kaist_info"])["ku_kname"] if sso_info["kaist_info"] else sso_info["last_name"] + sso_info["first_name"]
 
