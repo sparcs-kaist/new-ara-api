@@ -1,6 +1,7 @@
 import pytest
 from django.contrib.auth.models import User
 from django.utils import timezone
+from rest_framework.test import APIClient
 
 from django.conf import settings
 
@@ -11,18 +12,16 @@ from tests.conftest import RequestSetting, TestCase
 
 
 @pytest.fixture(scope='class')
-def set_board(request):
+def set_boards(request):
     request.cls.board = Board.objects.create(
         slug="test board",
         ko_name="테스트 게시판",
         en_name="Test Board",
         ko_description="테스트 게시판입니다",
-        en_description="This is a board for testing"
+        en_description="This is a board for testing",
+        name_type=BoardNameType.REGULAR,
     )
 
-
-@pytest.fixture(scope='class')
-def set_anon_board(request):
     request.cls.anon_board = Board.objects.create(
         slug="anonymous",
         ko_name="익명 게시판",
@@ -32,21 +31,18 @@ def set_anon_board(request):
         name_type=BoardNameType.ANONYMOUS
     )
 
-
-@pytest.fixture(scope='class')
-def set_realname_board(request):
     request.cls.realname_board = Board.objects.create(
-        slug="realname",
-        ko_name="실명 게시판",
-        en_name="Realname Board",
-        ko_description="실명 게시판",
-        en_description="Realname Board",
-        name_type=BoardNameType.REALNAME
+        slug="test realname board",
+        ko_name="테스트 실명 게시판",
+        en_name="Test realname Board",
+        ko_description="테스트 실명 게시판입니다",
+        en_description="This is a realname board for testing",
+        name_type=BoardNameType.REALNAME,
     )
 
 
 @pytest.fixture(scope='class')
-def set_topic(request):
+def set_topics(request):
     """set_board 먼저 적용"""
     request.cls.topic = Topic.objects.create(
         slug="test topic",
@@ -57,9 +53,18 @@ def set_topic(request):
         parent_board=request.cls.board
     )
 
+    request.cls.realname_topic = Topic.objects.create(
+        slug="test realname topic",
+        ko_name="테스트 실명 토픽",
+        en_name="Test realname Topic",
+        ko_description="테스트용 실명 토픽입니다",
+        en_description="This is realname topic for testing",
+        parent_board=request.cls.realname_board
+    )
+
 
 @pytest.fixture(scope='class')
-def set_article(request):
+def set_articles(request):
     """set_board 먼저 적용"""
     request.cls.article = Article.objects.create(
             title="example article",
@@ -129,7 +134,8 @@ def set_readonly_board(request):
     request.cls.readonly_board.delete()
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_client3','set_user_client4','set_board', 'set_anon_board', 'set_realname_board', 'set_topic', 'set_article')
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_client3', 'set_user_client4', 'set_user_with_kaist_info',
+                         'set_boards', 'set_topics', 'set_articles')
 class TestArticle(TestCase, RequestSetting):
     def test_list(self):
         # article 개수를 확인하는 테스트
@@ -213,42 +219,6 @@ class TestArticle(TestCase, RequestSetting):
         assert res2.get('name_type') == BoardNameType.ANONYMOUS
         assert res2.get('created_by')['username'] != anon_article.created_by.username
 
-    # http get으로 익명 게시글을 retrieve했을 때 작성자가 실명으로 나타나는지 확인
-    def test_realname_article(self):
-        # 실명 게시글 생성
-        realname_article = Article.objects.create(
-            title="example realname article",
-            content="example realname content",
-            content_text="example realname content text",
-            name_type=BoardNameType.REALNAME,
-            is_content_sexual=False,
-            is_content_social=False,
-            hit_count=0,
-            positive_vote_count=0,
-            negative_vote_count=0,
-            created_by=self.user,
-            parent_topic=None,
-            parent_board=self.realname_board,
-            commented_at=timezone.now()
-        )
-
-        # 익명 게시글을 GET할 때, 작성자의 정보가 실명으로 전달되는 것 확인
-        res = self.http_request(self.user, 'get', f'articles/{realname_article.id}').data
-        assert res.get('name_type') == BoardNameType.REALNAME
-        assert res.get('created_by')['username'] == realname_article.created_by.profile.realname
-
-        res2 = self.http_request(self.user2, 'get', f'articles/{realname_article.id}').data
-        assert res2.get('name_type') == BoardNameType.REALNAME
-        assert res2.get('created_by')['username'] == realname_article.created_by.profile.realname
-
-        res3 = self.http_request(self.user3, 'get', f'articles/{realname_article.id}').data
-        assert res3.get('name_type') == BoardNameType.REALNAME
-        assert res3.get('created_by')['username'] == realname_article.created_by.profile.realname
-
-        res4 = self.http_request(self.user4, 'get', f'articles/{realname_article.id}').data
-        assert res4.get('name_type') == BoardNameType.REALNAME
-        assert res4.get('created_by')['username'] == realname_article.created_by.profile.realname
-
     def test_create(self):
         # test_create: HTTP request (POST)를 이용해서 생성
         # user data in dict
@@ -287,28 +257,6 @@ class TestArticle(TestCase, RequestSetting):
         })
         result = self.http_request(self.user, 'post', 'articles', user_data)
         assert not result.data['name_type'] == BoardNameType.ANONYMOUS
-
-    def test_create_realname(self):
-        user_data = {
-            "title": "article for test_create",
-            "content": "content for test_create",
-            "content_text": "content_text for test_create",
-            "is_content_sexual": False,
-            "is_content_social": False,
-            "parent_topic": None,
-            "parent_board": self.realname_board.id
-        }
-
-        result = self.http_request(self.user, 'post', 'articles', user_data)
-
-        assert result.data['name_type'] == BoardNameType.REALNAME
-
-        user_data.update({
-            "parent_topic": self.topic.id,
-            "parent_board": self.board.id
-        })
-        result = self.http_request(self.user, 'post', 'articles', user_data)
-        assert not result.data['name_type'] == BoardNameType.REALNAME
 
     def test_update_cache_sync(self):
         new_title = 'title changed!'
@@ -517,8 +465,91 @@ class TestArticle(TestCase, RequestSetting):
         ).count() == 0
         assert self.article.comment_count == 0
 
+@pytest.mark.usefixtures('set_user_client', 'set_user_with_kaist_info', 'set_user_without_kaist_info',
+                         'set_boards', 'set_topics', 'set_articles')
+class TestRealnameArticle(TestCase, RequestSetting):
+    def test_get_realname_article(self):
+        # kaist info가 있는 유저가 생성한 게시글
+        realname_article_with_kinfo = Article.objects.create(
+            title='example realname article with kinfo',
+            content='example realname content with kinfo',
+            content_text='example realname content text with kinfo',
+            name_type=BoardNameType.REALNAME,
+            is_content_sexual=False,
+            is_content_social=False,
+            hit_count=0,
+            positive_vote_count=0,
+            negative_vote_count=0,
+            created_by=self.user_with_kaist_info,
+            parent_topic=self.realname_topic,
+            parent_board=self.realname_board,
+            commented_at=timezone.now()
+        )
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_topic', 'set_article')
+        # kaist info가 없는 유저가 생성한 게시글
+        realname_article_without_kinfo = Article.objects.create(
+            title='example realname article without_kinfo',
+            content='example realname content without_kinfo',
+            content_text='example realname content text without_kinfo',
+            name_type=BoardNameType.REALNAME,
+            is_content_sexual=False,
+            is_content_social=False,
+            hit_count=0,
+            positive_vote_count=0,
+            negative_vote_count=0,
+            created_by=self.user_without_kaist_info,
+            parent_topic=self.realname_topic,
+            parent_board=self.realname_board,
+            commented_at=timezone.now()
+        )
+
+        res = self.http_request(self.user_with_kaist_info, 'get', f'articles/{realname_article_with_kinfo.id}').data
+        assert res.get('name_type') == BoardNameType.REALNAME
+        assert res.get('created_by')['username'] == realname_article_with_kinfo.created_by.profile.realname
+
+        res2 = self.http_request(self.user_without_kaist_info, 'get', f'articles/{realname_article_without_kinfo.id}').data
+        assert res2.get('name_type') == BoardNameType.REALNAME
+        assert res2.get('created_by')['username'] == realname_article_without_kinfo.created_by.profile.realname
+
+    def test_create_realname_article(self):
+        article_title = 'realname article for test_create'
+        article_data = {
+            'title': article_title,
+            'content': 'realname content for test_create',
+            'content_text': 'realname content_text for test_create',
+            'is_content_sexual': False,
+            'is_content_social': False,
+            'parent_topic': self.realname_topic.id,
+            'parent_board': self.realname_board.id
+        }
+
+        result = self.http_request(self.user_with_kaist_info, 'post', 'articles', article_data).data
+
+        assert result.get('name_type') == BoardNameType.REALNAME
+        assert Article.objects.get(title=article_title).name_type == BoardNameType.REALNAME
+
+    def test_update_realname_article(self):
+        article_title = 'realname article for test_create'
+        article_data = {
+            'title': article_title,
+            'content': 'realname content for test_update',
+            'content_text': 'realname content_text for test_update',
+            'is_content_sexual': False,
+            'is_content_social': False,
+            'parent_topic': None,
+            'parent_board': self.realname_board.id
+        }
+
+        article_data.update({
+            'parent_topic': self.realname_topic.id
+        })
+        result = self.http_request(self.user_with_kaist_info, 'post', 'articles', article_data).data
+
+        assert result.get('name_type') == BoardNameType.REALNAME
+        assert Article.objects.get(title=article_title).name_type == BoardNameType.REALNAME
+
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_with_kaist_info', 'set_user_without_kaist_info',
+                         'set_boards', 'set_topics', 'set_articles')
 class TestHiddenArticles(TestCase, RequestSetting):
     @staticmethod
     def _user_factory(user_kwargs, profile_kwargs):
