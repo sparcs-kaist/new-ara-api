@@ -1,5 +1,6 @@
+import sys
+
 from django.utils import timezone
-from datetime import timedelta
 from rest_framework import serializers
 
 from ara.classes.serializers import MetaDataModelSerializer
@@ -22,18 +23,13 @@ class CommunicationArticleSerializer(BaseCommunicationArticleSerializer):
     days_left = serializers.SerializerMethodField(
         read_only=True,
     )
-    positive_vote_count = serializers.IntegerField(
-        source='article.positive_vote_count',
-        read_only=True,
-    )
 
     @staticmethod
     def get_days_left(obj) -> int:
-        no_deadline = 30
         if obj.response_deadline == timezone.datetime.min.replace(tzinfo=timezone.utc):
-            return no_deadline
+            return sys.maxsize
         else:
-            return ((obj.response_deadline + timedelta(hours=9)).date() - timezone.localtime().now().date()).days
+            return (obj.response_deadline.astimezone(timezone.localtime().tzinfo) - timezone.localtime()).days
 
 
 class CommunicationArticleUpdateActionSerializer(BaseCommunicationArticleSerializer):
