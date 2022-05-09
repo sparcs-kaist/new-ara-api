@@ -18,7 +18,7 @@ from apps.core.models import (
     Board,
     Comment,
     Vote,
-    Scrap,
+    Scrap, CommunicationArticle,
 )
 from apps.core.filters.article import ArticleFilter
 from apps.core.permissions.article import ArticlePermission, ArticleKAISTPermission
@@ -136,6 +136,12 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             created_by=self.request.user,
             name_type=Board.objects.get(pk=self.request.data['parent_board']).name_type
         )
+
+        instance = serializer.instance
+        if Board.objects.get(pk=self.request.data['parent_board']).is_school_communication:
+            CommunicationArticle.objects.create(
+                article=instance,
+            )
 
     def update(self, request, *args, **kwargs):
         article = self.get_object()
@@ -303,7 +309,8 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         self.paginate_queryset(count_queryset)
 
-        query_params = [self.request.user.id, self.paginator.get_page_size(request), max(0, self.paginator.page.start_index()-1)]
+        query_params = [self.request.user.id, self.paginator.get_page_size(request),
+                        max(0, self.paginator.page.start_index() - 1)]
         if search_keyword:
             query_params.insert(1, id_set)
 
@@ -319,7 +326,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 LIMIT %s OFFSET %s
             ) recents ON recents.article_id = `core_article`.id
             ORDER BY recents.my_last_read_at desc
-            ''', 
+            ''',
             query_params
         ).prefetch_related(
             'created_by',

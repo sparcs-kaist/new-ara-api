@@ -3,8 +3,6 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from django.conf import settings
-
 from apps.core.models import Article, Topic, Board, Block, Vote, Comment
 from apps.core.models.board import BoardNameType
 from apps.user.models import UserProfile

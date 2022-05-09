@@ -16,10 +16,11 @@ from apps.user.views.viewsets import get_profile_picture, hashlib
 from ara.classes.decorator import cache_by_user
 from ara.db.models import MetaDataModel
 from ara.sanitizer import sanitize
-from ara.settings import HASH_SECRET_VALUE
+from ara.settings import HASH_SECRET_VALUE, SCHOOL_RESPONSE_VOTE_THRESHOLD, ANSWER_PERIOD
 from .block import Block
 from .report import Report
 from .comment import Comment
+from .communication_article import SchoolResponseStatus
 from .board import BoardNameType
 
 
@@ -71,7 +72,7 @@ class Article(MetaDataModel):
     )
     report_count = models.IntegerField(
         default=0,
-        verbose_name ='신고 수',
+        verbose_name='신고 수',
     )
     positive_vote_count = models.IntegerField(
         default=0,
@@ -170,31 +171,40 @@ class Article(MetaDataModel):
         super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     def update_hit_count(self):
-        self.hit_count = self.article_read_log_set.values('read_by').annotate(models.Count('read_by')).order_by('read_by__count',).count() + self.migrated_hit_count
+        self.hit_count = self.article_read_log_set.values('read_by').annotate(models.Count('read_by')).order_by(
+            'read_by__count', ).count() + self.migrated_hit_count
 
         self.save()
 
     def update_comment_count(self):
-        self.comment_count = Comment.objects.filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)).filter(
+        self.comment_count = Comment.objects.filter(
+            deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)).filter(
             models.Q(parent_article=self) |
             models.Q(parent_comment__parent_article=self)
         ).count()
 
         self.save()
-    
+
     @transaction.atomic
     def update_report_count(self):
         count = Report.objects.filter(parent_article=self).count()
         self.report_count = count
 
         if count >= int(settings.REPORT_THRESHOLD):
-            self.hidden_at = timezone.now()    
+            self.hidden_at = timezone.now()
 
         self.save()
 
     def update_vote_status(self):
         self.positive_vote_count = self.vote_set.filter(is_positive=True).count() + self.migrated_positive_vote_count
         self.negative_vote_count = self.vote_set.filter(is_positive=False).count() + self.migrated_negative_vote_count
+
+        if self.parent_board.is_school_communication and \
+            self.positive_vote_count >= SCHOOL_RESPONSE_VOTE_THRESHOLD and \
+            self.communication_article.school_response_status == SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD:
+            self.communication_article.school_response_status = SchoolResponseStatus.BEFORE_SCHOOL_CONFIRM
+            self.communication_article.response_deadline = (timezone.localtime() + timezone.timedelta(days=ANSWER_PERIOD + 1)).date()
+            self.communication_article.save()
 
         self.save()
 
@@ -210,7 +220,7 @@ class Article(MetaDataModel):
     def postprocessed_created_by(self) -> Union[settings.AUTH_USER_MODEL, Dict]:
         if self.name_type == BoardNameType.REGULAR:
             return self.created_by
-        
+
         user_unique_num = self.created_by.id + self.id + HASH_SECRET_VALUE
         user_unique_encoding = str(hex(user_unique_num)).encode('utf-8')
         user_hash = hashlib.sha224(user_unique_encoding).hexdigest()
@@ -227,10 +237,9 @@ class Article(MetaDataModel):
                     'user': gettext('anonymous')
                 },
             }
-        
+
         if self.name_type == BoardNameType.REALNAME:
             user_realname = self.created_by.profile.realname
-
             return {
                 'id': user_unique_num,
                 'username': user_realname,
