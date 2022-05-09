@@ -312,7 +312,8 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         self.paginate_queryset(count_queryset)
 
-        query_params = [self.request.user.id, self.paginator.get_page_size(request), max(0, self.paginator.page.start_index()-1)]
+        query_params = [self.request.user.id, self.paginator.get_page_size(request),
+                        max(0, self.paginator.page.start_index() - 1)]
         if search_keyword:
             query_params.insert(1, id_set)
 
@@ -328,7 +329,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 LIMIT %s OFFSET %s
             ) recents ON recents.article_id = `core_article`.id
             ORDER BY recents.my_last_read_at desc
-            ''', 
+            ''',
             query_params
         ).prefetch_related(
             'created_by',

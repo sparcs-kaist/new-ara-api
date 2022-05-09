@@ -65,6 +65,21 @@ class PublicUserProfileSerializer(BaseUserProfileSerializer):
             'is_school_admin',
         )
 
+    is_official = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    is_school_admin = serializers.SerializerMethodField(
+        read_only=True,
+    )
+
+    @staticmethod
+    def get_is_official(obj) -> bool:
+        return obj.group in UserProfile.OFFICIAL_GROUPS
+
+    @staticmethod
+    def get_is_school_admin(obj) -> bool:
+        return obj.group == UserProfile.UserGroup.COMMUNICATION_BOARD_ADMIN
+
 
 class MyPageUserProfileSerializer(BaseUserProfileSerializer):
     num_articles = serializers.SerializerMethodField()

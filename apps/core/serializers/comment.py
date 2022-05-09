@@ -44,9 +44,6 @@ class BaseCommentSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
 
 class CommentSerializer(HiddenSerializerFieldMixin, BaseCommentSerializer):
     from apps.user.serializers.user import PublicUserSerializer
-    created_by = PublicUserSerializer(
-        read_only=True,
-    )
     my_vote = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -63,9 +60,6 @@ class CommentSerializer(HiddenSerializerFieldMixin, BaseCommentSerializer):
 
 class CommentListActionSerializer(HiddenSerializerFieldMixin, BaseCommentSerializer):
     from apps.user.serializers.user import PublicUserSerializer
-    created_by = PublicUserSerializer(
-        read_only=True,
-    )
     my_vote = serializers.SerializerMethodField(
         read_only=True,
     )
