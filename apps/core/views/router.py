@@ -63,3 +63,9 @@ router.register(
     prefix=r'best_searches',
     viewset=viewsets.BestSearchViewSet,
 )
+
+# CommunicationArticleViewSet
+router.register(
+    prefix=r'communication_articles',
+    viewset=viewsets.CommunicationArticleViewSet,
+)

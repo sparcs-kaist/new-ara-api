@@ -301,8 +301,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
 
         for vote_cnt, article in zip(vote_counts, articles):
             self._add_positive_votes(article, vote_cnt)
-            article.refresh_from_db()
-        
+                
         res = self.http_request(self.user, 'get', 'articles',
             querystring='ordering=-positive_vote_count,-created_at')
         assert res.status_code == HTTP_200_OK
@@ -324,13 +323,13 @@ class TestCommunicationArticle(TestCase, RequestSetting):
 
         for vote_cnt, article in zip(vote_counts, articles):
             self._add_positive_votes(article, vote_cnt)
-            article.refresh_from_db()
-        
+                
         res = self.http_request(self.user, 'get', 'articles',
             querystring='ordering=positive_vote_count,-created_at')
         assert res.status_code == HTTP_200_OK
 
         res_result = res.data.get('results')
+        assert Article.objects.count() == len(res_result)
 
         # 좋아요 개수 오름차순 정렬 확인
         res_positive_votes = [el.get('positive_vote_count') for el in res_result]
