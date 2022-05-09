@@ -32,7 +32,7 @@ class CommunicationArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     # 학교 담당자가 신문고 게시글에 대해 `확인했습니다` 버튼을 누른 경우
     def update(self, request, *args, **kwargs):
         # 이미 확인했습니다 단계를 지나간 경우
-        if self.get_object().school_response_status > SchoolResponseStatus.PREPARING_ANSWER:
+        if self.get_object().school_response_status >= SchoolResponseStatus.PREPARING_ANSWER:
             return response.Response(status=status.HTTP_200_OK)
         return super().update(request, *args, **kwargs)
 

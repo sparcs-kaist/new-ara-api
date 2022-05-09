@@ -1,3 +1,7 @@
+import sys
+from datetime import timedelta
+from unittest.mock import patch
+
 import pytest
 
 from django.utils import timezone
@@ -100,8 +104,8 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         for user in users:
             self.http_request(user, 'post', f'articles/{article.id}/vote_positive')
 
-    def _confirm_communication_article(self, article):
-        self.http_request(self.school_admin, 'put', f'communication_articles/{article.id}')
+    def _confirm_communication_article(self, article, user):
+        return self.http_request(user, 'put', f'communication_articles/{article.id}')
 
     def _add_admin_comment(self, article):
         comment_data = {
@@ -122,9 +126,9 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             'parent_board': self.communication_board.id,
             'name_type': BoardNameType.REALNAME
         }
-        self.http_request(self.user, 'post', 'articles', article_data)
+        res = self.http_request(self.user, 'post', 'articles', article_data)
 
-        article = Article.objects.get(title=article_title)
+        article = Article.objects.get(id=res.data.get('id'))
 
         if status == SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD:
             pass
@@ -132,10 +136,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             users_tuple = (self.user2, self.user3, self.user4)
             self._add_upvotes(article, users_tuple)
         elif status == SchoolResponseStatus.PREPARING_ANSWER:
-            # 작성일 기준 status 변경 방법이 존재하지 않음
-            users_tuple = (self.user2, self.user3, self.user4)
-            self._add_upvotes(article, users_tuple)
-            self._confirm_communication_article(article)
+            self._confirm_communication_article(article, self.school_admin)
         elif status == SchoolResponseStatus.ANSWER_DONE:
             self._add_admin_comment(article)
 
@@ -215,7 +216,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         article = self._create_article_with_status(from_status)
         assert self._get_communication_article_status(article) == from_status
 
-        self.http_request(self.school_admin, 'put', f'communication_articles/{article.id}')
+        self._confirm_communication_article(article, self.school_admin)
         assert self._get_communication_article_status(article) == to_status
 
     # 0 -> 3
@@ -237,7 +238,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         article = self._create_article_with_status(from_status)
         assert self._get_communication_article_status(article) == from_status
 
-        self.http_request(self.school_admin, 'put', f'communication_articles/{article.id}')
+        self._confirm_communication_article(article, self.school_admin)
         assert self._get_communication_article_status(article) == to_status
 
     # 1 -> 3
@@ -269,6 +270,12 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         article = self._create_article_with_status(status)
         assert self._get_communication_article_status(article) == status
 
+        # 좋아요 수가 threshold를 넘었을 때
+        for user in (self.user2, self.user3, self.user4):
+            self.http_request(user, 'post', f'articles/{article.id}/vote_positive')
+        assert self._get_communication_article_status(article) == status
+
+        # 좋아요 수가 threshold 밑으로 내려갔다가 다시 올라갈 때
         # 정책상 소통게시판에서 vote_cancel은 허용되지 않으나, 테스트 정확성을 위해 첨부함
         self.http_request(self.user4, 'post', f'articles/{article.id}/vote_cancel')
         self.http_request(self.user4, 'post', f'articles/{article.id}/vote_positive')
@@ -292,15 +299,39 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         article = self._create_article_with_status(status)
         assert self._get_communication_article_status(article) == status
 
-        self._confirm_communication_article(article)
+        self._confirm_communication_article(article, self.school_admin)
         assert self._get_communication_article_status(article) == status
 
     def test_days_left(self):
-        status = SchoolResponseStatus.PREPARING_ANSWER
+        status = SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD
         article = self._create_article_with_status(status)
 
+        # days_left가 설정되기 전
+        res = self.http_request(self.school_admin, 'get', f'communication_articles/{article.id}')
+        assert res.data.get('days_left') == sys.maxsize
+
+        user_tuple = (self.user2, self.user3, self.user4)
+        self._add_upvotes(article, user_tuple)
         res = self.http_request(self.school_admin, 'get', f'communication_articles/{article.id}')
         assert res.data.get('days_left') == ANSWER_PERIOD
+
+    def test_days_left_in_local_timezone(self):
+        status = SchoolResponseStatus.BEFORE_SCHOOL_CONFIRM
+        article = self._create_article_with_status(status)
+
+        today = timezone.localtime().replace(hour=23, minute=59, second=0)
+        tomorrow = (timezone.localtime() + timedelta(days=1)).replace(hour=0, minute=1, second=0)
+
+        # localtime 기준으로 오늘에서 내일로 넘어갈 때 D-day 변경되는지 확인
+        with patch.object(timezone, 'localtime', return_value=today):
+            res = self.http_request(self.school_admin, 'get', f'communication_articles/{article.id}')
+            assert res.data.get('days_left') == ANSWER_PERIOD
+
+        with patch.object(timezone, 'localtime', return_value=tomorrow):
+            res = self.http_request(self.school_admin, 'get', f'communication_articles/{article.id}')
+            assert res.data.get('days_left') == ANSWER_PERIOD - 1
+
+
 
     # ======================================================================= #
     #                          Ordering & Filtering                           #
@@ -359,7 +390,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         assert res.data.get('article') == self.communication_article.article.id
 
     def test_admin_can_update_admin_api(self):
-        res = self.http_request(self.school_admin, 'put', f'communication_articles/{self.article.id}')
+        res = self._confirm_communication_article(self.article, self.school_admin)
         assert res.status_code == 200
         self.communication_article.refresh_from_db()
         cas = CommunicationArticleSerializer(self.communication_article)
@@ -374,5 +405,5 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         assert res.status_code == status.HTTP_403_FORBIDDEN
 
     def test_user_cannot_update_admin_api(self):
-        res = self.http_request(self.user, 'put', f'communication_articles/{self.article.id}')
+        res = self._confirm_communication_article(self.article, self.user)
         assert res.status_code == status.HTTP_403_FORBIDDEN
