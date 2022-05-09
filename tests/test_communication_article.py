@@ -3,12 +3,16 @@ from datetime import timedelta
 from unittest.mock import patch
 
 import pytest
+from datetime import datetime
 
 from django.utils import timezone
 from django.contrib.auth.models import User
 
 from rest_framework import status
 from rest_framework.test import APIClient
+from rest_framework.status import HTTP_200_OK
+
+from ara.settings.dev import SCHOOL_RESPONSE_VOTE_THRESHOLD
 
 from apps.core.models import Article, Board
 from apps.core.models.board import BoardNameType
@@ -99,9 +103,32 @@ class TestCommunicationArticle(TestCase, RequestSetting):
     def _get_communication_article_status(self, article):
         res = self.http_request(self.user, 'get', f'articles/{article.id}').data
         return res.get('communication_article_status')
+    
+    def _create_dummy_users(self, num):
+        dummy_users = []
+        for i in range(num):
+            user, created = User.objects.get_or_create(
+                username=f'DummyUser{i}',
+                email=f'dummy_user{i}@sparcs.org'
+            )
+            if created:
+                UserProfile.objects.create(
+                    user=user,
+                    nickname=f'User{i} created at {timezone.now()}',
+                    group=UserProfile.UserGroup.KAIST_MEMBER,
+                    agree_terms_of_service_at=timezone.now(),
+                    sso_user_info={
+                        'kaist_info': '{\"ku_kname\": \"\\ud669\"}',
+                        'first_name': f'DummyUser{i}_FirstName',
+                        'last_name': f'DummyUser{i}_LastName'
+                    }
+                )
+            dummy_users.append(user)
+        return dummy_users
 
-    def _add_upvotes(self, article, users):
-        for user in users:
+    def _add_positive_votes(self, article, num):
+        dummy_users = self._create_dummy_users(num)
+        for user in dummy_users:
             self.http_request(user, 'post', f'articles/{article.id}/vote_positive')
 
     def _confirm_communication_article(self, article, user):
@@ -117,7 +144,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
 
     # status를 가지는 communication_article 반환
     def _create_article_with_status(self, status=SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD):
-        article_title = f'Factory: Article Status {status}'
+        article_title = f'Factory: Article Status {status} created at {timezone.now()}'
         article_data = {
             'title': article_title,
             'content': 'Content made in factory',
@@ -133,8 +160,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         if status == SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD:
             pass
         elif status == SchoolResponseStatus.BEFORE_SCHOOL_CONFIRM:
-            users_tuple = (self.user2, self.user3, self.user4)
-            self._add_upvotes(article, users_tuple)
+            self._add_positive_votes(article, SCHOOL_RESPONSE_VOTE_THRESHOLD)
         elif status == SchoolResponseStatus.PREPARING_ANSWER:
             self._confirm_communication_article(article, self.school_admin)
         elif status == SchoolResponseStatus.ANSWER_DONE:
@@ -204,8 +230,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         article = self._create_article_with_status(from_status)
         assert self._get_communication_article_status(article) == from_status
 
-        users_tuple = (self.user2, self.user3, self.user4)
-        self._add_upvotes(article, users_tuple)
+        self._add_positive_votes(article, SCHOOL_RESPONSE_VOTE_THRESHOLD)
         assert self._get_communication_article_status(article) == to_status
 
     # 0 -> 2
@@ -271,8 +296,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         assert self._get_communication_article_status(article) == status
 
         # 좋아요 수가 threshold를 넘었을 때
-        users_tuple = (self.user2, self.user3, self.user4)
-        self._add_upvotes(article, users_tuple)
+        self._add_positive_votes(article, SCHOOL_RESPONSE_VOTE_THRESHOLD)
         assert self._get_communication_article_status(article) == status
 
         # 좋아요 수가 threshold 밑으로 내려갔다가 다시 올라갈 때
@@ -288,8 +312,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         article = self._create_article_with_status(status)
         assert self._get_communication_article_status(article) == status
 
-        users_tuple = (self.user2, self.user3, self.user4)
-        self._add_upvotes(article, users_tuple)
+        self._add_positive_votes(article, SCHOOL_RESPONSE_VOTE_THRESHOLD)
         assert self._get_communication_article_status(article) == status
 
     # 3 -> 2 (관리자가 답변 완료한 글에 다시 확인했습니다 요청을 보낸 경우)
@@ -309,9 +332,8 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         # days_left가 설정되기 전
         res = self.http_request(self.school_admin, 'get', f'communication_articles/{article.id}')
         assert res.data.get('days_left') == sys.maxsize
-
-        user_tuple = (self.user2, self.user3, self.user4)
-        self._add_upvotes(article, user_tuple)
+        
+        self._add_positive_votes(article, SCHOOL_RESPONSE_VOTE_THRESHOLD)
         res = self.http_request(self.school_admin, 'get', f'communication_articles/{article.id}')
         assert res.data.get('days_left') == ANSWER_PERIOD
 
@@ -336,17 +358,72 @@ class TestCommunicationArticle(TestCase, RequestSetting):
     # ======================================================================= #
     #                          Ordering & Filtering                           #
     # ======================================================================= #
+    
+    # 좋아요 개수 내림차순 정렬 확인
+    def test_descending_ordering_by_positive_vote_count(self):
+        vote_counts = (0, 1, 2, 2, 3, 4)
+        articles = [self._create_article_with_status() for _ in vote_counts]
 
-    # 좋아요 개수로 정렬 확인
-    def test_ordering_by_positive_vote_count(self):
-        # TODO: In different branch
-        pass
+        for vote_cnt, article in zip(vote_counts, articles):
+            self._add_positive_votes(article, vote_cnt)
+        
+        res = self.http_request(self.user, 'get', 'articles',
+            querystring='ordering=-positive_vote_count,-created_at')
+        assert res.status_code == HTTP_200_OK
 
+        res_result = res.data.get('results')
+
+        # 좋아요 개수 내림차순 정렬 확인
+        res_positive_votes = [el.get('positive_vote_count') for el in res_result]
+        assert res_positive_votes == sorted(res_positive_votes, reverse=True)
+
+        # 좋아요 개수 같은 경우 최신 글이 앞에 있는지 확인
+        res_vote_cnt_eq = [el.get('created_at') for el in res_result if el.get('positive_vote_count') == 2]
+        assert res_vote_cnt_eq == sorted(res_vote_cnt_eq, reverse=True, key=lambda date_str: datetime.fromisoformat(date_str))
+    
+    # 좋아요 개수 오름차순 정렬 확인
+    def test_ascending_ordering_by_positive_vote_count(self):
+        vote_counts = (4, 3, 2, 2, 1, 0)
+        articles = [self._create_article_with_status() for _ in vote_counts]
+
+        for vote_cnt, article in zip(vote_counts, articles):
+            self._add_positive_votes(article, vote_cnt)
+                
+        res = self.http_request(self.user, 'get', 'articles',
+            querystring='ordering=positive_vote_count,-created_at')
+        assert res.status_code == HTTP_200_OK
+
+        res_result = res.data.get('results')
+        assert Article.objects.count() == len(res_result)
+
+        # 좋아요 개수 오름차순 정렬 확인
+        res_positive_votes = [el.get('positive_vote_count') for el in res_result]
+        assert res_positive_votes == sorted(res_positive_votes)
+
+        # 좋아요 개수 같은 경우 최신 글이 앞에 있는지 확인
+        res_vote_cnt_eq = [el.get('created_at') for el in res_result if el.get('positive_vote_count') == 2]
+        assert res_vote_cnt_eq == sorted(res_vote_cnt_eq, reverse=True, key=lambda date_str: datetime.fromisoformat(date_str))
+    
     # 답변 진행 상황 필터링 확인
     def test_filtering_by_status(self):
-        # TODO: In different branch
-        pass
+        # 모든 status의 article 하나씩 생성
+        for status in SchoolResponseStatus:
+            self._create_article_with_status(status)
+        
+        # 답변 완료(status=3)
+        res = self.http_request(self.user, 'get', 'articles',
+            querystring='communication_article__school_response_status=3')
+        assert res.status_code == HTTP_200_OK
+        res_status_set = {el.get('communication_article_status') for el in res.data.get('results')}
+        assert res_status_set == {SchoolResponseStatus.ANSWER_DONE}
 
+        # 답변 전(status<3)
+        res = self.http_request(self.user, 'get', 'articles',
+            querystring='communication_article__school_response_status__lt=3')
+        assert res.status_code == HTTP_200_OK
+        res_status_set = {el.get('communication_article_status') for el in res.data.get('results')}
+        assert res_status_set == {*SchoolResponseStatus} - {SchoolResponseStatus.ANSWER_DONE}
+    
     # ======================================================================= #
     #                                Anonymous                                #
     # ======================================================================= #

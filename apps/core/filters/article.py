@@ -47,6 +47,10 @@ class ArticleFilter(filters.FilterSet):
                 'in',
                 'exact',
             ],
+            'communication_article__school_response_status': [
+                'exact',
+                'lt'
+            ]
         }
 
     main_search__contains = filters.CharFilter(
