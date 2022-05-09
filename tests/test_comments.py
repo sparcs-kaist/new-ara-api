@@ -110,6 +110,24 @@ def set_articles(request):
     )
 
 
+    """set_realname_topic, set_user_without_kaist_info 먼저 적용"""
+    request.cls.realname_article_without_kinfo = Article.objects.create(
+        title='Realname Test Article',
+        content='Content of test realname article',
+        content_text='Content of test article in text',
+        name_type=BoardNameType.REALNAME,
+        is_content_sexual=False,
+        is_content_social=False,
+        hit_count=0,
+        positive_vote_count=0,
+        negative_vote_count=0,
+        created_by=request.cls.user_without_kaist_info,
+        parent_topic=request.cls.realname_topic,
+        parent_board=request.cls.realname_board,
+        commented_at=timezone.now()
+    )
+
+
 @pytest.fixture(scope='class')
 def set_comments(request):
     """set_article 먼저 적용"""
@@ -135,7 +153,8 @@ def set_comments(request):
     )
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_client3', 'set_user_client4', 'set_user_with_kaist_info',
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_client3', 'set_user_client4',
+                         'set_user_with_kaist_info', 'set_user_without_kaist_info',
                          'set_boards', 'set_topics', 'set_articles', 'set_comments')
 class TestComments(TestCase, RequestSetting):
     # comment 개수를 확인하는 테스트
@@ -412,16 +431,27 @@ class TestComments(TestCase, RequestSetting):
                          'set_boards', 'set_topics', 'set_articles', 'set_comments')
 class TestRealnameComments(TestCase, RequestSetting):
     def test_get_realname_comment(self):
-        comment = Comment.objects.create(
-            content='Realname test comment',
+        comment1 = Comment.objects.create(
+            content='Realname test comment1',
             name_type=BoardNameType.REALNAME,
             created_by=self.user_without_kaist_info,
             parent_article=self.realname_article
         )
 
-        res = self.http_request(self.user_without_kaist_info, 'get', f'comments/{comment.id}').data
-        assert res.get('name_type') == BoardNameType.REALNAME
-        assert res.get('created_by')['username'] == comment.created_by.profile.realname
+        comment2 = Comment.objects.create(
+            content='Realname test comment2',
+            name_type=BoardNameType.REALNAME,
+            created_by=self.user_with_kaist_info,
+            parent_article=self.realname_article_without_kinfo
+        )
+
+        res1 = self.http_request(self.user_without_kaist_info, 'get', f'comments/{comment1.id}').data
+        assert res1.get('name_type') == BoardNameType.REALNAME
+        assert res1.get('created_by')['username'] == comment1.created_by.profile.realname
+
+        res2 = self.http_request(self.user_with_kaist_info, 'get', f'comments/{comment2.id}').data
+        assert res2.get('name_type') == BoardNameType.REALNAME
+        assert res2.get('created_by')['username'] == comment2.created_by.profile.realname
 
     def test_get_realname_comment_by_article_writer(self):
         res = self.http_request(self.user_with_kaist_info, 'get', f'comments/{self.realname_comment.id}').data
@@ -455,7 +485,8 @@ class TestRealnameComments(TestCase, RequestSetting):
         assert Comment.objects.get(content=comment_str).name_type == BoardNameType.REALNAME
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_with_kaist_info',
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2',
+                         'set_user_with_kaist_info', 'set_user_without_kaist_info',
                          'set_boards', 'set_topics', 'set_articles', 'set_comments')
 class TestHiddenComments(TestCase, RequestSetting):
     def _comment_factory(self, **comment_kwargs):

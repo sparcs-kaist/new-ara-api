@@ -529,24 +529,32 @@ class TestRealnameArticle(TestCase, RequestSetting):
         assert Article.objects.get(title=article_title).name_type == BoardNameType.REALNAME
 
     def test_update_realname_article(self):
-        article_title = 'realname article for test_create'
-        article_data = {
-            'title': article_title,
-            'content': 'realname content for test_update',
-            'content_text': 'realname content_text for test_update',
-            'is_content_sexual': False,
-            'is_content_social': False,
-            'parent_topic': None,
-            'parent_board': self.realname_board.id
-        }
+        article = Article.objects.create(
+            title='realname article for test_create',
+            content='realname content for test_create',
+            content_text='realname content_text for test_create',
+            name_type=BoardNameType.REALNAME,
+            is_content_sexual=False,
+            is_content_social=False,
+            hit_count=0,
+            positive_vote_count=0,
+            negative_vote_count=0,
+            created_by=self.user_with_kaist_info,
+            parent_topic=self.realname_topic,
+            parent_board=self.realname_board,
+            commented_at=timezone.now()
+        )
+        article.save()
 
-        article_data.update({
-            'parent_topic': self.realname_topic.id
-        })
-        result = self.http_request(self.user_with_kaist_info, 'post', 'articles', article_data).data
+        new_title = 'realname article for test_update'
+        new_content = 'realname content for test_update'
+        result = self.http_request(self.user_with_kaist_info, 'put', f'articles/{article.id}', {
+            'title': new_title,
+            'content': new_content
+        }).data
 
         assert result.get('name_type') == BoardNameType.REALNAME
-        assert Article.objects.get(title=article_title).name_type == BoardNameType.REALNAME
+        assert Article.objects.get(title=new_title).name_type == BoardNameType.REALNAME
 
 @pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_with_kaist_info', 'set_user_without_kaist_info',
                          'set_boards', 'set_topics', 'set_articles')
