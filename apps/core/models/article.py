@@ -239,10 +239,7 @@ class Article(MetaDataModel):
             }
 
         if self.name_type == BoardNameType.REALNAME:
-            sso_info = self.created_by.profile.sso_user_info
-            user_realname = json.loads(sso_info["kaist_info"])["ku_kname"] \
-                if sso_info["kaist_info"] else sso_info["last_name"] + sso_info["first_name"]
-
+            user_realname = self.created_by.profile.realname
             return {
                 'id': user_unique_num,
                 'username': user_realname,
