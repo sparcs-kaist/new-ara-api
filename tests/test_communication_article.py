@@ -296,8 +296,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         assert self._get_communication_article_status(article) == status
 
         # 좋아요 수가 threshold를 넘었을 때
-        users_tuple = (self.user2, self.user3, self.user4)
-        self._add_upvotes(article, users_tuple)
+        self._add_positive_votes(article, SCHOOL_RESPONSE_VOTE_THRESHOLD)
         assert self._get_communication_article_status(article) == status
 
         # 좋아요 수가 threshold 밑으로 내려갔다가 다시 올라갈 때
@@ -333,9 +332,8 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         # days_left가 설정되기 전
         res = self.http_request(self.school_admin, 'get', f'communication_articles/{article.id}')
         assert res.data.get('days_left') == sys.maxsize
-
-        user_tuple = (self.user2, self.user3, self.user4)
-        self._add_upvotes(article, user_tuple)
+        
+        self._add_positive_votes(article, SCHOOL_RESPONSE_VOTE_THRESHOLD)
         res = self.http_request(self.school_admin, 'get', f'communication_articles/{article.id}')
         assert res.data.get('days_left') == ANSWER_PERIOD
 
@@ -368,7 +366,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
 
         for vote_cnt, article in zip(vote_counts, articles):
             self._add_positive_votes(article, vote_cnt)
-                
+        
         res = self.http_request(self.user, 'get', 'articles',
             querystring='ordering=-positive_vote_count,-created_at')
         assert res.status_code == HTTP_200_OK
