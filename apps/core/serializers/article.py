@@ -346,7 +346,7 @@ class ArticleAttachmentType(Enum):
     BOTH = 'BOTH'
 
 
-class  ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
+class ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
     parent_topic = TopicSerializer(
         read_only=True,
     )

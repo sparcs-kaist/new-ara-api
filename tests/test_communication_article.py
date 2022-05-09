@@ -271,8 +271,8 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         assert self._get_communication_article_status(article) == status
 
         # 좋아요 수가 threshold를 넘었을 때
-        for user in (self.user2, self.user3, self.user4):
-            self.http_request(user, 'post', f'articles/{article.id}/vote_positive')
+        users_tuple = (self.user2, self.user3, self.user4)
+        self._add_upvotes(article, users_tuple)
         assert self._get_communication_article_status(article) == status
 
         # 좋아요 수가 threshold 밑으로 내려갔다가 다시 올라갈 때
