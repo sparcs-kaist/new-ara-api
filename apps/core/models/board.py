@@ -4,10 +4,12 @@ from django_extensions.db.fields import AutoSlugField
 
 from ara.db.models import MetaDataModel
 
+
 class BoardNameType(IntEnum):
     REGULAR = 0
     ANONYMOUS = 1
     REALNAME = 2
+
 
 class Board(MetaDataModel):
     class Meta(MetaDataModel.Meta):
@@ -42,7 +44,7 @@ class Board(MetaDataModel):
     # access_mask & (1<<user.group) > 0 일 때 접근이 가능합니다.
     # 사용자 그룹의 값들은 `UserGroup`을 참고하세요.
     access_mask = models.IntegerField(
-        default=2,  # 카이스트 구성원만 사용 가능
+        default=int('11011110', 2),  # 카이스트 구성원만 사용 가능
         null=False,
         verbose_name='접근 권한 값'
     )

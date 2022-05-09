@@ -9,7 +9,6 @@ from apps.core.documents import ArticleDocument
 from apps.core.models import Article, Board, Block, Scrap, ArticleHiddenReason, Comment
 from apps.core.models.board import BoardNameType
 from apps.core.serializers.board import BoardSerializer
-from apps.core.serializers.communication_article import CommunicationArticleSerializer
 from apps.core.serializers.mixins.hidden import HiddenSerializerMixin, HiddenSerializerFieldMixin
 from apps.core.serializers.topic import TopicSerializer
 from apps.user.serializers.user import PublicUserSerializer
@@ -119,7 +118,8 @@ class SideArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
 
 class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
-        exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count', 'content_text',)
+        exclude = (
+        'migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count', 'content_text',)
 
     @staticmethod
     def search_articles(queryset, search):
@@ -200,7 +200,7 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
                     after = after_scrap.parent_article
                 else:
                     after = None
-                
+
             else:
                 before = articles.filter(created_at__lte=obj.created_at).first()
                 after = articles.filter(created_at__gte=obj.created_at).last()
@@ -269,13 +269,13 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
         after = None if len(after) == 0 else after[0]
         return after, before
 
-    def get_attachments(self, obj): # -> typing.Optional[list]:
+    def get_attachments(self, obj):  # -> typing.Optional[list]:
         if self.visible_verdict(obj):
             return obj.attachments.all().values_list('id')
         return None
 
-    def get_my_comment_profile(self, obj):  
-        fake_comment = Comment(created_by = self.context['request'].user, name_type = obj.name_type, parent_article = obj)
+    def get_my_comment_profile(self, obj):
+        fake_comment = Comment(created_by=self.context['request'].user, name_type=obj.name_type, parent_article=obj)
         if obj.name_type in (BoardNameType.ANONYMOUS, BoardNameType.REALNAME):
             return fake_comment.postprocessed_created_by
         else:
@@ -337,6 +337,7 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
         if hasattr(obj, 'communication_article'):
             return obj.communication_article.school_response_status
         return None
+
 
 class ArticleAttachmentType(Enum):
     NONE = 'NONE'
@@ -407,7 +408,8 @@ class BestArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSer
 
 class ArticleCreateActionSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
-        exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count', 'content_text',)
+        exclude = (
+        'migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count', 'content_text',)
         read_only_fields = (
             'hit_count',
             'comment_count',
@@ -429,7 +431,8 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
 
 class ArticleUpdateActionSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
-        exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count', 'content_text',)
+        exclude = (
+        'migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count', 'content_text',)
         read_only_fields = (
             'name_type',
             'hit_count',

@@ -1,15 +1,25 @@
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, viewsets
+from rest_framework import status, filters, viewsets, response, permissions
 
+from apps.core.permissions.communication_article import CommunicationArticleAdminPermission
 from ara.classes.viewset import ActionAPIViewSet
 
-from apps.core.models.communication_article import CommunicationArticle
-from apps.core.serializers.communication_article import CommunicationArticleSerializer
+from apps.core.models.communication_article import CommunicationArticle, SchoolResponseStatus
+from apps.core.serializers.communication_article import CommunicationArticleUpdateActionSerializer, CommunicationArticleSerializer
 
 
-class CommunicationArticleViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
+class CommunicationArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     queryset = CommunicationArticle.objects.all()
     serializer_class = CommunicationArticleSerializer
+    action_serializer_class = {
+        'update': CommunicationArticleUpdateActionSerializer,
+        'list': CommunicationArticleSerializer,
+    }
+    permission_classes = (
+        permissions.IsAuthenticated,
+        CommunicationArticleAdminPermission,
+    )
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
 
     # usage: /api/communication_articles/?ordering=created_at
@@ -18,3 +28,17 @@ class CommunicationArticleViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSe
 
     # usage: /api/communication_articles/?school_response_status=1
     filterset_fields = ['school_response_status']
+
+    # 학교 담당자가 신문고 게시글에 대해 `확인했습니다` 버튼을 누른 경우
+    def update(self, request, *args, **kwargs):
+        # 이미 확인했습니다 단계를 지나간 경우
+        if self.get_object().school_response_status >= SchoolResponseStatus.PREPARING_ANSWER:
+            return response.Response(status=status.HTTP_200_OK)
+        return super().update(request, *args, **kwargs)
+
+    def perform_update(self, serializer):
+        serializer.save(
+            confirmed_by_school_at=timezone.now(),
+            school_response_status=SchoolResponseStatus.PREPARING_ANSWER,
+        )
+        return super().perform_update(serializer)

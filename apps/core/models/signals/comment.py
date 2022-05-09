@@ -4,6 +4,7 @@ from django.utils import timezone
 
 from apps.core.models import Comment, Notification
 from apps.core.models.communication_article import SchoolResponseStatus
+from apps.user.models import UserProfile
 
 
 @receiver(models.signals.post_save, sender=Comment)
@@ -22,7 +23,8 @@ def comment_post_save_signal(created, instance, **kwargs):
 
     def update_communication_article_status(comment):
         article = comment.parent_article if comment.parent_article else comment.parent_comment.parent_article
-        if article.parent_board.is_school_communication and comment.created_by.profile.is_school_admin:
+        if article.parent_board.is_school_communication and \
+            comment.created_by.profile.group == UserProfile.UserGroup.COMMUNICATION_BOARD_ADMIN:
             article.communication_article.answered_at = timezone.now()
             article.communication_article.school_response_status = SchoolResponseStatus.ANSWER_DONE
             article.communication_article.save()

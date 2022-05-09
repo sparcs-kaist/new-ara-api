@@ -25,6 +25,7 @@ class CommunicationArticle(MetaDataModel):
         related_name='communication_article',
         db_index=True,
         verbose_name='게시물',
+        primary_key=True,
     )
 
     response_deadline = models.DateTimeField(
