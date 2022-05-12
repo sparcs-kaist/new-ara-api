@@ -41,13 +41,21 @@ class Board(MetaDataModel):
     )
 
     # 사용자 그룹에 대해 접근 권한을 제어하는 bit mask 입니다.
-    # access_mask & (1<<user.group) > 0 일 때 접근이 가능합니다.
+    # access_mask & (1 << user.group) > 0 일 때 접근이 가능합니다.
     # 사용자 그룹의 값들은 `UserGroup`을 참고하세요.
-    access_mask = models.IntegerField(
-        default=int('11011110', 2),  # 카이스트 구성원만 사용 가능
+    read_access_mask = models.SmallIntegerField(
+        # UNAUTHORIZED, EXTERNAL_ORG 제외 모든 사용자 읽기 권한 부여
+        default=0b11011110,
         null=False,
-        verbose_name='접근 권한 값'
+        verbose_name='읽기 권한'
     )
+    write_access_mask = models.SmallIntegerField(
+        # UNAUTHORIZED, STORE_EMPLOYEE, EXTERNAL_ORG 제외 모든 사용자 쓰기 권한 부여
+        default=0b11011010,
+        null=False,
+        verbose_name='쓰기 권한'
+    )
+
     is_readonly = models.BooleanField(
         verbose_name='읽기 전용 게시판',
         help_text='활성화했을 때 관리자만 글을 쓸 수 있습니다. (ex. 포탈공지)',
