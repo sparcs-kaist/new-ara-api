@@ -117,5 +117,8 @@ class Board(MetaDataModel):
     def __str__(self) -> str:
         return self.ko_name
 
-    def group_has_access(self, group: int) -> bool:
-        return (self.access_mask & (1 << group)) > 0
+    def group_has_read_access(self, group: int) -> bool:
+        return (self.read_access_mask & (1 << group)) > 0
+    
+    def group_has_write_access(self, group: int) -> bool:
+        return (self.write_access_mask & (1 << group)) > 0
