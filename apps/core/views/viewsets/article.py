@@ -142,9 +142,10 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         instance = serializer.instance
         if Board.objects.get(pk=self.request.data['parent_board']).is_school_communication:
-            CommunicationArticle.objects.create(
+            communication_article = CommunicationArticle.objects.create(
                 article=instance,
             )
+            communication_article.save()
 
     def update(self, request, *args, **kwargs):
         article = self.get_object()
