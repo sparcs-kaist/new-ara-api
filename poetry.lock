@@ -343,7 +343,7 @@ python-versions = "*"
 
 [[package]]
 name = "django"
-version = "3.2.9"
+version = "3.2.13"
 description = "A high-level Python Web framework that encourages rapid development and clean, pragmatic design."
 category = "main"
 optional = false
@@ -1407,7 +1407,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "7d46043c6599135e9027e4c205ddc650b7ec21c00bb8d026c240a785786271d8"
+content-hash = "6fb976160d77c952dceba8ed542874ee00a843ef0d24f0778f423b1f3c36c008"
 
 [metadata.files]
 amqp = [
@@ -1593,8 +1593,8 @@ distlib = [
     {file = "distlib-0.3.2.zip", hash = "sha256:106fef6dc37dd8c0e2c0a60d3fca3e77460a48907f335fa28420463a6f799736"},
 ]
 django = [
-    {file = "Django-3.2.9-py3-none-any.whl", hash = "sha256:e22c9266da3eec7827737cde57694d7db801fedac938d252bf27377cec06ed1b"},
-    {file = "Django-3.2.9.tar.gz", hash = "sha256:51284300f1522ffcdb07ccbdf676a307c6678659e1284f0618e5a774127a6a08"},
+    {file = "Django-3.2.13-py3-none-any.whl", hash = "sha256:b896ca61edc079eb6bbaa15cf6071eb69d6aac08cce5211583cfb41515644fdf"},
+    {file = "Django-3.2.13.tar.gz", hash = "sha256:6d93497a0a9bf6ba0e0b1a29cccdc40efbfc76297255b1309b3a884a688ec4b6"},
 ]
 django-cacheops = [
     {file = "django-cacheops-5.1.tar.gz", hash = "sha256:d5851cd7bf3087384a1fcecfa8dddb8f55030eedfd6fdf127225b75bca0f99dd"},
