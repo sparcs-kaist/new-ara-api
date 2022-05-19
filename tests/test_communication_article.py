@@ -131,9 +131,6 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         for user in dummy_users:
             self.http_request(user, 'post', f'articles/{article.id}/vote_positive')
 
-    def _confirm_communication_article(self, article, user):
-        return self.http_request(user, 'put', f'communication_articles/{article.id}')
-
     def _add_admin_comment(self, article):
         comment_data = {
             'content': 'Comment made in factory',
@@ -161,8 +158,6 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             pass
         elif status == SchoolResponseStatus.BEFORE_SCHOOL_CONFIRM:
             self._add_positive_votes(article, SCHOOL_RESPONSE_VOTE_THRESHOLD)
-        elif status == SchoolResponseStatus.PREPARING_ANSWER:
-            self._confirm_communication_article(article, self.school_admin)
         elif status == SchoolResponseStatus.ANSWER_DONE:
             self._add_admin_comment(article)
 
@@ -196,7 +191,6 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         min_time = timezone.datetime.min.replace(tzinfo=timezone.utc)
         assert all([
             communication_article.response_deadline == min_time,
-            communication_article.confirmed_by_school_at == min_time,
             communication_article.answered_at == min_time,
             communication_article.school_response_status == SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD
         ])
@@ -234,17 +228,6 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         assert self._get_communication_article_status(article) == to_status
 
     # 0 -> 2
-    def test_BEFORE_UPVOTE_THRESHOLD_to_PREPARING_ANSWER(self):
-        from_status = SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD
-        to_status = SchoolResponseStatus.PREPARING_ANSWER
-
-        article = self._create_article_with_status(from_status)
-        assert self._get_communication_article_status(article) == from_status
-
-        self._confirm_communication_article(article, self.school_admin)
-        assert self._get_communication_article_status(article) == to_status
-
-    # 0 -> 3
     def test_BEFORE_UPVOTE_THRESHOLD_to_ANSWER_DONE(self):
         from_status = SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD
         to_status = SchoolResponseStatus.ANSWER_DONE
@@ -256,17 +239,6 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         assert self._get_communication_article_status(article) == to_status
 
     # 1 -> 2
-    def test_BEFORE_SCHOOL_CONFIRM_to_PREPARING_ANSWER(self):
-        from_status = SchoolResponseStatus.BEFORE_SCHOOL_CONFIRM
-        to_status = SchoolResponseStatus.PREPARING_ANSWER
-
-        article = self._create_article_with_status(from_status)
-        assert self._get_communication_article_status(article) == from_status
-
-        self._confirm_communication_article(article, self.school_admin)
-        assert self._get_communication_article_status(article) == to_status
-
-    # 1 -> 3
     def test_BEFORE_SCHOOL_CONFIRM_to_ANSWER_DONE(self):
         from_status = SchoolResponseStatus.BEFORE_SCHOOL_CONFIRM
         to_status = SchoolResponseStatus.ANSWER_DONE
@@ -277,35 +249,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         self._add_admin_comment(article)
         assert self._get_communication_article_status(article) == to_status
 
-    # 2 -> 3
-    def test_PREPARING_ANSWER_to_ANSWER_DONE(self):
-        from_status = SchoolResponseStatus.PREPARING_ANSWER
-        to_status = SchoolResponseStatus.ANSWER_DONE
-
-        article = self._create_article_with_status(from_status)
-        assert self._get_communication_article_status(article) == from_status
-
-        self._add_admin_comment(article)
-        assert self._get_communication_article_status(article) == to_status
-
-    # 2 -> 1 (관리자가 답변 준비 중일 때 좋아요 수가 다시 증가할 경우)
-    def test_PREPARING_ANSWER_to_BEFORE_SCHOOL_CONFIRM(self):
-        status = SchoolResponseStatus.PREPARING_ANSWER
-
-        article = self._create_article_with_status(status)
-        assert self._get_communication_article_status(article) == status
-
-        # 좋아요 수가 threshold를 넘었을 때
-        self._add_positive_votes(article, SCHOOL_RESPONSE_VOTE_THRESHOLD)
-        assert self._get_communication_article_status(article) == status
-
-        # 좋아요 수가 threshold 밑으로 내려갔다가 다시 올라갈 때
-        # 정책상 소통게시판에서 vote_cancel은 허용되지 않으나, 테스트 정확성을 위해 첨부함
-        self.http_request(self.user4, 'post', f'articles/{article.id}/vote_cancel')
-        self.http_request(self.user4, 'post', f'articles/{article.id}/vote_positive')
-        assert self._get_communication_article_status(article) == status
-
-    # 3 -> 1
+    # 2 -> 1
     def test_ANSWER_DONE_to_BEFORE_SCHOOL_CONFIRM(self):
         status = SchoolResponseStatus.ANSWER_DONE
 
@@ -313,16 +257,6 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         assert self._get_communication_article_status(article) == status
 
         self._add_positive_votes(article, SCHOOL_RESPONSE_VOTE_THRESHOLD)
-        assert self._get_communication_article_status(article) == status
-
-    # 3 -> 2 (관리자가 답변 완료한 글에 다시 확인했습니다 요청을 보낸 경우)
-    def test_ANSWER_DONE_to_PREPARING_ANSWER(self):
-        status = SchoolResponseStatus.ANSWER_DONE
-
-        article = self._create_article_with_status(status)
-        assert self._get_communication_article_status(article) == status
-
-        self._confirm_communication_article(article, self.school_admin)
         assert self._get_communication_article_status(article) == status
 
     def test_days_left(self):
@@ -412,14 +346,14 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         
         # 답변 완료(status=3)
         res = self.http_request(self.user, 'get', 'articles',
-            querystring='communication_article__school_response_status=3')
+            querystring=f'communication_article__school_response_status={SchoolResponseStatus.ANSWER_DONE}')
         assert res.status_code == HTTP_200_OK
         res_status_set = {el.get('communication_article_status') for el in res.data.get('results')}
         assert res_status_set == {SchoolResponseStatus.ANSWER_DONE}
 
         # 답변 전(status<3)
         res = self.http_request(self.user, 'get', 'articles',
-            querystring='communication_article__school_response_status__lt=3')
+            querystring=f'communication_article__school_response_status__lt={SchoolResponseStatus.ANSWER_DONE}')
         assert res.status_code == HTTP_200_OK
         res_status_set = {el.get('communication_article_status') for el in res.data.get('results')}
         assert res_status_set == {*SchoolResponseStatus} - {SchoolResponseStatus.ANSWER_DONE}
@@ -466,21 +400,10 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         assert res.status_code == 200
         assert res.data.get('article') == self.communication_article.article.id
 
-    def test_admin_can_update_admin_api(self):
-        res = self._confirm_communication_article(self.article, self.school_admin)
-        assert res.status_code == 200
-        self.communication_article.refresh_from_db()
-        cas = CommunicationArticleSerializer(self.communication_article)
-        assert res.data.get('confirmed_by_school_at') == cas.data['confirmed_by_school_at']
-
     def test_user_cannot_view_admin_api_list(self):
         res = self.http_request(self.user, 'get', 'communication_articles')
         assert res.status_code == status.HTTP_403_FORBIDDEN
 
     def test_user_cannot_view_admin_api_get(self):
         res = self.http_request(self.user, 'get', f'communication_articles/{self.article.id}')
-        assert res.status_code == status.HTTP_403_FORBIDDEN
-
-    def test_user_cannot_update_admin_api(self):
-        res = self._confirm_communication_article(self.article, self.user)
         assert res.status_code == status.HTTP_403_FORBIDDEN

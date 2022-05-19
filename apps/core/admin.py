@@ -231,14 +231,12 @@ class ReportAdmin(MetaDataModelAdmin):
 class CommunicationArticleAdmin(MetaDataModelAdmin):
     list_filter = (
         'response_deadline',
-        'confirmed_by_school_at',
         'answered_at',
     )
     list_display = (
         'article',
         'get_status_string',
         'response_deadline',
-        'confirmed_by_school_at',
         'answered_at',
     )
     raw_id_fields = (

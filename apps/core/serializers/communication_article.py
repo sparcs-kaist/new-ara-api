@@ -14,7 +14,6 @@ class BaseCommunicationArticleSerializer(MetaDataModelSerializer):
         read_only_fields = (
             'article',
             'response_deadline',
-            'answered_at',
             'school_response_status',
         )
 
@@ -30,8 +29,3 @@ class CommunicationArticleSerializer(BaseCommunicationArticleSerializer):
             return sys.maxsize
         else:
             return (obj.response_deadline.astimezone(timezone.localtime().tzinfo) - timezone.localtime()).days
-
-
-class CommunicationArticleUpdateActionSerializer(BaseCommunicationArticleSerializer):
-    class Meta(BaseCommunicationArticleSerializer.Meta):
-        pass

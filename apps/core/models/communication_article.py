@@ -10,8 +10,7 @@ from enum import IntEnum
 class SchoolResponseStatus(IntEnum):
     BEFORE_UPVOTE_THRESHOLD = 0
     BEFORE_SCHOOL_CONFIRM = 1
-    PREPARING_ANSWER = 2
-    ANSWER_DONE = 3
+    ANSWER_DONE = 2
 
 
 class CommunicationArticle(MetaDataModel):
@@ -32,11 +31,6 @@ class CommunicationArticle(MetaDataModel):
         default=timezone.datetime.min.replace(tzinfo=timezone.utc),
         verbose_name='답변 요청 기한',
     )
-    
-    confirmed_by_school_at = models.DateTimeField(
-        default=timezone.datetime.min.replace(tzinfo=timezone.utc),
-        verbose_name='학교측 문의 확인 시각',
-    )
 
     answered_at = models.DateTimeField(
         default=timezone.datetime.min.replace(tzinfo=timezone.utc),
@@ -50,7 +44,7 @@ class CommunicationArticle(MetaDataModel):
     
     @admin.display(description='진행 상황')
     def get_status_string(self) -> str:
-        status_list = ['소통 중', '답변 대기 중', '답변 준비 중', '답변 완료']
+        status_list = ['소통 중', '답변 대기 중', '답변 완료']
         return status_list[self.school_response_status]
     
     def __str__(self):
