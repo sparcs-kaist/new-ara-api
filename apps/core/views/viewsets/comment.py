@@ -55,7 +55,12 @@ class CommentViewSet(mixins.CreateModelMixin,
     }
 
     def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+        user_group = request.user.profile.group
+        parent_article = Article.objects.get(pk=self.request.data['parent_article'])
+        if parent_article.parent_board.group_has_write_access(user_group):
+            return super().create(request, *args, **kwargs)
+        return response.Response({'message': gettext('Permission denied')},
+                                 status=status.HTTP_403_FORBIDDEN)
 
     def perform_create(self, serializer):
         parent_article_id = self.request.data.get('parent_article')

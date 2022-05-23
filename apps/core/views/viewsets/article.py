@@ -133,6 +133,14 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             )
 
         return queryset
+    
+    def create(self, request, *args, **kwargs):
+        user_group = request.user.profile.group
+        board = Board.objects.get(pk=self.request.data['parent_board'])
+        if board.group_has_write_access(user_group):
+            return super().create(request, *args, **kwargs)
+        return response.Response({'message': gettext('Permission denied')},
+                                 status=status.HTTP_403_FORBIDDEN)
 
     def perform_create(self, serializer):
         serializer.save(
