@@ -1,4 +1,3 @@
-import os
 import environ
 from os import environ as os_environ
 
@@ -16,5 +15,6 @@ env = environ.Env(
     PORTAL_ID=(str, os_environ.get('PORTAL_ID')),
     PORTAL_PASSWORD=(str, os_environ.get('PORTAL_PASSWORD')),
     PORTAL_2FA_KEY=(str, os_environ.get('PORTAL_2FA_KEY')),
+    PORTAL_JSESSIONID=(str, os_environ.get('PORTAL_JSESSIONID')),
     HASH_SECRET_VALUE=(int, os_environ.get('HASH_SECRET_VALUE', '1')),
 )
