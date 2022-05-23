@@ -1,6 +1,7 @@
 import pytest
 from django.contrib.auth.models import User
 from django.utils import timezone
+from rest_framework import status
 from rest_framework.test import APIClient
 
 from apps.core.models import Article, Topic, Board, Block, Vote, Comment
@@ -36,6 +37,62 @@ def set_boards(request):
         ko_description="테스트 실명 게시판입니다",
         en_description="This is a realname board for testing",
         name_type=BoardNameType.REALNAME,
+    )
+
+    request.cls.regular_access_board = Board.objects.create(
+        slug='regular access',
+        ko_name='일반 접근 권한 게시판',
+        en_name='Regular Access Board',
+        ko_description='일반 접근 권한 게시판',
+        en_description='Regular Access Board',
+        read_access_mask=0b11011110,
+        write_access_mask=0b11011010
+    )
+
+    request.cls.advertiser_readable_board = Board.objects.create(
+        slug='advertiser readable',
+        ko_name='외부인(홍보 계정) 열람 가능 게시판',
+        en_name='Advertiser Readable Board',
+        ko_description='외부인(홍보 계정) 열람 가능 게시판',
+        en_description='Advertiser Readable Board',
+        read_access_mask=0b11111110
+    )
+
+    request.cls.nonwritable_board = Board.objects.create(
+        slug='nonwritable',
+        ko_name='글 작성 불가 게시판',
+        en_name='Nonwritable Board',
+        ko_description='글 작성 불가 게시판',
+        en_description='Nonwritable Board',
+        write_access_mask=0b00000000
+    )
+
+    request.cls.newsadmin_writable_board = Board.objects.create(
+        slug='newsadmin writable',
+        ko_name='뉴스게시판 관리인 글 작성 가능 게시판',
+        en_name='Newsadmin Writable Board',
+        ko_description='뉴스게시판 관리인 글 작성 가능 게시판',
+        en_description='Newsadmin Writable Board',
+        write_access_mask=0b10000000
+    )
+
+    request.cls.enterprise_writable_board = Board.objects.create(
+        slug='enterprise writable',
+        ko_name='입주업체 글 작성 가능 게시판',
+        en_name='Enterprise Writable Board',
+        ko_description='입주업체 글 작성 가능 게시판',
+        en_description='Enterprise Writable Board',
+        write_access_mask=0b11011110
+    )
+
+    # Though its name is 'advertiser writable', enterprise can also write to it
+    request.cls.advertiser_writable_board = Board.objects.create(
+        slug='advertiser writable',
+        ko_name='외부인(홍보 계정) 글 작성 가능 게시판',
+        en_name='Advertiser Writable Board',
+        ko_description='외부인(홍보 계정) 글 작성 가능 게시판',
+        en_description='Advertiser Writable Board',
+        write_access_mask=0b11111110
     )
 
 
@@ -135,6 +192,25 @@ def set_readonly_board(request):
 @pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_client3', 'set_user_client4', 'set_user_with_kaist_info',
                          'set_boards', 'set_topics', 'set_articles')
 class TestArticle(TestCase, RequestSetting):
+    def _create_user_by_group(self, group):
+        user, created = User.objects.get_or_create(
+            username=f'User in group {group}',
+            email=f'group{group}user@sparcs.org'
+        )
+        if created:
+            UserProfile.objects.create(
+                user=user,
+                nickname=f'Nickname in group {group}',
+                group=group,
+                agree_terms_of_service_at=timezone.now(),
+                sso_user_info={
+                    'kaist_info': '{\"ku_kname\": \"\\ud669\"}',
+                    'first_name': f'Group{group}User_FirstName',
+                    'last_name': f'Group{group}User_LastName'
+                }
+            )
+        return user
+
     def test_list(self):
         # article 개수를 확인하는 테스트
         res = self.http_request(self.user, 'get', 'articles')
@@ -233,7 +309,32 @@ class TestArticle(TestCase, RequestSetting):
         # convert user data to JSON
         self.http_request(self.user, 'post', 'articles', user_data)
         assert Article.objects.filter(title='article for test_create')
+    
+    # create 단계에서 user의 write 권한 확인 테스트
+    def test_check_write_permission_when_create(self):
+        group_users = [self._create_user_by_group(group) for group in UserProfile.UserGroup]
+        boards = [
+            self.regular_access_board,
+            self.nonwritable_board,
+            self.newsadmin_writable_board,
+            self.enterprise_writable_board,
+            self.advertiser_writable_board
+        ]
 
+        for user in group_users:
+            for board in boards:
+                res = self.http_request(user, 'post', 'articles', {
+                    'title': 'title in write permission test',
+                    'content': 'content in write permission test',
+                    'content_text': 'content_text in write permission test',
+                    'parent_board': board.id
+                })
+                
+                if board.group_has_write_access(user.profile.group):
+                    assert res.status_code == status.HTTP_201_CREATED
+                else:
+                    assert res.status_code == status.HTTP_403_FORBIDDEN
+    
     def test_create_anonymous(self):
         user_data = {
             "title": "article for test_create",
