@@ -122,19 +122,35 @@ def set_topics(request):
 def set_articles(request):
     """set_board 먼저 적용"""
     request.cls.article = Article.objects.create(
-            title="example article",
-            content="example content",
-            content_text="example content text",
-            name_type=BoardNameType.REGULAR,
-            is_content_sexual=False,
-            is_content_social=False,
-            hit_count=0,
-            positive_vote_count=0,
-            negative_vote_count=0,
-            created_by=request.cls.user,
-            parent_topic=request.cls.topic,
-            parent_board=request.cls.board,
-            commented_at=timezone.now()
+        title="example article",
+        content="example content",
+        content_text="example content text",
+        name_type=BoardNameType.REGULAR,
+        is_content_sexual=False,
+        is_content_social=False,
+        hit_count=0,
+        positive_vote_count=0,
+        negative_vote_count=0,
+        created_by=request.cls.user,
+        parent_topic=request.cls.topic,
+        parent_board=request.cls.board,
+        commented_at=timezone.now()
+    )
+
+    request.cls.regular_access_article = Article.objects.create(
+        title='regular access article',
+        content='regular access article content',
+        content_text='regular access article content',
+        created_by=request.cls.user,
+        parent_board=request.cls.regular_access_board
+    )
+
+    request.cls.advertiser_readable_article = Article.objects.create(
+        title='advertiser readable article',
+        content='advertiser readable article content',
+        content_text='advertiser readable article content',
+        created_by=request.cls.user,
+        parent_board=request.cls.advertiser_readable_board
     )
 
 
@@ -309,6 +325,24 @@ class TestArticle(TestCase, RequestSetting):
         # convert user data to JSON
         self.http_request(self.user, 'post', 'articles', user_data)
         assert Article.objects.filter(title='article for test_create')
+    
+    # get request 시 user의 read 권한 확인 테스트
+    def test_check_read_permission_when_get(self):
+        group_users = [self._create_user_by_group(group) for group in UserProfile.UserGroup]
+        articles = [
+            self.regular_access_article,
+            self.advertiser_readable_article
+        ]
+
+        for user in group_users:
+            for article in articles:
+                res = self.http_request(user, 'get', f'articles/{article.id}')
+
+                if article.parent_board.group_has_read_access(user.profile.group):
+                    assert res.status_code == status.HTTP_200_OK
+                    assert res.data['id'] == article.id
+                else:
+                    assert res.status_code == status.HTTP_403_FORBIDDEN
     
     # create 단계에서 user의 write 권한 확인 테스트
     def test_check_write_permission_when_create(self):
