@@ -8,7 +8,6 @@ from datetime import datetime
 from django.utils import timezone
 from django.contrib.auth.models import User
 
-from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework.status import HTTP_200_OK
 
@@ -17,7 +16,6 @@ from ara.settings.dev import SCHOOL_RESPONSE_VOTE_THRESHOLD
 from apps.core.models import Article, Board
 from apps.core.models.board import BoardNameType
 from apps.core.models.communication_article import CommunicationArticle, SchoolResponseStatus
-from apps.core.serializers.communication_article import CommunicationArticleSerializer
 from apps.user.models import UserProfile
 from ara.settings import ANSWER_PERIOD
 
@@ -266,11 +264,11 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         article = self._create_article_with_status(status)
 
         # days_left가 설정되기 전
-        res = self.http_request(self.school_admin, 'get', f'communication_articles/{article.id}')
+        res = self.http_request(self.school_admin, 'get', f'articles/{article.id}')
         assert res.data.get('days_left') == sys.maxsize
-        
+        #
         self._add_positive_votes(article, SCHOOL_RESPONSE_VOTE_THRESHOLD)
-        res = self.http_request(self.school_admin, 'get', f'communication_articles/{article.id}')
+        res = self.http_request(self.school_admin, 'get', f'articles/{article.id}')
         assert res.data.get('days_left') == ANSWER_PERIOD
 
     def test_days_left_in_local_timezone(self):
@@ -282,11 +280,11 @@ class TestCommunicationArticle(TestCase, RequestSetting):
 
         # localtime 기준으로 오늘에서 내일로 넘어갈 때 D-day 변경되는지 확인
         with patch.object(timezone, 'localtime', return_value=today):
-            res = self.http_request(self.school_admin, 'get', f'communication_articles/{article.id}')
+            res = self.http_request(self.school_admin, 'get', f'articles/{article.id}')
             assert res.data.get('days_left') == ANSWER_PERIOD
 
         with patch.object(timezone, 'localtime', return_value=tomorrow):
-            res = self.http_request(self.school_admin, 'get', f'communication_articles/{article.id}')
+            res = self.http_request(self.school_admin, 'get', f'articles/{article.id}')
             assert res.data.get('days_left') == ANSWER_PERIOD - 1
 
 
@@ -388,24 +386,3 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         }
         res = self.http_request(self.user, 'post', 'comments', comment_data).data
         assert res.get('name_type') == BoardNameType.REALNAME
-
-    # ======================================================================= #
-    #                               Permission                                #
-    # ======================================================================= #
-    def test_admin_can_view_admin_api_list(self):
-        res = self.http_request(self.school_admin, 'get', 'communication_articles')
-        assert res.status_code == 200
-        assert res.data.get('num_items') == CommunicationArticle.objects.all().count()
-
-    def test_admin_can_view_admin_api_get(self):
-        res = self.http_request(self.school_admin, 'get', f'communication_articles/{self.article.id}')
-        assert res.status_code == 200
-        assert res.data.get('article') == self.communication_article.article.id
-
-    def test_user_cannot_view_admin_api_list(self):
-        res = self.http_request(self.user, 'get', 'communication_articles')
-        assert res.status_code == status.HTTP_403_FORBIDDEN
-
-    def test_user_cannot_view_admin_api_get(self):
-        res = self.http_request(self.user, 'get', f'communication_articles/{self.article.id}')
-        assert res.status_code == status.HTTP_403_FORBIDDEN

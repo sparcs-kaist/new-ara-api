@@ -215,6 +215,9 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         pipe.execute(raise_on_error=True)
 
         serialized = ArticleSerializer(article, context={'request': request, 'override_hidden': override_hidden})
+
+        if not request.user.profile.is_school_admin:
+            serialized.days_left = None
         return Response(serialized.data)
 
     @decorators.action(detail=True, methods=['post'])
