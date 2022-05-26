@@ -14,7 +14,7 @@ flush_test:
 reset: flush init
 
 run:
-	python manage.py runserver 0.0.0.0:9000
+	python3.8 manage.py runserver 0.0.0.0:9000
 
 shell:
 	python manage.py shell -i bpython
@@ -35,8 +35,8 @@ test_coverage_missing:
 
 env:  # use for local & might not be ~/.bashrc
 	git clone git://github.com/inishchith/autoenv.git ~/.autoenv
-	echo 'source ~/.autoenv/activate.sh' >> ~/.bashrc
-	source ~/.bashrc
+	echo 'source ~/.autoenv/activate.sh' >> ~/.zshrc
+	source ~/.zshrc
 
 celery_worker_run:
 	celery -A ara worker -l info

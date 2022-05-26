@@ -136,3 +136,11 @@ class UserProfile(MetaDataModel):
         user_realname = json.loads(sso_info["kaist_info"])["ku_kname"] if sso_info["kaist_info"] else sso_info["last_name"] + sso_info["first_name"]
 
         return user_realname
+
+    @cached_property
+    def is_official(self) -> bool:
+        return self.group in UserProfile.OFFICIAL_GROUPS
+
+    @cached_property
+    def is_school_admin(self) -> bool:
+        return self.group == UserProfile.UserGroup.COMMUNICATION_BOARD_ADMIN

@@ -1,3 +1,4 @@
+import sys
 import typing
 
 from enum import Enum
@@ -332,6 +333,16 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
         read_only=True,
     )
 
+    days_left = serializers.SerializerMethodField(
+        read_only=True,
+    )
+
+    @staticmethod
+    def get_days_left(obj):
+        if hasattr(obj, 'communication_article'):
+            return obj.communication_article.days_left
+        return None
+
     @staticmethod
     def get_communication_article_status(obj):
         if hasattr(obj, 'communication_article'):
@@ -371,6 +382,9 @@ class ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSeriali
         read_only=True,
     )
 
+    days_left = serializers.SerializerMethodField(
+        read_only=True,
+    )
     def get_attachment_type(self, obj) -> str:
         if not self.visible_verdict(obj):
             return ArticleAttachmentType.NONE.value
@@ -394,6 +408,12 @@ class ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSeriali
     def get_communication_article_status(obj):
         if hasattr(obj, 'communication_article'):
             return obj.communication_article.school_response_status
+        return None
+
+    @staticmethod
+    def get_days_left(obj):
+        if hasattr(obj, 'communication_article'):
+            return obj.communication_article.days_left
         return None
 
 
