@@ -119,7 +119,11 @@ class SideArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
 class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
         exclude = (
-        'migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count', 'content_text',)
+            'migrated_hit_count',
+            'migrated_positive_vote_count',
+            'migrated_negative_vote_count',
+            'content_text'
+        )
 
     @staticmethod
     def search_articles(queryset, search):
