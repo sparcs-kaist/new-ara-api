@@ -9,6 +9,7 @@ from apps.core.models.board import BoardNameType
 
 from ara import redis
 from ara.classes.viewset import ActionAPIViewSet
+from ara.settings import SCHOOL_RESPONSE_VOTE_THRESHOLD
 
 from apps.core.models import (
     Article,
@@ -212,6 +213,10 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     @decorators.action(detail=True, methods=['post'])
     def vote_cancel(self, request, *args, **kwargs):
         article = self.get_object()
+
+        if article.name_type == BoardNameType.REALNAME and article.positive_vote_count >= SCHOOL_RESPONSE_VOTE_THRESHOLD:
+            return response.Response({'message': gettext('Cannot cancel vote on more than 30 votes in realname article')},
+                                     status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
         if article.is_hidden_by_reported():
             return response.Response({'message': gettext('Cannot cancel vote on articles hidden by reports')},
