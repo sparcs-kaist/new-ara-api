@@ -7,6 +7,7 @@ from rest_framework.test import APIClient
 from apps.core.models import Article, Topic, Board, Block, Vote, Comment
 from apps.core.models.board import BoardNameType
 from apps.user.models import UserProfile
+from ara.settings import SCHOOL_RESPONSE_VOTE_THRESHOLD
 from tests.conftest import RequestSetting, TestCase
 
 
@@ -143,6 +144,25 @@ def set_articles(request):
         content_text='advertiser readable article content',
         created_by=request.cls.user,
         parent_board=request.cls.advertiser_accessible_board
+    )
+
+@pytest.fixture(scope='class')
+def set_realname_article(request):
+    """set_user_with_kaist_info,, set_realname_topic, set_realname_board 먼저 적용"""
+    request.cls.realname_article = Article.objects.create(
+        title='Realname Test Article',
+        content='Content of test realname article',
+        content_text='Content of test article in text',
+        name_type=BoardNameType.REALNAME,
+        is_content_sexual=False,
+        is_content_social=False,
+        hit_count=0,
+        positive_vote_count=0,
+        negative_vote_count=0,
+        created_by=request.cls.user_with_kaist_info,
+        parent_topic=request.cls.realname_topic,
+        parent_board=request.cls.realname_board,
+        commented_at=timezone.now()
     )
 
 
@@ -595,8 +615,8 @@ class TestArticle(TestCase, RequestSetting):
         ).count() == 0
         assert self.article.comment_count == 0
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_with_kaist_info', 'set_user_without_kaist_info',
-                         'set_boards', 'set_topics', 'set_articles')
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_with_kaist_info', 'set_user_without_kaist_info',
+                         'set_boards', 'set_topics', 'set_articles', 'set_realname_article')
 class TestRealnameArticle(TestCase, RequestSetting):
     def test_get_realname_article(self):
         # kaist info가 있는 유저가 생성한 게시글
@@ -685,6 +705,23 @@ class TestRealnameArticle(TestCase, RequestSetting):
 
         assert result.get('name_type') == BoardNameType.REALNAME
         assert Article.objects.get(title=new_title).name_type == BoardNameType.REALNAME
+
+    def test_ban_canclellation_vote_after_30(self):
+        # SCHOOL_RESPONSE_VOTE_THRESHOLD is 3 in test
+        users = [self.user, self.user2]
+        for user in users:
+            self.http_request(user, 'post', f'articles/{self.realname_article.id}/vote_positive')
+
+        res1 = self.http_request(self.user_without_kaist_info, 'post', f'articles/{self.realname_article.id}/vote_positive')
+        article = Article.objects.get(id=self.realname_article.id)
+        assert res1.status_code == 200
+        assert article.positive_vote_count == SCHOOL_RESPONSE_VOTE_THRESHOLD
+
+        res2 = self.http_request(self.user_without_kaist_info, 'post', f'articles/{self.realname_article.id}/vote_cancel')
+        article = Article.objects.get(id=self.realname_article.id)
+        assert res2.status_code == 405
+        assert article.positive_vote_count == SCHOOL_RESPONSE_VOTE_THRESHOLD
+
 
 @pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_with_kaist_info', 'set_user_without_kaist_info',
                          'set_boards', 'set_topics', 'set_articles')
