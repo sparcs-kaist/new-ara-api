@@ -2,6 +2,7 @@ import pytest
 from django.contrib.auth.models import User
 from django.utils import timezone
 from rest_framework.test import APIClient
+from rest_framework import status
 
 from apps.core.models import Article, Topic, Board, Block, Vote, Comment
 from apps.core.models.board import BoardNameType
@@ -574,7 +575,7 @@ class TestRealnameArticle(TestCase, RequestSetting):
         assert result.get('name_type') == BoardNameType.REALNAME
         assert Article.objects.get(title=new_title).name_type == BoardNameType.REALNAME
 
-    def test_ban_canclellation_vote_after_30(self):
+    def test_ban_vote_canclellation_after_30(self):
         # SCHOOL_RESPONSE_VOTE_THRESHOLD is 3 in test
         users = [self.user, self.user2]
         for user in users:
@@ -582,12 +583,12 @@ class TestRealnameArticle(TestCase, RequestSetting):
 
         res1 = self.http_request(self.user_without_kaist_info, 'post', f'articles/{self.realname_article.id}/vote_positive')
         article = Article.objects.get(id=self.realname_article.id)
-        assert res1.status_code == 200
+        assert res1.status_code == status.HTTP_200_OK
         assert article.positive_vote_count == SCHOOL_RESPONSE_VOTE_THRESHOLD
 
         res2 = self.http_request(self.user_without_kaist_info, 'post', f'articles/{self.realname_article.id}/vote_cancel')
         article = Article.objects.get(id=self.realname_article.id)
-        assert res2.status_code == 405
+        assert res2.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
         assert article.positive_vote_count == SCHOOL_RESPONSE_VOTE_THRESHOLD
 
 
