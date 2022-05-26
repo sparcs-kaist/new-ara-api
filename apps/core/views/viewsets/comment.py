@@ -1,4 +1,6 @@
 from django.conf import settings
+from django.utils import timezone
+from django.shortcuts import get_object_or_404
 
 from django.utils.translation import gettext
 from rest_framework import mixins, status, response, decorators, serializers, permissions
@@ -55,8 +57,14 @@ class CommentViewSet(mixins.CreateModelMixin,
     }
 
     def create(self, request, *args, **kwargs):
+        if self.request.data['parent_article'] is None:
+            parent_article = Comment.objects.get(pk=self.request.data['parent_comment']).parent_article
+        else:
+            article_queryset = Article.objects.queryset_with_deleted
+            parent_article = get_object_or_404(article_queryset, pk=self.request.data['parent_article'])
+            if parent_article.deleted_at != timezone.datetime.min.replace(tzinfo=timezone.utc):
+                return response.Response(status=status.HTTP_410_GONE)
         user_group = request.user.profile.group
-        parent_article = Article.objects.get(pk=self.request.data['parent_article'])
         if parent_article.parent_board.group_has_write_access(user_group):
             return super().create(request, *args, **kwargs)
         return response.Response({'message': gettext('Permission denied')},
