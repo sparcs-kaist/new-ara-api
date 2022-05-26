@@ -4,6 +4,7 @@ import pytest
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.utils.translation import gettext
+from rest_framework import status
 from rest_framework.test import APIClient
 
 from apps.core.models import Article, Topic, Board, Comment, Block, Vote
@@ -91,7 +92,6 @@ def set_articles(request):
         commented_at=timezone.now()
     )
 
-
     """set_realname_topic, set_user_with_kaist_info 먼저 적용"""
     request.cls.realname_article = Article.objects.create(
         title='Realname Test Article',
@@ -108,7 +108,6 @@ def set_articles(request):
         parent_board=request.cls.realname_board,
         commented_at=timezone.now()
     )
-
 
     """set_realname_topic, set_user_without_kaist_info 먼저 적용"""
     request.cls.realname_article_without_kinfo = Article.objects.create(
@@ -338,16 +337,16 @@ class TestComments(TestCase, RequestSetting):
         assert article_writer_id2 == comment_writer_id2
 
     def test_comment_on_regular_parent_article(self):
-        comment_str = 'This is a comment on a regular parent article'
         comment_data = {
-            'content': comment_str,
+            'content': 'This is a comment on a regular parent article',
             'parent_article': self.article_regular.id,
             'parent_comment': None,
             'attachment': None,
         }
-        self.http_request(self.user, 'post', 'comments', comment_data)
-        Comment.objects.filter(content=comment_str).first()
-        assert Comment.objects.filter(content=comment_str).first().name_type == BoardNameType.REGULAR
+        res = self.http_request(self.user, 'post', 'comments', comment_data)
+        
+        assert res.data['name_type'] == BoardNameType.REGULAR
+        assert Comment.objects.get(pk=res.data['id']).name_type == BoardNameType.REGULAR
 
     def test_comment_on_regular_parent_comment(self):
         comment_str = 'This is a comment on a regular parent comment'
@@ -372,15 +371,49 @@ class TestComments(TestCase, RequestSetting):
         assert Comment.objects.filter(content=comment_str).first().name_type == BoardNameType.ANONYMOUS
 
     def test_comment_on_anonymous_parent_comment(self):
-        comment_str = 'This is a comment on an anonymous parent comment'
         comment_data = {
-            'content': comment_str,
+            'content': 'This is a comment on an anonymous parent comment',
             'parent_article': None,
             'parent_comment': self.comment_anonymous.id,
             'attachment': None,
         }
-        self.http_request(self.user, 'post', 'comments', comment_data)
-        assert Comment.objects.filter(content=comment_str).first().name_type == BoardNameType.ANONYMOUS
+        res = self.http_request(self.user, 'post', 'comments', comment_data)
+
+        assert res.data['name_type'] == BoardNameType.ANONYMOUS
+        assert Comment.objects.get(pk=res.data['id']).name_type == BoardNameType.ANONYMOUS
+
+    def test_comment_on_deleted_article(self):
+        deleted_article = Article.objects.create(
+            title='deleted article',
+            content='deleted article content',
+            content_text='deleted article content text',
+            created_by=self.user,
+            parent_board=self.board,
+            deleted_at=timezone.now()
+        )
+        res = self.http_request(self.user, 'post', 'comments', {
+            'content': 'deleted article comment content',
+            'parent_article': deleted_article.id,
+            'name_type': BoardNameType.REGULAR
+        })
+        assert res.status_code == status.HTTP_410_GONE
+
+    def test_comment_on_report_hidden_article(self):
+        report_hidden_article = Article.objects.create(
+            title='report hidden article',
+            content='report hidden article content',
+            content_text='report hidden article content text',
+            created_by=self.user,
+            parent_board=self.board,
+            report_count=1_000_000,
+            hidden_at=timezone.now()
+        )
+        res = self.http_request(self.user, 'post', 'comments', {
+            'content': 'report hidden article comment content',
+            'parent_article': report_hidden_article.id,
+            'name_type': BoardNameType.REGULAR
+        })
+        assert res.status_code == status.HTTP_201_CREATED
 
     # 댓글 좋아요 확인
     def test_positive_vote(self):
