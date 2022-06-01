@@ -21,7 +21,10 @@ from apps.core.models import (
     Scrap, CommunicationArticle,
 )
 from apps.core.filters.article import ArticleFilter
-from apps.core.permissions.article import ArticlePermission, ArticleKAISTPermission
+from apps.core.permissions.article import (
+    ArticlePermission,
+    ArticleReadPermission
+)
 from apps.core.serializers.article import (
     ArticleSerializer,
     ArticleListActionSerializer,
@@ -50,20 +53,24 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     }
     permission_classes = (
         ArticlePermission,
-        ArticleKAISTPermission
+        ArticleReadPermission,
     )
     action_permission_classes = {
+        'create': (
+            permissions.IsAuthenticated,
+            # Check WritePermission in ArticleCreateActionSerializer
+        ),
         'vote_cancel': (
             permissions.IsAuthenticated,
-            ArticleKAISTPermission
+            ArticleReadPermission,
         ),
         'vote_positive': (
             permissions.IsAuthenticated,
-            ArticleKAISTPermission
+            ArticleReadPermission,
         ),
         'vote_negative': (
             permissions.IsAuthenticated,
-            ArticleKAISTPermission
+            ArticleReadPermission,
         ),
     }
 
@@ -133,14 +140,6 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             )
 
         return queryset
-    
-    def create(self, request, *args, **kwargs):
-        user_group = request.user.profile.group
-        board = Board.objects.get(pk=self.request.data['parent_board'])
-        if board.group_has_write_access(user_group):
-            return super().create(request, *args, **kwargs)
-        return response.Response({'message': gettext('Permission denied')},
-                                 status=status.HTTP_403_FORBIDDEN)
 
     def perform_create(self, serializer):
         serializer.save(

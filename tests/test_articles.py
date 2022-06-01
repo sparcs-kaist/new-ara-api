@@ -532,25 +532,6 @@ class TestArticle(TestCase, RequestSetting):
         assert article.positive_vote_count == 0
         assert article.negative_vote_count == 0
 
-    @pytest.mark.usefixtures('set_kaist_articles')
-    def test_kaist_permission(self):
-        # 카이스트 구성원만 볼 수 있는 게시판에 대한 테스트
-        def check_kaist_error(response):
-            assert response.status_code == status.HTTP_403_FORBIDDEN
-            assert 'KAIST' in response.data['detail']  # 에러 메세지 체크
-        # 게시물 읽기 테스트
-        check_kaist_error(self.http_request(self.non_kaist_user, 'get', f'articles/{self.kaist_article.id}'))
-        # 투표 테스트
-        check_kaist_error(
-            self.http_request(self.non_kaist_user, 'post', f'articles/{self.kaist_article.id}/vote_positive')
-        )
-        check_kaist_error(
-            self.http_request(self.non_kaist_user, 'post', f'articles/{self.kaist_article.id}/vote_negative')
-        )
-        check_kaist_error(
-            self.http_request(self.non_kaist_user, 'post', f'articles/{self.kaist_article.id}/vote_cancel')
-        )
-
     @pytest.mark.usefixtures('set_readonly_board')
     def test_readonly_board(self):
         user_data = {

@@ -2,7 +2,7 @@ import typing
 
 from enum import Enum
 from django.utils.translation import gettext
-from rest_framework import serializers
+from rest_framework import serializers, exceptions
 from django.utils import timezone
 
 from apps.core.documents import ArticleDocument
@@ -427,9 +427,9 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
         user_is_superuser = self.context['request'].user.is_superuser
         if not user_is_superuser and board.is_readonly:
             raise serializers.ValidationError(gettext('This board is read only.'))
-        user_has_read_perm = board.group_has_read_access(self.context['request'].user.profile.group)
-        if not user_has_read_perm:
-            raise serializers.ValidationError(gettext('Read permission denied'))
+        user_has_write_permission = board.group_has_write_access(self.context['request'].user.profile.group)
+        if not user_has_write_permission:
+            raise exceptions.PermissionDenied()
         return board
 
 
