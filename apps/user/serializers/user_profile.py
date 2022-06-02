@@ -10,6 +10,7 @@ from apps.user.models import UserProfile
 
 class BaseUserProfileSerializer(MetaDataModelSerializer):
     email = serializers.SerializerMethodField()
+    is_official = serializers.SerializerMethodField()
 
     class Meta:
         model = UserProfile
@@ -20,6 +21,10 @@ class BaseUserProfileSerializer(MetaDataModelSerializer):
         if obj.email.endswith('@sso.sparcs.org'):
             return None
         return obj.email
+
+    @staticmethod
+    def get_is_official(obj) -> bool:
+        return obj.is_official
 
 
 class UserProfileSerializer(BaseUserProfileSerializer):
@@ -62,23 +67,7 @@ class PublicUserProfileSerializer(BaseUserProfileSerializer):
             'nickname',
             'user',
             'is_official',
-            'is_school_admin',
         )
-
-    is_official = serializers.SerializerMethodField(
-        read_only=True,
-    )
-    is_school_admin = serializers.SerializerMethodField(
-        read_only=True,
-    )
-
-    @staticmethod
-    def get_is_official(obj) -> bool:
-        return obj.group in UserProfile.OFFICIAL_GROUPS
-
-    @staticmethod
-    def get_is_school_admin(obj) -> bool:
-        return obj.group == UserProfile.UserGroup.COMMUNICATION_BOARD_ADMIN
 
 
 class MyPageUserProfileSerializer(BaseUserProfileSerializer):

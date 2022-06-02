@@ -8,4 +8,3 @@ from .notification import *
 from .scrap import *
 from .faq import *
 from .best_search import *
-from .communication_article import *

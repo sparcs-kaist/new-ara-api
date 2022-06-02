@@ -1,3 +1,6 @@
+import sys
+
+from cached_property import cached_property
 from django.db import models
 from django.utils import timezone
 from django.contrib import admin
@@ -46,6 +49,13 @@ class CommunicationArticle(MetaDataModel):
     def get_status_string(self) -> str:
         status_list = ['소통 중', '답변 대기 중', '답변 완료']
         return status_list[self.school_response_status]
-    
+
+    @cached_property
+    def days_left(self) -> int:
+        if self.response_deadline == timezone.datetime.min.replace(tzinfo=timezone.utc):
+            return sys.maxsize
+        else:
+            return (self.response_deadline.astimezone(timezone.localtime().tzinfo) - timezone.localtime()).days
+
     def __str__(self):
         return self.article.title
