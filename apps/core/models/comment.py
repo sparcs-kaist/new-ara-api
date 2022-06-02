@@ -184,7 +184,7 @@ class Comment(MetaDataModel):
                 'profile': {
                     'picture': default_storage.url(user_profile_picture),
                     'nickname': user_name,
-                    'user': user_hash
+                    'user': user_hash,
                 }
             }
         
@@ -200,7 +200,10 @@ class Comment(MetaDataModel):
                 'profile': {
                     'picture': default_storage.url(user_profile_picture),
                     'nickname': user_realname,
-                    'user': user_realname
+                    'user': user_realname,
+                    'is_official': self.created_by.profile.is_official,
+                    'is_school_admin': self.created_by.profile.is_school_admin,
+
                 },
             }
 
