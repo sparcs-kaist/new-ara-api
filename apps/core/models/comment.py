@@ -185,6 +185,8 @@ class Comment(MetaDataModel):
                     'picture': default_storage.url(user_profile_picture),
                     'nickname': user_name,
                     'user': user_hash,
+                    'is_official': None,
+                    'is_school_admin': None,
                 }
             }
         
@@ -201,9 +203,8 @@ class Comment(MetaDataModel):
                     'picture': default_storage.url(user_profile_picture),
                     'nickname': user_realname,
                     'user': user_realname,
-                    'is_official': self.created_by.profile.is_official,
-                    'is_school_admin': self.created_by.profile.is_school_admin,
-
+                    'is_official': None,
+                    'is_school_admin': self.created_by.profile.is_school_admin if parent_article.parent_board.is_school_communication else None
                 },
             }
 
