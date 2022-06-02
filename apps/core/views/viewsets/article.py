@@ -9,6 +9,7 @@ from apps.core.models.board import BoardNameType
 
 from ara import redis
 from ara.classes.viewset import ActionAPIViewSet
+from ara.settings import SCHOOL_RESPONSE_VOTE_THRESHOLD
 
 from apps.core.models import (
     Article,
@@ -216,6 +217,10 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         if article.is_hidden_by_reported():
             return response.Response({'message': gettext('Cannot cancel vote on articles hidden by reports')},
                                      status=status.HTTP_403_FORBIDDEN)
+
+        if article.name_type == BoardNameType.REALNAME and article.positive_vote_count >= SCHOOL_RESPONSE_VOTE_THRESHOLD:
+            return response.Response({'message': gettext('It is not available to cancel a vote for a real name article with more than 30 votes.')},
+                                     status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
         if not Vote.objects.filter(
             voted_by=request.user,
