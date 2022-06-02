@@ -1,10 +1,8 @@
-import sys
 import typing
 
 from enum import Enum
 from django.utils.translation import gettext
 from rest_framework import serializers, exceptions
-from django.utils import timezone
 
 from apps.core.documents import ArticleDocument
 from apps.core.models import Article, Board, Block, Scrap, ArticleHiddenReason, Comment
