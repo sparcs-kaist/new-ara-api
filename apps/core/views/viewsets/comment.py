@@ -1,4 +1,6 @@
 from django.conf import settings
+from django.utils import timezone
+from django.shortcuts import get_object_or_404
 
 from django.utils.translation import gettext
 from rest_framework import mixins, status, response, decorators, serializers, permissions
@@ -55,7 +57,20 @@ class CommentViewSet(mixins.CreateModelMixin,
     }
 
     def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+        if self.request.data.get('parent_article') is None:
+            comment_queryset = Comment.objects.all()
+            parent_comment = get_object_or_404(comment_queryset, pk=self.request.data['parent_comment'])
+            parent_article = parent_comment.parent_article
+        else:
+            article_queryset = Article.objects.all()
+            parent_article = get_object_or_404(article_queryset, pk=self.request.data['parent_article'])
+        # TODO: Use CommentPermission for permission checking logic
+        # self.check_object_permissions(request, parent_article)
+        user_group = request.user.profile.group
+        if parent_article.parent_board.group_has_write_access(user_group):
+            return super().create(request, *args, **kwargs)
+        return response.Response({'message': gettext('Permission denied')},
+                                 status=status.HTTP_403_FORBIDDEN)
 
     def perform_create(self, serializer):
         parent_article_id = self.request.data.get('parent_article')

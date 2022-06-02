@@ -1,6 +1,7 @@
 import pytest
 from django.contrib.auth.models import User
 from django.utils import timezone
+from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework import status
 
@@ -40,6 +41,54 @@ def set_boards(request):
         name_type=BoardNameType.REALNAME,
     )
 
+    request.cls.regular_access_board = Board.objects.create(
+        slug='regular access',
+        ko_name='일반 접근 권한 게시판',
+        en_name='Regular Access Board',
+        ko_description='일반 접근 권한 게시판',
+        en_description='Regular Access Board',
+        read_access_mask=0b11011110,
+        write_access_mask=0b11011010
+    )
+
+    # Though its name is 'advertiser accessible', enterprise is also accessible
+    request.cls.advertiser_accessible_board = Board.objects.create(
+        slug='advertiser accessible',
+        ko_name='외부인(홍보 계정) 접근 가능 게시판',
+        en_name='Advertiser Accessible Board',
+        ko_description='외부인(홍보 계정) 접근 가능 게시판',
+        en_description='Advertiser Accessible Board',
+        read_access_mask=0b11111110,
+        write_access_mask=0b11111110
+    )
+
+    request.cls.nonwritable_board = Board.objects.create(
+        slug='nonwritable',
+        ko_name='글 작성 불가 게시판',
+        en_name='Nonwritable Board',
+        ko_description='글 작성 불가 게시판',
+        en_description='Nonwritable Board',
+        write_access_mask=0b00000000
+    )
+
+    request.cls.newsadmin_writable_board = Board.objects.create(
+        slug='newsadmin writable',
+        ko_name='뉴스게시판 관리인 글 작성 가능 게시판',
+        en_name='Newsadmin Writable Board',
+        ko_description='뉴스게시판 관리인 글 작성 가능 게시판',
+        en_description='Newsadmin Writable Board',
+        write_access_mask=0b10000000
+    )
+
+    request.cls.enterprise_writable_board = Board.objects.create(
+        slug='enterprise writable',
+        ko_name='입주업체 글 작성 가능 게시판',
+        en_name='Enterprise Writable Board',
+        ko_description='입주업체 글 작성 가능 게시판',
+        en_description='Enterprise Writable Board',
+        write_access_mask=0b11011110
+    )
+
 
 @pytest.fixture(scope='class')
 def set_topics(request):
@@ -67,19 +116,35 @@ def set_topics(request):
 def set_articles(request):
     """set_board 먼저 적용"""
     request.cls.article = Article.objects.create(
-            title="example article",
-            content="example content",
-            content_text="example content text",
-            name_type=BoardNameType.REGULAR,
-            is_content_sexual=False,
-            is_content_social=False,
-            hit_count=0,
-            positive_vote_count=0,
-            negative_vote_count=0,
-            created_by=request.cls.user,
-            parent_topic=request.cls.topic,
-            parent_board=request.cls.board,
-            commented_at=timezone.now()
+        title="example article",
+        content="example content",
+        content_text="example content text",
+        name_type=BoardNameType.REGULAR,
+        is_content_sexual=False,
+        is_content_social=False,
+        hit_count=0,
+        positive_vote_count=0,
+        negative_vote_count=0,
+        created_by=request.cls.user,
+        parent_topic=request.cls.topic,
+        parent_board=request.cls.board,
+        commented_at=timezone.now()
+    )
+
+    request.cls.regular_access_article = Article.objects.create(
+        title='regular access article',
+        content='regular access article content',
+        content_text='regular access article content',
+        created_by=request.cls.user,
+        parent_board=request.cls.regular_access_board
+    )
+
+    request.cls.advertiser_accessible_article = Article.objects.create(
+        title='advertiser readable article',
+        content='advertiser readable article content',
+        content_text='advertiser readable article content',
+        created_by=request.cls.user,
+        parent_board=request.cls.advertiser_accessible_board
     )
 
 @pytest.fixture(scope='class')
@@ -104,13 +169,27 @@ def set_realname_article(request):
 
 @pytest.fixture(scope='function')
 def set_kaist_articles(request):
-    request.cls.non_kaist_user, _ = User.objects.get_or_create(username='NonKaistUser', email='non-kaist-user@sparcs.org')
+    request.cls.non_kaist_user, _ = User.objects.get_or_create(
+        username='NonKaistUser',
+        email='non-kaist-user@sparcs.org'
+    )
     if not hasattr(request.cls.non_kaist_user, 'profile'):
-        UserProfile.objects.get_or_create(user=request.cls.non_kaist_user, nickname='Not a KAIST User', agree_terms_of_service_at=timezone.now())
-    request.cls.kaist_user, _ = User.objects.get_or_create(username='KaistUser', email='kaist-user@sparcs.org')
+        UserProfile.objects.get_or_create(
+            user=request.cls.non_kaist_user,
+            nickname='Not a KAIST User',
+            agree_terms_of_service_at=timezone.now()
+        )
+    request.cls.kaist_user, _ = User.objects.get_or_create(
+        username='KaistUser',
+        email='kaist-user@sparcs.org'
+    )
     if not hasattr(request.cls.kaist_user, 'profile'):
-        UserProfile.objects.get_or_create(user=request.cls.kaist_user, nickname='KAIST User',
-                                          group=UserProfile.UserGroup.KAIST_MEMBER, agree_terms_of_service_at=timezone.now())
+        UserProfile.objects.get_or_create(
+            user=request.cls.kaist_user,
+            nickname='KAIST User',
+            agree_terms_of_service_at=timezone.now(),
+            group=UserProfile.UserGroup.KAIST_MEMBER
+        )
 
     request.cls.kaist_board, _ = Board.objects.get_or_create(
         slug="kaist-only",
@@ -118,7 +197,8 @@ def set_kaist_articles(request):
         en_name="KAIST Board",
         ko_description="KAIST Board",
         en_description="KAIST Board",
-        access_mask=2
+        read_access_mask=0b00000010,
+        write_access_mask=0b00000010
     )
     request.cls.kaist_article, _ = Article.objects.get_or_create(
             title="example article",
@@ -156,10 +236,29 @@ def set_readonly_board(request):
 @pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_client3', 'set_user_client4', 'set_user_with_kaist_info',
                          'set_boards', 'set_topics', 'set_articles')
 class TestArticle(TestCase, RequestSetting):
+    def _create_user_by_group(self, group):
+        user, created = User.objects.get_or_create(
+            username=f'User in group {group}',
+            email=f'group{group}user@sparcs.org'
+        )
+        if created:
+            UserProfile.objects.create(
+                user=user,
+                nickname=f'Nickname in group {group}',
+                group=group,
+                agree_terms_of_service_at=timezone.now(),
+                sso_user_info={
+                    'kaist_info': '{\"ku_kname\": \"\\ud669\"}',
+                    'first_name': f'Group{group}User_FirstName',
+                    'last_name': f'Group{group}User_LastName'
+                }
+            )
+        return user
+
     def test_list(self):
         # article 개수를 확인하는 테스트
         res = self.http_request(self.user, 'get', 'articles')
-        assert res.data.get('num_items') == 1
+        assert res.data.get('num_items') == Article.objects.count()
 
         Article.objects.create(
             title="example article",
@@ -194,7 +293,7 @@ class TestArticle(TestCase, RequestSetting):
         )
 
         res = self.http_request(self.user, 'get', 'articles')
-        assert res.data.get('num_items') == 3
+        assert res.data.get('num_items') == Article.objects.count()
 
     def test_get(self):
         # article 조회가 잘 되는지 확인
@@ -254,7 +353,50 @@ class TestArticle(TestCase, RequestSetting):
         # convert user data to JSON
         self.http_request(self.user, 'post', 'articles', user_data)
         assert Article.objects.filter(title='article for test_create')
+    
+    # get request 시 user의 read 권한 확인 테스트
+    def test_check_read_permission_when_get(self):
+        group_users = [self._create_user_by_group(group) for group in UserProfile.UserGroup]
+        articles = [
+            self.regular_access_article,
+            self.advertiser_accessible_article
+        ]
 
+        for user in group_users:
+            for article in articles:
+                res = self.http_request(user, 'get', f'articles/{article.id}')
+
+                if article.parent_board.group_has_read_access(user.profile.group):
+                    assert res.status_code == status.HTTP_200_OK
+                    assert res.data['id'] == article.id
+                else:
+                    assert res.status_code == status.HTTP_403_FORBIDDEN
+    
+    # create 단계에서 user의 write 권한 확인 테스트
+    def test_check_write_permission_when_create(self):
+        group_users = [self._create_user_by_group(group) for group in UserProfile.UserGroup]
+        boards = [
+            self.regular_access_board,
+            self.nonwritable_board,
+            self.newsadmin_writable_board,
+            self.enterprise_writable_board,
+            self.advertiser_accessible_board
+        ]
+
+        for user in group_users:
+            for board in boards:
+                res = self.http_request(user, 'post', 'articles', {
+                    'title': 'title in write permission test',
+                    'content': 'content in write permission test',
+                    'content_text': 'content_text in write permission test',
+                    'parent_board': board.id
+                })
+                
+                if board.group_has_write_access(user.profile.group):
+                    assert res.status_code == status.HTTP_201_CREATED
+                else:
+                    assert res.status_code == status.HTTP_403_FORBIDDEN
+    
     def test_create_anonymous(self):
         user_data = {
             "title": "article for test_create",
@@ -307,11 +449,18 @@ class TestArticle(TestCase, RequestSetting):
         assert response.data.get('title') == new_title
         assert response.data.get('content') == new_content
 
+    @pytest.mark.usefixtures('set_kaist_articles')
     def test_update_hit_counts(self):
-        previous_hit_count = self.article.hit_count
+        updated_hit_count = self.article.hit_count + 1
         res = self.http_request(self.user2, 'get', f'articles/{self.article.id}').data
-        assert res.get('hit_count') == previous_hit_count + 1
-        assert Article.objects.get(id=self.article.id).hit_count == previous_hit_count + 1
+        assert res.get('hit_count') == updated_hit_count
+        assert Article.objects.get(id=self.article.id).hit_count == updated_hit_count
+
+        # 권한 없는 사용자가 get
+        self.http_request(self.non_kaist_user, 'get', f'articles/{self.article.id}')
+
+        res = self.http_request(self.user2, 'get', f'articles/{self.article.id}').data
+        assert res.get('hit_count') == updated_hit_count
 
     def test_delete_by_non_writer(self):
         # 글쓴이가 아닌 사람은 글을 지울 수 없음
@@ -404,25 +553,6 @@ class TestArticle(TestCase, RequestSetting):
         assert article.positive_vote_count == 0
         assert article.negative_vote_count == 0
 
-    @pytest.mark.usefixtures('set_kaist_articles')
-    def test_kaist_permission(self):
-        # 카이스트 구성원만 볼 수 있는 게시판에 대한 테스트
-        def check_kaist_error(response):
-            assert response.status_code == 403
-            assert 'KAIST' in response.data['detail']  # 에러 메세지 체크
-        # 게시물 읽기 테스트
-        check_kaist_error(self.http_request(self.non_kaist_user, 'get', f'articles/{self.kaist_article.id}'))
-        # 투표 테스트
-        check_kaist_error(
-            self.http_request(self.non_kaist_user, 'post', f'articles/{self.kaist_article.id}/vote_positive')
-        )
-        check_kaist_error(
-            self.http_request(self.non_kaist_user, 'post', f'articles/{self.kaist_article.id}/vote_negative')
-        )
-        check_kaist_error(
-            self.http_request(self.non_kaist_user, 'post', f'articles/{self.kaist_article.id}/vote_cancel')
-        )
-
     @pytest.mark.usefixtures('set_readonly_board')
     def test_readonly_board(self):
         user_data = {
@@ -444,20 +574,22 @@ class TestArticle(TestCase, RequestSetting):
         assert res1.data['results'][0]['read_status'] == 'N'
         assert res2.data['results'][0]['read_status'] == 'N'
 
+        article_id = res1.data['results'][0]['id']
+
         # user2만 읽음
-        self.http_request(self.user2, 'get', f'articles/{self.article.id}')
+        self.http_request(self.user2, 'get', f'articles/{article_id}')
         res1 = self.http_request(self.user, 'get', 'articles')
         res2 = self.http_request(self.user2, 'get', 'articles')
         assert res1.data['results'][0]['read_status'] == 'N'
         assert res2.data['results'][0]['read_status'] == '-'
 
         # user1이 업데이트 (user2은 아직 변경사항 확인못함)
-        self.http_request(self.user, 'get', f'articles/{self.article.id}')
-        self.http_request(self.user, 'patch', f'articles/{self.article.id}', {'content': 'update!'})
+        self.http_request(self.user, 'get', f'articles/{article_id}')
+        self.http_request(self.user, 'patch', f'articles/{article_id}', {'content': 'update!'})
 
         # TODO: 현재는 프론트 구현상 게시물을 수정하면 바로 다시 GET을 호출하기 때문에 '-' 로 나옴.
         #       추후 websocket 등으로 게시물 수정이 실시간으로 이루어진다면, 'U'로 나오기 때문에 수정 필요.
-        self.http_request(self.user, 'get', f'articles/{self.article.id}')
+        self.http_request(self.user, 'get', f'articles/{article_id}')
         res1 = self.http_request(self.user, 'get', 'articles')
         assert res1.data['results'][0]['read_status'] == '-'
 
@@ -877,25 +1009,3 @@ class TestHiddenArticles(TestCase, RequestSetting):
         })
 
         assert res.status_code == 403
-
-    def test_comment_on_deleted_article(self):
-        target_article = self._create_deleted_article()
-
-        res = self.http_request(self.user, 'post', 'comments', {
-            'content': 'This is a comment',
-            'parent_article': target_article.id,
-            'name_type': BoardNameType.REGULAR,
-        })
-
-        assert res.status_code == 400
-
-    def test_comment_on_report_hidden_article(self):
-        target_article = self._create_report_hidden_article()
-
-        res = self.http_request(self.user, 'post', 'comments', {
-            'content': 'This is a comment',
-            'parent_article': target_article.id,
-            'name_type': BoardNameType.REGULAR,
-        })
-
-        assert res.status_code == 201

@@ -2,7 +2,7 @@ import typing
 
 from enum import Enum
 from django.utils.translation import gettext
-from rest_framework import serializers
+from rest_framework import serializers, exceptions
 from django.utils import timezone
 
 from apps.core.documents import ArticleDocument
@@ -119,7 +119,11 @@ class SideArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
 class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
         exclude = (
-        'migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count', 'content_text',)
+            'migrated_hit_count',
+            'migrated_positive_vote_count',
+            'migrated_negative_vote_count',
+            'content_text'
+        )
 
     @staticmethod
     def search_articles(queryset, search):
@@ -421,11 +425,11 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
 
     def validate_parent_board(self, board: Board):
         user_is_superuser = self.context['request'].user.is_superuser
-        user_has_perm = board.group_has_access(self.context['request'].user.profile.group)
         if not user_is_superuser and board.is_readonly:
             raise serializers.ValidationError(gettext('This board is read only.'))
-        if not user_has_perm:
-            raise serializers.ValidationError(gettext('This board is only for KAIST members.'))
+        user_has_write_permission = board.group_has_write_access(self.context['request'].user.profile.group)
+        if not user_has_write_permission:
+            raise exceptions.PermissionDenied()
         return board
 
 

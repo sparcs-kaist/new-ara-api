@@ -22,7 +22,10 @@ from apps.core.models import (
     Scrap, CommunicationArticle,
 )
 from apps.core.filters.article import ArticleFilter
-from apps.core.permissions.article import ArticlePermission, ArticleKAISTPermission
+from apps.core.permissions.article import (
+    ArticlePermission,
+    ArticleReadPermission
+)
 from apps.core.serializers.article import (
     ArticleSerializer,
     ArticleListActionSerializer,
@@ -51,20 +54,24 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     }
     permission_classes = (
         ArticlePermission,
-        ArticleKAISTPermission
+        ArticleReadPermission,
     )
     action_permission_classes = {
+        'create': (
+            permissions.IsAuthenticated,
+            # Check WritePermission in ArticleCreateActionSerializer
+        ),
         'vote_cancel': (
             permissions.IsAuthenticated,
-            ArticleKAISTPermission
+            ArticleReadPermission,
         ),
         'vote_positive': (
             permissions.IsAuthenticated,
-            ArticleKAISTPermission
+            ArticleReadPermission,
         ),
         'vote_negative': (
             permissions.IsAuthenticated,
-            ArticleKAISTPermission
+            ArticleReadPermission,
         ),
     }
 
