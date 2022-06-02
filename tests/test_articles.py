@@ -707,7 +707,7 @@ class TestRealnameArticle(TestCase, RequestSetting):
         assert result.get('name_type') == BoardNameType.REALNAME
         assert Article.objects.get(title=new_title).name_type == BoardNameType.REALNAME
 
-    def test_ban_vote_canclellation_after_30(self):
+    def test_ban_vote_cancellation_after_30(self):
         # SCHOOL_RESPONSE_VOTE_THRESHOLD is 3 in test
         users = [self.user, self.user2]
         for user in users:
