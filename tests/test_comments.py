@@ -396,7 +396,7 @@ class TestComments(TestCase, RequestSetting):
             'parent_article': deleted_article.id,
             'name_type': BoardNameType.REGULAR
         })
-        assert res.status_code == status.HTTP_410_GONE
+        assert res.status_code == status.HTTP_404_NOT_FOUND
 
     def test_comment_on_report_hidden_article(self):
         report_hidden_article = Article.objects.create(

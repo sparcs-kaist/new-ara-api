@@ -54,7 +54,9 @@ def set_communication_board(request):
         ko_description='학교와의 게시판 (테스트)',
         en_description='With School (Test)',
         is_school_communication=True,
-        name_type=BoardNameType.REALNAME
+        name_type=BoardNameType.REALNAME,
+        read_access_mask=0b11011110,
+        write_access_mask=0b11011010
     )
 
 
@@ -101,8 +103,8 @@ class TestCommunicationArticle(TestCase, RequestSetting):
     # ======================================================================= #
 
     def _get_communication_article_status(self, article):
-        res = self.http_request(self.user, 'get', f'articles/{article.id}').data
-        return res.get('communication_article_status')
+        res = self.http_request(self.user, 'get', f'articles/{article.id}')
+        return res.data.get('communication_article_status')
     
     def _create_dummy_users(self, num):
         dummy_users = []
@@ -152,7 +154,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         }
         res = self.http_request(self.user, 'post', 'articles', article_data)
 
-        article = Article.objects.get(id=res.data.get('id'))
+        article = Article.objects.get(pk=res.data.get('id'))
 
         if status == SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD:
             pass

@@ -57,13 +57,15 @@ class CommentViewSet(mixins.CreateModelMixin,
     }
 
     def create(self, request, *args, **kwargs):
-        if self.request.data['parent_article'] is None:
-            parent_article = Comment.objects.get(pk=self.request.data['parent_comment']).parent_article
+        if self.request.data.get('parent_article') is None:
+            comment_queryset = Comment.objects.all()
+            parent_comment = get_object_or_404(comment_queryset, pk=self.request.data['parent_comment'])
+            parent_article = parent_comment.parent_article
         else:
-            article_queryset = Article.objects.queryset_with_deleted
+            article_queryset = Article.objects.all()
             parent_article = get_object_or_404(article_queryset, pk=self.request.data['parent_article'])
-            if parent_article.deleted_at != timezone.datetime.min.replace(tzinfo=timezone.utc):
-                return response.Response(status=status.HTTP_410_GONE)
+        # TODO: Use CommentPermission for permission checking logic
+        # self.check_object_permissions(request, parent_article)
         user_group = request.user.profile.group
         if parent_article.parent_board.group_has_write_access(user_group):
             return super().create(request, *args, **kwargs)
