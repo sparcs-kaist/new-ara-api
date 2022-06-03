@@ -137,7 +137,8 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             'created_by': self.school_admin.id,
             'parent_article': article.id
         }
-        self.http_request(self.school_admin, 'post', 'comments', comment_data)
+        res = self.http_request(self.school_admin, 'post', 'comments', comment_data)
+        assert res.data.get('created_by').get('profile').get('is_school_admin')
 
     # status를 가지는 communication_article 반환
     def _create_article_with_status(self, status=SchoolResponseStatus.BEFORE_UPVOTE_THRESHOLD):
