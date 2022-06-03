@@ -94,8 +94,7 @@ class CommentCreateActionSerializer(BaseCommentSerializer):
             'created_by',
         )
 
-    from apps.user.serializers.user import PublicUserSerializer
-    created_by = PublicUserSerializer(
+    created_by = serializers.SerializerMethodField(
         read_only=True,
     )
 
