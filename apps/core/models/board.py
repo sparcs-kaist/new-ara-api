@@ -11,6 +11,12 @@ class BoardNameType(IntEnum):
     REALNAME = 2
 
 
+class BoardAccessPermissionType(IntEnum):
+    READ = 0
+    WRITE = 1
+    COMMENT = 2
+
+
 class Board(MetaDataModel):
     class Meta(MetaDataModel.Meta):
         verbose_name = '게시판'
@@ -54,6 +60,12 @@ class Board(MetaDataModel):
         default=0b11011010,
         null=False,
         verbose_name='쓰기 권한'
+    )
+    comment_access_mask = models.SmallIntegerField(
+        # UNAUTHORIZED 제외 모든 사용자 댓글 권한 부여
+      default=0b11111110,
+      null=False,
+      verbose_name='댓글 권한'
     )
 
     is_readonly = models.BooleanField(
@@ -116,9 +128,20 @@ class Board(MetaDataModel):
 
     def __str__(self) -> str:
         return self.ko_name
-
-    def group_has_read_access(self, group: int) -> bool:
-        return (self.read_access_mask & (1 << group)) > 0
     
-    def group_has_write_access(self, group: int) -> bool:
-        return (self.write_access_mask & (1 << group)) > 0
+    def group_has_access_permission(
+            self,
+            access_type: BoardAccessPermissionType,
+            group: int) -> bool:
+        mask = None
+        if access_type == BoardAccessPermissionType.READ:
+            mask = self.read_access_mask
+        elif access_type == BoardAccessPermissionType.WRITE:
+            mask = self.write_access_mask
+        elif access_type == BoardAccessPermissionType.COMMENT:
+            mask = self.comment_access_mask
+        else:
+            # TODO: Handle error
+            return False
+        
+        return (mask & (1 << group)) > 0

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from ara.classes.serializers import MetaDataModelSerializer
-from apps.core.models import Board
+from apps.core.models.board import Board, BoardAccessPermissionType
 
 
 class BaseBoardSerializer(MetaDataModelSerializer):
@@ -26,8 +26,12 @@ class BoardDetailActionSerializer(BaseBoardSerializer):
 
     def get_user_readable(self, obj):
         user = self.context['request'].user
-        return obj.group_has_read_access(user.profile.group)
+        return obj.group_has_access_permission(
+            BoardAccessPermissionType.READ,
+            user.profile.group)
 
     def get_user_writable(self, obj):
         user = self.context['request'].user
-        return obj.group_has_write_access(user.profile.group)
+        return obj.group_has_access_permission(
+            BoardAccessPermissionType.WRITE,
+            user.profile.group)
