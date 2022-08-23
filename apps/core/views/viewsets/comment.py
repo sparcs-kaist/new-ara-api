@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 
 from django.utils.translation import gettext
 from rest_framework import mixins, status, response, decorators, serializers, permissions
-from apps.core.models.board import BoardNameType
+from apps.core.models.board import BoardAccessPermissionType
 
 from ara.classes.viewset import ActionAPIViewSet
 
@@ -66,8 +66,10 @@ class CommentViewSet(mixins.CreateModelMixin,
             parent_article = get_object_or_404(article_queryset, pk=self.request.data['parent_article'])
         # TODO: Use CommentPermission for permission checking logic
         # self.check_object_permissions(request, parent_article)
+
+        # Check permission
         user_group = request.user.profile.group
-        if parent_article.parent_board.group_has_write_access(user_group):
+        if parent_article.parent_board.group_has_access_permission(BoardAccessPermissionType.COMMENT, user_group):
             return super().create(request, *args, **kwargs)
         return response.Response({'message': gettext('Permission denied')},
                                  status=status.HTTP_403_FORBIDDEN)

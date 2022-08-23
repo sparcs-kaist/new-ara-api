@@ -21,7 +21,7 @@ from .block import Block
 from .report import Report
 from .comment import Comment
 from .communication_article import SchoolResponseStatus
-from .board import BoardNameType
+from .board import BoardNameType, BoardAccessPermissionType
 
 
 class ArticleHiddenReason(str, Enum):
@@ -262,7 +262,8 @@ class Article(MetaDataModel):
         if self.is_content_social and not user.profile.see_social:
             reasons.append(ArticleHiddenReason.SOCIAL_CONTENT)
         # 혹시 몰라 여기 두기는 하는데 여기 오기전에 Permission에서 막혀야 함
-        if not self.parent_board.group_has_read_access(user.profile.group):
+        if not self.parent_board.group_has_access_permission(
+                BoardAccessPermissionType.READ, user.profile.group):
             reasons.append(ArticleHiddenReason.ACCESS_DENIED_CONTENT)
 
         return reasons

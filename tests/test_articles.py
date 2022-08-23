@@ -6,7 +6,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 
 from apps.core.models import Article, Topic, Board, Block, Vote, Comment
-from apps.core.models.board import BoardNameType
+from apps.core.models.board import BoardNameType, BoardAccessPermissionType
 from apps.user.models import UserProfile
 from ara.settings import SCHOOL_RESPONSE_VOTE_THRESHOLD
 from tests.conftest import RequestSetting, TestCase
@@ -366,7 +366,9 @@ class TestArticle(TestCase, RequestSetting):
             for article in articles:
                 res = self.http_request(user, 'get', f'articles/{article.id}')
 
-                if article.parent_board.group_has_read_access(user.profile.group):
+                if article.parent_board.group_has_access_permission(
+                        BoardAccessPermissionType.READ,
+                        user.profile.group):
                     assert res.status_code == status.HTTP_200_OK
                     assert res.data['id'] == article.id
                 else:
@@ -392,7 +394,9 @@ class TestArticle(TestCase, RequestSetting):
                     'parent_board': board.id
                 })
                 
-                if board.group_has_write_access(user.profile.group):
+                if board.group_has_access_permission(
+                        BoardAccessPermissionType.WRITE,
+                        user.profile.group):
                     assert res.status_code == status.HTTP_201_CREATED
                 else:
                     assert res.status_code == status.HTTP_403_FORBIDDEN
