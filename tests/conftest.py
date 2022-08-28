@@ -25,10 +25,22 @@ def set_admin_client(request):
 
 @pytest.fixture(scope='class')
 def set_user_client(request):
-    request.cls.user, _ = User.objects.get_or_create(username='User', email='user@sparcs.org')
+    request.cls.user, _ = User.objects.get_or_create(
+        username='User',
+        email='user@sparcs.org',
+    )
     if not hasattr(request.cls.user, 'profile'):
-        UserProfile.objects.get_or_create(user=request.cls.user, nickname='User',
-                                          group=UserProfile.UserGroup.KAIST_MEMBER, agree_terms_of_service_at=timezone.now())
+        UserProfile.objects.get_or_create(
+            user=request.cls.user,
+            nickname='User',
+            group=UserProfile.UserGroup.KAIST_MEMBER,
+            agree_terms_of_service_at=timezone.now(),
+            sso_user_info={
+                'kaist_info': '{\"ku_kname\": \"\\ud669\"}',
+                'first_name': 'FirstName',
+                'last_name': 'LastName'
+            }
+        )
     client = APIClient()
     request.cls.api_client = client
 
@@ -51,11 +63,34 @@ def set_user_client3(request):
 
     request.cls.api_client = APIClient()
 
+
 @pytest.fixture(scope='class')
 def set_user_client4(request):
     request.cls.user4, _ = User.objects.get_or_create(username='User4', email='user4@sparcs.org')
     if not hasattr(request.cls.user4, 'profile'):
         UserProfile.objects.get_or_create(user=request.cls.user4, nickname='User4',
+                                          group=UserProfile.UserGroup.KAIST_MEMBER, agree_terms_of_service_at=timezone.now())
+
+    request.cls.api_client = APIClient()
+
+
+@pytest.fixture(scope='class')
+def set_user_with_kaist_info(request):
+    request.cls.user_with_kaist_info, _ = User.objects.get_or_create(username='User_with_kaist_info', email='user_with_kaist_info@sparcs.org')
+    if not hasattr(request.cls.user_with_kaist_info, 'profile'):
+        UserProfile.objects.get_or_create(user=request.cls.user_with_kaist_info, nickname='user_with_kinfo',
+                                          sso_user_info={"kaist_info": "{\"ku_kname\": \"user_with_kaist_info\"}"},
+                                          group=UserProfile.UserGroup.KAIST_MEMBER, agree_terms_of_service_at=timezone.now())
+
+    request.cls.api_client = APIClient()
+
+
+@pytest.fixture(scope='class')
+def set_user_without_kaist_info(request):
+    request.cls.user_without_kaist_info, _ = User.objects.get_or_create(username='User_without_kaist_info', email='user_without_kaist_info@sparcs.org')
+    if not hasattr(request.cls.user_without_kaist_info, 'profile'):
+        UserProfile.objects.get_or_create(user=request.cls.user_without_kaist_info, nickname='user_without_kinfo',
+                                          sso_user_info={"kaist_info": None, "last_name": "user_", "first_name": "without_kaist_info"},
                                           group=UserProfile.UserGroup.KAIST_MEMBER, agree_terms_of_service_at=timezone.now())
 
     request.cls.api_client = APIClient()

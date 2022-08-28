@@ -5,9 +5,11 @@ from django.http import Http404
 from django.utils.translation import gettext
 from rest_framework import status, viewsets, response, decorators, serializers, permissions
 from rest_framework.response import Response
+from apps.core.models.board import BoardNameType
 
 from ara import redis
 from ara.classes.viewset import ActionAPIViewSet
+from ara.settings import SCHOOL_RESPONSE_VOTE_THRESHOLD
 
 from apps.core.models import (
     Article,
@@ -17,10 +19,13 @@ from apps.core.models import (
     Board,
     Comment,
     Vote,
-    Scrap,
+    Scrap, CommunicationArticle,
 )
 from apps.core.filters.article import ArticleFilter
-from apps.core.permissions.article import ArticlePermission, ArticleKAISTPermission
+from apps.core.permissions.article import (
+    ArticlePermission,
+    ArticleReadPermission
+)
 from apps.core.serializers.article import (
     ArticleSerializer,
     ArticleListActionSerializer,
@@ -33,7 +38,10 @@ from apps.core.documents import ArticleDocument
 
 class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     queryset = Article.objects.all()
+    
     filterset_class = ArticleFilter
+    ordering_fields = ['created_at', 'positive_vote_count']
+
     serializer_class = ArticleSerializer
     action_serializer_class = {
         'list': ArticleListActionSerializer,
@@ -46,20 +54,24 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     }
     permission_classes = (
         ArticlePermission,
-        ArticleKAISTPermission
+        ArticleReadPermission,
     )
     action_permission_classes = {
+        'create': (
+            permissions.IsAuthenticated,
+            # Check WritePermission in ArticleCreateActionSerializer
+        ),
         'vote_cancel': (
             permissions.IsAuthenticated,
-            ArticleKAISTPermission
+            ArticleReadPermission,
         ),
         'vote_positive': (
             permissions.IsAuthenticated,
-            ArticleKAISTPermission
+            ArticleReadPermission,
         ),
         'vote_negative': (
             permissions.IsAuthenticated,
-            ArticleKAISTPermission
+            ArticleReadPermission,
         ),
     }
 
@@ -72,11 +84,14 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         elif self.action == 'list':
             created_by = self.request.query_params.get('created_by')
             if created_by and int(created_by) != self.request.user.id:
-                queryset = queryset.exclude(is_anonymous=True)
+                # exclude someone's anonymous or realname article in one's profile
+                exclude_list = [BoardNameType.ANONYMOUS, BoardNameType.REALNAME]
+                queryset = queryset.exclude(name_type__in=exclude_list)
 
+            # exclude article written by blocked users in anonymous board
             queryset = queryset.exclude(
                 created_by__id__in=self.request.user.block_set.values('user'),
-                is_anonymous=True
+                name_type=BoardNameType.ANONYMOUS
             )
 
             # optimizing queryset for list action
@@ -130,8 +145,15 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def perform_create(self, serializer):
         serializer.save(
             created_by=self.request.user,
-            is_anonymous=Board.objects.get(pk=self.request.data['parent_board']).is_anonymous
+            name_type=Board.objects.get(pk=self.request.data['parent_board']).name_type
         )
+
+        instance = serializer.instance
+        if Board.objects.get(pk=self.request.data['parent_board']).is_school_communication:
+            communication_article = CommunicationArticle.objects.create(
+                article=instance,
+            )
+            communication_article.save()
 
     def update(self, request, *args, **kwargs):
         article = self.get_object()
@@ -193,6 +215,9 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         pipe.execute(raise_on_error=True)
 
         serialized = ArticleSerializer(article, context={'request': request, 'override_hidden': override_hidden})
+
+        if not request.user.profile.is_school_admin:
+            serialized.days_left = None
         return Response(serialized.data)
 
     @decorators.action(detail=True, methods=['post'])
@@ -202,6 +227,10 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         if article.is_hidden_by_reported():
             return response.Response({'message': gettext('Cannot cancel vote on articles hidden by reports')},
                                      status=status.HTTP_403_FORBIDDEN)
+
+        if article.name_type == BoardNameType.REALNAME and article.positive_vote_count >= SCHOOL_RESPONSE_VOTE_THRESHOLD:
+            return response.Response({'message': gettext('It is not available to cancel a vote for a real name article with more than 30 votes.')},
+                                     status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
         if not Vote.objects.filter(
             voted_by=request.user,
@@ -299,7 +328,8 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         self.paginate_queryset(count_queryset)
 
-        query_params = [self.request.user.id, self.paginator.get_page_size(request), max(0, self.paginator.page.start_index()-1)]
+        query_params = [self.request.user.id, self.paginator.get_page_size(request),
+                        max(0, self.paginator.page.start_index() - 1)]
         if search_keyword:
             query_params.insert(1, id_set)
 
@@ -315,7 +345,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 LIMIT %s OFFSET %s
             ) recents ON recents.article_id = `core_article`.id
             ORDER BY recents.my_last_read_at desc
-            ''', 
+            ''',
             query_params
         ).prefetch_related(
             'created_by',

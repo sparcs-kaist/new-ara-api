@@ -6,17 +6,27 @@ from django.utils import timezone
 from django.core.validators import URLValidator
 
 from apps.core.models import Board, Article, Comment
+from apps.core.models.board import BoardNameType
 from tests.conftest import RequestSetting, TestCase
 
 
 @pytest.fixture(scope='class')
-def set_board(request):
+def set_boards(request):
     request.cls.board = Board.objects.create(
         slug="test board",
         ko_name="테스트 게시판",
         en_name="Test Board",
         ko_description="테스트 게시판입니다",
         en_description="This is a board for testing"
+    )
+
+    request.cls.realname_board = Board.objects.create(
+        slug="realname",
+        ko_name="실명 게시판",
+        en_name="Realname Board",
+        ko_description="실명 게시판",
+        en_description="Realname Board",
+        name_type=BoardNameType.REALNAME
     )
 
 
@@ -26,7 +36,7 @@ def set_articles(request):
     common_kwargs = {
         'content': 'example content',
         'content_text': 'example content text',
-        'is_anonymous': False,
+        'name_type': BoardNameType.REGULAR,
         'created_by': request.cls.user2,
         'parent_board': request.cls.board,
         'hit_count': 0,
@@ -75,7 +85,7 @@ def set_anonymous_article(request):
         title='익명글',
         is_content_sexual=False,
         is_content_social=False,
-        is_anonymous=True,
+        name_type=BoardNameType.ANONYMOUS,
         content='example content',
         content_text='example content text',
         created_by=request.cls.user2,
@@ -85,17 +95,45 @@ def set_anonymous_article(request):
 
 
 @pytest.fixture(scope='class')
+def set_realname_article(request):
+    """set_realname_board, set_user_with_kaist_info 먼저 적용"""
+    request.cls.realname_article = Article.objects.create(
+        title='실명글',
+        is_content_sexual=False,
+        is_content_social=False,
+        name_type=BoardNameType.REALNAME,
+        content='example content',
+        content_text='example content text',
+        created_by=request.cls.user_with_kaist_info,
+        parent_board=request.cls.realname_board,
+        hit_count=0,
+    )
+
+
+@pytest.fixture(scope='class')
 def set_anonymous_comment(request):
     """set_anonymous_articles 먼저 적용"""
     request.cls.comment_anonymous = Comment.objects.create(
         content='example comment',
-        is_anonymous=True,
+        name_type=BoardNameType.ANONYMOUS,
         created_by=request.cls.user,
         parent_article=request.cls.article_anonymous,
     )
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_articles')
+@pytest.fixture(scope='class')
+def set_realname_comment(request):
+    """set_realname_article, set_user_with_kaist_info 먼저 적용"""
+    request.cls.realname_comment = Comment.objects.create(
+        content='example comment',
+        name_type=BoardNameType.REALNAME,
+        created_by=request.cls.user_with_kaist_info,
+        parent_article=request.cls.realname_article,
+    )
+
+
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_with_kaist_info',
+                         'set_boards', 'set_articles')
 class TestUser(TestCase, RequestSetting):
     def test_profile_edit(self):
         # 프로필 (ie. 사용자 설정)이 잘 변경되는지 테스트합니다.
@@ -196,13 +234,14 @@ class TestUserNickname(TestCase, RequestSetting):
         assert (timezone.now() - self.user.profile.nickname_updated_at).total_seconds() < 5
 
 
-@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_board', 'set_anonymous_article', 'set_anonymous_comment')
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_with_kaist_info',
+                         'set_boards', 'set_anonymous_article', 'set_anonymous_comment')
 class TestAnonymousUser(TestCase, RequestSetting):
     def test_anonymous_article_profile_picture(self):
         r = self.http_request(self.user, 'get', f'articles/{self.article_anonymous.id}').data
         profile_picture_url = r.get('created_by')['profile']['picture']
         try:
-            URLValidator(profile_picture_url)
+            URLValidator()(profile_picture_url)
         except ValidationError:
             assert False, 'Bad URL for anonymous article profile picture'
 
@@ -210,6 +249,26 @@ class TestAnonymousUser(TestCase, RequestSetting):
         r = self.http_request(self.user, 'get', f'comments/{self.comment_anonymous.id}').data
         profile_picture_url = r.get('created_by')['profile']['picture']
         try:
-            URLValidator(profile_picture_url)
+            URLValidator()(profile_picture_url)
+        except ValidationError:
+            assert False, 'Bad URL for anonymous comment profile picture'
+
+
+@pytest.mark.usefixtures('set_user_client', 'set_user_client2', 'set_user_with_kaist_info',
+                         'set_boards', 'set_realname_article', 'set_realname_comment')
+class TestRealnameUser(TestCase, RequestSetting):
+    def test_realname_article_profile_picture(self):
+        r = self.http_request(self.user_with_kaist_info, 'get', f'articles/{self.realname_article.id}').data
+        profile_picture_url = r.get('created_by')['profile']['picture']
+        try:
+            URLValidator()(profile_picture_url)
+        except ValidationError:
+            assert False, 'Bad URL for anonymous article profile picture'
+
+    def test_realname_comment_profile_picture(self):
+        r = self.http_request(self.user_with_kaist_info, 'get', f'comments/{self.realname_comment.id}').data
+        profile_picture_url = r.get('created_by')['profile']['picture']
+        try:
+            URLValidator()(profile_picture_url)
         except ValidationError:
             assert False, 'Bad URL for anonymous comment profile picture'

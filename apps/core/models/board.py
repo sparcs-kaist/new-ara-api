@@ -1,8 +1,20 @@
 from django.db import models
-
+from enum import IntEnum
 from django_extensions.db.fields import AutoSlugField
 
 from ara.db.models import MetaDataModel
+
+
+class BoardNameType(IntEnum):
+    REGULAR = 0
+    ANONYMOUS = 1
+    REALNAME = 2
+
+
+class BoardAccessPermissionType(IntEnum):
+    READ = 0
+    WRITE = 1
+    COMMENT = 2
 
 
 class Board(MetaDataModel):
@@ -35,13 +47,27 @@ class Board(MetaDataModel):
     )
 
     # 사용자 그룹에 대해 접근 권한을 제어하는 bit mask 입니다.
-    # access_mask & (1<<user.group) > 0 일 때 접근이 가능합니다.
+    # access_mask & (1 << user.group) > 0 일 때 접근이 가능합니다.
     # 사용자 그룹의 값들은 `UserGroup`을 참고하세요.
-    access_mask = models.IntegerField(
-        default=2,  # 카이스트 구성원만 사용 가능
+    read_access_mask = models.SmallIntegerField(
+        # UNAUTHORIZED, EXTERNAL_ORG 제외 모든 사용자 읽기 권한 부여
+        default=0b11011110,
         null=False,
-        verbose_name='접근 권한 값'
+        verbose_name='읽기 권한'
     )
+    write_access_mask = models.SmallIntegerField(
+        # UNAUTHORIZED, STORE_EMPLOYEE, EXTERNAL_ORG 제외 모든 사용자 쓰기 권한 부여
+        default=0b11011010,
+        null=False,
+        verbose_name='쓰기 권한'
+    )
+    comment_access_mask = models.SmallIntegerField(
+        # UNAUTHORIZED 제외 모든 사용자 댓글 권한 부여
+      default=0b11111110,
+      null=False,
+      verbose_name='댓글 권한'
+    )
+
     is_readonly = models.BooleanField(
         verbose_name='읽기 전용 게시판',
         help_text='활성화했을 때 관리자만 글을 쓸 수 있습니다. (ex. 포탈공지)',
@@ -54,15 +80,68 @@ class Board(MetaDataModel):
         db_index=True,
     )
 
-    is_anonymous = models.BooleanField(
-        verbose_name='익명 게시판',
-        help_text='게시판의 글과 댓글들이 익명이도록 합니다.',
+    name_type = models.SmallIntegerField(
+        verbose_name='익명/실명 게시판',
+        help_text='게시판의 글과 댓글들이 익명 혹은 실명이도록 합니다.',
+        default=BoardNameType.REGULAR,
+        db_index=True
+    )
+
+    is_school_communication = models.BooleanField(
+        verbose_name='학교와의 소통 게시판',
+        help_text='학교 소통 게시판 글임을 표시',
         default=False,
         db_index=True
     )
 
+    group_id = models.IntegerField(
+        verbose_name='그룹 ID',
+        default=1
+    )
+
+    banner_image = models.ImageField(
+        default='default_banner.png',
+        upload_to='board_banner_images',
+        verbose_name='게시판 배너 이미지',
+    )
+
+    ko_banner_description = models.TextField(
+        null=True,
+        blank=True,
+        default=None,
+        verbose_name='게시판 배너에 삽입되는 국문 소개',
+    )
+
+    en_banner_description = models.TextField(
+        null=True,
+        blank=True,
+        default=None,
+        verbose_name='게시판 배너에 삽입되는 영문 소개',
+    )
+
+    banner_url = models.TextField(
+        null=True,
+        blank=True,
+        default=None,
+        verbose_name='게시판 배너를 클릭 시에 이동하는 링크',
+    )
+
     def __str__(self) -> str:
         return self.ko_name
-
-    def group_has_access(self, group: int) -> bool:
-        return (self.access_mask & (1 << group)) > 0
+    
+    def group_has_access_permission(
+            self,
+            access_type: BoardAccessPermissionType,
+            group: int) -> bool:
+        mask = None
+        if access_type == BoardAccessPermissionType.READ:
+            mask = self.read_access_mask
+        elif access_type == BoardAccessPermissionType.WRITE:
+            mask = self.write_access_mask
+        elif access_type == BoardAccessPermissionType.COMMENT:
+            mask = self.comment_access_mask
+        else:
+            # TODO: Handle error
+            return False
+        
+        return (mask & (1 << group)) > 0

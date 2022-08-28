@@ -2,9 +2,11 @@ import typing
 
 from enum import Enum
 from django.utils.translation import gettext
-from rest_framework import serializers
+from rest_framework import serializers, exceptions
+
 from apps.core.documents import ArticleDocument
-from apps.core.models import Article, Board, Block, Scrap, ArticleHiddenReason
+from apps.core.models import Article, Board, Block, Scrap, ArticleHiddenReason, Comment
+from apps.core.models.board import BoardNameType, BoardAccessPermissionType
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.mixins.hidden import HiddenSerializerMixin, HiddenSerializerFieldMixin
 from apps.core.serializers.topic import TopicSerializer
@@ -57,7 +59,7 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
         return None
 
     def get_created_by(self, obj) -> dict:
-        if obj.is_anonymous:
+        if obj.name_type in (BoardNameType.ANONYMOUS, BoardNameType.REALNAME):
             return obj.postprocessed_created_by
         else:
             data = PublicUserSerializer(obj.postprocessed_created_by).data
@@ -115,7 +117,12 @@ class SideArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
 
 class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
-        exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count', 'content_text',)
+        exclude = (
+            'migrated_hit_count',
+            'migrated_positive_vote_count',
+            'migrated_negative_vote_count',
+            'content_text'
+        )
 
     @staticmethod
     def search_articles(queryset, search):
@@ -196,7 +203,7 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
                     after = after_scrap.parent_article
                 else:
                     after = None
-                
+
             else:
                 before = articles.filter(created_at__lte=obj.created_at).first()
                 after = articles.filter(created_at__gte=obj.created_at).last()
@@ -265,10 +272,18 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
         after = None if len(after) == 0 else after[0]
         return after, before
 
-    def get_attachments(self, obj): # -> typing.Optional[list]:
+    def get_attachments(self, obj):  # -> typing.Optional[list]:
         if self.visible_verdict(obj):
             return obj.attachments.all().values_list('id')
         return None
+
+    def get_my_comment_profile(self, obj):
+        fake_comment = Comment(created_by=self.context['request'].user, name_type=obj.name_type, parent_article=obj)
+        if obj.name_type in (BoardNameType.ANONYMOUS, BoardNameType.REALNAME):
+            return fake_comment.postprocessed_created_by
+        else:
+            data = PublicUserSerializer(fake_comment.postprocessed_created_by).data
+            return data
 
     parent_topic = TopicSerializer(
         read_only=True,
@@ -279,6 +294,10 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
 
     attachments = serializers.SerializerMethodField(
         read_only=True,
+    )
+
+    my_comment_profile = serializers.SerializerMethodField(
+        read_only=True
     )
 
     from apps.core.serializers.comment import ArticleNestedCommentListActionSerializer
@@ -312,6 +331,25 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
     side_articles = serializers.SerializerMethodField(
         read_only=True,
     )
+    communication_article_status = serializers.SerializerMethodField(
+        read_only=True,
+    )
+
+    days_left = serializers.SerializerMethodField(
+        read_only=True,
+    )
+
+    @staticmethod
+    def get_days_left(obj):
+        if hasattr(obj, 'communication_article'):
+            return obj.communication_article.days_left
+        return None
+
+    @staticmethod
+    def get_communication_article_status(obj):
+        if hasattr(obj, 'communication_article'):
+            return obj.communication_article.school_response_status
+        return None
 
 
 class ArticleAttachmentType(Enum):
@@ -342,6 +380,13 @@ class ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSeriali
         read_only=True,
     )
 
+    communication_article_status = serializers.SerializerMethodField(
+        read_only=True,
+    )
+
+    days_left = serializers.SerializerMethodField(
+        read_only=True,
+    )
     def get_attachment_type(self, obj) -> str:
         if not self.visible_verdict(obj):
             return ArticleAttachmentType.NONE.value
@@ -361,6 +406,18 @@ class ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSeriali
             return ArticleAttachmentType.NON_IMAGE.value
         return ArticleAttachmentType.NONE.value
 
+    @staticmethod
+    def get_communication_article_status(obj):
+        if hasattr(obj, 'communication_article'):
+            return obj.communication_article.school_response_status
+        return None
+
+    @staticmethod
+    def get_days_left(obj):
+        if hasattr(obj, 'communication_article'):
+            return obj.communication_article.days_left
+        return None
+
 
 class BestArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
     title = serializers.SerializerMethodField(
@@ -373,7 +430,8 @@ class BestArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSer
 
 class ArticleCreateActionSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
-        exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count', 'content_text',)
+        exclude = (
+        'migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count', 'content_text',)
         read_only_fields = (
             'hit_count',
             'comment_count',
@@ -385,19 +443,22 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
 
     def validate_parent_board(self, board: Board):
         user_is_superuser = self.context['request'].user.is_superuser
-        user_has_perm = board.group_has_access(self.context['request'].user.profile.group)
         if not user_is_superuser and board.is_readonly:
             raise serializers.ValidationError(gettext('This board is read only.'))
-        if not user_has_perm:
-            raise serializers.ValidationError(gettext('This board is only for KAIST members.'))
+        user_has_write_permission = board.group_has_access_permission(
+            BoardAccessPermissionType.WRITE,
+            self.context['request'].user.profile.group)
+        if not user_has_write_permission:
+            raise exceptions.PermissionDenied()
         return board
 
 
 class ArticleUpdateActionSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
-        exclude = ('migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count', 'content_text',)
+        exclude = (
+        'migrated_hit_count', 'migrated_positive_vote_count', 'migrated_negative_vote_count', 'content_text',)
         read_only_fields = (
-            'is_anonymous',
+            'name_type',
             'hit_count',
             'comment_count',
             'positive_vote_count',

@@ -2,6 +2,7 @@ import typing
 from enum import Enum
 from typing import Dict, Union
 import hashlib
+import json
 
 from django.core.files.storage import default_storage
 from django.db import models, IntegrityError
@@ -11,13 +12,14 @@ from django.db import transaction
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
 
-from apps.user.views.viewsets import NOUNS, make_random_profile_picture
+from apps.user.views.viewsets import NOUNS, get_profile_picture
 from ara.classes.decorator import cache_by_user
 from ara.db.models import MetaDataModel, MetaDataQuerySet
 from ara.sanitizer import sanitize
 from ara.settings import HASH_SECRET_VALUE
 from .block import Block
 from .report import Report
+from .board import BoardNameType
 
 
 class CommentHiddenReason(Enum):
@@ -38,9 +40,9 @@ class Comment(MetaDataModel):
         verbose_name='본문',
     )
 
-    is_anonymous = models.BooleanField(
-        default=False,
-        verbose_name='익명',
+    name_type = models.SmallIntegerField(
+        default=BoardNameType.REGULAR,
+        verbose_name='익명 혹은 실명',
     )
 
     report_count = models.IntegerField(
@@ -155,21 +157,22 @@ class Comment(MetaDataModel):
     # API 상에서 보이는 사용자 (익명일 경우 익명화된 글쓴이, 그 외는 그냥 글쓴이)
     @cached_property
     def postprocessed_created_by(self) -> Union[settings.AUTH_USER_MODEL, Dict]:
-        if not self.is_anonymous:
+        if self.name_type == BoardNameType.REGULAR:
             return self.created_by
-        else:
-            parent_article = self.get_parent_article()
-            parent_article_id = parent_article.id
-            parent_article_created_by_id = parent_article.created_by.id
-            comment_created_by_id = self.created_by.id
+        
+        parent_article = self.get_parent_article()
+        parent_article_id = parent_article.id
+        parent_article_created_by_id = parent_article.created_by.id
+        comment_created_by_id = self.created_by.id
+        
+        # 댓글 작성자는 (작성자 id + parent article id + 시크릿)을 해시한 값으로 구별합니다.
+        user_unique_num = comment_created_by_id + parent_article_id + HASH_SECRET_VALUE
+        user_unique_encoding = str(hex(user_unique_num)).encode('utf-8')
+        user_hash = hashlib.sha224(user_unique_encoding).hexdigest()
+        user_hash_int = int(user_hash[-4:], 16)
+        user_profile_picture = get_profile_picture(user_hash_int)
 
-            # 댓글 작성자는 (작성자 id + parent article id + 시크릿)을 해시한 값으로 구별합니다.
-            user_unique_num = comment_created_by_id + parent_article_id + HASH_SECRET_VALUE
-            user_unique_encoding = str(hex(user_unique_num)).encode('utf-8')
-            user_hash = hashlib.sha224(user_unique_encoding).hexdigest()
-            user_hash_int = int(user_hash[-4:], 16)
-            user_profile_picture = make_random_profile_picture(user_hash_int)
-
+        if self.name_type == BoardNameType.ANONYMOUS:
             if parent_article_created_by_id == comment_created_by_id:
                 user_name = gettext('author')
             else:
@@ -181,9 +184,30 @@ class Comment(MetaDataModel):
                 'profile': {
                     'picture': default_storage.url(user_profile_picture),
                     'nickname': user_name,
-                    'user': user_hash
+                    'user': user_hash,
+                    'is_official': None,
+                    'is_school_admin': None,
                 }
             }
+        
+        if self.name_type == BoardNameType.REALNAME:
+            if parent_article_created_by_id == comment_created_by_id:
+                user_realname = gettext('author')
+            else:
+                user_realname =  self.created_by.profile.realname
+            
+            return {
+                'id': user_unique_num,
+                'username': user_realname,
+                'profile': {
+                    'picture': default_storage.url(user_profile_picture),
+                    'nickname': user_realname,
+                    'user': user_realname,
+                    'is_official': None,
+                    'is_school_admin': self.created_by.profile.is_school_admin if parent_article.parent_board.is_school_communication else None
+                },
+            }
+
 
     @cache_by_user
     def hidden_reasons(self, user: settings.AUTH_USER_MODEL) -> typing.List:

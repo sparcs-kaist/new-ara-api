@@ -1,5 +1,6 @@
 from rest_framework import serializers
 import typing
+from apps.core.models.board import BoardNameType
 
 from apps.core.serializers.mixins.hidden import HiddenSerializerFieldMixin, HiddenSerializerMixin
 from ara.classes.serializers import MetaDataModelSerializer
@@ -33,7 +34,7 @@ class BaseCommentSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
         return None
 
     def get_created_by(self, obj) -> dict:
-        if obj.is_anonymous:
+        if obj.name_type in (BoardNameType.ANONYMOUS, BoardNameType.REALNAME):
             return obj.postprocessed_created_by
         else:
             data = PublicUserSerializer(obj.postprocessed_created_by).data
@@ -43,9 +44,6 @@ class BaseCommentSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
 
 class CommentSerializer(HiddenSerializerFieldMixin, BaseCommentSerializer):
     from apps.user.serializers.user import PublicUserSerializer
-    created_by = PublicUserSerializer(
-        read_only=True,
-    )
     my_vote = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -62,9 +60,6 @@ class CommentSerializer(HiddenSerializerFieldMixin, BaseCommentSerializer):
 
 class CommentListActionSerializer(HiddenSerializerFieldMixin, BaseCommentSerializer):
     from apps.user.serializers.user import PublicUserSerializer
-    created_by = PublicUserSerializer(
-        read_only=True,
-    )
     my_vote = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -99,8 +94,7 @@ class CommentCreateActionSerializer(BaseCommentSerializer):
             'created_by',
         )
 
-    from apps.user.serializers.user import PublicUserSerializer
-    created_by = PublicUserSerializer(
+    created_by = serializers.SerializerMethodField(
         read_only=True,
     )
 
@@ -108,7 +102,7 @@ class CommentCreateActionSerializer(BaseCommentSerializer):
 class CommentUpdateActionSerializer(BaseCommentSerializer):
     class Meta(BaseCommentSerializer.Meta):
         read_only_fields = (
-            'is_anonymous',
+            'name_type',
             'positive_vote_count',
             'negative_vote_count',
             'created_by',

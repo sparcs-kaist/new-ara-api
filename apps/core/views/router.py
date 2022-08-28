@@ -52,16 +52,14 @@ router.register(
     viewset=viewsets.NotificationViewSet,
 )
 
-
 # FAQViewSet
 router.register(
     prefix=r'faqs',
     viewset=viewsets.FAQViewSet,
 )
 
-
 # BestSearchViewSet
 router.register(
-    prefix=f'best_searches',
+    prefix=r'best_searches',
     viewset=viewsets.BestSearchViewSet,
 )

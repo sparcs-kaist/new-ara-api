@@ -19,7 +19,7 @@ class ArticleFilter(filters.FilterSet):
             'content_text': [
                 'contains',
             ],
-            'is_anonymous': [
+            'name_type': [
                 'exact',
             ],
             'is_content_sexual': [
@@ -47,6 +47,10 @@ class ArticleFilter(filters.FilterSet):
                 'in',
                 'exact',
             ],
+            'communication_article__school_response_status': [
+                'exact',
+                'lt'
+            ]
         }
 
     main_search__contains = filters.CharFilter(

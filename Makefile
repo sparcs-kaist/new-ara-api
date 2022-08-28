@@ -8,6 +8,9 @@ superuser:
 flush:
 	mysql -u root -e 'DROP DATABASE new_ara;'
 
+flush_test:
+	mysql -u root -e 'DROP DATABASE test_new_ara;'
+
 reset: flush init
 
 run:
