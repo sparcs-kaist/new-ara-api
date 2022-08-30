@@ -16,7 +16,7 @@ from tqdm import tqdm
 
 from apps.core.models import Article
 from apps.user.models import UserProfile
-from ara.settings import PORTAL_ID, PORTAL_PASSWORD, PORTAL_2FA_KEY, AWS_S3_BUCKET_NAME
+from ara.settings import PORTAL_ID, PORTAL_PASSWORD, PORTAL_2FA_KEY, AWS_S3_BUCKET_NAME, PORTAL_JSESSIONID
 
 LOGIN_INFO_SSO2 = {
     'userid': PORTAL_ID,
@@ -25,16 +25,15 @@ LOGIN_INFO_SSO2 = {
     'phase': 'pass1',
 }
 
-
 LOGIN_INFO_SSO = {
     'user_id': PORTAL_ID,
     'pw': PORTAL_PASSWORD,
     'login_page': 'L_P_COMMON',
 }
 
+COOKIES = {'JSESSIONID': PORTAL_JSESSIONID}
 
 BASE_URL = 'https://portal.kaist.ac.kr'
-
 
 def _make_2fa_token():
     totp = pyotp.TOTP(PORTAL_2FA_KEY)
@@ -42,46 +41,12 @@ def _make_2fa_token():
 
 
 def _login_kaist_portal():
-    print(f' >>>>> 2FA Token: {_make_2fa_token()}')
     session = requests.Session()
-    init_response = session.get(
-        'https://portal.kaist.ac.kr/portal/', allow_redirects=True
+    response = session.get(
+        f'{BASE_URL}/board/list.brd?boardId=today_notice&lang_knd=ko&userAgent=Chrome&isMobile=false&page=1&userAgent=Chrome&isMobile=False&sortColumn=REG_DATIM&sortMethod=DESC',
+        cookies=COOKIES
     )
-    login_param_id = init_response.url.split('=')[-1]
-
-    login_response = session.post(
-        'https://iam2.kaist.ac.kr/api/sso/login',
-        data={**LOGIN_INFO_SSO, 'param_id': login_param_id,},
-    )
-
-    if login_response.status_code == 500:
-        # Need 2FA
-        login_response = session.post(
-            'https://iam2.kaist.ac.kr/api/sso/login',
-            data={
-                **LOGIN_INFO_SSO,
-                'param_id': login_param_id,
-                'alrdln': 'T',
-                'auth_type_2nd': 'google',
-                'otp': _make_2fa_token()
-            },
-        )
-    k_uid = login_response.json()['dataMap']['encKaistUid']
-    result = login_response.json()['dataMap']['encData']
-    state = login_response.json()['dataMap']['state']
-
-    session.post(
-        'https://portal.kaist.ac.kr/statics/redirectUri.jsp',
-        data={
-            'k_uid': k_uid,
-            'result': result,
-            'state': state,
-            'success': 'true',
-            'enc': 'true',
-            'user_id': PORTAL_ID,
-        },
-    )
-
+    print('_login_kaist_portal status code: ', response.status_code)
     return session
 
 
@@ -130,7 +95,7 @@ def _get_article(url, session):
         hash = enc.hexdigest()[:20]
         filename = f'files/portal_image_{hash}.{url.split("_")[-1]}'
         
-        r = session.get(url, stream=True)
+        r = session.get(url, stream=True, cookies=COOKIES)
         if r.status_code == 200:
             s3 = boto3.client('s3')
             s3.upload_fileobj(r.raw, Bucket = AWS_S3_BUCKET_NAME, Key = filename)
@@ -146,7 +111,7 @@ def _get_article(url, session):
 
         return str(soup)
 
-    article_req = session.get(url)
+    article_req = session.get(url, cookies=COOKIES)
     soup = bs(article_req.text, 'lxml')
 
     writer = (
@@ -176,6 +141,12 @@ def _get_article(url, session):
             html = tr.find('td').prettify()
             break
 
+    if html is None:
+        for tr in trs:
+            if len(list(tr.children)) == 2:
+                html = tr.find('td').prettify()
+                break
+
     html = _save_portal_image(html, session)
     html = _enable_hyperlink(html)
 
@@ -203,7 +174,8 @@ def crawl_hour(day=None):
     def _get_board_today(page_num):
         today = True
         board_req = session.get(
-            f'{BASE_URL}/board/list.brd?boardId=today_notice&lang_knd=ko&userAgent=Chrome&isMobile=false&page={page_num}&userAgent=Chrome&isMobile=False&sortColumn=REG_DATIM&sortMethod=DESC'
+            f'{BASE_URL}/board/list.brd?boardId=today_notice&lang_knd=ko&userAgent=Chrome&isMobile=false&page={page_num}&userAgent=Chrome&isMobile=False&sortColumn=REG_DATIM&sortMethod=DESC',
+            cookies=COOKIES
         )
         soup = bs(board_req.text, 'lxml')
         linklist = []
@@ -322,7 +294,8 @@ def crawl_all():
 
     def _get_board(page_num):
         board_req = session.get(
-            f'{BASE_URL}/board/list.brd?boardId=today_notice&lang_knd=ko&userAgent=Chrome&isMobile=false&page={page_num}&sortColumn=REG_DATIM&sortMethod=DESC'
+            f'{BASE_URL}/board/list.brd?boardId=today_notice&lang_knd=ko&userAgent=Chrome&isMobile=false&page={page_num}&sortColumn=REG_DATIM&sortMethod=DESC',
+            cookies=COOKIES
         )
         soup = bs(board_req.text, 'lxml')
         link = []
