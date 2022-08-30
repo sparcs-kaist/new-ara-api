@@ -141,6 +141,12 @@ def _get_article(url, session):
             html = tr.find('td').prettify()
             break
 
+    if html is None:
+        for tr in trs:
+            if len(list(tr.children)) == 2:
+                html = tr.find('td').prettify()
+                break
+
     html = _save_portal_image(html, session)
     html = _enable_hyperlink(html)
 
