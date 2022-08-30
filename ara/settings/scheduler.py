@@ -25,9 +25,10 @@ def create_scheduler_config(name, period=None, crontab=None):
         config['CRONTAB'] = crontab
     return config
 
-
 SCHEDULERS = {
     'CRAWL_PORTAL': create_scheduler_config('CRAWL_PORTAL', crontab=crontab(minute=0)),  # 매 0분 (1시간마다)
     'SAVE_DAILY_BEST': create_scheduler_config('SAVE_DAILY_BEST', crontab=crontab(minute=0)),
     'SAVE_WEEKLY_BEST': create_scheduler_config('SAVE_WEEKLY_BEST', crontab=crontab(minute=0)),
+    'SEND_EMAIL_FOR_REPLY_REMINDER': create_scheduler_config('SEND_EMAIL_FOR_REPLY_REMINDER', crontab=crontab(hour=7, minute=0)),  # 매일 오전 7시
 }
+

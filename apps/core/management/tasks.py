@@ -2,6 +2,7 @@ import time
 from collections import defaultdict
 
 from apps.core.management.scripts.portal_crawler import crawl_hour
+from apps.core.management.scripts.reminder_email_for_reply import send_email
 from apps.core.models import BestArticle
 from ara import celery_app, redis
 
@@ -66,3 +67,8 @@ def save_daily_best():
 @celery_app.task
 def save_weekly_best():
     return _get_best(7, BestArticle.PERIOD_CHOICES_WEEKLY)
+
+
+@celery_app.task
+def send_email_for_reply_reminder():
+    send_email()
