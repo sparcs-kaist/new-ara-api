@@ -37,4 +37,9 @@ app.conf.beat_schedule = {
         'schedule': settings.SCHEDULERS['SAVE_WEEKLY_BEST']['CRONTAB'],
         'args': []
     },
+    'send_email_for_reply_reminder': {
+        'task': 'apps.core.management.tasks.send_email_for_reply_reminder',
+        'schedule': settings.SCHEDULERS['SEND_EMAIL_FOR_REPLY_REMINDER']['CRONTAB'],
+        'args': []
+    },
 }
