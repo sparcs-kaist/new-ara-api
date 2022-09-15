@@ -17,7 +17,7 @@ from apps.core.models import Article, Board
 from apps.core.models.board import BoardNameType
 from apps.core.models.communication_article import CommunicationArticle, SchoolResponseStatus
 from apps.user.models import UserProfile
-from ara.settings import ANSWER_PERIOD
+from ara.settings import ANSWER_PERIOD, MIN_TIME
 
 from tests.conftest import RequestSetting, TestCase
 
@@ -189,7 +189,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         assert communication_article
 
         # 필드 default 값 확인
-        min_time = timezone.datetime.min.replace(tzinfo=timezone.utc)
+        min_time = MIN_TIME
         assert all([
             communication_article.response_deadline == min_time,
             communication_article.answered_at == min_time,

@@ -9,6 +9,8 @@ from ara.db.models import MetaDataModel
 
 from enum import IntEnum
 
+from ara.settings import MIN_TIME
+
 
 class SchoolResponseStatus(IntEnum):
     BEFORE_UPVOTE_THRESHOLD = 0
@@ -31,12 +33,12 @@ class CommunicationArticle(MetaDataModel):
     )
 
     response_deadline = models.DateTimeField(
-        default=timezone.datetime.min.replace(tzinfo=timezone.utc),
+        default=MIN_TIME,
         verbose_name='답변 요청 기한',
     )
 
     answered_at = models.DateTimeField(
-        default=timezone.datetime.min.replace(tzinfo=timezone.utc),
+        default=MIN_TIME,
         verbose_name='학교측 답변을 받은 시각',
     )
 
@@ -52,7 +54,7 @@ class CommunicationArticle(MetaDataModel):
 
     @cached_property
     def days_left(self) -> int:
-        if self.response_deadline == timezone.datetime.min.replace(tzinfo=timezone.utc):
+        if self.response_deadline == MIN_TIME:
             return sys.maxsize
         else:
             return (self.response_deadline.astimezone(timezone.localtime().tzinfo) - timezone.localtime()).days

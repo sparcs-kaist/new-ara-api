@@ -10,6 +10,7 @@ from rest_framework.test import APIClient
 from apps.core.models import Article, Topic, Board, Comment, Block, Vote
 from apps.core.models.board import BoardNameType
 from apps.user.models import UserProfile
+from ara.settings import MIN_TIME
 from tests.conftest import RequestSetting, TestCase
 
 
@@ -188,7 +189,7 @@ class TestComments(TestCase, RequestSetting):
             'attachment': None,
         }
         self.http_request(self.user, 'post', 'comments', comment_data)
-        assert Comment.objects.filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)).filter(content=comment_str)
+        assert Comment.objects.filter(deleted_at=MIN_TIME).filter(content=comment_str)
 
     # post로 대댓글이 생성됨을 확인
     def test_create_subcomment(self):
@@ -200,7 +201,7 @@ class TestComments(TestCase, RequestSetting):
             'attachment': None,
         }
         self.http_request(self.user, 'post', 'comments', subcomment_data)
-        assert Comment.objects.filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)).filter(content=subcomment_str, parent_comment=self.comment.id)
+        assert Comment.objects.filter(deleted_at=MIN_TIME).filter(content=subcomment_str, parent_comment=self.comment.id)
 
     # 댓글의 생성과 삭제에 따라서 article의 comment_count가 맞게 바뀌는지 확인
     def test_article_comment_count(self):
@@ -254,15 +255,15 @@ class TestComments(TestCase, RequestSetting):
 
     # 댓글 작성자가 자신의 댓글을 지울 수 있는지 확인
     def test_delete_comment_by_comment_writer(self):
-        assert Comment.objects.filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)).filter(id=self.comment.id)
+        assert Comment.objects.filter(deleted_at=MIN_TIME).filter(id=self.comment.id)
         self.http_request(self.user, 'delete', f'comments/{self.comment.id}')
-        assert not Comment.objects.filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)).filter(id=self.comment.id)
+        assert not Comment.objects.filter(deleted_at=MIN_TIME).filter(id=self.comment.id)
 
     # 다른 사용자의 댓글을 지울 수 없는 것 확인
     def test_delete_comment_by_not_comment_writer(self):
-        assert Comment.objects.filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)).filter(id=self.comment.id)
+        assert Comment.objects.filter(deleted_at=MIN_TIME).filter(id=self.comment.id)
         self.http_request(self.user2, 'delete', f'comments/{self.comment.id}')
-        assert Comment.objects.filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)).filter(id=self.comment.id)
+        assert Comment.objects.filter(deleted_at=MIN_TIME).filter(id=self.comment.id)
 
     # 댓글을 삭제할 때, 그 댓글의 대댓글은 삭제되지 않는 것 확인
     def test_delete_comment_with_subcomment(self):
@@ -275,7 +276,7 @@ class TestComments(TestCase, RequestSetting):
         comment = Comment.objects.filter(id=self.comment.id).get()
         # MetaDataModel class에서 delete하여 signal로 cascade 삭제 확인.
         comment.delete()
-        assert Comment.objects.filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)).filter(id=subcomment.id)
+        assert Comment.objects.filter(deleted_at=MIN_TIME).filter(id=subcomment.id)
 
     # patch로 댓글을 수정할 수 있음을 확인
     def test_edit_comment_by_writer(self):

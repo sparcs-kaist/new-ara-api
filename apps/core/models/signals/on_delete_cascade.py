@@ -4,13 +4,14 @@ from django.dispatch import receiver
 from django.utils import timezone
 
 from apps.core.models import Article, Attachment, Board, Comment, Notification, Topic
+from ara.settings import MIN_TIME
 
 
 # Core
 
 @receiver(models.signals.post_save, sender=Article)
 def cascade_soft_deletion_article(instance, **kwargs):
-    deleted = instance.deleted_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
+    deleted = instance.deleted_at != MIN_TIME
 
     if deleted:
         with transaction.atomic():
@@ -19,7 +20,7 @@ def cascade_soft_deletion_article(instance, **kwargs):
             instance.article_delete_log_set.all().delete()
             instance.best_set.all().delete()
 
-            comments = instance.comment_set.filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)).delete()
+            comments = instance.comment_set.filter(deleted_at=MIN_TIME).delete()
             if comments:
                 instance.update_comment_count()
 
@@ -32,7 +33,7 @@ def cascade_soft_deletion_article(instance, **kwargs):
 
 @receiver(models.signals.post_save, sender=Board)
 def cascade_soft_deletion_board(instance, **kwargs):
-    deleted = instance.deleted_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
+    deleted = instance.deleted_at != MIN_TIME
 
     if deleted:
         with transaction.atomic():
@@ -42,7 +43,7 @@ def cascade_soft_deletion_board(instance, **kwargs):
 
 @receiver(models.signals.post_save, sender=Comment)
 def cascade_soft_deletion_comment(instance, **kwargs):
-    deleted = instance.deleted_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
+    deleted = instance.deleted_at != MIN_TIME
 
     if deleted:
         with transaction.atomic():
@@ -58,7 +59,7 @@ def cascade_soft_deletion_comment(instance, **kwargs):
 
 @receiver(models.signals.post_save, sender=Notification)
 def cascade_soft_deletion_notification(instance, **kwargs):
-    deleted = instance.deleted_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
+    deleted = instance.deleted_at != MIN_TIME
 
     if deleted:
         instance.notification_read_log_set.all().delete()
@@ -66,7 +67,7 @@ def cascade_soft_deletion_notification(instance, **kwargs):
 
 @receiver(models.signals.post_save, sender=Topic)
 def cascade_soft_deletion_topic(instance, **kwargs):
-    deleted = instance.deleted_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
+    deleted = instance.deleted_at != MIN_TIME
 
     if deleted:
         instance.article_set.all().delete()

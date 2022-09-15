@@ -9,6 +9,7 @@ from django.utils.translation import ugettext_lazy
 from django_mysql.models import JSONField
 
 from ara.db.models import MetaDataModel
+from ara.settings import MIN_TIME
 
 
 class UserProfile(MetaDataModel):
@@ -66,7 +67,7 @@ class UserProfile(MetaDataModel):
         verbose_name='닉네임',
     )
     nickname_updated_at = models.DateTimeField(
-        default=timezone.datetime.min.replace(tzinfo=timezone.utc),
+        default=MIN_TIME,
         verbose_name='최근 닉네임 변경일시'
     )
     see_sexual = models.BooleanField(

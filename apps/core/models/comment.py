@@ -16,7 +16,7 @@ from apps.user.views.viewsets import NOUNS, get_profile_picture
 from ara.classes.decorator import cache_by_user
 from ara.db.models import MetaDataModel, MetaDataQuerySet
 from ara.sanitizer import sanitize
-from ara.settings import HASH_SECRET_VALUE
+from ara.settings import HASH_SECRET_VALUE, MIN_TIME
 from .block import Block
 from .report import Report
 from .board import BoardNameType
@@ -95,7 +95,7 @@ class Comment(MetaDataModel):
         verbose_name='댓글',
     )
     hidden_at = models.DateTimeField(
-        default=timezone.datetime.min.replace(tzinfo=timezone.utc),
+        default=MIN_TIME,
         verbose_name='숨김 시간',
     )
 
@@ -139,10 +139,10 @@ class Comment(MetaDataModel):
         return self.parent_comment.parent_article
 
     def is_hidden_by_reported(self) -> bool:
-        return self.hidden_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
+        return self.hidden_at != MIN_TIME
 
     def is_deleted(self) -> bool:
-        return self.deleted_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
+        return self.deleted_at != MIN_TIME
     
     @transaction.atomic
     def update_report_count(self):
