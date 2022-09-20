@@ -76,7 +76,7 @@ def _make_message(articles):
 
 
 def _get_mailing_list():
-    mailing_list = []
+    mailing_list = ['new-ara@sparcs.org']
 
     admin_users = UserProfile.objects.filter(
         group=6
