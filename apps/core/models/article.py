@@ -16,7 +16,7 @@ from apps.user.views.viewsets import get_profile_picture, hashlib
 from ara.classes.decorator import cache_by_user
 from ara.db.models import MetaDataModel
 from ara.sanitizer import sanitize
-from ara.settings import HASH_SECRET_VALUE, SCHOOL_RESPONSE_VOTE_THRESHOLD, ANSWER_PERIOD
+from ara.settings import HASH_SECRET_VALUE, SCHOOL_RESPONSE_VOTE_THRESHOLD, ANSWER_PERIOD, MIN_TIME
 from .block import Block
 from .report import Report
 from .comment import Comment
@@ -148,7 +148,7 @@ class Article(MetaDataModel):
     )
 
     hidden_at = models.DateTimeField(
-        default=timezone.datetime.min.replace(tzinfo=timezone.utc),
+        default=MIN_TIME,
         verbose_name='숨김 시간',
     )
 
@@ -178,7 +178,7 @@ class Article(MetaDataModel):
 
     def update_comment_count(self):
         self.comment_count = Comment.objects.filter(
-            deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)).filter(
+            deleted_at=MIN_TIME).filter(
             models.Q(parent_article=self) |
             models.Q(parent_comment__parent_article=self)
         ).count()
@@ -209,7 +209,7 @@ class Article(MetaDataModel):
         self.save()
 
     def is_hidden_by_reported(self) -> bool:
-        return self.hidden_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
+        return self.hidden_at != MIN_TIME
 
     @property
     def created_by_nickname(self):
