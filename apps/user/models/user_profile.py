@@ -39,8 +39,6 @@ class UserProfile(MetaDataModel):
         COMMUNICATION_BOARD_ADMIN = 6, ugettext_lazy("Communication board admin")
         # 뉴스게시판 관리인
         NEWS_BOARD_ADMIN = 7, ugettext_lazy("News board admin")
-        # 제휴 업체
-        AFFILIATED_COMPANY = 8, ugettext_lazy("Affiliated company")
 
     OFFICIAL_GROUPS = [UserGroup.STORE_EMPLOYEE, UserGroup.KAIST_ORG]
 
