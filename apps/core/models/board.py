@@ -51,19 +51,19 @@ class Board(MetaDataModel):
     # 사용자 그룹의 값들은 `UserGroup`을 참고하세요.
     read_access_mask = models.SmallIntegerField(
         # UNAUTHORIZED, EXTERNAL_ORG 제외 모든 사용자 읽기 권한 부여
-        default=0b11011110,
+        default=0b011011110,
         null=False,
         verbose_name="읽기 권한",
     )
     write_access_mask = models.SmallIntegerField(
         # UNAUTHORIZED, STORE_EMPLOYEE, EXTERNAL_ORG 제외 모든 사용자 쓰기 권한 부여
-        default=0b11011010,
+        default=0b011011010,
         null=False,
         verbose_name="쓰기 권한",
     )
     comment_access_mask = models.SmallIntegerField(
         # UNAUTHORIZED 제외 모든 사용자 댓글 권한 부여
-        default=0b11111110,
+        default=0b011111110,
         null=False,
         verbose_name="댓글 권한",
     )
