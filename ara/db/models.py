@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils import timezone
 
+from ara.settings import MIN_TIME
+
 
 class MetaDataQuerySet(models.QuerySet):
     def delete(self):
@@ -23,7 +25,7 @@ class MetaDataManager(models.Manager):
     queryset_class = MetaDataQuerySet
 
     def get_queryset(self):
-        return self.queryset_class(self.model).filter(deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc))
+        return self.queryset_class(self.model).filter(deleted_at=MIN_TIME)
 
     @property
     def queryset_with_deleted(self):
@@ -50,7 +52,7 @@ class MetaDataModel(models.Model):
         verbose_name='수정 시간',
     )
     deleted_at = models.DateTimeField(
-        default=timezone.datetime.min.replace(tzinfo=timezone.utc),
+        default=MIN_TIME,
         db_index=True,
         verbose_name='삭제 시간',
     )

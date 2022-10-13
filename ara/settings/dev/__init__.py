@@ -1,5 +1,6 @@
 from ara.settings import INSTALLED_APPS, MIDDLEWARE, LOGGING
 from ..djangorestframework import REST_FRAMEWORK
+from django.utils import timezone
 
 DEBUG = True
 
@@ -32,6 +33,7 @@ LOGGING['disable_existing_loggers'] = False
 REPORT_THRESHOLD = 4
 SCHOOL_RESPONSE_VOTE_THRESHOLD = 3
 ANSWER_PERIOD = 14
+MIN_TIME = timezone.datetime.min.replace(tzinfo=timezone.utc)
 
 try:
     from .local_settings import *

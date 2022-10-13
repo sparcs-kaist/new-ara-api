@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from apps.core.models import Block
 from ara import redis
+from ara.settings import MIN_TIME
 
 
 @receiver(models.signals.post_save, sender=Block)
@@ -22,7 +23,7 @@ def block_post_save_signal(created, instance, **kwargs):
         pipe.zrem(redis_key, f'{block.user_id}')
         pipe.execute(raise_on_error=True)
 
-    deleted = instance.deleted_at != timezone.datetime.min.replace(tzinfo=timezone.utc)
+    deleted = instance.deleted_at != MIN_TIME
 
     if created:
         add_block_to_redis(instance)

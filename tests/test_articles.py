@@ -8,7 +8,7 @@ from rest_framework import status
 from apps.core.models import Article, Topic, Board, Block, Vote, Comment
 from apps.core.models.board import BoardNameType, BoardAccessPermissionType
 from apps.user.models import UserProfile
-from ara.settings import SCHOOL_RESPONSE_VOTE_THRESHOLD
+from ara.settings import SCHOOL_RESPONSE_VOTE_THRESHOLD, MIN_TIME
 from tests.conftest import RequestSetting, TestCase
 
 
@@ -616,7 +616,7 @@ class TestArticle(TestCase, RequestSetting):
 
         assert Comment.objects.filter(
             parent_article=self.article,
-            deleted_at=timezone.datetime.min.replace(tzinfo=timezone.utc)
+            deleted_at=MIN_TIME
         ).count() == 0
         assert self.article.comment_count == 0
 

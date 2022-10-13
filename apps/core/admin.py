@@ -19,6 +19,7 @@ from apps.core.models import (
     Comment,
     CommunicationArticle
 )
+from ara.settings import MIN_TIME
 
 
 class HiddenContentListFilter(admin.SimpleListFilter):
@@ -34,11 +35,11 @@ class HiddenContentListFilter(admin.SimpleListFilter):
     def queryset(self, request, queryset):
         if self.value() == 'hidden':
             return queryset.exclude(
-                hidden_at=timezone.datetime.min.replace(tzinfo=timezone.utc)
+                hidden_at=MIN_TIME
             )
         if self.value() == 'not_hidden':
             return queryset.filter(
-                hidden_at=timezone.datetime.min.replace(tzinfo=timezone.utc)
+                hidden_at=MIN_TIME
             )
 
 
@@ -121,7 +122,7 @@ class ArticleAdmin(MetaDataModelAdmin):
     @admin.action(description=gettext('Restore hidden articles'))
     def restore_hidden_articles(self, request, queryset):
         rows_updated = queryset.update(
-            hidden_at=timezone.datetime.min.replace(tzinfo=timezone.utc)
+            hidden_at=MIN_TIME
         )
         self.message_user(request, f'{rows_updated}개의 게시물(들)이 성공적으로 복구되었습니다.')
 
@@ -154,7 +155,7 @@ class CommentAdmin(MetaDataModelAdmin):
     @admin.action(description=gettext('Restore hidden comments'))
     def restore_hidden_comments(self, request, queryset):
         rows_updated = queryset.update(
-            hidden_at=timezone.datetime.min.replace(tzinfo=timezone.utc)
+            hidden_at=MIN_TIME
         )
         self.message_user(request, f'{rows_updated}개의 댓글(들)이 성공적으로 복구되었습니다.')
 

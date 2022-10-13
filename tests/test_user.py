@@ -7,6 +7,7 @@ from django.core.validators import URLValidator
 
 from apps.core.models import Board, Article, Comment
 from apps.core.models.board import BoardNameType
+from ara.settings import MIN_TIME
 from tests.conftest import RequestSetting, TestCase
 
 
@@ -196,7 +197,7 @@ class TestUser(TestCase, RequestSetting):
 class TestUserNickname(TestCase, RequestSetting):
     def test_nickname_update(self):
         # 사용자가 처음 생성됨 -> 변경된 적이 없으므로 None
-        assert self.user.profile.nickname_updated_at == timezone.datetime.min.replace(tzinfo=timezone.utc)
+        assert self.user.profile.nickname_updated_at == MIN_TIME
 
         # 닉네임 변경시 nickname_updated_at 변경
         update_data = {

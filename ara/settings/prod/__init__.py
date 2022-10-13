@@ -1,4 +1,5 @@
 from ara.settings import MIDDLEWARE, REST_FRAMEWORK
+from django.utils import timezone
 
 DEBUG = False
 
@@ -28,3 +29,4 @@ REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = (
 REPORT_THRESHOLD = 4
 SCHOOL_RESPONSE_VOTE_THRESHOLD = 20
 ANSWER_PERIOD = 14
+MIN_TIME = timezone.datetime.min.replace(tzinfo=timezone.utc)
