@@ -1,4 +1,4 @@
-from enum import IntEnum, auto
+from enum import IntEnum
 
 from django.db import models
 from django_extensions.db.fields import AutoSlugField
