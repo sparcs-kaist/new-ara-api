@@ -7,15 +7,15 @@ from ara.db.models import MetaDataModel
 
 
 class BoardNameType(IntEnum):
-    REGULAR = auto()
-    ANONYMOUS = auto()
-    REALNAME = auto()
+    REGULAR = 0
+    ANONYMOUS = 1
+    REALNAME = 2
 
 
 class BoardAccessPermissionType(IntEnum):
-    READ = auto()
-    WRITE = auto()
-    COMMENT = auto()
+    READ = 0
+    WRITE = 1
+    COMMENT = 2
 
 
 class Board(MetaDataModel):
