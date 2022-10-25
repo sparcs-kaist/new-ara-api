@@ -2,7 +2,6 @@ from django.db import models
 
 from ara.db.models import MetaDataModel
 
-
 PERIOD_CHOICES = (
     ("daily", "daily"),
     ("weekly", "weekly"),

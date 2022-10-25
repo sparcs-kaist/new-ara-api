@@ -1,6 +1,8 @@
-from ara.settings import INSTALLED_APPS, MIDDLEWARE, LOGGING
-from ..djangorestframework import REST_FRAMEWORK
 from django.utils import timezone
+
+from ara.settings import INSTALLED_APPS, LOGGING, MIDDLEWARE
+
+from ..djangorestframework import REST_FRAMEWORK
 
 DEBUG = True
 

@@ -2,11 +2,10 @@ import pytest
 from django.contrib.auth.models import User
 from django.core.management import call_command
 
-from apps.core.models import Board, Article
+from apps.core.models import Article, Board
 from apps.core.models.board import BoardNameType
 from apps.user.models import UserProfile
 from tests.conftest import RequestSetting, TestCase
-
 
 # TODO: test_articles fixture와 중복되는 코드 합치기
 

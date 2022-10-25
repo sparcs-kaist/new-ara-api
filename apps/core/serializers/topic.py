@@ -1,6 +1,5 @@
-from ara.classes.serializers import MetaDataModelSerializer
-
 from apps.core.models import Topic
+from ara.classes.serializers import MetaDataModelSerializer
 
 
 class BaseTopicSerializer(MetaDataModelSerializer):

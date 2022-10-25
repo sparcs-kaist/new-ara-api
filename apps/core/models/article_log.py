@@ -1,9 +1,8 @@
-from django.db import models
 from django.conf import settings
-
+from django.db import models
 from django_mysql.models import JSONField
 
-from ara.db.models import MetaDataModel, MetaDataManager, MetaDataQuerySet
+from ara.db.models import MetaDataManager, MetaDataModel, MetaDataQuerySet
 
 
 class ArticleReadLog(MetaDataModel):

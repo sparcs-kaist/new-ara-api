@@ -1,6 +1,5 @@
-from ara.classes.serializers import MetaDataModelSerializer
-
 from apps.core.models import Vote
+from ara.classes.serializers import MetaDataModelSerializer
 
 
 class BaseVoteSerializer(MetaDataModelSerializer):

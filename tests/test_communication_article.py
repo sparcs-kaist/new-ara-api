@@ -1,17 +1,12 @@
 import sys
-from datetime import timedelta
+from datetime import datetime, timedelta
 from unittest.mock import patch
 
 import pytest
-from datetime import datetime
-
-from django.utils import timezone
 from django.contrib.auth.models import User
-
-from rest_framework.test import APIClient
+from django.utils import timezone
 from rest_framework.status import HTTP_200_OK
-
-from ara.settings.dev import SCHOOL_RESPONSE_VOTE_THRESHOLD
+from rest_framework.test import APIClient
 
 from apps.core.models import Article, Board
 from apps.core.models.board import BoardNameType
@@ -21,7 +16,7 @@ from apps.core.models.communication_article import (
 )
 from apps.user.models import UserProfile
 from ara.settings import ANSWER_PERIOD, MIN_TIME
-
+from ara.settings.dev import SCHOOL_RESPONSE_VOTE_THRESHOLD
 from tests.conftest import RequestSetting, TestCase
 
 

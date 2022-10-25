@@ -3,12 +3,11 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
-from rest_framework import status
 
-from apps.core.models import Article, Topic, Board, Block, Vote, Comment
-from apps.core.models.board import BoardNameType, BoardAccessPermissionType
+from apps.core.models import Article, Block, Board, Comment, Topic, Vote
+from apps.core.models.board import BoardAccessPermissionType, BoardNameType
 from apps.user.models import UserProfile
-from ara.settings import SCHOOL_RESPONSE_VOTE_THRESHOLD, MIN_TIME
+from ara.settings import MIN_TIME, SCHOOL_RESPONSE_VOTE_THRESHOLD
 from tests.conftest import RequestSetting, TestCase
 
 

@@ -1,13 +1,13 @@
 import pytest
-from django.db import transaction
-from django.utils import timezone
-from django.db.utils import IntegrityError
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
+from django.db import transaction
+from django.db.utils import IntegrityError
+from django.utils import timezone
 
-from apps.core.models import Article, Topic, Board, Comment, Block
+from apps.core.models import Article, Block, Board, Comment, Topic
 from apps.core.models.board import BoardNameType
 from tests.conftest import RequestSetting, TestCase
-from dateutil.relativedelta import relativedelta
 
 
 @pytest.fixture(scope="class")

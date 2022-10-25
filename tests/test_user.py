@@ -2,10 +2,10 @@ from datetime import timedelta
 
 import pytest
 from django.core.exceptions import ValidationError
-from django.utils import timezone
 from django.core.validators import URLValidator
+from django.utils import timezone
 
-from apps.core.models import Board, Article, Comment
+from apps.core.models import Article, Board, Comment
 from apps.core.models.board import BoardNameType
 from ara.settings import MIN_TIME
 from tests.conftest import RequestSetting, TestCase

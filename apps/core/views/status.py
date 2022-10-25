@@ -1,7 +1,6 @@
 from django.db import connections
 from django.db.utils import OperationalError
-
-from rest_framework import views, response
+from rest_framework import response, views
 
 
 class StatusView(views.APIView):

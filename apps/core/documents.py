@@ -1,14 +1,13 @@
+from django.apps import apps
 from django.conf import settings
 from django_elasticsearch_dsl import Document, fields
 from django_elasticsearch_dsl.registries import registry
-from django.apps import apps
-from elasticsearch_dsl import analyzer, tokenizer, Q
-from elasticsearch_dsl.query import Query
+from elasticsearch_dsl import Q, analyzer, tokenizer
 from elasticsearch_dsl.analysis import token_filter
+from elasticsearch_dsl.query import Query
 
 from apps.core.models import Article
 from apps.user.models import UserProfile
-
 
 ngram_analyzer = analyzer(
     "ngram_anl",

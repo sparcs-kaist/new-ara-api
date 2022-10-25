@@ -1,10 +1,9 @@
 import os
+from os import environ as os_environ
 
 from django.utils.translation import ugettext_lazy
 
 from .env import env, root
-from os import environ as os_environ
-
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = root()

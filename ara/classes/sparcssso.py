@@ -1,13 +1,12 @@
+import binascii
 import hashlib
 import hmac
+import os
 import time
-
-from sentry_sdk import capture_exception
 from urllib.parse import urlencode
 
-import binascii
-import os
 import requests
+from sentry_sdk import capture_exception
 
 # SPARCS SSO V2 Client Version 1.1
 # VALID ONLY AFTER 2016-09-10T01:00+09:00

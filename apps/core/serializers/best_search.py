@@ -1,6 +1,5 @@
-from ara.classes.serializers import MetaDataModelSerializer
-
 from apps.core.models import BestSearch
+from ara.classes.serializers import MetaDataModelSerializer
 
 
 class BaseBestSearchSerializer(MetaDataModelSerializer):

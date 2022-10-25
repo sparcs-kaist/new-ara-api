@@ -1,6 +1,5 @@
-from ara.classes.serializers import MetaDataModelSerializer
-
 from apps.core.models import Attachment
+from ara.classes.serializers import MetaDataModelSerializer
 
 
 class BaseAttachmentSerializer(MetaDataModelSerializer):

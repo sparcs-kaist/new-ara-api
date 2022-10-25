@@ -1,5 +1,6 @@
-from ara.settings import MIDDLEWARE, REST_FRAMEWORK
 from django.utils import timezone
+
+from ara.settings import MIDDLEWARE, REST_FRAMEWORK
 
 DEBUG = False
 

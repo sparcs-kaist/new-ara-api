@@ -1,11 +1,13 @@
-from django.contrib.auth import get_user_model
 from django.db import models, transaction
 from django.dispatch import receiver
-from django.utils import timezone
 
-from apps.core.models import Article, Attachment, Board, Comment, Notification, Topic
 from ara.settings import MIN_TIME
 
+from ..article import Article
+from ..board import Board
+from ..comment import Comment
+from ..notification import Notification
+from ..topic import Topic
 
 # Core
 

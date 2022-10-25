@@ -1,3 +1,3 @@
-from ara.settings import env
+from .env import env
 
 HASH_SECRET_VALUE = int(env("HASH_SECRET_VALUE"))

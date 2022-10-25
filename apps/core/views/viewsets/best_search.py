@@ -1,8 +1,8 @@
-from rest_framework import viewsets, permissions
+from rest_framework import permissions, viewsets
 
-from ara.classes.viewset import ActionAPIViewSet
-from apps.core.serializers.best_search import BestSearchSerializer
 from apps.core.models import BestSearch
+from apps.core.serializers.best_search import BestSearchSerializer
+from ara.classes.viewset import ActionAPIViewSet
 
 
 class BestSearchViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):

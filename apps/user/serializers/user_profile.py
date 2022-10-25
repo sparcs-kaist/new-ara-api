@@ -1,11 +1,12 @@
 import typing
-from django.utils.translation import gettext
+
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
+from django.utils.translation import gettext
 from rest_framework import serializers
 
-from ara.classes.serializers import MetaDataModelSerializer
 from apps.user.models import UserProfile
+from ara.classes.serializers import MetaDataModelSerializer
 
 
 class BaseUserProfileSerializer(MetaDataModelSerializer):

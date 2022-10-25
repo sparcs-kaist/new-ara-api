@@ -1,33 +1,26 @@
 from django.conf import settings
-from django.utils import timezone
 from django.shortcuts import get_object_or_404
-
+from django.utils import timezone
 from django.utils.translation import gettext
 from rest_framework import (
-    mixins,
-    status,
-    response,
     decorators,
-    serializers,
+    mixins,
     permissions,
+    response,
+    serializers,
+    status,
 )
-from apps.core.models.board import BoardAccessPermissionType
 
-from ara.classes.viewset import ActionAPIViewSet
-
-from apps.core.models import (
-    Comment,
-    CommentDeleteLog,
-    Vote,
-    Article,
-)
 from apps.core.filters.comment import CommentFilter
+from apps.core.models import Article, Comment, CommentDeleteLog, Vote
+from apps.core.models.board import BoardAccessPermissionType
 from apps.core.permissions.comment import CommentPermission
 from apps.core.serializers.comment import (
-    CommentSerializer,
     CommentCreateActionSerializer,
+    CommentSerializer,
     CommentUpdateActionSerializer,
 )
+from ara.classes.viewset import ActionAPIViewSet
 
 
 class CommentViewSet(

@@ -1,27 +1,26 @@
 import hashlib
 import re
-import boto3
 import uuid
 from datetime import datetime
 
+import boto3
+import pyotp
 import requests
 from bs4 import BeautifulSoup as bs
-
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext
-import pyotp
 from tqdm import tqdm
 
 from apps.core.models import Article
 from apps.user.models import UserProfile
 from ara.settings import (
-    PORTAL_ID,
-    PORTAL_PASSWORD,
-    PORTAL_2FA_KEY,
     AWS_S3_BUCKET_NAME,
+    PORTAL_2FA_KEY,
+    PORTAL_ID,
     PORTAL_JSESSIONID,
+    PORTAL_PASSWORD,
 )
 
 LOGIN_INFO_SSO2 = {

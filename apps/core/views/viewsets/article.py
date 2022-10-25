@@ -4,41 +4,39 @@ from django.db import models
 from django.http import Http404
 from django.utils.translation import gettext
 from rest_framework import (
+    decorators,
+    permissions,
+    response,
+    serializers,
     status,
     viewsets,
-    response,
-    decorators,
-    serializers,
-    permissions,
 )
 from rest_framework.response import Response
-from apps.core.models.board import BoardNameType
 
+from apps.core.documents import ArticleDocument
+from apps.core.filters.article import ArticleFilter
+from apps.core.models import (
+    Article,
+    ArticleDeleteLog,
+    ArticleReadLog,
+    ArticleUpdateLog,
+    Board,
+    Comment,
+    CommunicationArticle,
+    Scrap,
+    Vote,
+)
+from apps.core.models.board import BoardNameType
+from apps.core.permissions.article import ArticlePermission, ArticleReadPermission
+from apps.core.serializers.article import (
+    ArticleCreateActionSerializer,
+    ArticleListActionSerializer,
+    ArticleSerializer,
+    ArticleUpdateActionSerializer,
+)
 from ara import redis
 from ara.classes.viewset import ActionAPIViewSet
 from ara.settings import SCHOOL_RESPONSE_VOTE_THRESHOLD
-
-from apps.core.models import (
-    Article,
-    ArticleReadLog,
-    ArticleUpdateLog,
-    ArticleDeleteLog,
-    Board,
-    Comment,
-    Vote,
-    Scrap,
-    CommunicationArticle,
-)
-from apps.core.filters.article import ArticleFilter
-from apps.core.permissions.article import ArticlePermission, ArticleReadPermission
-from apps.core.serializers.article import (
-    ArticleSerializer,
-    ArticleListActionSerializer,
-    ArticleCreateActionSerializer,
-    ArticleUpdateActionSerializer,
-)
-
-from apps.core.documents import ArticleDocument
 
 
 class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):

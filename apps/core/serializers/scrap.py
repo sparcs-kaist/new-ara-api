@@ -2,8 +2,8 @@ from django.db import IntegrityError
 from django.utils.translation import gettext
 from rest_framework import serializers
 
-from ara.classes.serializers import MetaDataModelSerializer
 from apps.core.models import Scrap
+from ara.classes.serializers import MetaDataModelSerializer
 
 
 class BaseScrapSerializer(MetaDataModelSerializer):

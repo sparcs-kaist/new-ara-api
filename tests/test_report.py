@@ -1,9 +1,10 @@
 import pytest
-from apps.core.models import Article, Topic, Board, Comment, Report
 from django.db.utils import IntegrityError
+from django.utils import timezone
+
+from apps.core.models import Article, Board, Comment, Report, Topic
 from apps.core.models.board import BoardNameType
 from tests.conftest import RequestSetting, TestCase
-from django.utils import timezone
 
 
 @pytest.fixture(scope="class")

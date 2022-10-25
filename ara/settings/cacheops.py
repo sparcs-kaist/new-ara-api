@@ -1,5 +1,4 @@
-from ara.settings import REDIS_HOST
-
+from .redis import REDIS_HOST
 
 CACHEOPS_REDIS = {
     "host": REDIS_HOST,

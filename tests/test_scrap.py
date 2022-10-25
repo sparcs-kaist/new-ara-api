@@ -1,7 +1,8 @@
 import pytest
 from django.db import IntegrityError, transaction
+
+from apps.core.models import Article, Block, Board, Scrap
 from tests.conftest import RequestSetting, TestCase
-from apps.core.models import Scrap, Board, Article, Block
 
 
 @pytest.fixture(scope="class")

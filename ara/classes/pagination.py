@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-from rest_framework import response, pagination
+from rest_framework import pagination, response
 
 
 class PageNumberPagination(pagination.PageNumberPagination):

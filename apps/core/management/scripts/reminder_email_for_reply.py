@@ -1,9 +1,8 @@
-from django.utils import timezone, dateformat
 from django.core.mail import send_mail
+from django.utils import dateformat, timezone
 
 from apps.core.models import CommunicationArticle, UserProfile
 from ara.settings import env
-
 
 if env("DJANGO_ENV") == "production":
     django_env = ""

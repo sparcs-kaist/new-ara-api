@@ -2,9 +2,8 @@ import typing
 
 from rest_framework import serializers
 
-from ara.classes.serializers import MetaDataModelSerializer
-
 from apps.core.models import Notification
+from ara.classes.serializers import MetaDataModelSerializer
 
 
 class BaseNotificationSerializer(MetaDataModelSerializer):

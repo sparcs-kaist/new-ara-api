@@ -1,11 +1,10 @@
+import json
+import logging
 import os
 import time
-import logging
 import uuid
-import json
-from datetime import datetime
 from collections import OrderedDict
-
+from datetime import datetime
 from logging import handlers
 
 from ara.log.log_object import ErrorLogObject

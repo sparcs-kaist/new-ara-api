@@ -1,8 +1,8 @@
-from rest_framework import views, response
+from rest_framework import response, views
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
 
-from apps.core.models import BestArticle, PERIOD_CHOICES
+from apps.core.models import PERIOD_CHOICES, BestArticle
 from apps.core.serializers.article import BestArticleListActionSerializer
 
 

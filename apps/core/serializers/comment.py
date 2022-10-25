@@ -1,14 +1,15 @@
-from rest_framework import serializers
 import typing
-from apps.core.models.board import BoardNameType
 
+from rest_framework import serializers
+
+from apps.core.models import Block, Comment, CommentHiddenReason
+from apps.core.models.board import BoardNameType
 from apps.core.serializers.mixins.hidden import (
     HiddenSerializerFieldMixin,
     HiddenSerializerMixin,
 )
-from ara.classes.serializers import MetaDataModelSerializer
 from apps.user.serializers.user import PublicUserSerializer
-from apps.core.models import Comment, Block, CommentHiddenReason
+from ara.classes.serializers import MetaDataModelSerializer
 
 
 class BaseCommentSerializer(HiddenSerializerMixin, MetaDataModelSerializer):

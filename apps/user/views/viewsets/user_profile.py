@@ -1,16 +1,14 @@
 from django.utils import timezone
-
 from rest_framework import decorators, mixins, response, status
-
-from ara.classes.viewset import ActionAPIViewSet
 
 from apps.user.models import UserProfile
 from apps.user.permissions.user_profile import UserProfilePermission
 from apps.user.serializers.user_profile import (
+    PublicUserProfileSerializer,
     UserProfileSerializer,
     UserProfileUpdateActionSerializer,
-    PublicUserProfileSerializer,
 )
+from ara.classes.viewset import ActionAPIViewSet
 
 
 class UserProfileViewSet(

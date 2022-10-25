@@ -1,12 +1,13 @@
-import pytest
 import hashlib
 from collections import OrderedDict
-from django.core.management import call_command
 
-from apps.core.models import Article, Topic, Board
+import pytest
+from django.core.management import call_command
+from django.utils import timezone
+
+from apps.core.models import Article, Board, Topic
 from apps.core.models.board import BoardNameType
 from tests.conftest import RequestSetting, TestCase
-from django.utils import timezone
 
 
 @pytest.fixture(scope="class")

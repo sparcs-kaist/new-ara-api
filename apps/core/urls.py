@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import include, path
 
 from apps.core.views import HomeView, InvalidSsoLoginView, StatusView, router
 

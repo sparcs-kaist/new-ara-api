@@ -1,9 +1,8 @@
-from rest_framework import viewsets, permissions
-
-from apps.core.serializers.faq import FAQSerializer
-from ara.classes.viewset import ActionAPIViewSet
+from rest_framework import permissions, viewsets
 
 from apps.core.models import FAQ
+from apps.core.serializers.faq import FAQSerializer
+from ara.classes.viewset import ActionAPIViewSet
 
 
 class FAQViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):

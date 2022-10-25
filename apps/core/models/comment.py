@@ -1,14 +1,13 @@
+import hashlib
+import json
 import typing
 from enum import Enum
 from typing import Dict, Union
-import hashlib
-import json
 
-from django.core.files.storage import default_storage
-from django.db import models, IntegrityError
 from django.conf import settings
+from django.core.files.storage import default_storage
+from django.db import IntegrityError, models, transaction
 from django.utils import timezone
-from django.db import transaction
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
 
@@ -17,9 +16,10 @@ from ara.classes.decorator import cache_by_user
 from ara.db.models import MetaDataModel, MetaDataQuerySet
 from ara.sanitizer import sanitize
 from ara.settings import HASH_SECRET_VALUE, MIN_TIME
+
 from .block import Block
-from .report import Report
 from .board import BoardNameType
+from .report import Report
 
 
 class CommentHiddenReason(Enum):

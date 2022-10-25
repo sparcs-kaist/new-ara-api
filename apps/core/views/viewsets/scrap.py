@@ -1,19 +1,10 @@
 from rest_framework import mixins
 
-from ara.classes.viewset import ActionAPIViewSet
-
-from apps.core.models import (
-    ArticleReadLog,
-    Block,
-    Scrap,
-)
-from apps.core.permissions.scrap import ScrapPermission
-from apps.core.serializers.scrap import (
-    ScrapSerializer,
-    ScrapCreateActionSerializer,
-)
-
 from apps.core.documents import ArticleDocument
+from apps.core.models import ArticleReadLog, Block, Scrap
+from apps.core.permissions.scrap import ScrapPermission
+from apps.core.serializers.scrap import ScrapCreateActionSerializer, ScrapSerializer
+from ara.classes.viewset import ActionAPIViewSet
 
 
 class ScrapViewSet(

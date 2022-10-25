@@ -1,12 +1,10 @@
 from django.shortcuts import redirect
-
-from rest_framework import mixins, decorators, permissions
-
-from ara.classes.viewset import ActionAPIViewSet
+from rest_framework import decorators, mixins, permissions
 
 from apps.core.models import Attachment
-from apps.core.serializers.attachment import AttachmentSerializer
 from apps.core.permissions.attachment import AttachmentPermission
+from apps.core.serializers.attachment import AttachmentSerializer
+from ara.classes.viewset import ActionAPIViewSet
 
 
 class AttachmentViewSet(

@@ -1,5 +1,5 @@
-from django.db import models, IntegrityError
 from django.conf import settings
+from django.db import IntegrityError, models
 
 from ara.db.models import MetaDataModel
 

@@ -1,8 +1,7 @@
 from rest_framework import serializers
 
-from ara.classes.serializers import MetaDataModelSerializer
-
 from apps.core.models import ArticleUpdateLog
+from ara.classes.serializers import MetaDataModelSerializer
 
 
 class BaseArticleUpdateLogSerializer(MetaDataModelSerializer):

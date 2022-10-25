@@ -2,7 +2,6 @@ from os import environ
 
 from ara.settings import *
 
-
 DEBUG = True
 TEST = True
 

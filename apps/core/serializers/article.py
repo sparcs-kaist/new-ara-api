@@ -1,16 +1,16 @@
 import typing
-
 from enum import Enum
+
 from django.utils.translation import gettext
-from rest_framework import serializers, exceptions
+from rest_framework import exceptions, serializers
 
 from apps.core.documents import ArticleDocument
-from apps.core.models import Article, Board, Block, Scrap, ArticleHiddenReason, Comment
-from apps.core.models.board import BoardNameType, BoardAccessPermissionType
+from apps.core.models import Article, ArticleHiddenReason, Block, Board, Comment, Scrap
+from apps.core.models.board import BoardAccessPermissionType, BoardNameType
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.mixins.hidden import (
-    HiddenSerializerMixin,
     HiddenSerializerFieldMixin,
+    HiddenSerializerMixin,
 )
 from apps.core.serializers.topic import TopicSerializer
 from apps.user.serializers.user import PublicUserSerializer

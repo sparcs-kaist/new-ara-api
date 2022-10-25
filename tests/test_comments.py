@@ -7,7 +7,7 @@ from django.utils.translation import gettext
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.core.models import Article, Topic, Board, Comment, Block, Vote
+from apps.core.models import Article, Block, Board, Comment, Topic, Vote
 from apps.core.models.board import BoardNameType
 from apps.user.models import UserProfile
 from ara.settings import MIN_TIME

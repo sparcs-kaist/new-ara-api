@@ -1,9 +1,9 @@
-from django.db import models
-from string import ascii_lowercase, ascii_uppercase, digits
 from crypt import crypt
+from string import ascii_lowercase, ascii_uppercase, digits
+
+from django.db import models
 
 from ara.db.models import MetaDataModel
-
 
 # Constant from ARAra project.
 SALT_SET = "{}{}{}./".format(ascii_lowercase, ascii_uppercase, digits)

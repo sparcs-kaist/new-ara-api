@@ -1,9 +1,10 @@
 from datetime import timedelta
 from os import environ as os_environ
+
 from celery.schedules import crontab
 
-from ara.settings import TIME_ZONE, REDIS_URL
-
+from .django import TIME_ZONE
+from .redis import REDIS_URL
 
 # Celery
 CELERY_TIMEZONE = TIME_ZONE

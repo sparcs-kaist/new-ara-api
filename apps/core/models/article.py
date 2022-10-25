@@ -1,13 +1,12 @@
-import bs4
+import json
 import typing
 from enum import Enum
 from typing import Dict, Union
-import json
 
-from django.core.files.storage import default_storage
-
-from django.db import models, IntegrityError, transaction
+import bs4
 from django.conf import settings
+from django.core.files.storage import default_storage
+from django.db import IntegrityError, models, transaction
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
@@ -17,16 +16,17 @@ from ara.classes.decorator import cache_by_user
 from ara.db.models import MetaDataModel
 from ara.sanitizer import sanitize
 from ara.settings import (
-    HASH_SECRET_VALUE,
-    SCHOOL_RESPONSE_VOTE_THRESHOLD,
     ANSWER_PERIOD,
+    HASH_SECRET_VALUE,
     MIN_TIME,
+    SCHOOL_RESPONSE_VOTE_THRESHOLD,
 )
+
 from .block import Block
-from .report import Report
+from .board import BoardAccessPermissionType, BoardNameType
 from .comment import Comment
 from .communication_article import SchoolResponseStatus
-from .board import BoardNameType, BoardAccessPermissionType
+from .report import Report
 
 
 class ArticleHiddenReason(str, Enum):

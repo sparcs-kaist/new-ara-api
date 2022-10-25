@@ -1,7 +1,7 @@
 import pytest
-from tests.conftest import RequestSetting, TestCase
 
-from apps.core.models import Notification, NotificationReadLog, Article, Board, Comment
+from apps.core.models import Article, Board, Comment, Notification, NotificationReadLog
+from tests.conftest import RequestSetting, TestCase
 
 
 @pytest.fixture(scope="class")

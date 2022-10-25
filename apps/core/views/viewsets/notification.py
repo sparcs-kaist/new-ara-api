@@ -1,10 +1,9 @@
-from rest_framework import status, viewsets, response, decorators, serializers
+from rest_framework import decorators, response, serializers, status, viewsets
 
-from ara.classes.viewset import ActionAPIViewSet
-
-from apps.core.models import Notification, NotificationReadLog
 from apps.core.filters.notification import NotificationFilter
+from apps.core.models import Notification, NotificationReadLog
 from apps.core.serializers.notification import NotificationSerializer
+from ara.classes.viewset import ActionAPIViewSet
 
 
 class NotificationViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):

@@ -1,6 +1,5 @@
 from .env import env
 
-
 # https://github.com/etianen/django-s3-storage/
 
 AWS_REGION = "ap-northeast-2"

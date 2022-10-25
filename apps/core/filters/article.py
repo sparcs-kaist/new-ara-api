@@ -1,6 +1,5 @@
-from django.db import models
-
 import rest_framework_filters as filters
+from django.db import models
 
 from apps.core.documents import ArticleDocument
 from apps.core.models import Article

@@ -1,18 +1,16 @@
-from rest_framework import mixins, decorators, status, response
-
-from apps.core.permissions.block import BlockPermission
-from ara.classes.viewset import ActionAPIViewSet
+from dateutil.relativedelta import relativedelta
+from django.utils import timezone
+from django.utils.translation import gettext
+from rest_framework import decorators, mixins, response, status
 
 from apps.core.models import Block
+from apps.core.permissions.block import BlockPermission
 from apps.core.serializers.block import (
-    BlockSerializer,
     BlockCreateActionSerializer,
     BlockDestroyWithoutIdSerializer,
+    BlockSerializer,
 )
-
-from django.utils import timezone
-from dateutil.relativedelta import relativedelta
-from django.utils.translation import gettext
+from ara.classes.viewset import ActionAPIViewSet
 
 
 class BlockViewSet(

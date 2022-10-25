@@ -1,25 +1,23 @@
+import hashlib
 import json
-import uuid
 import random
-import requests
+import uuid
 from urllib.parse import urlparse
 
+import requests
 from cached_property import cached_property
 from django.conf import settings
 from django.contrib.auth import get_user_model, login, logout
 from django.db import transaction
 from django.shortcuts import redirect, reverse
 from django.utils import timezone
-from rest_framework import status, response, decorators, permissions
-
-from apps.user.models.user.manual import ManualUser
-from ara.classes.viewset import ActionAPIViewSet
-from ara.classes.sparcssso import Client as SSOClient
+from rest_framework import decorators, permissions, response, status
 
 from apps.user.models import UserProfile
+from apps.user.models.user.manual import ManualUser
 from apps.user.permissions.user import UserPermission
-
-import hashlib
+from ara.classes.sparcssso import Client as SSOClient
+from ara.classes.viewset import ActionAPIViewSet
 
 NOUNS = [
     "외계인",

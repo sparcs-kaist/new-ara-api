@@ -1,24 +1,23 @@
 from django.contrib import admin
-from django.utils.translation import gettext
 from django.utils import timezone
-
-from ara.classes.admin import MetaDataModelAdmin
+from django.utils.translation import gettext
 
 from apps.core.models import (
-    Board,
-    Topic,
-    Article,
-    ArticleReadLog,
-    ArticleDeleteLog,
-    BestArticle,
-    CommentDeleteLog,
-    BestComment,
     FAQ,
+    Article,
+    ArticleDeleteLog,
+    ArticleReadLog,
+    BestArticle,
+    BestComment,
     BestSearch,
-    Report,
+    Board,
     Comment,
+    CommentDeleteLog,
     CommunicationArticle,
+    Report,
+    Topic,
 )
+from ara.classes.admin import MetaDataModelAdmin
 from ara.settings import MIN_TIME
 
 

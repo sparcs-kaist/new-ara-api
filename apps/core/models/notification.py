@@ -3,7 +3,6 @@ from django.db import models
 
 from ara.db.models import MetaDataModel
 
-
 TYPE_CHOICES = (
     ("default", "default"),
     ("article_commented", "article_commented"),

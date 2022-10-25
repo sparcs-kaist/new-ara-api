@@ -1,5 +1,5 @@
-import sys
 import os
+import sys
 
 LOG_FILE_PATH = os.environ.get("LOG_FILE_PATH", "/var/log/newara/http_access.log")
 LOG_MAX_BYTES = int(os.environ.get("LOG_MAX_BYTES", 1024 * 1024 * 10))
