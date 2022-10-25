@@ -1,5 +1,4 @@
 from rest_framework import response, views
-from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
 
 from apps.core.models import PERIOD_CHOICES, BestArticle

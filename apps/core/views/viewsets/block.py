@@ -1,6 +1,5 @@
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
-from django.utils.translation import gettext
 from rest_framework import decorators, mixins, response, status
 
 from apps.core.models import Block

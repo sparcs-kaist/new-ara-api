@@ -2,7 +2,6 @@ import time
 
 from django.db import models
 from django.dispatch import receiver
-from django.utils import timezone
 
 from apps.core.models import Block
 from ara import redis

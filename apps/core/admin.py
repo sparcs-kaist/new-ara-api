@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.utils import timezone
 from django.utils.translation import gettext
 
 from apps.core.models import (

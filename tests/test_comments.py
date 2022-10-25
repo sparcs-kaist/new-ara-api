@@ -5,11 +5,9 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.utils.translation import gettext
 from rest_framework import status
-from rest_framework.test import APIClient
 
 from apps.core.models import Article, Block, Board, Comment, Topic, Vote
 from apps.core.models.board import BoardNameType
-from apps.user.models import UserProfile
 from ara.settings import MIN_TIME
 from tests.conftest import RequestSetting, TestCase
 

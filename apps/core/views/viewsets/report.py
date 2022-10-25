@@ -3,7 +3,7 @@ from django.utils.translation import gettext
 from rest_framework import mixins, status
 from rest_framework.response import Response
 
-from apps.core.models import Article, ArticleReadLog, Block, Comment, Report
+from apps.core.models import Article, ArticleReadLog, Comment, Report
 from apps.core.permissions.report import ReportPermission
 from apps.core.serializers.report import ReportCreateActionSerializer, ReportSerializer
 from ara.classes.viewset import ActionAPIViewSet

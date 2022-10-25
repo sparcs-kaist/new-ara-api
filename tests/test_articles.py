@@ -2,7 +2,6 @@ import pytest
 from django.contrib.auth.models import User
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.test import APIClient
 
 from apps.core.models import Article, Block, Board, Comment, Topic, Vote
 from apps.core.models.board import BoardAccessPermissionType, BoardNameType

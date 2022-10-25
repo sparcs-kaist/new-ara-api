@@ -1,6 +1,5 @@
 import pytest
 from dateutil.relativedelta import relativedelta
-from django.conf import settings
 from django.db import transaction
 from django.db.utils import IntegrityError
 from django.utils import timezone
