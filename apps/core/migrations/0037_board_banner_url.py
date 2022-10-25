@@ -6,13 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0036_alter_board_banner_image'),
+        ("core", "0036_alter_board_banner_image"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='board',
-            name='banner_url',
-            field=models.TextField(blank=True, default=None, null=True, verbose_name='게시판 배너를 클릭 시에 이동하는 링크'),
+            model_name="board",
+            name="banner_url",
+            field=models.TextField(
+                blank=True,
+                default=None,
+                null=True,
+                verbose_name="게시판 배너를 클릭 시에 이동하는 링크",
+            ),
         ),
     ]

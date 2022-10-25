@@ -13,18 +13,16 @@ from apps.user.serializers.user_profile import (
 )
 
 
-class UserProfileViewSet(mixins.RetrieveModelMixin,
-                         mixins.UpdateModelMixin,
-                         ActionAPIViewSet):
+class UserProfileViewSet(
+    mixins.RetrieveModelMixin, mixins.UpdateModelMixin, ActionAPIViewSet
+):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     action_serializer_class = {
-        'update': UserProfileUpdateActionSerializer,
-        'partial_update': UserProfileUpdateActionSerializer,
+        "update": UserProfileUpdateActionSerializer,
+        "partial_update": UserProfileUpdateActionSerializer,
     }
-    permission_classes = (
-        UserProfilePermission,
-    )
+    permission_classes = (UserProfilePermission,)
 
     def retrieve(self, request, *args, **kwargs):
         profile = self.get_object()
@@ -33,7 +31,7 @@ class UserProfileViewSet(mixins.RetrieveModelMixin,
         else:
             return response.Response(PublicUserProfileSerializer(profile).data)
 
-    @decorators.action(detail=True, methods=['patch'])
+    @decorators.action(detail=True, methods=["patch"])
     def agree_terms_of_service(self, request, *args, **kwargs):
         # BAD_REQUEST if user already agree with the terms of service
         if request.user.profile.agree_terms_of_service_at is not None:

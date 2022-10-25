@@ -10,7 +10,7 @@ from apps.core.models import Notification
 class BaseNotificationSerializer(MetaDataModelSerializer):
     class Meta:
         model = Notification
-        fields = '__all__'
+        fields = "__all__"
 
     def get_is_read(self, obj) -> typing.Optional[bool]:
         if not obj.notification_read_log_set.exists():
@@ -27,11 +27,13 @@ class NotificationSerializer(BaseNotificationSerializer):
     )
 
     from apps.core.serializers.article import BaseArticleSerializer
+
     related_article = BaseArticleSerializer(
         read_only=True,
     )
 
     from apps.core.serializers.comment import BaseCommentSerializer
+
     related_comment = BaseCommentSerializer(
         read_only=True,
     )

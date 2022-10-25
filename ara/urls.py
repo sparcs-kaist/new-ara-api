@@ -26,36 +26,39 @@ from drf_yasg import openapi
 
 schema_view = get_schema_view(
     openapi.Info(
-        title='Snippets API',
-        default_version='v1',
-        description='Test description',
-        terms_of_service='https://google.com/policies/terms',
-        contact=openapi.Contact(email='contact@snippets.local'),
-        license=openapi.License(name='BSD Licence'),
+        title="Snippets API",
+        default_version="v1",
+        description="Test description",
+        terms_of_service="https://google.com/policies/terms",
+        contact=openapi.Contact(email="contact@snippets.local"),
+        license=openapi.License(name="BSD Licence"),
     ),
     public=True,
-    permission_classes=(
-        permissions.AllowAny,
-    ),
+    permission_classes=(permissions.AllowAny,),
 )
 
 urlpatterns = [
-    path('api/admin/', admin.site.urls),
-    path('', include(('apps.core.urls', 'core'))),
-    path('', include(('apps.user.urls', 'user'))),
+    path("api/admin/", admin.site.urls),
+    path("", include(("apps.core.urls", "core"))),
+    path("", include(("apps.user.urls", "user"))),
 ]
 
 # drf-yasg
 
 urlpatterns += [
-    re_path(r'swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(), name='schema-json'),
-    path('swagger/', schema_view.with_ui('swagger'), name='schema-swagger-ui'),
-    path('redoc/', schema_view.with_ui('redoc'), name='schema-redoc'),
+    re_path(
+        r"swagger(?P<format>\.json|\.yaml)$",
+        schema_view.without_ui(),
+        name="schema-json",
+    ),
+    path("swagger/", schema_view.with_ui("swagger"), name="schema-swagger-ui"),
+    path("redoc/", schema_view.with_ui("redoc"), name="schema-redoc"),
 ]
 
 # installed apps (test environment)
 if settings.DEBUG:
     import debug_toolbar
+
     urlpatterns += [
-        path('__debug__/', include(debug_toolbar.urls)),
+        path("__debug__/", include(debug_toolbar.urls)),
     ]

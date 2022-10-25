@@ -8,7 +8,7 @@ from apps.core.models import ArticleUpdateLog
 class BaseArticleUpdateLogSerializer(MetaDataModelSerializer):
     class Meta:
         model = ArticleUpdateLog
-        fields = '__all__'
+        fields = "__all__"
 
 
 class ArticleUpdateLogSerializer(BaseArticleUpdateLogSerializer):

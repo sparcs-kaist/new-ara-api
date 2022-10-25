@@ -4,31 +4,31 @@ from django.utils import timezone
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["*"]
 
 CORS_ORIGIN_ALLOW_ALL = True
 
 SSO_IS_BETA = False
 
-SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SAMESITE = "None"
 
 INSTALLED_APPS += [
-    'corsheaders',
-    'debug_toolbar',
+    "corsheaders",
+    "debug_toolbar",
 ]
 
 MIDDLEWARE += [
-    'corsheaders.middleware.CorsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
-    'debug_toolbar_force.middleware.ForceDebugToolbarMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
+    "debug_toolbar_force.middleware.ForceDebugToolbarMiddleware",
 ]
 
-REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] = (
-    'rest_framework.authentication.BasicAuthentication',
-    'ara.authentication.CsrfExemptSessionAuthentication',
+REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = (
+    "rest_framework.authentication.BasicAuthentication",
+    "ara.authentication.CsrfExemptSessionAuthentication",
 )
 
-LOGGING['disable_existing_loggers'] = False
+LOGGING["disable_existing_loggers"] = False
 
 REPORT_THRESHOLD = 4
 SCHOOL_RESPONSE_VOTE_THRESHOLD = 3
@@ -39,4 +39,3 @@ try:
     from .local_settings import *
 except ImportError:
     pass
-

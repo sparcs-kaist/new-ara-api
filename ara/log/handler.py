@@ -15,7 +15,7 @@ class LogMiddlewareHandler(logging.Handler):
     @staticmethod
     def message_from_record(record):
         if isinstance(record.msg, dict) or isinstance(record.msg, str):
-            message = {'raw': record.msg}
+            message = {"raw": record.msg}
         elif isinstance(record.msg, Exception):
             message = ErrorLogObject.format_exception(record.msg)
         else:
@@ -24,12 +24,16 @@ class LogMiddlewareHandler(logging.Handler):
 
     def format(self, record):
         message = self.message_from_record(record)
-        return json.dumps(OrderedDict([
-            ('id', str(uuid.uuid4())),
-            ('level', record.levelname),
-            ('time', datetime.fromtimestamp(record.created).isoformat()),
-            *message.items()
-        ]))
+        return json.dumps(
+            OrderedDict(
+                [
+                    ("id", str(uuid.uuid4())),
+                    ("level", record.levelname),
+                    ("time", datetime.fromtimestamp(record.created).isoformat()),
+                    *message.items(),
+                ]
+            )
+        )
 
 
 class ConsoleHandler(logging.StreamHandler, LogMiddlewareHandler):
@@ -40,16 +44,29 @@ class FileHandler(handlers.TimedRotatingFileHandler, LogMiddlewareHandler):
     pass
 
 
-class SizedTimedRotatingFileHandler(handlers.TimedRotatingFileHandler, LogMiddlewareHandler):
+class SizedTimedRotatingFileHandler(
+    handlers.TimedRotatingFileHandler, LogMiddlewareHandler
+):
     """
     Handler for logging to a set of files, which switches from one file
     to the next when the current file reaches a certain size, or at certain
     timed intervals
     """
 
-    def __init__(self, filename, max_bytes=0, backup_count=0, encoding=None,
-                 delay=0, when='h', interval=1, utc=False):
-        handlers.TimedRotatingFileHandler.__init__(self, filename, when, interval, backup_count, encoding, delay, utc)
+    def __init__(
+        self,
+        filename,
+        max_bytes=0,
+        backup_count=0,
+        encoding=None,
+        delay=0,
+        when="h",
+        interval=1,
+        utc=False,
+    ):
+        handlers.TimedRotatingFileHandler.__init__(
+            self, filename, when, interval, backup_count, encoding, delay, utc
+        )
         self.maxBytes = max_bytes
 
     def shouldRollover(self, record) -> int:
@@ -99,10 +116,12 @@ class SizedTimedRotatingFileHandler(handlers.TimedRotatingFileHandler, LogMiddle
                     addend = -3600
                 timeTuple = time.localtime(t + addend)
 
-        dfn = self.rotation_filename(self.baseFilename + '.' + time.strftime(self.suffix, timeTuple))
+        dfn = self.rotation_filename(
+            self.baseFilename + "." + time.strftime(self.suffix, timeTuple)
+        )
 
-        if self.when == 'MIDNIGHT':
-            dfn += time.strftime("." + '%H-%M-%S', time.localtime(currentTime))
+        if self.when == "MIDNIGHT":
+            dfn += time.strftime("." + "%H-%M-%S", time.localtime(currentTime))
 
         self.rotate(self.baseFilename, dfn)
         if self.backupCount > 0:
@@ -114,12 +133,14 @@ class SizedTimedRotatingFileHandler(handlers.TimedRotatingFileHandler, LogMiddle
         while newRolloverAt <= currentTime:
             newRolloverAt = newRolloverAt + self.interval
         # If DST changes and midnight or weekly rollover, adjust for this.
-        if (self.when == 'MIDNIGHT' or self.when.startswith('W')) and not self.utc:
+        if (self.when == "MIDNIGHT" or self.when.startswith("W")) and not self.utc:
             dstAtRollover = time.localtime(newRolloverAt)[-1]
             if dstNow != dstAtRollover:
-                if not dstNow:  # DST kicks in before next rollover, so we need to deduct an hour
+                if (
+                    not dstNow
+                ):  # DST kicks in before next rollover, so we need to deduct an hour
                     addend = -3600
-                else:           # DST bows out before next rollover, so we need to add an hour
+                else:  # DST bows out before next rollover, so we need to add an hour
                     addend = 3600
                 newRolloverAt += addend
         self.rolloverAt = newRolloverAt
@@ -127,5 +148,5 @@ class SizedTimedRotatingFileHandler(handlers.TimedRotatingFileHandler, LogMiddle
     def exitRollover(self):
         self.delay = True
         if self.stream:
-            if self.stream.tell() > 0 :
+            if self.stream.tell() > 0:
                 self.doRollover()

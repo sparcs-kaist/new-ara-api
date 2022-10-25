@@ -7,8 +7,6 @@ from apps.core.models import BestSearch
 
 class BestSearchViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
     queryset = BestSearch.objects.all()
-    filterset_fields = ['latest']
+    filterset_fields = ["latest"]
     serializer_class = BestSearchSerializer
-    permission_classes = (
-        permissions.IsAuthenticated,
-    )
+    permission_classes = (permissions.IsAuthenticated,)

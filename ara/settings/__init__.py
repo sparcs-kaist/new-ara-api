@@ -11,7 +11,7 @@ from .sentry import *
 from .api import *
 
 
-if env('DJANGO_ENV') == 'development':
+if env("DJANGO_ENV") == "development":
     from .dev import *
-elif env('DJANGO_ENV') == 'production':
+elif env("DJANGO_ENV") == "production":
     from .prod import *

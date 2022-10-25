@@ -13,32 +13,34 @@ def crawl_portal():
 
 
 def _get_redis_key(type_):
-    return f'articles:{type_}'
+    return f"articles:{type_}"
 
 
 def _get_best(days, period):
     BestArticle.objects.filter(latest=True, period=period).update(latest=False)
 
-    type_ = 'vote'
+    type_ = "vote"
     to_ts = time.time()
-    from_ts = to_ts - 24*60*60*days
+    from_ts = to_ts - 24 * 60 * 60 * days
 
-    vote_objs = redis.get_objs_by_values(_get_redis_key(type_), f'({from_ts}', to_ts)
+    vote_objs = redis.get_objs_by_values(_get_redis_key(type_), f"({from_ts}", to_ts)
 
     article_votes = defaultdict(int)
     for obj in vote_objs:
-        article_id, vote, _, _ = obj.split(':')
+        article_id, vote, _, _ = obj.split(":")
         article_votes[article_id] += int(vote)
 
-    type_ = 'hit'
-    hit_objs = redis.get_objs_by_values(_get_redis_key(type_), f'({from_ts}', to_ts)
+    type_ = "hit"
+    hit_objs = redis.get_objs_by_values(_get_redis_key(type_), f"({from_ts}", to_ts)
 
     article_hits = defaultdict(int)
     for obj in hit_objs:
-        article_id, hit, _, _ = obj.split(':')
+        article_id, hit, _, _ = obj.split(":")
         article_hits[article_id] += int(hit)
 
-    hit_sorted = sorted(article_votes.items(), key=lambda x: article_hits[x[0]], reverse=True)
+    hit_sorted = sorted(
+        article_votes.items(), key=lambda x: article_hits[x[0]], reverse=True
+    )
     articles = []
     keys = []
 

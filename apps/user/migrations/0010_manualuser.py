@@ -11,27 +11,72 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('user', '0009_auto_20201025_0136'),
+        ("user", "0009_auto_20201025_0136"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ManualUser',
+            name="ManualUser",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='생성 시간')),
-                ('updated_at', models.DateTimeField(auto_now=True, db_index=True, verbose_name='수정 시간')),
-                ('deleted_at', models.DateTimeField(db_index=True, default=datetime.datetime(1, 1, 1, 0, 0, tzinfo=utc), verbose_name='삭제 시간')),
-                ('organization_name', models.CharField(max_length=160, verbose_name='업체/단체 이름')),
-                ('applicant_name', models.CharField(max_length=160, verbose_name='신청자 이름')),
-                ('sso_email', models.EmailField(max_length=160, verbose_name='sso 이메일')),
-                ('user', models.OneToOneField(blank=True, default=None, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='manual', to=settings.AUTH_USER_MODEL, verbose_name='사용자')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, db_index=True, verbose_name="생성 시간"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, db_index=True, verbose_name="수정 시간"
+                    ),
+                ),
+                (
+                    "deleted_at",
+                    models.DateTimeField(
+                        db_index=True,
+                        default=datetime.datetime(1, 1, 1, 0, 0, tzinfo=utc),
+                        verbose_name="삭제 시간",
+                    ),
+                ),
+                (
+                    "organization_name",
+                    models.CharField(max_length=160, verbose_name="업체/단체 이름"),
+                ),
+                (
+                    "applicant_name",
+                    models.CharField(max_length=160, verbose_name="신청자 이름"),
+                ),
+                (
+                    "sso_email",
+                    models.EmailField(max_length=160, verbose_name="sso 이메일"),
+                ),
+                (
+                    "user",
+                    models.OneToOneField(
+                        blank=True,
+                        default=None,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="manual",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="사용자",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '수동 등록된 사용자',
-                'verbose_name_plural': '수동 등록된 사용자 목록',
-                'ordering': ('-created_at',),
-                'abstract': False,
+                "verbose_name": "수동 등록된 사용자",
+                "verbose_name_plural": "수동 등록된 사용자 목록",
+                "ordering": ("-created_at",),
+                "abstract": False,
             },
         ),
     ]

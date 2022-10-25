@@ -6,12 +6,12 @@ router = routers.DefaultRouter()
 
 # UserViewSet
 router.register(
-    prefix=r'users',
+    prefix=r"users",
     viewset=UserViewSet,
 )
 
 # UserProfileViewSet
 router.register(
-    prefix=r'user_profiles',
+    prefix=r"user_profiles",
     viewset=UserProfileViewSet,
 )

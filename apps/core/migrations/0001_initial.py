@@ -20,390 +20,1184 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Article',
+            name="Article",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='생성 시간')),
-                ('updated_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='수정 시간')),
-                ('deleted_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='삭제 시간')),
-                ('title', models.CharField(max_length=256, verbose_name='제목')),
-                ('content', models.TextField(verbose_name='본문')),
-                ('content_text', models.TextField(editable=False, verbose_name='text 형식 본문')),
-                ('is_anonymous', models.BooleanField(default=False, verbose_name='익명')),
-                ('is_content_sexual', models.BooleanField(default=False, verbose_name='성인/음란성 내용')),
-                ('is_content_social', models.BooleanField(default=False, verbose_name='정치/사회성 내용')),
-                ('hit_count', models.IntegerField(default=0, verbose_name='조회수')),
-                ('positive_vote_count', models.IntegerField(default=0, verbose_name='좋아요 수')),
-                ('negative_vote_count', models.IntegerField(default=0, verbose_name='싫어요 수')),
-                ('commented_at', models.DateTimeField(default=None, null=True, verbose_name='마지막 댓글 시간')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="생성 시간"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="수정 시간"
+                    ),
+                ),
+                (
+                    "deleted_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="삭제 시간"
+                    ),
+                ),
+                ("title", models.CharField(max_length=256, verbose_name="제목")),
+                ("content", models.TextField(verbose_name="본문")),
+                (
+                    "content_text",
+                    models.TextField(editable=False, verbose_name="text 형식 본문"),
+                ),
+                ("is_anonymous", models.BooleanField(default=False, verbose_name="익명")),
+                (
+                    "is_content_sexual",
+                    models.BooleanField(default=False, verbose_name="성인/음란성 내용"),
+                ),
+                (
+                    "is_content_social",
+                    models.BooleanField(default=False, verbose_name="정치/사회성 내용"),
+                ),
+                ("hit_count", models.IntegerField(default=0, verbose_name="조회수")),
+                (
+                    "positive_vote_count",
+                    models.IntegerField(default=0, verbose_name="좋아요 수"),
+                ),
+                (
+                    "negative_vote_count",
+                    models.IntegerField(default=0, verbose_name="싫어요 수"),
+                ),
+                (
+                    "commented_at",
+                    models.DateTimeField(
+                        default=None, null=True, verbose_name="마지막 댓글 시간"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '문서',
-                'verbose_name_plural': '문서 목록',
-                'ordering': ('-created_at',),
-                'abstract': False,
+                "verbose_name": "문서",
+                "verbose_name_plural": "문서 목록",
+                "ordering": ("-created_at",),
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='ArticleDeleteLog',
+            name="ArticleDeleteLog",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='생성 시간')),
-                ('updated_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='수정 시간')),
-                ('deleted_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='삭제 시간')),
-                ('article', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='article_delete_log_set', to='core.Article', verbose_name='삭제된 게시글')),
-                ('deleted_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='article_delete_log_set', to=settings.AUTH_USER_MODEL, verbose_name='삭제자')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="생성 시간"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="수정 시간"
+                    ),
+                ),
+                (
+                    "deleted_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="삭제 시간"
+                    ),
+                ),
+                (
+                    "article",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="article_delete_log_set",
+                        to="core.Article",
+                        verbose_name="삭제된 게시글",
+                    ),
+                ),
+                (
+                    "deleted_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="article_delete_log_set",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="삭제자",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '게시물 삭제 기록',
-                'verbose_name_plural': '게시물 삭제 기록 목록',
-                'ordering': ('-created_at',),
-                'abstract': False,
+                "verbose_name": "게시물 삭제 기록",
+                "verbose_name_plural": "게시물 삭제 기록 목록",
+                "ordering": ("-created_at",),
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='ArticleReadLog',
+            name="ArticleReadLog",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='생성 시간')),
-                ('updated_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='수정 시간')),
-                ('deleted_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='삭제 시간')),
-                ('article', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='article_read_log_set', to='core.Article', verbose_name='조회된 게시글')),
-                ('read_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='article_read_log_set', to=settings.AUTH_USER_MODEL, verbose_name='조회자')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="생성 시간"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="수정 시간"
+                    ),
+                ),
+                (
+                    "deleted_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="삭제 시간"
+                    ),
+                ),
+                (
+                    "article",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="article_read_log_set",
+                        to="core.Article",
+                        verbose_name="조회된 게시글",
+                    ),
+                ),
+                (
+                    "read_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="article_read_log_set",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="조회자",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '게시물 조회 기록',
-                'verbose_name_plural': '게시물 조회 기록 목록',
-                'ordering': ('-created_at',),
-                'abstract': False,
+                "verbose_name": "게시물 조회 기록",
+                "verbose_name_plural": "게시물 조회 기록 목록",
+                "ordering": ("-created_at",),
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='ArticleUpdateLog',
+            name="ArticleUpdateLog",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='생성 시간')),
-                ('updated_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='수정 시간')),
-                ('deleted_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='삭제 시간')),
-                ('data', django_mysql.models.JSONField(default=dict)),
-                ('article', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='article_update_log_set', to='core.Article', verbose_name='변경된 게시글')),
-                ('updated_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='article_update_log_set', to=settings.AUTH_USER_MODEL, verbose_name='변경자')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="생성 시간"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="수정 시간"
+                    ),
+                ),
+                (
+                    "deleted_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="삭제 시간"
+                    ),
+                ),
+                ("data", django_mysql.models.JSONField(default=dict)),
+                (
+                    "article",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="article_update_log_set",
+                        to="core.Article",
+                        verbose_name="변경된 게시글",
+                    ),
+                ),
+                (
+                    "updated_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="article_update_log_set",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="변경자",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '게시물 변경 기록',
-                'verbose_name_plural': '게시물 변경 기록 목록',
-                'ordering': ('-created_at',),
-                'abstract': False,
+                "verbose_name": "게시물 변경 기록",
+                "verbose_name_plural": "게시물 변경 기록 목록",
+                "ordering": ("-created_at",),
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Attachment',
+            name="Attachment",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='생성 시간')),
-                ('updated_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='수정 시간')),
-                ('deleted_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='삭제 시간')),
-                ('name', models.TextField(verbose_name='이름')),
-                ('file', models.FileField(upload_to='', verbose_name='링크')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="생성 시간"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="수정 시간"
+                    ),
+                ),
+                (
+                    "deleted_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="삭제 시간"
+                    ),
+                ),
+                ("name", models.TextField(verbose_name="이름")),
+                ("file", models.FileField(upload_to="", verbose_name="링크")),
             ],
             options={
-                'verbose_name': '첨부파일',
-                'verbose_name_plural': '첨부파일 목록',
-                'ordering': ('-created_at',),
-                'abstract': False,
+                "verbose_name": "첨부파일",
+                "verbose_name_plural": "첨부파일 목록",
+                "ordering": ("-created_at",),
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='BestArticle',
+            name="BestArticle",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='생성 시간')),
-                ('updated_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='수정 시간')),
-                ('deleted_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='삭제 시간')),
-                ('period', models.CharField(choices=[('daily', 'daily'), ('weekly', 'weekly')], default='daily', max_length=32, verbose_name='베스트 문서 종류')),
-                ('best_by', models.CharField(choices=[('positive_vote_count', 'positive_vote_count'), ('hit_count', 'hit_count')], default='positive_vote_count', max_length=32, verbose_name='베스트 문서 선정 기준')),
-                ('article', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='best', to='core.Article', verbose_name='문서')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="생성 시간"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="수정 시간"
+                    ),
+                ),
+                (
+                    "deleted_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="삭제 시간"
+                    ),
+                ),
+                (
+                    "period",
+                    models.CharField(
+                        choices=[("daily", "daily"), ("weekly", "weekly")],
+                        default="daily",
+                        max_length=32,
+                        verbose_name="베스트 문서 종류",
+                    ),
+                ),
+                (
+                    "best_by",
+                    models.CharField(
+                        choices=[
+                            ("positive_vote_count", "positive_vote_count"),
+                            ("hit_count", "hit_count"),
+                        ],
+                        default="positive_vote_count",
+                        max_length=32,
+                        verbose_name="베스트 문서 선정 기준",
+                    ),
+                ),
+                (
+                    "article",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="best",
+                        to="core.Article",
+                        verbose_name="문서",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '베스트 문서',
-                'verbose_name_plural': '베스트 문서 목록',
-                'ordering': ('-created_at',),
-                'abstract': False,
+                "verbose_name": "베스트 문서",
+                "verbose_name_plural": "베스트 문서 목록",
+                "ordering": ("-created_at",),
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='BestComment',
+            name="BestComment",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='생성 시간')),
-                ('updated_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='수정 시간')),
-                ('deleted_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='삭제 시간')),
-                ('period', models.CharField(choices=[('daily', 'daily'), ('weekly', 'weekly')], default='daily', max_length=32, verbose_name='베스트 댓글 종류')),
-                ('best_by', models.CharField(choices=[('positive_vote_count', 'positive_vote_count'), ('hit_count', 'hit_count')], default='positive_vote_count', max_length=32, verbose_name='베스트 댓글 선정 기준')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="생성 시간"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="수정 시간"
+                    ),
+                ),
+                (
+                    "deleted_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="삭제 시간"
+                    ),
+                ),
+                (
+                    "period",
+                    models.CharField(
+                        choices=[("daily", "daily"), ("weekly", "weekly")],
+                        default="daily",
+                        max_length=32,
+                        verbose_name="베스트 댓글 종류",
+                    ),
+                ),
+                (
+                    "best_by",
+                    models.CharField(
+                        choices=[
+                            ("positive_vote_count", "positive_vote_count"),
+                            ("hit_count", "hit_count"),
+                        ],
+                        default="positive_vote_count",
+                        max_length=32,
+                        verbose_name="베스트 댓글 선정 기준",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '베스트 댓글',
-                'verbose_name_plural': '베스트 댓글 목록',
-                'ordering': ('-created_at',),
-                'abstract': False,
+                "verbose_name": "베스트 댓글",
+                "verbose_name_plural": "베스트 댓글 목록",
+                "ordering": ("-created_at",),
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Block',
+            name="Block",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='생성 시간')),
-                ('updated_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='수정 시간')),
-                ('deleted_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='삭제 시간')),
-                ('blocked_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='block_set', to=settings.AUTH_USER_MODEL, verbose_name='차단한 사람')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='blocked_by_set', to=settings.AUTH_USER_MODEL, verbose_name='차단당한 사람')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="생성 시간"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="수정 시간"
+                    ),
+                ),
+                (
+                    "deleted_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="삭제 시간"
+                    ),
+                ),
+                (
+                    "blocked_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="block_set",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="차단한 사람",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="blocked_by_set",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="차단당한 사람",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '차단',
-                'verbose_name_plural': '차단 목록',
-                'ordering': ('-created_at',),
-                'abstract': False,
+                "verbose_name": "차단",
+                "verbose_name_plural": "차단 목록",
+                "ordering": ("-created_at",),
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Board',
+            name="Board",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='생성 시간')),
-                ('updated_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='수정 시간')),
-                ('deleted_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='삭제 시간')),
-                ('slug', django_extensions.db.fields.AutoSlugField(blank=True, editable=False, populate_from=['en_name'])),
-                ('ko_name', models.CharField(max_length=32, verbose_name='게시판 국문 이름')),
-                ('en_name', models.CharField(max_length=32, verbose_name='게시판 영문 이름')),
-                ('ko_description', models.TextField(verbose_name='게시판 국문 소개')),
-                ('en_description', models.TextField(verbose_name='게시판 영문 소개')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="생성 시간"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="수정 시간"
+                    ),
+                ),
+                (
+                    "deleted_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="삭제 시간"
+                    ),
+                ),
+                (
+                    "slug",
+                    django_extensions.db.fields.AutoSlugField(
+                        blank=True, editable=False, populate_from=["en_name"]
+                    ),
+                ),
+                ("ko_name", models.CharField(max_length=32, verbose_name="게시판 국문 이름")),
+                ("en_name", models.CharField(max_length=32, verbose_name="게시판 영문 이름")),
+                ("ko_description", models.TextField(verbose_name="게시판 국문 소개")),
+                ("en_description", models.TextField(verbose_name="게시판 영문 소개")),
             ],
             options={
-                'verbose_name': '게시판',
-                'verbose_name_plural': '게시판 목록',
-                'ordering': ('-created_at',),
-                'abstract': False,
+                "verbose_name": "게시판",
+                "verbose_name_plural": "게시판 목록",
+                "ordering": ("-created_at",),
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Comment',
+            name="Comment",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='생성 시간')),
-                ('updated_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='수정 시간')),
-                ('deleted_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='삭제 시간')),
-                ('content', models.TextField(default=None, verbose_name='본문')),
-                ('is_anonymous', models.BooleanField(default=False, verbose_name='익명')),
-                ('positive_vote_count', models.IntegerField(default=0, verbose_name='좋아요 수')),
-                ('negative_vote_count', models.IntegerField(default=0, verbose_name='싫어요 수')),
-                ('attachment', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='core.Attachment', verbose_name='첨부 파일')),
-                ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='comment_set', to=settings.AUTH_USER_MODEL, verbose_name='작성자')),
-                ('parent_article', models.ForeignKey(blank=True, default=None, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='comment_set', to='core.Article', verbose_name='글')),
-                ('parent_comment', models.ForeignKey(blank=True, default=None, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='comment_set', to='core.Comment', verbose_name='댓글')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="생성 시간"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="수정 시간"
+                    ),
+                ),
+                (
+                    "deleted_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="삭제 시간"
+                    ),
+                ),
+                ("content", models.TextField(default=None, verbose_name="본문")),
+                ("is_anonymous", models.BooleanField(default=False, verbose_name="익명")),
+                (
+                    "positive_vote_count",
+                    models.IntegerField(default=0, verbose_name="좋아요 수"),
+                ),
+                (
+                    "negative_vote_count",
+                    models.IntegerField(default=0, verbose_name="싫어요 수"),
+                ),
+                (
+                    "attachment",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="core.Attachment",
+                        verbose_name="첨부 파일",
+                    ),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="comment_set",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="작성자",
+                    ),
+                ),
+                (
+                    "parent_article",
+                    models.ForeignKey(
+                        blank=True,
+                        default=None,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="comment_set",
+                        to="core.Article",
+                        verbose_name="글",
+                    ),
+                ),
+                (
+                    "parent_comment",
+                    models.ForeignKey(
+                        blank=True,
+                        default=None,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="comment_set",
+                        to="core.Comment",
+                        verbose_name="댓글",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '댓글',
-                'verbose_name_plural': '댓글 목록',
-                'ordering': ('-created_at',),
-                'abstract': False,
+                "verbose_name": "댓글",
+                "verbose_name_plural": "댓글 목록",
+                "ordering": ("-created_at",),
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='CommentDeleteLog',
+            name="CommentDeleteLog",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='생성 시간')),
-                ('updated_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='수정 시간')),
-                ('deleted_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='삭제 시간')),
-                ('comment', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='comment_delete_log_set', to='core.Comment', verbose_name='삭제된 댓글')),
-                ('deleted_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='comment_delete_log_set', to=settings.AUTH_USER_MODEL, verbose_name='삭제자')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="생성 시간"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="수정 시간"
+                    ),
+                ),
+                (
+                    "deleted_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="삭제 시간"
+                    ),
+                ),
+                (
+                    "comment",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="comment_delete_log_set",
+                        to="core.Comment",
+                        verbose_name="삭제된 댓글",
+                    ),
+                ),
+                (
+                    "deleted_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="comment_delete_log_set",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="삭제자",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '댓글 삭제 기록',
-                'verbose_name_plural': '댓글 삭제 기록 목록',
-                'ordering': ('-created_at',),
-                'abstract': False,
+                "verbose_name": "댓글 삭제 기록",
+                "verbose_name_plural": "댓글 삭제 기록 목록",
+                "ordering": ("-created_at",),
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='CommentUpdateLog',
+            name="CommentUpdateLog",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='생성 시간')),
-                ('updated_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='수정 시간')),
-                ('deleted_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='삭제 시간')),
-                ('data', django_mysql.models.JSONField(default=dict)),
-                ('comment', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='comment_update_log_set', to='core.Comment', verbose_name='변경된 댓글')),
-                ('updated_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='comment_update_log_set', to=settings.AUTH_USER_MODEL, verbose_name='변경자')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="생성 시간"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="수정 시간"
+                    ),
+                ),
+                (
+                    "deleted_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="삭제 시간"
+                    ),
+                ),
+                ("data", django_mysql.models.JSONField(default=dict)),
+                (
+                    "comment",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="comment_update_log_set",
+                        to="core.Comment",
+                        verbose_name="변경된 댓글",
+                    ),
+                ),
+                (
+                    "updated_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="comment_update_log_set",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="변경자",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '댓글 변경 기록',
-                'verbose_name_plural': '댓글 변경 기록 목록',
-                'ordering': ('-created_at',),
-                'abstract': False,
+                "verbose_name": "댓글 변경 기록",
+                "verbose_name_plural": "댓글 변경 기록 목록",
+                "ordering": ("-created_at",),
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Notification',
+            name="Notification",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='생성 시간')),
-                ('updated_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='수정 시간')),
-                ('deleted_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='삭제 시간')),
-                ('type', models.CharField(choices=[('default', 'default'), ('article_commented', 'article_commented'), ('comment_commented', 'comment_commented')], default='default', max_length=32, verbose_name='알림 종류')),
-                ('title', models.CharField(max_length=256, verbose_name='제목')),
-                ('content', models.TextField(verbose_name='내용')),
-                ('related_article', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='notification_set', to='core.Article', verbose_name='알림 관련 제보')),
-                ('related_comment', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='notification_set', to='core.Comment', verbose_name='알림 관련 댓글')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="생성 시간"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="수정 시간"
+                    ),
+                ),
+                (
+                    "deleted_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="삭제 시간"
+                    ),
+                ),
+                (
+                    "type",
+                    models.CharField(
+                        choices=[
+                            ("default", "default"),
+                            ("article_commented", "article_commented"),
+                            ("comment_commented", "comment_commented"),
+                        ],
+                        default="default",
+                        max_length=32,
+                        verbose_name="알림 종류",
+                    ),
+                ),
+                ("title", models.CharField(max_length=256, verbose_name="제목")),
+                ("content", models.TextField(verbose_name="내용")),
+                (
+                    "related_article",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="notification_set",
+                        to="core.Article",
+                        verbose_name="알림 관련 제보",
+                    ),
+                ),
+                (
+                    "related_comment",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="notification_set",
+                        to="core.Comment",
+                        verbose_name="알림 관련 댓글",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '알림',
-                'verbose_name_plural': '알림 목록',
-                'ordering': ('-created_at',),
-                'abstract': False,
+                "verbose_name": "알림",
+                "verbose_name_plural": "알림 목록",
+                "ordering": ("-created_at",),
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='NotificationReadLog',
+            name="NotificationReadLog",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='생성 시간')),
-                ('updated_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='수정 시간')),
-                ('deleted_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='삭제 시간')),
-                ('is_read', models.BooleanField(default=False, verbose_name='조회 여부')),
-                ('notification', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='notification_read_log_set', to='core.Notification', verbose_name='관련 알림')),
-                ('read_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='notification_read_log_set', to=settings.AUTH_USER_MODEL, verbose_name='관련 사용자')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="생성 시간"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="수정 시간"
+                    ),
+                ),
+                (
+                    "deleted_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="삭제 시간"
+                    ),
+                ),
+                ("is_read", models.BooleanField(default=False, verbose_name="조회 여부")),
+                (
+                    "notification",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="notification_read_log_set",
+                        to="core.Notification",
+                        verbose_name="관련 알림",
+                    ),
+                ),
+                (
+                    "read_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="notification_read_log_set",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="관련 사용자",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '알림 조회 기록',
-                'verbose_name_plural': '알림 조회 기록 목록',
-                'ordering': ('-created_at',),
-                'abstract': False,
+                "verbose_name": "알림 조회 기록",
+                "verbose_name_plural": "알림 조회 기록 목록",
+                "ordering": ("-created_at",),
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Report',
+            name="Report",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='생성 시간')),
-                ('updated_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='수정 시간')),
-                ('deleted_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='삭제 시간')),
-                ('content', models.TextField(blank=True, verbose_name='내용')),
-                ('parent_article', models.ForeignKey(blank=True, default=None, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='report_set', to='core.Article', verbose_name='신고된 문서')),
-                ('parent_comment', models.ForeignKey(blank=True, default=None, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='report_set', to='core.Comment', verbose_name='신고된 댓글')),
-                ('reported_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL, verbose_name='신고자')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="생성 시간"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="수정 시간"
+                    ),
+                ),
+                (
+                    "deleted_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="삭제 시간"
+                    ),
+                ),
+                ("content", models.TextField(blank=True, verbose_name="내용")),
+                (
+                    "parent_article",
+                    models.ForeignKey(
+                        blank=True,
+                        default=None,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="report_set",
+                        to="core.Article",
+                        verbose_name="신고된 문서",
+                    ),
+                ),
+                (
+                    "parent_comment",
+                    models.ForeignKey(
+                        blank=True,
+                        default=None,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="report_set",
+                        to="core.Comment",
+                        verbose_name="신고된 댓글",
+                    ),
+                ),
+                (
+                    "reported_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="신고자",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '신고',
-                'verbose_name_plural': '신고 목록',
-                'ordering': ('-created_at',),
-                'abstract': False,
+                "verbose_name": "신고",
+                "verbose_name_plural": "신고 목록",
+                "ordering": ("-created_at",),
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Scrap',
+            name="Scrap",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='생성 시간')),
-                ('updated_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='수정 시간')),
-                ('deleted_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='삭제 시간')),
-                ('parent_article', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='scrap_set', to='core.Article', verbose_name='글')),
-                ('scrapped_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='scrap_set', to=settings.AUTH_USER_MODEL, verbose_name='스크랩한 사람')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="생성 시간"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="수정 시간"
+                    ),
+                ),
+                (
+                    "deleted_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="삭제 시간"
+                    ),
+                ),
+                (
+                    "parent_article",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="scrap_set",
+                        to="core.Article",
+                        verbose_name="글",
+                    ),
+                ),
+                (
+                    "scrapped_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="scrap_set",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="스크랩한 사람",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '스크랩',
-                'verbose_name_plural': '스크랩 목록',
-                'ordering': ('-created_at',),
-                'abstract': False,
+                "verbose_name": "스크랩",
+                "verbose_name_plural": "스크랩 목록",
+                "ordering": ("-created_at",),
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Topic',
+            name="Topic",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='생성 시간')),
-                ('updated_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='수정 시간')),
-                ('deleted_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='삭제 시간')),
-                ('slug', django_extensions.db.fields.AutoSlugField(blank=True, editable=False, populate_from=['en_name'])),
-                ('ko_name', models.CharField(max_length=32, verbose_name='말머리 국문 이름')),
-                ('en_name', models.CharField(max_length=32, verbose_name='말머리 영문 이름')),
-                ('ko_description', models.TextField(verbose_name='말머리 국문 소개')),
-                ('en_description', models.TextField(verbose_name='말머리 영문 소개')),
-                ('parent_board', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='topic_set', to='core.Board', verbose_name='상위 게시판')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="생성 시간"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="수정 시간"
+                    ),
+                ),
+                (
+                    "deleted_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="삭제 시간"
+                    ),
+                ),
+                (
+                    "slug",
+                    django_extensions.db.fields.AutoSlugField(
+                        blank=True, editable=False, populate_from=["en_name"]
+                    ),
+                ),
+                ("ko_name", models.CharField(max_length=32, verbose_name="말머리 국문 이름")),
+                ("en_name", models.CharField(max_length=32, verbose_name="말머리 영문 이름")),
+                ("ko_description", models.TextField(verbose_name="말머리 국문 소개")),
+                ("en_description", models.TextField(verbose_name="말머리 영문 소개")),
+                (
+                    "parent_board",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="topic_set",
+                        to="core.Board",
+                        verbose_name="상위 게시판",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '말머리',
-                'verbose_name_plural': '말머리 목록',
-                'ordering': ('-created_at',),
-                'abstract': False,
+                "verbose_name": "말머리",
+                "verbose_name_plural": "말머리 목록",
+                "ordering": ("-created_at",),
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Vote',
+            name="Vote",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='생성 시간')),
-                ('updated_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='수정 시간')),
-                ('deleted_at', models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0), verbose_name='삭제 시간')),
-                ('is_positive', models.BooleanField(verbose_name='찬반')),
-                ('parent_article', models.ForeignKey(blank=True, default=None, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='vote_set', to='core.Article', verbose_name='상위 문서')),
-                ('parent_comment', models.ForeignKey(blank=True, default=None, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='vote_set', to='core.Comment', verbose_name='상위 댓글')),
-                ('voted_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL, verbose_name='투표자')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="생성 시간"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="수정 시간"
+                    ),
+                ),
+                (
+                    "deleted_at",
+                    models.DateTimeField(
+                        default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="삭제 시간"
+                    ),
+                ),
+                ("is_positive", models.BooleanField(verbose_name="찬반")),
+                (
+                    "parent_article",
+                    models.ForeignKey(
+                        blank=True,
+                        default=None,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="vote_set",
+                        to="core.Article",
+                        verbose_name="상위 문서",
+                    ),
+                ),
+                (
+                    "parent_comment",
+                    models.ForeignKey(
+                        blank=True,
+                        default=None,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="vote_set",
+                        to="core.Comment",
+                        verbose_name="상위 댓글",
+                    ),
+                ),
+                (
+                    "voted_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="투표자",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '투표',
-                'verbose_name_plural': '투표 목록',
-                'ordering': ('-created_at',),
-                'abstract': False,
+                "verbose_name": "투표",
+                "verbose_name_plural": "투표 목록",
+                "ordering": ("-created_at",),
+                "abstract": False,
             },
         ),
         migrations.AlterUniqueTogether(
-            name='board',
-            unique_together=set([('ko_name', 'deleted_at'), ('en_name', 'deleted_at')]),
+            name="board",
+            unique_together=set([("ko_name", "deleted_at"), ("en_name", "deleted_at")]),
         ),
         migrations.AddField(
-            model_name='bestcomment',
-            name='comment',
-            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='best', to='core.Comment', verbose_name='댓글'),
+            model_name="bestcomment",
+            name="comment",
+            field=models.OneToOneField(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="best",
+                to="core.Comment",
+                verbose_name="댓글",
+            ),
         ),
         migrations.AddField(
-            model_name='article',
-            name='attachments',
-            field=models.ManyToManyField(blank=True, db_index=True, to='core.Attachment', verbose_name='첨부 파일(들)'),
+            model_name="article",
+            name="attachments",
+            field=models.ManyToManyField(
+                blank=True, db_index=True, to="core.Attachment", verbose_name="첨부 파일(들)"
+            ),
         ),
         migrations.AddField(
-            model_name='article',
-            name='created_by',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='article_set', to=settings.AUTH_USER_MODEL, verbose_name='작성자'),
+            model_name="article",
+            name="created_by",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="article_set",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="작성자",
+            ),
         ),
         migrations.AddField(
-            model_name='article',
-            name='parent_board',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='article_set', to='core.Board', verbose_name='게시판'),
+            model_name="article",
+            name="parent_board",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="article_set",
+                to="core.Board",
+                verbose_name="게시판",
+            ),
         ),
         migrations.AddField(
-            model_name='article',
-            name='parent_topic',
-            field=models.ForeignKey(blank=True, default=None, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='article_set', to='core.Topic', verbose_name='말머리'),
+            model_name="article",
+            name="parent_topic",
+            field=models.ForeignKey(
+                blank=True,
+                default=None,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="article_set",
+                to="core.Topic",
+                verbose_name="말머리",
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='vote',
-            unique_together=set([('parent_article', 'voted_by', 'deleted_at'), ('parent_comment', 'voted_by', 'deleted_at')]),
+            name="vote",
+            unique_together=set(
+                [
+                    ("parent_article", "voted_by", "deleted_at"),
+                    ("parent_comment", "voted_by", "deleted_at"),
+                ]
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='topic',
-            unique_together=set([('ko_name', 'deleted_at'), ('en_name', 'deleted_at')]),
+            name="topic",
+            unique_together=set([("ko_name", "deleted_at"), ("en_name", "deleted_at")]),
         ),
         migrations.AlterUniqueTogether(
-            name='scrap',
-            unique_together=set([('parent_article', 'scrapped_by', 'deleted_at')]),
+            name="scrap",
+            unique_together=set([("parent_article", "scrapped_by", "deleted_at")]),
         ),
         migrations.AlterUniqueTogether(
-            name='report',
-            unique_together=set([('parent_comment', 'reported_by', 'deleted_at'), ('parent_article', 'reported_by', 'deleted_at')]),
+            name="report",
+            unique_together=set(
+                [
+                    ("parent_comment", "reported_by", "deleted_at"),
+                    ("parent_article", "reported_by", "deleted_at"),
+                ]
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='notificationreadlog',
-            unique_together=set([('read_by', 'notification', 'deleted_at')]),
+            name="notificationreadlog",
+            unique_together=set([("read_by", "notification", "deleted_at")]),
         ),
     ]

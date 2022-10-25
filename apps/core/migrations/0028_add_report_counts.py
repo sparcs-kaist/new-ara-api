@@ -8,28 +8,36 @@ from django.utils.timezone import utc
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0027_report_type'),
+        ("core", "0027_report_type"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='article',
-            name='hidden_at',
-            field=models.DateTimeField(db_index=True, default=datetime.datetime(1, 1, 1, 0, 0, tzinfo=utc), verbose_name='임시 삭제 시간'),
+            model_name="article",
+            name="hidden_at",
+            field=models.DateTimeField(
+                db_index=True,
+                default=datetime.datetime(1, 1, 1, 0, 0, tzinfo=utc),
+                verbose_name="임시 삭제 시간",
+            ),
         ),
         migrations.AddField(
-            model_name='article',
-            name='report_count',
-            field=models.IntegerField(default=0, verbose_name='신고 수'),
+            model_name="article",
+            name="report_count",
+            field=models.IntegerField(default=0, verbose_name="신고 수"),
         ),
         migrations.AddField(
-            model_name='comment',
-            name='hidden_at',
-            field=models.DateTimeField(db_index=True, default=datetime.datetime(1, 1, 1, 0, 0, tzinfo=utc), verbose_name='임시 삭제 시간'),
+            model_name="comment",
+            name="hidden_at",
+            field=models.DateTimeField(
+                db_index=True,
+                default=datetime.datetime(1, 1, 1, 0, 0, tzinfo=utc),
+                verbose_name="임시 삭제 시간",
+            ),
         ),
         migrations.AddField(
-            model_name='comment',
-            name='report_count',
-            field=models.IntegerField(default=0, verbose_name='신고 수'),
+            model_name="comment",
+            name="report_count",
+            field=models.IntegerField(default=0, verbose_name="신고 수"),
         ),
     ]

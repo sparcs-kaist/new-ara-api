@@ -9,6 +9,7 @@ from ara.settings import MIN_TIME
 
 # Core
 
+
 @receiver(models.signals.post_save, sender=Article)
 def cascade_soft_deletion_article(instance, **kwargs):
     deleted = instance.deleted_at != MIN_TIME

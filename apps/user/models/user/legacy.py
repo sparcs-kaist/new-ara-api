@@ -6,13 +6,13 @@ from ara.db.models import MetaDataModel
 
 
 # Constant from ARAra project.
-SALT_SET = '{}{}{}./'.format(ascii_lowercase, ascii_uppercase, digits)
+SALT_SET = "{}{}{}./".format(ascii_lowercase, ascii_uppercase, digits)
 
 
 class LegacyUser(MetaDataModel):
     class Meta(MetaDataModel.Meta):
-        verbose_name = '기존 사용자'
-        verbose_name_plural = '기존 사용자 목록'
+        verbose_name = "기존 사용자"
+        verbose_name_plural = "기존 사용자 목록"
 
     """
     Model for ARAra DB migration.
@@ -45,7 +45,7 @@ class LegacyUser(MetaDataModel):
 
         # XXX (combacsa): Temporary fix for strange pw values.
         #                 Don't know why "TypeError" occurs.
-        i = ord('0') + ord('0')
+        i = ord("0") + ord("0")
         try:
             i = ord(asc1) + ord(asc2)
         except TypeError:
@@ -78,6 +78,6 @@ def smart_unicode(_str) -> str:
         return _str
     else:
         try:
-            return str(_str, 'utf-8')
+            return str(_str, "utf-8")
         except UnicodeDecodeError:
-            return str(_str, 'cp949')
+            return str(_str, "cp949")

@@ -7,41 +7,78 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0029_delete_db_index_hidden_at'),
+        ("core", "0029_delete_db_index_hidden_at"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='article',
-            options={'ordering': ('-created_at',), 'verbose_name': '게시물', 'verbose_name_plural': '게시물 목록'},
+            name="article",
+            options={
+                "ordering": ("-created_at",),
+                "verbose_name": "게시물",
+                "verbose_name_plural": "게시물 목록",
+            },
         ),
         migrations.AlterModelOptions(
-            name='bestarticle',
-            options={'ordering': ('-created_at',), 'verbose_name': '베스트 게시물', 'verbose_name_plural': '베스트 게시물 목록'},
+            name="bestarticle",
+            options={
+                "ordering": ("-created_at",),
+                "verbose_name": "베스트 게시물",
+                "verbose_name_plural": "베스트 게시물 목록",
+            },
         ),
         migrations.AlterField(
-            model_name='bestarticle',
-            name='article',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='best_set', to='core.article', verbose_name='게시물'),
+            model_name="bestarticle",
+            name="article",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="best_set",
+                to="core.article",
+                verbose_name="게시물",
+            ),
         ),
         migrations.AlterField(
-            model_name='bestarticle',
-            name='latest',
-            field=models.BooleanField(db_index=True, default=True, verbose_name='최신 베스트 게시물'),
+            model_name="bestarticle",
+            name="latest",
+            field=models.BooleanField(
+                db_index=True, default=True, verbose_name="최신 베스트 게시물"
+            ),
         ),
         migrations.AlterField(
-            model_name='bestarticle',
-            name='period',
-            field=models.CharField(choices=[('daily', 'daily'), ('weekly', 'weekly')], db_index=True, default='daily', max_length=32, verbose_name='베스트 게시물 종류'),
+            model_name="bestarticle",
+            name="period",
+            field=models.CharField(
+                choices=[("daily", "daily"), ("weekly", "weekly")],
+                db_index=True,
+                default="daily",
+                max_length=32,
+                verbose_name="베스트 게시물 종류",
+            ),
         ),
         migrations.AlterField(
-            model_name='report',
-            name='parent_article',
-            field=models.ForeignKey(blank=True, default=None, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='report_set', to='core.article', verbose_name='신고된 게시물'),
+            model_name="report",
+            name="parent_article",
+            field=models.ForeignKey(
+                blank=True,
+                default=None,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="report_set",
+                to="core.article",
+                verbose_name="신고된 게시물",
+            ),
         ),
         migrations.AlterField(
-            model_name='vote',
-            name='parent_article',
-            field=models.ForeignKey(blank=True, default=None, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='vote_set', to='core.article', verbose_name='상위 게시물'),
+            model_name="vote",
+            name="parent_article",
+            field=models.ForeignKey(
+                blank=True,
+                default=None,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="vote_set",
+                to="core.article",
+                verbose_name="상위 게시물",
+            ),
         ),
     ]

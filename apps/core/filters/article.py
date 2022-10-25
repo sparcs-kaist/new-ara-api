@@ -10,53 +10,50 @@ class ArticleFilter(filters.FilterSet):
     class Meta:
         model = Article
         fields = {
-            'title': [
-                'contains',
+            "title": [
+                "contains",
             ],
-            'content': [
-                'contains',
+            "content": [
+                "contains",
             ],
-            'content_text': [
-                'contains',
+            "content_text": [
+                "contains",
             ],
-            'name_type': [
-                'exact',
+            "name_type": [
+                "exact",
             ],
-            'is_content_sexual': [
-                'exact',
+            "is_content_sexual": [
+                "exact",
             ],
-            'is_content_social': [
-                'exact',
+            "is_content_social": [
+                "exact",
             ],
-            'created_by': [
-                'exact',
+            "created_by": [
+                "exact",
             ],
-            'created_by__username': [
-                'exact',
-                'contains',
+            "created_by__username": [
+                "exact",
+                "contains",
             ],
-            'created_by__profile__nickname': [
-                'exact',
-                'contains',
+            "created_by__profile__nickname": [
+                "exact",
+                "contains",
             ],
-            'parent_topic': [
-                'in',
-                'exact',
+            "parent_topic": [
+                "in",
+                "exact",
             ],
-            'parent_board': [
-                'in',
-                'exact',
+            "parent_board": [
+                "in",
+                "exact",
             ],
-            'communication_article__school_response_status': [
-                'exact',
-                'lt'
-            ]
+            "communication_article__school_response_status": ["exact", "lt"],
         }
 
     main_search__contains = filters.CharFilter(
-        field_name='main_search',
-        label='메인 검색 (제목포함, 본문포함, 닉네임일치)',
-        method='get_main_search__contains'
+        field_name="main_search",
+        label="메인 검색 (제목포함, 본문포함, 닉네임일치)",
+        method="get_main_search__contains",
     )
 
     @staticmethod

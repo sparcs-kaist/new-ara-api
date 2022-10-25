@@ -10,22 +10,21 @@ from apps.core.models import Block
 
 class BaseBlockSerializer(MetaDataModelSerializer):
     def validate_user(self, value):
-        if self.context['request'].user and self.context['request'].user == value:
-            raise ValidationError(gettext('Cannot block yourself'))
+        if self.context["request"].user and self.context["request"].user == value:
+            raise ValidationError(gettext("Cannot block yourself"))
         return value
 
     class Meta:
         model = Block
-        fields = '__all__'
+        fields = "__all__"
 
 
 class BlockSerializer(BaseBlockSerializer):
     class Meta(BaseBlockSerializer.Meta):
-        read_only_fields = (
-            'blocked_by',
-        )
+        read_only_fields = ("blocked_by",)
 
     from apps.user.serializers.user import PublicUserSerializer
+
     user = PublicUserSerializer(
         read_only=True,
     )
@@ -33,9 +32,7 @@ class BlockSerializer(BaseBlockSerializer):
 
 class BlockCreateActionSerializer(BaseBlockSerializer):
     class Meta(BaseBlockSerializer.Meta):
-        read_only_fields = (
-            'blocked_by',
-        )
+        read_only_fields = ("blocked_by",)
 
     def create(self, validated_data):
         try:

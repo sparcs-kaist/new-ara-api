@@ -2,7 +2,10 @@ from rest_framework import serializers
 import typing
 from apps.core.models.board import BoardNameType
 
-from apps.core.serializers.mixins.hidden import HiddenSerializerFieldMixin, HiddenSerializerMixin
+from apps.core.serializers.mixins.hidden import (
+    HiddenSerializerFieldMixin,
+    HiddenSerializerMixin,
+)
 from ara.classes.serializers import MetaDataModelSerializer
 from apps.user.serializers.user import PublicUserSerializer
 from apps.core.models import Comment, Block, CommentHiddenReason
@@ -11,13 +14,11 @@ from apps.core.models import Comment, Block, CommentHiddenReason
 class BaseCommentSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.CAN_OVERRIDE_REASONS = [
-            CommentHiddenReason.BLOCKED_USER_CONTENT
-        ]
+        self.CAN_OVERRIDE_REASONS = [CommentHiddenReason.BLOCKED_USER_CONTENT]
 
     class Meta:
         model = Comment
-        exclude = ('attachment', )
+        exclude = ("attachment",)
 
     @staticmethod
     def get_my_vote(obj) -> typing.Optional[bool]:
@@ -38,12 +39,15 @@ class BaseCommentSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
             return obj.postprocessed_created_by
         else:
             data = PublicUserSerializer(obj.postprocessed_created_by).data
-            data['is_blocked'] = Block.is_blocked(blocked_by=self.context['request'].user, user=obj.created_by)
+            data["is_blocked"] = Block.is_blocked(
+                blocked_by=self.context["request"].user, user=obj.created_by
+            )
             return data
 
 
 class CommentSerializer(HiddenSerializerFieldMixin, BaseCommentSerializer):
     from apps.user.serializers.user import PublicUserSerializer
+
     my_vote = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -60,6 +64,7 @@ class CommentSerializer(HiddenSerializerFieldMixin, BaseCommentSerializer):
 
 class CommentListActionSerializer(HiddenSerializerFieldMixin, BaseCommentSerializer):
     from apps.user.serializers.user import PublicUserSerializer
+
     my_vote = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -82,16 +87,16 @@ class ArticleNestedCommentListActionSerializer(CommentListActionSerializer):
     comments = CommentNestedCommentListActionSerializer(
         many=True,
         read_only=True,
-        source='comment_set',
+        source="comment_set",
     )
 
 
 class CommentCreateActionSerializer(BaseCommentSerializer):
     class Meta(BaseCommentSerializer.Meta):
         read_only_fields = (
-            'positive_vote_count',
-            'negative_vote_count',
-            'created_by',
+            "positive_vote_count",
+            "negative_vote_count",
+            "created_by",
         )
 
     created_by = serializers.SerializerMethodField(
@@ -102,15 +107,16 @@ class CommentCreateActionSerializer(BaseCommentSerializer):
 class CommentUpdateActionSerializer(BaseCommentSerializer):
     class Meta(BaseCommentSerializer.Meta):
         read_only_fields = (
-            'name_type',
-            'positive_vote_count',
-            'negative_vote_count',
-            'created_by',
-            'parent_article',
-            'parent_comment',
+            "name_type",
+            "positive_vote_count",
+            "negative_vote_count",
+            "created_by",
+            "parent_article",
+            "parent_comment",
         )
 
     from apps.user.serializers.user import PublicUserSerializer
+
     created_by = PublicUserSerializer(
         read_only=True,
     )

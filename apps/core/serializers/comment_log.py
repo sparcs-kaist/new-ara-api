@@ -8,7 +8,7 @@ from apps.core.models import CommentUpdateLog
 class BaseCommentUpdateLogSerializer(MetaDataModelSerializer):
     class Meta:
         model = CommentUpdateLog
-        fields = '__all__'
+        fields = "__all__"
 
 
 class CommentUpdateLogSerializer(BaseCommentUpdateLogSerializer):

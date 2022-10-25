@@ -9,6 +9,4 @@ from apps.core.models import FAQ
 class FAQViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
     queryset = FAQ.objects.all()
     serializer_class = FAQSerializer
-    permission_classes = (
-        permissions.IsAuthenticated,
-    )
+    permission_classes = (permissions.IsAuthenticated,)

@@ -7,38 +7,49 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0037_board_banner_url'),
+        ("core", "0037_board_banner_url"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='article',
-            old_name='is_anonymous',
-            new_name='name_type',
+            model_name="article",
+            old_name="is_anonymous",
+            new_name="name_type",
         ),
         migrations.AlterField(
-            model_name='article',
-            name='name_type',
-            field=models.SmallIntegerField(default=apps.core.models.board.BoardNameType['REGULAR'], verbose_name='익명 혹은 실명 여부'),
+            model_name="article",
+            name="name_type",
+            field=models.SmallIntegerField(
+                default=apps.core.models.board.BoardNameType["REGULAR"],
+                verbose_name="익명 혹은 실명 여부",
+            ),
         ),
         migrations.RenameField(
-            model_name='board',
-            old_name='is_anonymous',
-            new_name='name_type',
+            model_name="board",
+            old_name="is_anonymous",
+            new_name="name_type",
         ),
         migrations.AlterField(
-            model_name='board',
-            name='name_type',
-            field=models.SmallIntegerField(db_index=True, default=apps.core.models.board.BoardNameType['REGULAR'], help_text='게시판의 글과 댓글들이 익명 혹은 실명이도록 합니다.', verbose_name='익명/실명 게시판'),
+            model_name="board",
+            name="name_type",
+            field=models.SmallIntegerField(
+                db_index=True,
+                default=apps.core.models.board.BoardNameType["REGULAR"],
+                help_text="게시판의 글과 댓글들이 익명 혹은 실명이도록 합니다.",
+                verbose_name="익명/실명 게시판",
+            ),
         ),
         migrations.RenameField(
-            model_name='comment',
-            old_name='is_anonymous',
-            new_name='name_type',
+            model_name="comment",
+            old_name="is_anonymous",
+            new_name="name_type",
         ),
         migrations.AlterField(
-            model_name='comment',
-            name='name_type',
-            field=models.SmallIntegerField(default=apps.core.models.board.BoardNameType['REGULAR'], verbose_name='익명 혹은 실명'),
+            model_name="comment",
+            name="name_type",
+            field=models.SmallIntegerField(
+                default=apps.core.models.board.BoardNameType["REGULAR"],
+                verbose_name="익명 혹은 실명",
+            ),
         ),
     ]

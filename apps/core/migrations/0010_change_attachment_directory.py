@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0009_board_perms'),
+        ("core", "0009_board_perms"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='attachment',
-            name='file',
-            field=models.FileField(upload_to='files', verbose_name='링크'),
+            model_name="attachment",
+            name="file",
+            field=models.FileField(upload_to="files", verbose_name="링크"),
         ),
     ]

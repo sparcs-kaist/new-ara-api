@@ -9,17 +9,22 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('core', '0010_change_attachment_directory'),
+        ("core", "0010_change_attachment_directory"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='scrap',
-            name='parent_article',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='scrap_set', to='core.Article', verbose_name='스크랩한 글'),
+            model_name="scrap",
+            name="parent_article",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="scrap_set",
+                to="core.Article",
+                verbose_name="스크랩한 글",
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='block',
-            unique_together={('blocked_by', 'user', 'deleted_at')},
+            name="block",
+            unique_together={("blocked_by", "user", "deleted_at")},
         ),
     ]
