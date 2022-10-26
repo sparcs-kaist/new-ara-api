@@ -6,9 +6,7 @@
   </a>
 </p>
 <p align="center">
-  <em>NewAra, KAIST's official community service</em>
-  <br>
-  Restful API for NewAra @ SPARCS
+  <em>Restful API for NewAra, KAIST's official community service</em>
 </p>
 <p align="center">
   <img
