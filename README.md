@@ -10,7 +10,7 @@
 </p>
 <p align="center">
   <img
-    src="https://img.shields.io/github/v/release/sparcs-kaist/new-ara-api?display_name=tag&color=black"
+    src="https://img.shields.io/github/v/release/sparcs-kaist/new-ara-api?display_name=tag&color=blue"
     alt="Release"
   >
   <img
@@ -18,8 +18,8 @@
     alt="License"
   >
   <img
-    src="https://img.shields.io/github/workflow/status/sparcs-kaist/new-ara-api/Run tests for new-ara-api"
-    alt="Build"
+    src="https://github.com/sparcs-kaist/new-ara-api/actions/workflows/github-actions.yml/badge.svg"
+    alt="Test"
   >
 </p>
 
