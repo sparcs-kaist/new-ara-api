@@ -6,12 +6,12 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('user', '0007_userprofile_group'),
+        ("user", "0007_userprofile_group"),
     ]
 
     operations = [
         migrations.RunSQL(
-            sql='CREATE FULLTEXT INDEX `idx_nickname` on user_userprofile(`nickname`);',
-            reverse_sql='ALTER TABLE user_userprofile DROP INDEX idx_nickname',
+            sql="CREATE FULLTEXT INDEX `idx_nickname` on user_userprofile(`nickname`);",
+            reverse_sql="ALTER TABLE user_userprofile DROP INDEX idx_nickname",
         ),
     ]

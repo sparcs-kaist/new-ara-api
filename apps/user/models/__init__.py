@@ -1,3 +1,2 @@
-from .user_profile import *
-
 from .signals import *
+from .user_profile import *

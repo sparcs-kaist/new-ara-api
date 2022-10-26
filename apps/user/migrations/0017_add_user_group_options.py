@@ -6,18 +6,42 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('user', '0016_set_created_at_to_timezone_now'),
+        ("user", "0016_set_created_at_to_timezone_now"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='manualuser',
-            name='org_type',
-            field=models.IntegerField(choices=[(0, 'Unauthorized user'), (1, 'KAIST member'), (2, 'Store employee'), (3, 'Other member'), (4, 'KAIST organization'), (5, 'External organization'), (6, 'Communication board admin'), (7, 'News board admin')], default=0),
+            model_name="manualuser",
+            name="org_type",
+            field=models.IntegerField(
+                choices=[
+                    (0, "Unauthorized user"),
+                    (1, "KAIST member"),
+                    (2, "Store employee"),
+                    (3, "Other member"),
+                    (4, "KAIST organization"),
+                    (5, "External organization"),
+                    (6, "Communication board admin"),
+                    (7, "News board admin"),
+                ],
+                default=0,
+            ),
         ),
         migrations.AlterField(
-            model_name='userprofile',
-            name='group',
-            field=models.IntegerField(choices=[(0, 'Unauthorized user'), (1, 'KAIST member'), (2, 'Store employee'), (3, 'Other member'), (4, 'KAIST organization'), (5, 'External organization'), (6, 'Communication board admin'), (7, 'News board admin')], default=0),
+            model_name="userprofile",
+            name="group",
+            field=models.IntegerField(
+                choices=[
+                    (0, "Unauthorized user"),
+                    (1, "KAIST member"),
+                    (2, "Store employee"),
+                    (3, "Other member"),
+                    (4, "KAIST organization"),
+                    (5, "External organization"),
+                    (6, "Communication board admin"),
+                    (7, "News board admin"),
+                ],
+                default=0,
+            ),
         ),
     ]

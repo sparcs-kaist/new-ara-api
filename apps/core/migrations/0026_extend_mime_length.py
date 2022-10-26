@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0025_add_related_name_for_cascade_deletion'),
+        ("core", "0025_add_related_name_for_cascade_deletion"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='attachment',
-            name='mimetype',
-            field=models.CharField(default='text/plain', max_length=128, verbose_name='타입'),
+            model_name="attachment",
+            name="mimetype",
+            field=models.CharField(
+                default="text/plain", max_length=128, verbose_name="타입"
+            ),
         ),
     ]

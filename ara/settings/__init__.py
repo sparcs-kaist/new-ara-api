@@ -1,17 +1,16 @@
+from .api import *
+from .aws import *
+from .cacheops import *
 from .django import *
 from .djangorestframework import *
-from .aws import *
-from .sso import *
+from .elasticsearch import *
+from .log import *
 from .redis import *
 from .scheduler import *
-from .log import *
-from .cacheops import *
-from .elasticsearch import *
 from .sentry import *
-from .api import *
+from .sso import *
 
-
-if env('DJANGO_ENV') == 'development':
+if env("DJANGO_ENV") == "development":
     from .dev import *
-elif env('DJANGO_ENV') == 'production':
+elif env("DJANGO_ENV") == "production":
     from .prod import *

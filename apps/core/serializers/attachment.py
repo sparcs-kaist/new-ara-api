@@ -1,12 +1,11 @@
-from ara.classes.serializers import MetaDataModelSerializer
-
 from apps.core.models import Attachment
+from ara.classes.serializers import MetaDataModelSerializer
 
 
 class BaseAttachmentSerializer(MetaDataModelSerializer):
     class Meta:
         model = Attachment
-        fields = '__all__'
+        fields = "__all__"
 
 
 class AttachmentSerializer(BaseAttachmentSerializer):

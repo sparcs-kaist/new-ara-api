@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0032_board_is_anonymous'),
+        ("core", "0032_board_is_anonymous"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='board',
-            name='group_id',
-            field=models.IntegerField(default=1, verbose_name='그룹 ID'),
+            model_name="board",
+            name="group_id",
+            field=models.IntegerField(default=1, verbose_name="그룹 ID"),
         ),
     ]

@@ -6,13 +6,24 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0026_extend_mime_length'),
+        ("core", "0026_extend_mime_length"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='report',
-            name='type',
-            field=models.CharField(blank=True, choices=[('violation_of_code', 'violation_of_code'), ('impersonation', 'impersonation'), ('insult', 'insult'), ('spam', 'spam'), ('others', 'others')], default='', max_length=128),
+            model_name="report",
+            name="type",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("violation_of_code", "violation_of_code"),
+                    ("impersonation", "impersonation"),
+                    ("insult", "insult"),
+                    ("spam", "spam"),
+                    ("others", "others"),
+                ],
+                default="",
+                max_length=128,
+            ),
         ),
     ]

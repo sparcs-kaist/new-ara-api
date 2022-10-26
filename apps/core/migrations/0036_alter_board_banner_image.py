@@ -6,13 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0035_board_banner_description'),
+        ("core", "0035_board_banner_description"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='board',
-            name='banner_image',
-            field=models.ImageField(default='default_banner.png', upload_to='board_banner_images', verbose_name='게시판 배너 이미지'),
+            model_name="board",
+            name="banner_image",
+            field=models.ImageField(
+                default="default_banner.png",
+                upload_to="board_banner_images",
+                verbose_name="게시판 배너 이미지",
+            ),
         ),
     ]

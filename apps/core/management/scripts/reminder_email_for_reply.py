@@ -1,22 +1,21 @@
-from django.utils import timezone, dateformat
 from django.core.mail import send_mail
+from django.utils import dateformat, timezone
 
 from apps.core.models import CommunicationArticle, UserProfile
 from ara.settings import env
 
-
-if env('DJANGO_ENV') == 'production':
-    django_env = ''
-    BASE_URL = 'https://newara.sparcs.org/post'
+if env("DJANGO_ENV") == "production":
+    django_env = ""
+    BASE_URL = "https://newara.sparcs.org/post"
 else:
-    django_env = '[DEV]'
-    BASE_URL = 'https://newara.dev.sparcs.org/post'
+    django_env = "[DEV]"
+    BASE_URL = "https://newara.dev.sparcs.org/post"
 
 
 def _get_preparing_articles():
     articles = CommunicationArticle.objects.filter(
         school_response_status=1,
-    ).order_by('response_deadline')
+    ).order_by("response_deadline")
 
     return articles
 
@@ -33,22 +32,24 @@ def _is_remind_day(articles):
 
 
 def _format_date(date):
-    return dateformat.format(date, 'Y-m-d')
+    return dateformat.format(date, "Y-m-d")
 
 
 def _format_dday(days_left):
     if days_left < 0:
-        dday = f'[D+{days_left * -1}]'
+        dday = f"[D+{days_left * -1}]"
     elif days_left == 0:
-        dday = '[D-Day]'
+        dday = "[D-Day]"
     else:
-        dday = f'[D-{days_left}]'
+        dday = f"[D-{days_left}]"
 
     return dday
 
 
 def _make_title():
-    return f"[NewAra]{django_env} {_format_date(timezone.localtime())} '학교에게 전합니다' 답변대기 목록"
+    return (
+        f"[NewAra]{django_env} {_format_date(timezone.localtime())} '학교에게 전합니다' 답변대기 목록"
+    )
 
 
 def _make_message(articles):
@@ -76,14 +77,12 @@ def _make_message(articles):
 
 
 def _get_mailing_list():
-    mailing_list = ['new-ara@sparcs.org']
+    mailing_list = ["new-ara@sparcs.org"]
 
-    admin_users = UserProfile.objects.filter(
-        group=6
-    ).values('sso_user_info')
+    admin_users = UserProfile.objects.filter(group=6).values("sso_user_info")
 
     for user in admin_users:
-        mailing_list.append(user['sso_user_info']['email'])
+        mailing_list.append(user["sso_user_info"]["email"])
 
     return mailing_list
 
@@ -100,4 +99,4 @@ def send_email():
 
     mailing_list = _get_mailing_list()
 
-    send_mail(title, message, 'new-ara@sparcs.org', mailing_list)
+    send_mail(title, message, "new-ara@sparcs.org", mailing_list)
