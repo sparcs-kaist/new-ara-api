@@ -522,6 +522,7 @@ class TestComments(TestCase, RequestSetting):
     "set_user_client",
     "set_user_with_kaist_info",
     "set_user_without_kaist_info",
+    "set_school_admin",
     "set_boards",
     "set_topics",
     "set_articles",
@@ -598,6 +599,40 @@ class TestRealnameComments(TestCase, RequestSetting):
         assert res.get("name_type") == BoardNameType.REALNAME
         assert (
             Comment.objects.get(content=comment_str).name_type == BoardNameType.REALNAME
+        )
+
+    def test_create_school_admin_comment(self):
+        comment_str = "This is a school_admin comment on a realname article"
+        comment_data = {
+            "content": comment_str,
+            "parent_article": self.realname_article.id,
+            "parent_comment": None,
+            "attachment": None,
+        }
+
+        res = self.http_request(
+            self.school_admin, "post", "comments", comment_data
+        ).data
+        assert res.get("name_type") == BoardNameType.REGULAR
+        assert (
+            Comment.objects.get(content=comment_str).name_type == BoardNameType.REGULAR
+        )
+
+    def test_create_school_admin_subcomment(self):
+        comment_str = "This is a school_admin subcomment on a realname comment"
+        comment_data = {
+            "content": comment_str,
+            "parent_article": None,
+            "parent_comment": self.realname_comment.id,
+            "attachment": None,
+        }
+
+        res = self.http_request(
+            self.school_admin, "post", "comments", comment_data
+        ).data
+        assert res.get("name_type") == BoardNameType.REGULAR
+        assert (
+            Comment.objects.get(content=comment_str).name_type == BoardNameType.REGULAR
         )
 
 
