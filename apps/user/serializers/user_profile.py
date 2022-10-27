@@ -72,6 +72,7 @@ class PublicUserProfileSerializer(BaseUserProfileSerializer):
             "nickname",
             "user",
             "is_official",
+            "is_school_admin",
         )
 
 
