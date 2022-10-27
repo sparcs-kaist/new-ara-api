@@ -143,7 +143,10 @@ class UserProfile(MetaDataModel):
 
     @cached_property
     def is_official(self) -> bool:
-        return self.group in UserProfile.OFFICIAL_GROUPS
+        return (
+            self.group in UserProfile.OFFICIAL_GROUPS
+            or self.user.email == "new-ara@sparcs.org"
+        )
 
     @cached_property
     def is_school_admin(self) -> bool:
