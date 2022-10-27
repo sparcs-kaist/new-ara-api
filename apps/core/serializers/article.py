@@ -322,12 +322,18 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
         return None
 
     def get_my_comment_profile(self, obj):
+        created_by = self.context["request"].user
+        name_type = obj.name_type
+
+        if obj.parent_board.id == 14 and created_by.profile.is_school_admin:
+            name_type = BoardNameType.REGULAR
+
         fake_comment = Comment(
-            created_by=self.context["request"].user,
-            name_type=obj.name_type,
+            created_by=created_by,
+            name_type=name_type,
             parent_article=obj,
         )
-        if obj.name_type in (BoardNameType.ANONYMOUS, BoardNameType.REALNAME):
+        if fake_comment.name_type in (BoardNameType.ANONYMOUS, BoardNameType.REALNAME):
             return fake_comment.postprocessed_created_by
         else:
             data = PublicUserSerializer(fake_comment.postprocessed_created_by).data
