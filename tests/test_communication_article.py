@@ -30,7 +30,6 @@ def set_communication_board(request):
         en_description="With School (Test)",
         is_school_communication=True,
         name_type=BoardNameType.REALNAME,
-        id=14,
         read_access_mask=0b11011110,
         write_access_mask=0b11011010,
     )

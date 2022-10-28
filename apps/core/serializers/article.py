@@ -325,7 +325,10 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
         created_by = self.context["request"].user
         name_type = obj.name_type
 
-        if obj.parent_board.id == 14 and created_by.profile.is_school_admin:
+        if (
+            obj.parent_board.is_school_communication
+            and created_by.profile.is_school_admin
+        ):
             name_type = BoardNameType.REGULAR
 
         fake_comment = Comment(
