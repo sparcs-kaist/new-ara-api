@@ -21,26 +21,6 @@ from tests.conftest import RequestSetting, TestCase
 
 
 @pytest.fixture(scope="class")
-def set_school_admin(request):
-    request.cls.school_admin, _ = User.objects.get_or_create(
-        username="School Admin", email="schooladmin@sparcs.org"
-    )
-    if not hasattr(request.cls.school_admin, "profile"):
-        UserProfile.objects.get_or_create(
-            user=request.cls.school_admin,
-            nickname="School Admin",
-            agree_terms_of_service_at=timezone.now(),
-            group=UserProfile.UserGroup.COMMUNICATION_BOARD_ADMIN,
-            sso_user_info={
-                "kaist_info": '{"ku_kname": "\\ud669"}',
-                "first_name": "FirstName",
-                "last_name": "LastName",
-            },
-        )
-    request.cls.api_client = APIClient()
-
-
-@pytest.fixture(scope="class")
 def set_communication_board(request):
     request.cls.communication_board = Board.objects.create(
         slug="with-school",
@@ -436,3 +416,19 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         }
         res = self.http_request(self.user, "post", "comments", comment_data).data
         assert res.get("name_type") == BoardNameType.REALNAME
+
+    # ======================================================================= #
+    #                               School Admin                              #
+    # ======================================================================= #
+
+    # school_admin이 작성할 때 my_comment_profile REGULAR 확인
+    def test_school_admin_my_comment_profile(self):
+        res = self.http_request(
+            self.school_admin, "get", f"articles/{self.article.id}"
+        ).data
+
+        assert res.get("my_comment_profile")["profile"]["is_school_admin"]
+        assert (
+            res.get("my_comment_profile")["profile"]["nickname"]
+            == UserProfile.objects.get(user_id=self.school_admin.id).nickname
+        )

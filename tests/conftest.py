@@ -136,6 +136,27 @@ def set_user_without_kaist_info(request):
     request.cls.api_client = APIClient()
 
 
+@pytest.fixture(scope="class")
+def set_school_admin(request):
+    request.cls.school_admin, _ = User.objects.get_or_create(
+        username="School Admin", email="schooladmin@sparcs.org"
+    )
+    if not hasattr(request.cls.school_admin, "profile"):
+        UserProfile.objects.get_or_create(
+            user=request.cls.school_admin,
+            nickname="School Admin",
+            agree_terms_of_service_at=timezone.now(),
+            group=UserProfile.UserGroup.COMMUNICATION_BOARD_ADMIN,
+            sso_user_info={
+                "kaist_info": '{"ku_kname": "\\ud669"}',
+                "first_name": "FirstName",
+                "last_name": "LastName",
+            },
+        )
+
+    request.cls.api_client = APIClient()
+
+
 class RequestSetting:
     def http_request(self, user, method, path, data=None, querystring="", **kwargs):
         self.api_client.force_authenticate(user=user)

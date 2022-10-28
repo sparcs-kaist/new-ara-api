@@ -10,8 +10,8 @@ from rest_framework import (
 )
 
 from apps.core.filters.comment import CommentFilter
-from apps.core.models import Article, Comment, CommentDeleteLog, Vote
-from apps.core.models.board import BoardAccessPermissionType
+from apps.core.models import Article, Comment, CommentDeleteLog, UserProfile, Vote
+from apps.core.models.board import BoardAccessPermissionType, BoardNameType
 from apps.core.permissions.comment import CommentPermission
 from apps.core.serializers.comment import (
     CommentCreateActionSerializer,
@@ -79,12 +79,21 @@ class CommentViewSet(
         parent_comment_id = self.request.data.get("parent_comment")
         parent_comment = parent_comment_id and Comment.objects.get(id=parent_comment_id)
 
-        name_type = (
-            parent_article.name_type if parent_article else parent_comment.name_type
+        created_by = self.request.user
+        is_school_admin = (
+            UserProfile.objects.get(user_id=created_by).group
+            == UserProfile.UserGroup.COMMUNICATION_BOARD_ADMIN
         )
 
+        if is_school_admin:
+            name_type = BoardNameType.REGULAR
+        elif parent_article:
+            name_type = parent_article.name_type
+        else:
+            name_type = parent_comment.parent_article.name_type
+
         serializer.save(
-            created_by=self.request.user,
+            created_by=created_by,
             name_type=name_type,
         )
 
