@@ -12,19 +12,25 @@ if [ ! -z $GITHUB_REF ]; then
         if [ $NAME = "master" ]; then
             export DOCKER_TAG=prod
             export CACHE_DOCKER_TAG=prod
+            echo $FIREBASE_SERVICE_ACCOUNT_KEY_PROD > firebaseServiceAccountKey.json
         elif [ $NAME = "develop" ]; then
             # Docker tag에 /가 들어갈 수 없어서 -로 변경
             export DOCKER_TAG=develop
             export CACHE_DOCKER_TAG=develop
+            echo $FIREBASE_SERVICE_ACCOUNT_KEY_DEV > firebaseServiceAccountKey.json
         fi
     elif [ $TRIGGER_TYPE = "tags" ]; then
         export PUSH=true
         export DOCKER_TAG=$NAME
         export CACHE_DOCKER_TAG=prod
+        echo $FIREBASE_SERVICE_ACCOUNT_KEY_PROD > firebaseServiceAccountKey.json
+
     elif [ $TRIGGER_TYPE = "pull" ]; then
         export PUSH=true
         export DOCKER_TAG="pr$NAME"
         export CACHE_DOCKER_TAG=develop
+        echo $FIREBASE_SERVICE_ACCOUNT_KEY_DEV > firebaseServiceAccountKey.json
+
     fi
 fi
 
