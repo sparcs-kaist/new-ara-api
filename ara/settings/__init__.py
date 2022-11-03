@@ -9,6 +9,7 @@ from .redis import *
 from .scheduler import *
 from .sentry import *
 from .sso import *
+from .firebase import *
 
 if env("DJANGO_ENV") == "development":
     from .dev import *
