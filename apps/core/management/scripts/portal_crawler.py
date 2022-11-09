@@ -94,7 +94,7 @@ def _get_article(url, session):
         return new_string
 
     def _get_new_url_and_save_to_s3(url, session):
-        if "." in url.split("/")[-1]:  # not a portal image
+        if url.startswith("data:") or "." in url.split("/")[-1]:  # not a portal image
             return url
         enc = hashlib.md5()
         enc.update(url.encode())
