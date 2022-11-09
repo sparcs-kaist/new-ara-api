@@ -4,6 +4,7 @@ from .cacheops import *
 from .django import *
 from .djangorestframework import *
 from .elasticsearch import *
+from .firebase import *
 from .log import *
 from .redis import *
 from .scheduler import *
