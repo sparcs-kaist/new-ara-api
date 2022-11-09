@@ -1,39 +1,45 @@
 import hashlib
 import re
-import boto3
 import uuid
 from datetime import datetime
 
+import boto3
+import pyotp
 import requests
 from bs4 import BeautifulSoup as bs
-
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext
-import pyotp
 from tqdm import tqdm
 
 from apps.core.models import Article
 from apps.user.models import UserProfile
-from ara.settings import PORTAL_ID, PORTAL_PASSWORD, PORTAL_2FA_KEY, AWS_S3_BUCKET_NAME, PORTAL_JSESSIONID
+from ara.settings import (
+    AWS_S3_BUCKET_NAME,
+    PORTAL_2FA_KEY,
+    PORTAL_ID,
+    PORTAL_JSESSIONID,
+    PORTAL_PASSWORD,
+)
 
 LOGIN_INFO_SSO2 = {
-    'userid': PORTAL_ID,
-    'password': PORTAL_PASSWORD,
-    'saveid': 'on',
-    'phase': 'pass1',
+    "userid": PORTAL_ID,
+    "password": PORTAL_PASSWORD,
+    "saveid": "on",
+    "phase": "pass1",
 }
 
 LOGIN_INFO_SSO = {
-    'user_id': PORTAL_ID,
-    'pw': PORTAL_PASSWORD,
-    'login_page': 'L_P_COMMON',
+    "user_id": PORTAL_ID,
+    "pw": PORTAL_PASSWORD,
+    "login_page": "L_P_COMMON",
 }
 
-COOKIES = {'JSESSIONID': PORTAL_JSESSIONID}
+COOKIES = {"JSESSIONID": PORTAL_JSESSIONID}
 
-BASE_URL = 'https://portal.kaist.ac.kr'
+BASE_URL = "https://portal.kaist.ac.kr"
+
 
 def _make_2fa_token():
     totp = pyotp.TOTP(PORTAL_2FA_KEY)
@@ -43,21 +49,21 @@ def _make_2fa_token():
 def _login_kaist_portal():
     session = requests.Session()
     response = session.get(
-        f'{BASE_URL}/board/list.brd?boardId=today_notice&lang_knd=ko&userAgent=Chrome&isMobile=false&page=1&userAgent=Chrome&isMobile=False&sortColumn=REG_DATIM&sortMethod=DESC',
-        cookies=COOKIES
+        f"{BASE_URL}/board/list.brd?boardId=today_notice&lang_knd=ko&userAgent=Chrome&isMobile=false&page=1&userAgent=Chrome&isMobile=False&sortColumn=REG_DATIM&sortMethod=DESC",
+        cookies=COOKIES,
     )
-    print('_login_kaist_portal status code: ', response.status_code)
+    print("_login_kaist_portal status code: ", response.status_code)
     return session
 
 
 def _get_article(url, session):
     def _already_hyperlinked(html):
-        soup = bs(html, 'lxml')
+        soup = bs(html, "lxml")
         tagged_links = []
         for child in soup.descendants:
-            name = getattr(child, 'name', None)
+            name = getattr(child, "name", None)
             if name:
-                linked = child.attrs.get('src') or child.attrs.get('href')
+                linked = child.attrs.get("src") or child.attrs.get("href")
                 if linked:
                     tagged_links.append(linked)
 
@@ -69,7 +75,7 @@ def _get_article(url, session):
         links = [x[0] for x in url]
 
         start_index = 0
-        new_string = ''
+        new_string = ""
         already_hyperlinked = _already_hyperlinked(s)
         for link in links:
             start = start_index + s[start_index:].find(link)
@@ -88,79 +94,79 @@ def _get_article(url, session):
         return new_string
 
     def _get_new_url_and_save_to_s3(url, session):
-        if '.' in url.split('/')[-1]: # not a portal image
+        if url.startswith("data:") or "." in url.split("/")[-1]:  # not a portal image
             return url
         enc = hashlib.md5()
         enc.update(url.encode())
         hash = enc.hexdigest()[:20]
         filename = f'files/portal_image_{hash}.{url.split("_")[-1]}'
-        
+
         r = session.get(url, stream=True, cookies=COOKIES)
         if r.status_code == 200:
-            s3 = boto3.client('s3')
-            s3.upload_fileobj(r.raw, Bucket = AWS_S3_BUCKET_NAME, Key = filename)
+            s3 = boto3.client("s3")
+            s3.upload_fileobj(r.raw, Bucket=AWS_S3_BUCKET_NAME, Key=filename)
 
-        return f'https://{AWS_S3_BUCKET_NAME}.s3.amazonaws.com/{filename}'
+        return f"https://{AWS_S3_BUCKET_NAME}.s3.amazonaws.com/{filename}"
 
     def _save_portal_image(html, session):
-        soup = bs(html, 'lxml')
-        for child in soup.find_all('img', {}):
-            old_url = child.attrs.get('src')
+        soup = bs(html, "lxml")
+        for child in soup.find_all("img", {}):
+            old_url = child.attrs.get("src")
             new_url = _get_new_url_and_save_to_s3(old_url, session)
-            child['src'] = new_url
+            child["src"] = new_url
 
         return str(soup)
 
     article_req = session.get(url, cookies=COOKIES)
-    soup = bs(article_req.text, 'lxml')
+    soup = bs(article_req.text, "lxml")
 
     writer = (
-        soup.find('th', text='작성자(소속)')
-        .findNext('td')
-        .select('label')[0]
+        soup.find("th", text="작성자(소속)")
+        .findNext("td")
+        .select("label")[0]
         .contents[0]
         .strip()
     )
     created_at_str = (
-        soup.find('th', text='작성일(조회수)')
-        .findNext('td')
+        soup.find("th", text="작성일(조회수)")
+        .findNext("td")
         .contents[0]
         .strip()
-        .split('(')[0]
+        .split("(")[0]
     )
     created_at = timezone.get_current_timezone().localize(
-        datetime.strptime(created_at_str, '%Y.%m.%d %H:%M:%S')
+        datetime.strptime(created_at_str, "%Y.%m.%d %H:%M:%S")
     )
-    title = soup.select('table > tbody > tr > td.req_first')[0].contents[0]
+    title = soup.select("table > tbody > tr > td.req_first")[0].contents[0]
 
-    trs = soup.select('table > tbody > tr')
+    trs = soup.select("table > tbody > tr")
     html = None
 
     for tr in trs:
         if len(list(tr.children)) == 3:
-            html = tr.find('td').prettify()
+            html = tr.find("td").prettify()
             break
 
     if html is None:
         for tr in trs:
             if len(list(tr.children)) == 2:
-                html = tr.find('td').prettify()
+                html = tr.find("td").prettify()
                 break
 
     html = _save_portal_image(html, session)
     html = _enable_hyperlink(html)
 
     if html is None:
-        raise RuntimeError(gettext('No content for portal article'))
+        raise RuntimeError(gettext("No content for portal article"))
 
-    content_text = ' '.join(bs(html, features='html5lib').find_all(text=True))
+    content_text = " ".join(bs(html, features="html5lib").find_all(text=True))
 
     return {
-        'title': title,
-        'content_text': content_text,
-        'content': html,
-        'writer': writer,
-        'created_at': created_at,
+        "title": title,
+        "content_text": content_text,
+        "content": html,
+        "writer": writer,
+        "created_at": created_at,
     }
 
 
@@ -174,26 +180,26 @@ def crawl_hour(day=None):
     def _get_board_today(page_num):
         today = True
         board_req = session.get(
-            f'{BASE_URL}/board/list.brd?boardId=today_notice&lang_knd=ko&userAgent=Chrome&isMobile=false&page={page_num}&userAgent=Chrome&isMobile=False&sortColumn=REG_DATIM&sortMethod=DESC',
-            cookies=COOKIES
+            f"{BASE_URL}/board/list.brd?boardId=today_notice&lang_knd=ko&userAgent=Chrome&isMobile=false&page={page_num}&userAgent=Chrome&isMobile=False&sortColumn=REG_DATIM&sortMethod=DESC",
+            cookies=COOKIES,
         )
-        soup = bs(board_req.text, 'lxml')
+        soup = bs(board_req.text, "lxml")
         linklist = []
-        links = soup.select('table > tbody > tr > td > a')
-        dates = soup.select('table > tbody > tr > td:nth-child(5)')
+        links = soup.select("table > tbody > tr > td > a")
+        dates = soup.select("table > tbody > tr > td:nth-child(5)")
 
         if links:
-            print('------- portal login success!')
+            print("------- portal login success!")
         else:
-            print('------- portal login failed!')
+            print("------- portal login failed!")
 
-        today_date = str(day).replace('-', '.')
+        today_date = str(day).replace("-", ".")
         for link, date in zip(links, dates):
             article_date = date.get_text()
             if article_date > today_date:
                 continue
             elif article_date == today_date:
-                linklist.append({'link': link.attrs['href'], 'date': article_date})
+                linklist.append({"link": link.attrs["href"], "date": article_date})
             else:
                 today = False
                 return linklist, today
@@ -213,28 +219,37 @@ def crawl_hour(day=None):
         # Next page
         page_num += 1
 
-    last_portal_article_in_db = Article.objects.filter(
+    last_portal_article_in_db = (
+        Article.objects.filter(
             parent_board_id=1,
-        ).order_by('-created_at').first()
+        )
+        .order_by("-created_at")
+        .first()
+    )
 
     new_articles = []
-    prev_title = ''
+    prev_title = ""
 
     for link in links:
-        link = link['link']
-        board_id = link.split('/')[-2]
-        num = link.split('/')[-1]
-        full_link = f'{BASE_URL}/board/read.brd?cmd=READ&boardId={board_id}&bltnNo={num}&lang_knd=ko'
+        link = link["link"]
+        board_id = link.split("/")[-2]
+        num = link.split("/")[-1]
+        full_link = f"{BASE_URL}/board/read.brd?cmd=READ&boardId={board_id}&bltnNo={num}&lang_knd=ko"
         info = _get_article(full_link, session)
 
         # Since it is time ordered, consequent ones have been posted more than 1 hour ago.
 
-        created_at_utc = info['created_at'].astimezone(timezone.utc)
+        created_at_utc = info["created_at"].astimezone(timezone.utc)
 
-        if created_at_utc < last_portal_article_in_db.created_at or info['title'] == prev_title:
+        if (
+            created_at_utc < last_portal_article_in_db.created_at
+            or info["title"] == prev_title
+        ):
             continue
 
-        user_exist = UserProfile.objects.filter(nickname=info['writer'], is_newara=False)
+        user_exist = UserProfile.objects.filter(
+            nickname=info["writer"], is_newara=False
+        )
 
         if user_exist:
             user = user_exist.first().user
@@ -246,19 +261,19 @@ def crawl_hour(day=None):
             UserProfile.objects.create(
                 is_newara=False,
                 user=user,
-                nickname=info['writer'],
-                picture='user_profiles/default_pictures/KAIST-logo.png',
+                nickname=info["writer"],
+                picture="user_profiles/default_pictures/KAIST-logo.png",
             )
 
         article = Article(
-                    parent_board_id=1,
-                    title=info['title'],
-                    content=info['content'],
-                    content_text=info['content_text'],
-                    created_by=user,
-                    created_at=created_at_utc,
-                    url=full_link
-                  )
+            parent_board_id=1,
+            title=info["title"],
+            content=info["content"],
+            content_text=info["content_text"],
+            created_by=user,
+            created_at=created_at_utc,
+            url=full_link,
+        )
 
         new_articles.append(article)
         prev_title = article.title
@@ -267,7 +282,10 @@ def crawl_hour(day=None):
     if not new_articles:
         return
     earliest_new_article = new_articles[-1]
-    is_same_day = last_portal_article_in_db.created_at.date() == earliest_new_article.created_at.date()
+    is_same_day = (
+        last_portal_article_in_db.created_at.date()
+        == earliest_new_article.created_at.date()
+    )
     is_same_title = last_portal_article_in_db.title == earliest_new_article.title
 
     if is_same_day and is_same_title:
@@ -279,12 +297,15 @@ def crawl_hour(day=None):
     created_articles = Article.objects.bulk_create(new_articles)
 
     for i in range(len(created_articles)):
-        print(f'crawled article: {created_articles[i].title}')
+        print(f"crawled article: {created_articles[i].title}")
 
 
 def list_contains_article(articles, article_info):
     for a in articles:
-        if a.title == article_info['title'] and a.content_text == article_info['content_text']:
+        if (
+            a.title == article_info["title"]
+            and a.content_text == article_info["content_text"]
+        ):
             return True
     return False
 
@@ -294,21 +315,21 @@ def crawl_all():
 
     def _get_board(page_num):
         board_req = session.get(
-            f'{BASE_URL}/board/list.brd?boardId=today_notice&lang_knd=ko&userAgent=Chrome&isMobile=false&page={page_num}&sortColumn=REG_DATIM&sortMethod=DESC',
-            cookies=COOKIES
+            f"{BASE_URL}/board/list.brd?boardId=today_notice&lang_knd=ko&userAgent=Chrome&isMobile=false&page={page_num}&sortColumn=REG_DATIM&sortMethod=DESC",
+            cookies=COOKIES,
         )
-        soup = bs(board_req.text, 'lxml')
+        soup = bs(board_req.text, "lxml")
         link = []
-        titles = soup.select('table > tbody > tr > td > a')
+        titles = soup.select("table > tbody > tr > td > a")
         for title in titles:
-            link.append(title.attrs['href'])
+            link.append(title.attrs["href"])
 
         return link
 
     page_num = 1
 
     while True:
-        print('page_num:', page_num)
+        print("page_num:", page_num)
         links = []
         link = _get_board(page_num)
         if link:
@@ -316,13 +337,13 @@ def crawl_all():
 
             with transaction.atomic():
                 for link in tqdm(links):
-                    board_id = link.split('/')[-2]
-                    num = link.split('/')[-1]
-                    full_link = f'{BASE_URL}/board/read.brd?cmd=READ&boardId={board_id}&bltnNo={num}&lang_knd=ko'
+                    board_id = link.split("/")[-2]
+                    num = link.split("/")[-1]
+                    full_link = f"{BASE_URL}/board/read.brd?cmd=READ&boardId={board_id}&bltnNo={num}&lang_knd=ko"
                     info = _get_article(full_link, session)
 
                     user_exist = UserProfile.objects.filter(
-                        nickname=info['writer'], is_newara=False
+                        nickname=info["writer"], is_newara=False
                     )
                     if user_exist:
                         user = user_exist.first().user
@@ -333,21 +354,21 @@ def crawl_all():
                         user_profile = UserProfile.objects.create(
                             is_newara=False,
                             user=user,
-                            nickname=info['writer'],
-                            picture='user_profiles/default_pictures/KAIST-logo.png',
+                            nickname=info["writer"],
+                            picture="user_profiles/default_pictures/KAIST-logo.png",
                         )
 
                     a, created = Article.objects.get_or_create(
                         parent_board_id=1,  # 포탈공지 게시판
-                        title=info['title'],
-                        content=info['content'],
-                        content_text=info['content_text'],
+                        title=info["title"],
+                        content=info["content"],
+                        content_text=info["content_text"],
                         created_by=user,
                         url=full_link,
                     )
 
                     if created:
-                        a.created_at = info['created_at']
+                        a.created_at = info["created_at"]
                         a.save()
 
             page_num += 1
@@ -356,5 +377,5 @@ def crawl_all():
             break
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     _login_kaist_portal()
