@@ -1,5 +1,7 @@
 from firebase_admin import messaging
+
 from apps.user.models import FCMToken
+
 
 def fcm_notify_comment(user, title, body, open_url):
     targets = FCMToken.objects.filter(user=user)
@@ -9,6 +11,7 @@ def fcm_notify_comment(user, title, body, open_url):
         except:
             FCMToken.objects.filter(token=i.token).delete()
     pass
+
 
 def fcm_simple(FCM_token, title="Title", body="Body", open_url="/"):
     # This registration token comes from the client FCM SDKs.
@@ -24,18 +27,15 @@ def fcm_simple(FCM_token, title="Title", body="Body", open_url="/"):
                 body=body,
                 tag=open_url,
                 renotify=True,
-                icon='/img/icons/ara-pwa-192.png',
-                actions=[messaging.WebpushNotificationAction(
-                    "action_open", "Open"
-                ), messaging.WebpushNotificationAction(
-                    "action_close", "Close"
-                )],
+                icon="/img/icons/ara-pwa-192.png",
+                actions=[
+                    messaging.WebpushNotificationAction("action_open", "Open"),
+                    messaging.WebpushNotificationAction("action_close", "Close"),
+                ],
             ),
             # Maybe bug: fcm_options.link is not working
         ),
-        data={
-            "action_open_url": open_url
-        },
+        data={"action_open_url": open_url},
         token=FCM_token,
     )
 

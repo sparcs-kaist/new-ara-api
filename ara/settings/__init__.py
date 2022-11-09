@@ -4,12 +4,12 @@ from .cacheops import *
 from .django import *
 from .djangorestframework import *
 from .elasticsearch import *
+from .firebase import *
 from .log import *
 from .redis import *
 from .scheduler import *
 from .sentry import *
 from .sso import *
-from .firebase import *
 
 if env("DJANGO_ENV") == "development":
     from .dev import *

@@ -72,9 +72,12 @@ class Notification(MetaDataModel):
                     related_comment=None,
                 ),
             )
-            fcm_notify_comment(_parent_article.created_by, title, _comment.content[:32],
-                               f"post/{_parent_article.id}")
-
+            fcm_notify_comment(
+                _parent_article.created_by,
+                title,
+                _comment.content[:32],
+                f"post/{_parent_article.id}",
+            )
 
         def notify_comment_commented(_parent_article, _comment):
             title = f"{_comment.created_by.profile.nickname} 님이 새로운 대댓글을 작성했습니다."
@@ -88,8 +91,12 @@ class Notification(MetaDataModel):
                     related_comment=_comment.parent_comment,
                 ),
             )
-            fcm_notify_comment(_comment.parent_comment.created_by, title, _comment.content[:32],
-                               f"post/{_parent_article.id}")
+            fcm_notify_comment(
+                _comment.parent_comment.created_by,
+                title,
+                _comment.content[:32],
+                f"post/{_parent_article.id}",
+            )
 
         article = (
             comment.parent_article
