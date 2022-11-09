@@ -6,18 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0034_board_banner_image'),
+        ("core", "0034_board_banner_image"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='board',
-            name='en_banner_description',
-            field=models.TextField(blank=True, default=None, null=True, verbose_name='게시판 배너에 삽입되는 영문 소개'),
+            model_name="board",
+            name="en_banner_description",
+            field=models.TextField(
+                blank=True, default=None, null=True, verbose_name="게시판 배너에 삽입되는 영문 소개"
+            ),
         ),
         migrations.AddField(
-            model_name='board',
-            name='ko_banner_description',
-            field=models.TextField(blank=True, default=None, null=True, verbose_name='게시판 배너에 삽입되는 국문 소개'),
+            model_name="board",
+            name="ko_banner_description",
+            field=models.TextField(
+                blank=True, default=None, null=True, verbose_name="게시판 배너에 삽입되는 국문 소개"
+            ),
         ),
     ]

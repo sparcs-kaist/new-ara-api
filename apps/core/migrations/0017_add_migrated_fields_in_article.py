@@ -6,23 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0016_increase_filefield_max_length'),
+        ("core", "0016_increase_filefield_max_length"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='article',
-            name='migrated_hit_count',
-            field=models.IntegerField(default=0, verbose_name='이전된 조회수'),
+            model_name="article",
+            name="migrated_hit_count",
+            field=models.IntegerField(default=0, verbose_name="이전된 조회수"),
         ),
         migrations.AddField(
-            model_name='article',
-            name='migrated_negative_vote_count',
-            field=models.IntegerField(default=0, verbose_name='이전된 좋아요 수'),
+            model_name="article",
+            name="migrated_negative_vote_count",
+            field=models.IntegerField(default=0, verbose_name="이전된 좋아요 수"),
         ),
         migrations.AddField(
-            model_name='article',
-            name='migrated_positive_vote_count',
-            field=models.IntegerField(default=0, verbose_name='이전된 좋아요 수'),
+            model_name="article",
+            name="migrated_positive_vote_count",
+            field=models.IntegerField(default=0, verbose_name="이전된 좋아요 수"),
         ),
     ]

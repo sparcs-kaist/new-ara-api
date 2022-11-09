@@ -6,17 +6,25 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('user', '0006_set_minimum_datetime_timezone'),
+        ("user", "0006_set_minimum_datetime_timezone"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='userprofile',
-            name='group',
-            field=models.IntegerField(choices=[(0, 'Unauthorized user'), (1, 'KAIST member'), (2, 'Restaurant employee'), (3, 'Other employee')], default=0),
+            model_name="userprofile",
+            name="group",
+            field=models.IntegerField(
+                choices=[
+                    (0, "Unauthorized user"),
+                    (1, "KAIST member"),
+                    (2, "Restaurant employee"),
+                    (3, "Other employee"),
+                ],
+                default=0,
+            ),
         ),
         migrations.RemoveField(
-            model_name='userprofile',
-            name='is_kaist',
+            model_name="userprofile",
+            name="is_kaist",
         ),
     ]

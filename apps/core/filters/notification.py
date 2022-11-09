@@ -7,31 +7,30 @@ class NotificationFilter(filters.FilterSet):
     class Meta:
         model = Notification
         fields = {
-            'type': [
-                'in',
-                'exact',
+            "type": [
+                "in",
+                "exact",
             ],
-            'title': [
-                'contains',
+            "title": [
+                "contains",
             ],
-            'content': [
-                'contains',
+            "content": [
+                "contains",
             ],
-
-            'related_article': [
-                'in',
-                'exact',
+            "related_article": [
+                "in",
+                "exact",
             ],
-            'related_comment': [
-                'in',
-                'exact',
+            "related_comment": [
+                "in",
+                "exact",
             ],
         }
 
     is_read = filters.BooleanFilter(
-        field_name='is_read',
-        label='조회 여부',
-        method='get_is_read',
+        field_name="is_read",
+        label="조회 여부",
+        method="get_is_read",
     )
 
     @staticmethod

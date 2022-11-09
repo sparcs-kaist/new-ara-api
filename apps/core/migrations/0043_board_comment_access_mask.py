@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0042_add_read_write_access_masks'),
+        ("core", "0042_add_read_write_access_masks"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='board',
-            name='comment_access_mask',
-            field=models.SmallIntegerField(default=254, verbose_name='댓글 권한'),
+            model_name="board",
+            name="comment_access_mask",
+            field=models.SmallIntegerField(default=254, verbose_name="댓글 권한"),
         ),
     ]

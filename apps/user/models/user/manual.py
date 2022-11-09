@@ -7,14 +7,14 @@ from ara.db.models import MetaDataModel
 
 class ManualUser(MetaDataModel):
     class Meta(MetaDataModel.Meta):
-        verbose_name = '수동 등록된 사용자'  # 단체 및 업체
-        verbose_name_plural = '수동 등록된 사용자 목록'
+        verbose_name = "수동 등록된 사용자"  # 단체 및 업체
+        verbose_name_plural = "수동 등록된 사용자 목록"
 
     user = models.OneToOneField(
         on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
-        related_name='manual',
-        verbose_name='사용자',
+        related_name="manual",
+        verbose_name="사용자",
         null=True,
         blank=True,
         default=None,

@@ -9,8 +9,8 @@ from apps.core.management.scripts.portal_crawler import crawl_hour
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        parser.add_argument('--start')
-        parser.add_argument('--end')
+        parser.add_argument("--start")
+        parser.add_argument("--end")
 
     def parse_date(self, options, arg_name):
         tz = timezone.get_current_timezone()
@@ -21,10 +21,10 @@ class Command(BaseCommand):
             return None
 
     def handle(self, *args, **options):
-        start = self.parse_date(options, 'start') or timezone.datetime.today().date()
-        end = self.parse_date(options, 'end') or timezone.datetime.today().date()
+        start = self.parse_date(options, "start") or timezone.datetime.today().date()
+        end = self.parse_date(options, "end") or timezone.datetime.today().date()
 
-        print('start:', start, 'end:', end)
+        print("start:", start, "end:", end)
         dates = []
         while start != end:
             dates.append(start)

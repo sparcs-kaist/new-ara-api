@@ -6,22 +6,26 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('user', '0001_initial'),
+        ("user", "0001_initial"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='userprofile',
-            old_name='past_user',
-            new_name='is_past',
+            model_name="userprofile",
+            old_name="past_user",
+            new_name="is_past",
         ),
         migrations.AddField(
-            model_name='userprofile',
-            name='is_kaist',
-            field=models.BooleanField(default=False, verbose_name='카이스트 인증된 사용자'),
+            model_name="userprofile",
+            name="is_kaist",
+            field=models.BooleanField(default=False, verbose_name="카이스트 인증된 사용자"),
         ),
         migrations.AlterUniqueTogether(
-            name='userprofile',
-            unique_together={('nickname', 'is_past', 'deleted_at'), ('uid', 'deleted_at'), ('sid', 'deleted_at')},
+            name="userprofile",
+            unique_together={
+                ("nickname", "is_past", "deleted_at"),
+                ("uid", "deleted_at"),
+                ("sid", "deleted_at"),
+            },
         ),
     ]

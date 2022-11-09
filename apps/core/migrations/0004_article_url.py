@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0003_create_FAQ'),
+        ("core", "0003_create_FAQ"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='article',
-            name='url',
-            field=models.TextField(default=None, null=True, verbose_name='링크'),
+            model_name="article",
+            name="url",
+            field=models.TextField(default=None, null=True, verbose_name="링크"),
         ),
     ]
