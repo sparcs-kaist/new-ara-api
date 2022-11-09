@@ -112,8 +112,9 @@ def _get_article(url, session):
         soup = bs(html, "lxml")
         for child in soup.find_all("img", {}):
             old_url = child.attrs.get("src")
-            new_url = _get_new_url_and_save_to_s3(old_url, session)
-            child["src"] = new_url
+            if not old_url.startswith("data:"):
+                new_url = _get_new_url_and_save_to_s3(old_url, session)
+                child["src"] = new_url
 
         return str(soup)
 
