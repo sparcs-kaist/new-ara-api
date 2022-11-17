@@ -34,5 +34,5 @@ class FCMToken(models.Model):
     )
 
     is_web = models.BooleanField(
-        default=True, max_length=100, db_index=True, verbose_name="토큰 부여 플랫폼이 웹인지 여부"
+        default=True, db_index=True, verbose_name="토큰 부여 플랫폼이 웹인지 여부"
     )
