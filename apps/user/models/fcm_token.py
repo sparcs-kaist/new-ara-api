@@ -1,14 +1,18 @@
 from cached_property import cached_property
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
-from ara.db.models import MetaDataModel
 
+class FCMToken(models.Model):
+    class Meta:
+        ordering = ("-created_at",)
 
-class FCMToken(MetaDataModel):
-    class Meta(MetaDataModel.Meta):
-        verbose_name = "FCM 토큰"
-        verbose_name_plural = "FCM 푸시알림 토큰"
+    created_at = models.DateTimeField(
+        default=timezone.now,
+        db_index=True,
+        verbose_name="생성 시간",
+    )
 
     user = models.ForeignKey(
         on_delete=models.CASCADE,
@@ -27,4 +31,8 @@ class FCMToken(MetaDataModel):
         null=True,
         default=None,
         verbose_name="최근 토큰 부여 및 확인 시간",
+    )
+
+    is_web = models.BooleanField(
+        default=True, db_index=True, verbose_name="토큰 부여 플랫폼이 웹인지 여부"
     )
