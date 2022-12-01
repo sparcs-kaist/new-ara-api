@@ -1,3 +1,6 @@
+from datetime import timedelta
+
+from django.utils import timezone
 from firebase_admin import messaging
 
 from apps.user.models import FCMToken
@@ -5,6 +8,11 @@ from apps.user.models import FCMToken
 
 def fcm_notify_comment(user, title, body, open_url):
     targets = FCMToken.objects.filter(user=user)
+
+    # Delete expired tokens
+    week_ago = timezone.now().date() - timedelta(days=7)
+    FCMToken.objects.filter(user=user).filter(last_activated_at__lte=week_ago).delete()
+
     for i in targets:
         try:
             fcm_simple(i.token, title, body, open_url)
