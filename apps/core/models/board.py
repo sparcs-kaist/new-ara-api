@@ -1,9 +1,15 @@
 from enum import IntEnum
 
 from django.db import models
+from django.utils.functional import cached_property
 from django_extensions.db.fields import AutoSlugField
 
 from ara.db.models import MetaDataModel
+
+
+class BoardType(IntEnum):
+    SCHOOL_COMMUNICATION = 14
+    KAIST_NEWS = 17
 
 
 class BoardNameType(IntEnum):
@@ -117,6 +123,10 @@ class Board(MetaDataModel):
 
     def __str__(self) -> str:
         return self.ko_name
+
+    @cached_property
+    def is_news_board(self) -> bool:
+        return self.id == BoardType.KAIST_NEWS
 
     def group_has_access_permission(
         self, access_type: BoardAccessPermissionType, group: int

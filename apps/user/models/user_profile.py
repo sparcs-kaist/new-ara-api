@@ -151,3 +151,7 @@ class UserProfile(MetaDataModel):
     @cached_property
     def is_school_admin(self) -> bool:
         return self.group == UserProfile.UserGroup.COMMUNICATION_BOARD_ADMIN
+
+    @cached_property
+    def is_news_admin(self) -> bool:
+        return self.group == UserProfile.UserGroup.NEWS_BOARD_ADMIN

@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
 
+from apps.user.models import UserProfile
 from apps.user.views.viewsets import get_profile_picture, hashlib
 from ara.classes.decorator import cache_by_user
 from ara.db.models import MetaDataModel
@@ -257,7 +258,18 @@ class Article(MetaDataModel):
     @cached_property
     def postprocessed_created_by(self) -> Union[settings.AUTH_USER_MODEL, Dict]:
         if self.name_type == BoardNameType.REGULAR:
-            return self.created_by
+            # If is kaist news admin in the news board, use KAIST NEWS profile
+            is_news_admin = self.created_by.profile.is_news_admin
+            is_news_board = self.parent_board.is_news_board
+
+            created_by = self.created_by
+            if is_news_admin and is_news_board:
+                created_by.profile.nickname = gettext("KAIST NEWS")
+                created_by.profile.picture = (
+                    "user_profiles/default_pictures/KAIST-NEWS.png"
+                )
+
+            return created_by
 
         user_unique_num = self.created_by.id + self.id + HASH_SECRET_VALUE
         user_unique_encoding = str(hex(user_unique_num)).encode("utf-8")

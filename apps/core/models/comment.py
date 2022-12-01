@@ -165,13 +165,24 @@ class Comment(MetaDataModel):
     # API 상에서 보이는 사용자 (익명일 경우 익명화된 글쓴이, 그 외는 그냥 글쓴이)
     @cached_property
     def postprocessed_created_by(self) -> Union[settings.AUTH_USER_MODEL, Dict]:
-        if self.name_type == BoardNameType.REGULAR:
-            return self.created_by
-
         parent_article = self.get_parent_article()
         parent_article_id = parent_article.id
         parent_article_created_by_id = parent_article.created_by.id
         comment_created_by_id = self.created_by.id
+
+        if self.name_type == BoardNameType.REGULAR:
+            # If is kaist news admin in the news board, use KAIST NEWS profile
+            is_news_admin = self.created_by.profile.is_news_admin
+            is_news_board = parent_article.parent_board.is_news_board
+
+            created_by = self.created_by
+            if is_news_admin and is_news_board:
+                created_by.profile.nickname = gettext("KAIST NEWS")
+                created_by.profile.picture = (
+                    "user_profiles/default_pictures/KAIST-NEWS.png"
+                )
+
+            return created_by
 
         # 댓글 작성자는 (작성자 id + parent article id + 시크릿)을 해시한 값으로 구별합니다.
         user_unique_num = comment_created_by_id + parent_article_id + HASH_SECRET_VALUE

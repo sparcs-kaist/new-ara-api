@@ -34,6 +34,7 @@ from apps.core.serializers.article import (
     ArticleSerializer,
     ArticleUpdateActionSerializer,
 )
+from apps.user.models.user_profile import UserProfile
 from ara import redis
 from ara.classes.viewset import ActionAPIViewSet
 from ara.settings import SCHOOL_RESPONSE_VOTE_THRESHOLD
@@ -150,9 +151,21 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         return queryset
 
     def perform_create(self, serializer):
+        created_by = self.request.user
+        parent_board = Board.objects.get(pk=self.request.data["parent_board"])
+
+        is_news_admin = created_by.profile.is_news_admin
+        is_news_board = parent_board.is_news_board
+
+        # if user is KAIST NEWS admin, set name type as REGULAR
+        if is_news_admin and is_news_board:
+            name_type = BoardNameType.REGULAR
+        else:
+            name_type = parent_board.name_type
+
         serializer.save(
             created_by=self.request.user,
-            name_type=Board.objects.get(pk=self.request.data["parent_board"]).name_type,
+            name_type=name_type,
         )
 
         instance = serializer.instance

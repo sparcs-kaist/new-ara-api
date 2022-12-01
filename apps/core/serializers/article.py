@@ -325,10 +325,15 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
         created_by = self.context["request"].user
         name_type = obj.name_type
 
-        if (
+        is_school_admin = (
             obj.parent_board.is_school_communication
             and created_by.profile.is_school_admin
-        ):
+        )
+        is_news_admin = (
+            obj.parent_board.is_news_board and created_by.profile.is_news_admin
+        )
+
+        if is_school_admin:
             name_type = BoardNameType.REGULAR
 
         fake_comment = Comment(
@@ -338,6 +343,8 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
         )
         if fake_comment.name_type in (BoardNameType.ANONYMOUS, BoardNameType.REALNAME):
             return fake_comment.postprocessed_created_by
+        # elif is_news_admin:
+        #     return fake_comment.postprocessed_created_by
         else:
             data = PublicUserSerializer(fake_comment.postprocessed_created_by).data
             return data
