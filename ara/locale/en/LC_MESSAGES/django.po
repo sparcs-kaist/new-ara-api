@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-04 23:18+0900\n"
+"POT-Creation-Date: 2022-12-21 16:44+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,141 +22,160 @@ msgstr ""
 msgid "Hidden Contents"
 msgstr ""
 
-#: apps/core/admin.py:118
+#: apps/core/admin.py:111
 msgid "Restore hidden articles"
 msgstr ""
 
-#: apps/core/admin.py:150
+#: apps/core/admin.py:139
 msgid "Restore hidden comments"
 msgstr ""
 
-#: apps/core/management/scripts/portal_crawler.py:154
+#: apps/core/management/scripts/portal_crawler.py:160
 msgid "No content for portal article"
 msgstr ""
 
-#: apps/core/models/article.py:217 apps/core/models/article.py:220
-#: apps/core/models/article.py:221
+#: apps/core/models/article.py:271 apps/core/models/article.py:274
+#: apps/core/models/article.py:275
 msgid "anonymous"
 msgstr ""
 
-#: apps/core/models/comment.py:171
+#: apps/core/models/comment.py:185 apps/core/models/comment.py:203
+#: tests/test_comments.py:568
 msgid "author"
 msgstr ""
 
-#: apps/core/serializers/article.py:201
+#: apps/core/serializers/article.py:175
 msgid "This article is not in user's scrap list."
 msgstr ""
 
-#: apps/core/serializers/article.py:218
+#: apps/core/serializers/article.py:199
 msgid "Wrong value for parameter 'from_view'."
 msgstr ""
 
-#: apps/core/serializers/article.py:291
-msgid "This article is never read by user."
-msgstr ""
-
-#: apps/core/serializers/article.py:419
+#: apps/core/serializers/article.py:510
 msgid "This board is read only."
 msgstr ""
 
-#: apps/core/serializers/article.py:421
-msgid "This board is only for KAIST members."
-msgstr ""
-
-#: apps/core/serializers/block.py:14
+#: apps/core/serializers/block.py:13
 msgid "Cannot block yourself"
 msgstr ""
 
-#: apps/core/serializers/block.py:44
+#: apps/core/serializers/block.py:40
 msgid "This user is already blocked."
 msgstr ""
 
-#: apps/core/serializers/report.py:43
+#: apps/core/serializers/report.py:44
 msgid "You already reported this article."
 msgstr ""
 
-#: apps/core/serializers/scrap.py:37
+#: apps/core/serializers/scrap.py:38
 msgid "This article is already scrapped."
 msgstr ""
 
-#: apps/core/views/viewsets/article.py:128
+#: apps/core/views/viewsets/article.py:171
 msgid "Cannot modify articles hidden by reports"
 msgstr ""
 
-#: apps/core/views/viewsets/article.py:149
+#: apps/core/views/viewsets/article.py:194
 msgid "Cannot delete articles hidden by reports"
 msgstr ""
 
-#: apps/core/views/viewsets/article.py:185
+#: apps/core/views/viewsets/article.py:249
 msgid "Cannot cancel vote on articles hidden by reports"
 msgstr ""
 
-#: apps/core/views/viewsets/article.py:215
-#: apps/core/views/viewsets/article.py:244
+#: apps/core/views/viewsets/article.py:262
+msgid ""
+"It is not available to cancel a vote for a real name article with more than "
+"30 votes."
+msgstr ""
+
+#: apps/core/views/viewsets/article.py:299
+#: apps/core/views/viewsets/article.py:334
 msgid "Cannot vote on your own article"
 msgstr ""
 
-#: apps/core/views/viewsets/article.py:219
-#: apps/core/views/viewsets/article.py:248
+#: apps/core/views/viewsets/article.py:305
+#: apps/core/views/viewsets/article.py:340
 msgid "Cannot vote on articles hidden by reports"
 msgstr ""
 
-#: apps/core/views/viewsets/comment.py:62
+#: apps/core/views/viewsets/comment.py:73
+msgid "Permission denied"
+msgstr ""
+
+#: apps/core/views/viewsets/comment.py:114
 msgid "Cannot modify hidden or deleted comments"
 msgstr ""
 
-#: apps/core/views/viewsets/comment.py:84
+#: apps/core/views/viewsets/comment.py:137
 msgid "Cannot delete hidden or deleted comments"
 msgstr ""
 
-#: apps/core/views/viewsets/comment.py:102
+#: apps/core/views/viewsets/comment.py:159
 msgid "Cannot cancel vote on comments that are deleted or hidden by reports"
 msgstr ""
 
-#: apps/core/views/viewsets/comment.py:119
-#: apps/core/views/viewsets/comment.py:143
+#: apps/core/views/viewsets/comment.py:180
+#: apps/core/views/viewsets/comment.py:212
 msgid "Cannot vote on your own comment"
 msgstr ""
 
-#: apps/core/views/viewsets/comment.py:123
-#: apps/core/views/viewsets/comment.py:147
+#: apps/core/views/viewsets/comment.py:188
+#: apps/core/views/viewsets/comment.py:220
 msgid "Cannot vote on comments that are deleted or hidden by reports"
 msgstr ""
 
-#: apps/core/views/viewsets/report.py:69
+#: apps/core/views/viewsets/report.py:111
 msgid "Cannot report articles that are deleted or hidden by reports"
 msgstr ""
 
-#: apps/core/views/viewsets/report.py:74
+#: apps/core/views/viewsets/report.py:126
 msgid "Cannot report comments that are deleted or hidden by reports"
 msgstr ""
 
-#: apps/user/models/user_profile.py:23
+#: apps/user/models/user_profile.py:27
 msgid "Unauthorized user"
 msgstr ""
 
-#: apps/user/models/user_profile.py:24
+#: apps/user/models/user_profile.py:29
 msgid "KAIST member"
 msgstr ""
 
-#: apps/user/models/user_profile.py:25
-msgid "Restaurant employee"
+#: apps/user/models/user_profile.py:31
+msgid "Store employee"
 msgstr ""
 
-#: apps/user/models/user_profile.py:26
-msgid "Other employee"
+#: apps/user/models/user_profile.py:33
+msgid "Other member"
 msgstr ""
 
-#: apps/user/serializers/user_profile.py:43
+#: apps/user/models/user_profile.py:35
+msgid "KAIST organization"
+msgstr ""
+
+#: apps/user/models/user_profile.py:37
+msgid "External organization"
+msgstr ""
+
+#: apps/user/models/user_profile.py:39
+msgid "Communication board admin"
+msgstr ""
+
+#: apps/user/models/user_profile.py:41
+msgid "News board admin"
+msgstr ""
+
+#: apps/user/serializers/user_profile.py:52
 #, python-format
 msgid ""
 "Nicknames can only be changed every 3 months. (can't change until %(date)s)"
 msgstr ""
 
-#: ara/settings/django.py:96
+#: ara/settings/django.py:92
 msgid "Korean"
 msgstr ""
 
-#: ara/settings/django.py:97
+#: ara/settings/django.py:92
 msgid "English"
 msgstr ""
