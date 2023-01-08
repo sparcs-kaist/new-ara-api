@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-04 23:18+0900\n"
+"POT-Creation-Date: 2022-12-21 16:44+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,159 +22,194 @@ msgstr ""
 msgid "Hidden Contents"
 msgstr "숨김처리된 컨텐츠"
 
-#: apps/core/admin.py:118
+#: apps/core/admin.py:111
 msgid "Restore hidden articles"
 msgstr "(선택된) 숨겨진 게시물 목록을 복구합니다."
 
-#: apps/core/admin.py:150
+#: apps/core/admin.py:139
 msgid "Restore hidden comments"
 msgstr "(선택된) 숨겨진 댓글 목록을 복구합니다."
 
-#: apps/core/management/scripts/portal_crawler.py:154
+#: apps/core/management/scripts/portal_crawler.py:160
 msgid "No content for portal article"
 msgstr ""
 
-#: apps/core/models/article.py:217 apps/core/models/article.py:220
-#: apps/core/models/article.py:221
+#: apps/core/models/article.py:271 apps/core/models/article.py:274
+#: apps/core/models/article.py:275
 msgid "anonymous"
 msgstr "익명"
 
-#: apps/core/models/comment.py:171
+#: apps/core/models/comment.py:185 apps/core/models/comment.py:203
+#: tests/test_comments.py:568
 msgid "author"
 msgstr "글쓴이"
 
-#: apps/core/serializers/article.py:201
+#: apps/core/serializers/article.py:175
 msgid "This article is not in user's scrap list."
 msgstr "사용자가 스크랩하지 않은 글입니다."
 
-#: apps/core/serializers/article.py:218
+#: apps/core/serializers/article.py:199
 msgid "Wrong value for parameter 'from_view'."
 msgstr "from_view 쿼리 파라미터 value값이 틀렸습니다."
 
-#: apps/core/serializers/article.py:291
-msgid "This article is never read by user."
-msgstr "읽은적이 없는 게시물입니다."
-
-#: apps/core/serializers/article.py:419
+#: apps/core/serializers/article.py:510
 msgid "This board is read only."
 msgstr "읽기 전용 게시판입니다."
 
-#: apps/core/serializers/article.py:421
-msgid "This board is only for KAIST members."
-msgstr "카이스트 구성원만 이용할 수 있는 게시판입니다."
-
-#: apps/core/serializers/block.py:14
+#: apps/core/serializers/block.py:13
 msgid "Cannot block yourself"
 msgstr "스스로를 차단할 수 없습니다."
 
-#: apps/core/serializers/block.py:44
+#: apps/core/serializers/block.py:40
 msgid "This user is already blocked."
 msgstr "이미 차단된 사용자입니다."
 
-#: apps/core/serializers/report.py:43
+#: apps/core/serializers/report.py:44
 msgid "You already reported this article."
 msgstr "이미 신고한 글입니다."
 
-#: apps/core/serializers/scrap.py:37
+#: apps/core/serializers/scrap.py:38
 msgid "This article is already scrapped."
 msgstr "이미 스크랩한 게시글입니다."
 
-#: apps/core/views/viewsets/article.py:128
+#: apps/core/views/viewsets/article.py:171
 msgid "Cannot modify articles hidden by reports"
 msgstr "다수의 신고로 숨겨진 게시글은 수정할 수 없습니다."
 
-#: apps/core/views/viewsets/article.py:149
+#: apps/core/views/viewsets/article.py:194
 #, fuzzy
 #| msgid "Cannot modify articles hidden by reports"
 msgid "Cannot delete articles hidden by reports"
 msgstr "다수의 신고로 숨겨진 게시글은 삭제할 수 없습니다."
 
-#: apps/core/views/viewsets/article.py:185
+#: apps/core/views/viewsets/article.py:249
 #, fuzzy
 #| msgid "Cannot modify articles hidden by reports"
 msgid "Cannot cancel vote on articles hidden by reports"
 msgstr "다수의 신고로 숨겨진 게시글에 대한 좋아요/싫어요는 취소할 수 없습니다."
 
-#: apps/core/views/viewsets/article.py:215
-#: apps/core/views/viewsets/article.py:244
+#: apps/core/views/viewsets/article.py:262
+msgid ""
+"It is not available to cancel a vote for a real name article with more than "
+"30 votes."
+msgstr ""
+
+#: apps/core/views/viewsets/article.py:299
+#: apps/core/views/viewsets/article.py:334
 msgid "Cannot vote on your own article"
 msgstr "본인의 글에 좋아요/싫어요를 할 수 없습니다."
 
-#: apps/core/views/viewsets/article.py:219
-#: apps/core/views/viewsets/article.py:248
+#: apps/core/views/viewsets/article.py:305
+#: apps/core/views/viewsets/article.py:340
 #, fuzzy
 #| msgid "Cannot modify articles hidden by reports"
 msgid "Cannot vote on articles hidden by reports"
 msgstr "다수의 신고로 숨겨진 게시글은 좋아요/싫어요 할 수 없습니다."
 
-#: apps/core/views/viewsets/comment.py:62
+#: apps/core/views/viewsets/comment.py:73
+msgid "Permission denied"
+msgstr ""
+
+#: apps/core/views/viewsets/comment.py:114
 msgid "Cannot modify hidden or deleted comments"
 msgstr "삭제되거나 다수의 신고로 숨겨진 댓글은 수정할 수 없습니다."
 
-#: apps/core/views/viewsets/comment.py:84
+#: apps/core/views/viewsets/comment.py:137
 #, fuzzy
 #| msgid "Cannot modify hidden or deleted comments"
 msgid "Cannot delete hidden or deleted comments"
 msgstr "삭제되거나 다수의 신고로 숨겨진 댓글은 삭제할 수 없습니다."
 
-#: apps/core/views/viewsets/comment.py:102
+#: apps/core/views/viewsets/comment.py:159
 msgid "Cannot cancel vote on comments that are deleted or hidden by reports"
-msgstr "삭제되거나 다수의 신고로 숨겨진 댓글에 대한 좋아요/싫어요를 취소할 수 없습니다."
+msgstr ""
+"삭제되거나 다수의 신고로 숨겨진 댓글에 대한 좋아요/싫어요를 취소할 수 없습니"
+"다."
 
-#: apps/core/views/viewsets/comment.py:119
-#: apps/core/views/viewsets/comment.py:143
+#: apps/core/views/viewsets/comment.py:180
+#: apps/core/views/viewsets/comment.py:212
 #, fuzzy
 #| msgid "Cannot modify hidden or deleted comments"
 msgid "Cannot vote on your own comment"
 msgstr "본인의 댓글에 좋아요/싫어요 할 수 없습니다."
 
-#: apps/core/views/viewsets/comment.py:123
-#: apps/core/views/viewsets/comment.py:147
+#: apps/core/views/viewsets/comment.py:188
+#: apps/core/views/viewsets/comment.py:220
 #, fuzzy
 #| msgid "Cannot modify articles hidden by reports"
 msgid "Cannot vote on comments that are deleted or hidden by reports"
 msgstr "삭제되거나 다수의 신고로 숨겨진 댓글은 좋아요/싫어요 할 수 없습니다."
 
-#: apps/core/views/viewsets/report.py:69
+#: apps/core/views/viewsets/report.py:111
 #, fuzzy
 #| msgid "Cannot modify articles hidden by reports"
 msgid "Cannot report articles that are deleted or hidden by reports"
 msgstr "삭제되거나 다수의 신고로 숨겨진 게시글은 신고할 수 없습니다."
 
-#: apps/core/views/viewsets/report.py:74
+#: apps/core/views/viewsets/report.py:126
 #, fuzzy
 #| msgid "Cannot modify articles hidden by reports"
 msgid "Cannot report comments that are deleted or hidden by reports"
 msgstr "삭제되거나 다수의 신고로 숨겨진 댓글은 신고할 수 없습니다."
 
-#: apps/user/models/user_profile.py:23
+#: apps/user/models/user_profile.py:27
 msgid "Unauthorized user"
 msgstr "미인증된 사용자"
 
-#: apps/user/models/user_profile.py:24
+#: apps/user/models/user_profile.py:29
 msgid "KAIST member"
 msgstr "카이스트 구성원"
 
-#: apps/user/models/user_profile.py:25
-msgid "Restaurant employee"
-msgstr "식당 직원"
-
-#: apps/user/models/user_profile.py:26
-msgid "Other employee"
+#: apps/user/models/user_profile.py:31
+#, fuzzy
+#| msgid "Other employee"
+msgid "Store employee"
 msgstr "기타 직원"
 
-#: apps/user/serializers/user_profile.py:43
+#: apps/user/models/user_profile.py:33
+#, fuzzy
+#| msgid "Other employee"
+msgid "Other member"
+msgstr "기타 직원"
+
+#: apps/user/models/user_profile.py:35
+msgid "KAIST organization"
+msgstr ""
+
+#: apps/user/models/user_profile.py:37
+msgid "External organization"
+msgstr ""
+
+#: apps/user/models/user_profile.py:39
+msgid "Communication board admin"
+msgstr ""
+
+#: apps/user/models/user_profile.py:41
+msgid "News board admin"
+msgstr ""
+
+#: apps/user/serializers/user_profile.py:52
 #, python-format
-msgid "Nicknames can only be changed every 3 months. (can't change until %(date)s)"
+msgid ""
+"Nicknames can only be changed every 3 months. (can't change until %(date)s)"
 msgstr "닉네임은 3개월마다 변경할 수 있습니다. (%(date)s까지 변경 불가)"
 
-#: ara/settings/django.py:96
+#: ara/settings/django.py:92
 msgid "Korean"
 msgstr "한국어"
 
-#: ara/settings/django.py:97
+#: ara/settings/django.py:92
 msgid "English"
 msgstr "영어"
+
+#~ msgid "This article is never read by user."
+#~ msgstr "읽은적이 없는 게시물입니다."
+
+#~ msgid "This board is only for KAIST members."
+#~ msgstr "카이스트 구성원만 이용할 수 있는 게시판입니다."
+
+#~ msgid "Restaurant employee"
+#~ msgstr "식당 직원"
 
 #~ msgid "This article is temporarily hidden"
 #~ msgstr "임시 숨김 처리된 게시글입니다."
