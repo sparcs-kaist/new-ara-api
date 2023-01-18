@@ -14,6 +14,7 @@ from django.utils.translation import gettext
 from tqdm import tqdm
 
 from apps.core.models import Article
+from apps.core.models.portal_view_count import PortalViewCount
 from apps.user.models import UserProfile
 from ara.settings import (
     AWS_S3_BUCKET_NAME,
@@ -52,7 +53,7 @@ def _login_kaist_portal():
     return session
 
 
-def _get_article(url, session):
+def _get_portal_article(url, session):
     def _already_hyperlinked(html):
         soup = bs(html, "lxml")
         tagged_links = []
@@ -123,18 +124,24 @@ def _get_article(url, session):
         .contents[0]
         .strip()
     )
-    created_at_str = (
+
+    created_at_view_count_str = (
         soup.find("th", text="작성일(조회수)")
         .findNext("td")
         .contents[0]
         .strip()
-        .split("(")[0]
     )
+
+    created_at_str = created_at_view_count_str.split("(")[0]
     created_at = (
         datetime.strptime(created_at_str, "%Y.%m.%d %H:%M:%S")
         .astimezone(KST)
         .astimezone(timezone.utc)
     )
+
+    view_count_str = created_at_view_count_str.split("(")[1].split(")")[0]
+    view_count = int(view_count_str)
+
     title = soup.select("table > tbody > tr > td.req_first")[0].contents[0]
 
     trs = soup.select("table > tbody > tr")
@@ -165,6 +172,7 @@ def _get_article(url, session):
         "content": html,
         "writer": writer,
         "created_at": created_at,
+        "view_count": view_count,
     }
 
 
@@ -226,6 +234,7 @@ def crawl_hour(day=None):
     )
 
     new_articles = []
+    new_portal_view_counts = []
     prev_title = ""
 
     for link in links:
@@ -233,7 +242,7 @@ def crawl_hour(day=None):
         board_id = link.split("/")[-2]
         num = link.split("/")[-1]
         full_link = f"{BASE_URL}/board/read.brd?cmd=READ&boardId={board_id}&bltnNo={num}&lang_knd=ko"
-        info = _get_article(full_link, session)
+        info = _get_portal_article(full_link, session)
 
         # Since it is time ordered, consequent ones have been posted more than 1 hour ago.
 
@@ -273,7 +282,15 @@ def crawl_hour(day=None):
             url=full_link,
         )
 
+        portal_view_count = PortalViewCount(
+            article=article,
+            view_count=info["view_count"],
+        )
+
+
         new_articles.append(article)
+        new_portal_view_counts.append(portal_view_count)
+
         prev_title = article.title
 
     # DB의 마지막 포탈글과 방금 크롤링한 글 중 가장 이른 글을 비교
@@ -293,6 +310,7 @@ def crawl_hour(day=None):
         new_articles.pop()
 
     created_articles = Article.objects.bulk_create(new_articles)
+    PortalViewCount.objects.bulk_create(new_portal_view_counts)
 
     for i in range(len(created_articles)):
         print(f"crawled article: {created_articles[i].title}")
@@ -338,7 +356,7 @@ def crawl_all():
                     board_id = link.split("/")[-2]
                     num = link.split("/")[-1]
                     full_link = f"{BASE_URL}/board/read.brd?cmd=READ&boardId={board_id}&bltnNo={num}&lang_knd=ko"
-                    info = _get_article(full_link, session)
+                    info = _get_portal_article(full_link, session)
 
                     user_exist = UserProfile.objects.filter(
                         nickname=info["writer"], is_newara=False
@@ -356,7 +374,7 @@ def crawl_all():
                             picture="user_profiles/default_pictures/KAIST-logo.png",
                         )
 
-                    a, created = Article.objects.get_or_create(
+                    a, article_created = Article.objects.get_or_create(
                         parent_board_id=1,  # 포탈공지 게시판
                         title=info["title"],
                         content=info["content"],
@@ -365,15 +383,28 @@ def crawl_all():
                         url=full_link,
                     )
 
-                    if created:
+                    if article_created:
                         a.created_at = info["created_at"]
                         a.save()
+
+                    print(info["view_count"])
+
+                    PortalViewCount.objects.update_or_create(
+                        article=a,
+                        view_count=info["view_count"],
+                    )
+
 
             page_num += 1
 
         else:
             break
 
+
+def crawl_view():
+    # TODO: update all portal_view_count of portal articles 
+    # from a week ago until now
+    pass
 
 if __name__ == "__main__":
     _login_kaist_portal()
