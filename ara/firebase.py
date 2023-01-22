@@ -2,9 +2,16 @@ from firebase_admin import messaging
 
 from apps.user.models import FCMToken
 
-def fcm_subscrible(FCM_token, user):
-    pass
+def fcm_subscrible(FCM_tokens, subs):
+    for sub in subs:
+        response = messaging.subscribe_to_topic(FCM_tokens, sub)
 
+def fcm_unsubscrible(FCM_tokens, subs):
+    for sub in subs:
+        response = messaging.unsubscribe_from_topic(FCM_tokens, sub)
+
+def fcm_notify_topic(topic):
+    pass
 
 def fcm_notify_comment(user, title, body, open_url):
     ################## Disable FCM ####################
