@@ -3,6 +3,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from apps.user.models import FCMToken
+from apps.user.models import FCMTopic
 from ara.firebase import fcm_subscrible, fcm_unsubscrible
 
 # TODO: make model, and apply it
@@ -25,11 +26,12 @@ class FCMTokenView(APIView):
 
 class FCMTopicView(APIView):
     def get(self, request):
-        # TODO: More better way?
+        # TODO: More better way for authentication guard?
         if not request.user.is_authenticated:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
         
-        user_topics = tmp_topic_storage.get(str(request.user.id))
+        # user_topics = tmp_topic_storage.get(str(request.user.id))
+        user_topics = FCMTopic.objects.filter(user=request.user).values_list('topic', flat=True).distinct()
         return Response(user_topics)
 
     def patch(self, request):
@@ -42,15 +44,18 @@ class FCMTopicView(APIView):
         # TODO: santize user topic list to available topics
         user_id = str(request.user.id)
 
-        if tmp_topic_storage.get(user_id) == None:
-            tmp_topic_storage[user_id] = set()
-        user_topics = tmp_topic_storage[user_id]
+        # if tmp_topic_storage.get(user_id) == None:
+        #     tmp_topic_storage[user_id] = set()
+        # user_topics = tmp_topic_storage[user_id]
 
         user_tokens = list(FCMToken.objects.filter(user=request.user).values_list('token', flat=True).distinct())
         fcm_subscrible(user_tokens, topic_put_list)
-        user_topics.update(topic_put_list)
+        for tpc in topic_put_list:
+            FCMTopic.objects.get_or_create(user=request.user, topic=tpc)
+        # user_topics.update(topic_put_list)
         fcm_unsubscrible(user_tokens, topic_delete_list)
-        user_topics.difference_update(topic_delete_list)
-        
+        for tpc in topic_delete_list:
+            FCMTopic.objects.filter(user=request.user, topic=tpc).delete()
+        # user_topics.difference_update(topic_delete_list)
 
         return Response(status=status.HTTP_200_OK)
