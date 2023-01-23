@@ -94,8 +94,14 @@ class Notification(MetaDataModel):
 
         def notify_article_commented(_parent_article, _comment):
             title = f"{_comment.created_by.profile.nickname} 님이 새로운 댓글을 작성했습니다."
-            NotificationReadLog.objects.create(
-                read_by=_parent_article.created_by,
+            topic = f"article_comment_{_parent_article.id}"
+
+            subs_id = list(FCMTopic.objects.filter(topic=topic).values_list('user', flat=True))
+            subs_id.append(_parent_article.created_by.id)
+            subs = User.objects.filter(id__in=subs_id)
+
+            NotificationReadLog.objects.bulk_create([NotificationReadLog(
+                read_by=sub,
                 notification=cls.objects.create(
                     type="article_commented",
                     title=title,
@@ -103,9 +109,16 @@ class Notification(MetaDataModel):
                     related_article=_parent_article,
                     related_comment=None,
                 ),
-            )
+            ) for sub in subs])
+            
             fcm_notify_user(
                 _parent_article.created_by,
+                title,
+                _comment.content[:32],
+                f"post/{_parent_article.id}",
+            )
+            fcm_notify_topic(
+                topic,
                 title,
                 _comment.content[:32],
                 f"post/{_parent_article.id}",
@@ -113,8 +126,14 @@ class Notification(MetaDataModel):
 
         def notify_comment_commented(_parent_article, _comment):
             title = f"{_comment.created_by.profile.nickname} 님이 새로운 대댓글을 작성했습니다."
-            NotificationReadLog.objects.create(
-                read_by=_comment.parent_comment.created_by,
+            topic = f"article_comment_{_parent_article.id}"
+
+            subs_id = list(FCMTopic.objects.filter(topic=topic).values_list('user', flat=True))
+            subs_id.append(_parent_article.created_by.id)
+            subs = User.objects.filter(id__in=subs_id)
+
+            NotificationReadLog.objects.bulk_create([NotificationReadLog(
+                read_by=sub,
                 notification=cls.objects.create(
                     type="comment_commented",
                     title=title,
@@ -122,9 +141,16 @@ class Notification(MetaDataModel):
                     related_article=_parent_article,
                     related_comment=_comment.parent_comment,
                 ),
-            )
+            ) for sub in subs])
+
             fcm_notify_user(
                 _comment.parent_comment.created_by,
+                title,
+                _comment.content[:32],
+                f"post/{_parent_article.id}",
+            )
+            fcm_notify_topic(
+                topic,
                 title,
                 _comment.content[:32],
                 f"post/{_parent_article.id}",
