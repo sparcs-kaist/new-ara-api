@@ -8,6 +8,7 @@ TYPE_CHOICES = (
     ("default", "default"),
     ("article_commented", "article_commented"),
     ("comment_commented", "comment_commented"),
+    ("article_new", "article_new")
 )
 
 
@@ -55,6 +56,26 @@ class Notification(MetaDataModel):
             "icon": "",
             "click_action": "",
         }
+    
+    # TODO: Support English
+    @classmethod
+    def notify_article(cls, article):
+        from apps.core.models import NotificationReadLog
+        title = f"{article.parent_board.ko_name} {article.parent_topic.ko_name} 게시판에 새로운 글이 달렸습니다."
+
+        subscribers = []
+
+        NotificationReadLog.objects.bulk_create([NotificationReadLog(
+                read_by=article.created_by,
+                notification=cls.objects.create(
+                    type="article_new",
+                    title=title,
+                    content=article.title,
+                    related_article=article,
+                    related_comment=None,
+                ),
+            ) for sub in subscribers])
+
 
     @classmethod
     def notify_commented(cls, comment):
