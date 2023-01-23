@@ -2,7 +2,9 @@ from django.db import models
 from django.utils.functional import cached_property
 
 from ara.db.models import MetaDataModel
-from ara.firebase import fcm_notify_comment
+from ara.firebase import fcm_notify_user, fcm_notify_topic
+from django.contrib.auth.models import User
+from apps.user.models import FCMTopic
 
 TYPE_CHOICES = (
     ("default", "default"),
@@ -61,20 +63,29 @@ class Notification(MetaDataModel):
     @classmethod
     def notify_article(cls, article):
         from apps.core.models import NotificationReadLog
-        title = f"{article.parent_board.ko_name} {article.parent_topic.ko_name} 게시판에 새로운 글이 달렸습니다."
+        board_topic_str = f" - {article.parent_topic.ko_name}" if article.parent_topic else ""
+        title = f"[{article.parent_board.ko_name}{board_topic_str}] 새로운 글이 달렸습니다: {article.title[:32]}"
+        topic = f"board_{article.parent_board_id}"
 
-        subscribers = []
+        subs_id = FCMTopic.objects.filter(topic=topic).values_list('user', flat=True)
+        subs = User.objects.filter(id__in=subs_id)
 
         NotificationReadLog.objects.bulk_create([NotificationReadLog(
-                read_by=article.created_by,
+                read_by=sub,
                 notification=cls.objects.create(
                     type="article_new",
                     title=title,
-                    content=article.title,
+                    content=article.content_text[:32],
                     related_article=article,
                     related_comment=None,
                 ),
-            ) for sub in subscribers])
+            ) for sub in subs])
+        fcm_notify_topic(
+                topic,
+                title,
+                article.content_text[:32],
+                f"post/{article.id}",
+            )
 
 
     @classmethod
@@ -93,7 +104,7 @@ class Notification(MetaDataModel):
                     related_comment=None,
                 ),
             )
-            fcm_notify_comment(
+            fcm_notify_user(
                 _parent_article.created_by,
                 title,
                 _comment.content[:32],
@@ -112,7 +123,7 @@ class Notification(MetaDataModel):
                     related_comment=_comment.parent_comment,
                 ),
             )
-            fcm_notify_comment(
+            fcm_notify_user(
                 _comment.parent_comment.created_by,
                 title,
                 _comment.content[:32],

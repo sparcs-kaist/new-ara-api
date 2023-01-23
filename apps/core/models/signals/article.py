@@ -8,4 +8,3 @@ from apps.core.models import Article, Notification
 def comment_post_save_signal(created, instance, **kwargs):
     if created:
         Notification.notify_article(instance)
-    print(created, instance)

@@ -10,23 +10,28 @@ def fcm_unsubscrible(FCM_tokens, subs):
     for sub in subs:
         response = messaging.unsubscribe_from_topic(FCM_tokens, sub)
 
-def fcm_notify_topic(topic):
-    pass
+def fcm_notify_topic(topic, title, body, open_url):
+    return
 
-def fcm_notify_comment(user, title, body, open_url):
+    try:
+        fcm_simple(title, body, open_url, topic=topic)
+    except Exception as e:
+        print(e)
+
+def fcm_notify_user(user, title, body, open_url):
     ################## Disable FCM ####################
     return
 
     targets = FCMToken.objects.filter(user=user)
     for i in targets:
         try:
-            fcm_simple(i.token, title, body, open_url)
+            fcm_simple(title, body, open_url, token=i.token)
         except:
             FCMToken.objects.filter(token=i.token).delete()
     pass
 
 
-def fcm_simple(FCM_token, title="Title", body="Body", open_url="/"):
+def fcm_simple(title="Title", body="Body", open_url="/", **kwargs):
     # This registration token comes from the client FCM SDKs.
     # See documentation on defining a message payload.
 
@@ -52,7 +57,7 @@ def fcm_simple(FCM_token, title="Title", body="Body", open_url="/"):
             # Maybe bug: fcm_options.link is not working
         ),
         data={"action_open_url": open_url},
-        token=FCM_token,
+        **kwargs,
     )
 
     response = messaging.send(message)
