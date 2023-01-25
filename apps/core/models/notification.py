@@ -60,6 +60,7 @@ class Notification(MetaDataModel):
         }
     
     # TODO: Support English
+    # TODO: add test code
     @classmethod
     def notify_article(cls, article):
         from apps.core.models import NotificationReadLog
@@ -129,7 +130,7 @@ class Notification(MetaDataModel):
             topic = f"article_comment_{_parent_article.id}"
 
             subs_id = list(FCMTopic.objects.filter(topic=topic).values_list('user', flat=True))
-            subs_id.append(_parent_article.created_by.id)
+            subs_id.append(_comment.parent_comment.created_by.id)
             subs = User.objects.filter(id__in=subs_id)
 
             NotificationReadLog.objects.bulk_create([NotificationReadLog(
