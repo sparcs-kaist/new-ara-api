@@ -31,7 +31,6 @@ def fcm_notify_user(user, title, body, open_url):
             fcm_simple(title, body, open_url, token=i.token)
         except:
             FCMToken.objects.filter(token=i.token).delete()
-    pass
 
 
 def fcm_simple(title="Title", body="Body", open_url="/", **kwargs):
