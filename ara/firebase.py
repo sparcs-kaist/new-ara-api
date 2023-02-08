@@ -6,9 +6,11 @@ def fcm_subscrible(FCM_tokens, subs):
     for sub in subs:
         response = messaging.subscribe_to_topic(FCM_tokens, sub)
 
+
 def fcm_unsubscrible(FCM_tokens, subs):
     for sub in subs:
         response = messaging.unsubscribe_from_topic(FCM_tokens, sub)
+
 
 def fcm_notify_topic(topic, title, body, open_url):
     return
@@ -17,6 +19,7 @@ def fcm_notify_topic(topic, title, body, open_url):
         fcm_simple(title, body, open_url, topic=topic)
     except Exception as e:
         print(e)
+
 
 def fcm_notify_user(user, title, body, open_url):
     ################## Disable FCM ####################

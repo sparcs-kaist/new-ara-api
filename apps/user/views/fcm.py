@@ -2,9 +2,10 @@ from django.db.models.functions import Now
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from apps.user.models import FCMToken
-from apps.user.models import FCMTopic
+
+from apps.user.models import FCMToken, FCMTopic
 from ara.firebase import fcm_subscrible, fcm_unsubscrible
+
 
 class FCMTokenView(APIView):
     def patch(self, request, mode):
@@ -19,22 +20,27 @@ class FCMTokenView(APIView):
             token.save()
         return Response(status=status.HTTP_200_OK)
 
+
 class FCMTopicView(APIView):
     def get(self, request):
         # TODO: More better way for authentication guard?
         if not request.user.is_authenticated:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
-        
+
         # user_topics = tmp_topic_storage.get(str(request.user.id))
-        user_topics = FCMTopic.objects.filter(user=request.user).values_list('topic', flat=True).distinct()
+        user_topics = (
+            FCMTopic.objects.filter(user=request.user)
+            .values_list("topic", flat=True)
+            .distinct()
+        )
         return Response(user_topics)
 
     def patch(self, request):
         if not request.user.is_authenticated:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        topic_put_list: list[str] = request.data.get('put')
-        topic_delete_list: list[str] = request.data.get('delete')
+        topic_put_list: list[str] = request.data.get("put")
+        topic_delete_list: list[str] = request.data.get("delete")
         # print(topic_put_list, topic_delete_list)
         # TODO: santize user topic list to available topics
         user_id = str(request.user.id)
@@ -48,7 +54,11 @@ class FCMTopicView(APIView):
         # user_topics.update(topic_put_list)
         # user_topics.difference_update(topic_delete_list)
 
-        user_tokens = list(FCMToken.objects.filter(user=request.user).values_list('token', flat=True).distinct())
+        user_tokens = list(
+            FCMToken.objects.filter(user=request.user)
+            .values_list("token", flat=True)
+            .distinct()
+        )
         fcm_subscrible(user_tokens, topic_put_list)
         for tpc in topic_put_list:
             FCMTopic.objects.get_or_create(user=request.user, topic=tpc)
