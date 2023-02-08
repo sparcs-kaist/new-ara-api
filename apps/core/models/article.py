@@ -133,6 +133,17 @@ class Article(MetaDataModel):
         verbose_name="포탈 링크",
         max_length=200,
         blank=True,
+        default=None,
+        verbose_name="링크",
+        # TODO: length 제한 후 index 걸기
+    )
+
+    latest_portal_view_count = models.IntegerField(
+        null=True,
+        verbose_name="포탈조회수",
+    )
+
+    content_updated_at = models.DateTimeField(
         null=True,
         default=None,
     )

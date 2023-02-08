@@ -1,8 +1,8 @@
 import hashlib
 import re
 import uuid
-from datetime import datetime
 from pytz import timezone as pytz_timezone
+from datetime import timedelta, datetime
 
 import boto3
 import requests
@@ -51,6 +51,13 @@ def _login_kaist_portal():
     )
     print("_login_kaist_portal status code: ", response.status_code)
     return session
+
+
+def _list_link_to_full_link(link):
+    board_id = link.split("/")[-2]
+    num = link.split("/")[-1]
+    full_link = f"{BASE_URL}/board/read.brd?cmd=READ&boardId={board_id}&bltnNo={num}&lang_knd=ko"
+    return full_link
 
 
 def _get_portal_article(url, session):
@@ -181,6 +188,8 @@ def crawl_hour(day=None):
     if day is None:
         day = timezone.datetime.today().date()
 
+    print(f"crawl_hour running for day {day}")
+
     session = _login_kaist_portal()
 
     def _get_board_today(page_num):
@@ -238,10 +247,7 @@ def crawl_hour(day=None):
     prev_title = ""
 
     for link in links:
-        link = link["link"]
-        board_id = link.split("/")[-2]
-        num = link.split("/")[-1]
-        full_link = f"{BASE_URL}/board/read.brd?cmd=READ&boardId={board_id}&bltnNo={num}&lang_knd=ko"
+        full_link = _list_link_to_full_link(link["link"])
         info = _get_portal_article(full_link, session)
 
         # Since it is time ordered, consequent ones have been posted more than 1 hour ago.
@@ -280,22 +286,18 @@ def crawl_hour(day=None):
             created_by=user,
             created_at=created_at_utc,
             url=full_link,
+            latest_portal_view_count=info["view_count"],
         )
-
-        portal_view_count = PortalViewCount(
-            article=article,
-            view_count=info["view_count"],
-        )
-
 
         new_articles.append(article)
-        new_portal_view_counts.append(portal_view_count)
 
         prev_title = article.title
 
     # DB의 마지막 포탈글과 방금 크롤링한 글 중 가장 이른 글을 비교
     if not new_articles:
+        print('no new articles')
         return
+    
     earliest_new_article = new_articles[-1]
     is_same_day = (
         last_portal_article_in_db.created_at.date()
@@ -310,11 +312,20 @@ def crawl_hour(day=None):
         new_articles.pop()
 
     created_articles = Article.objects.bulk_create(new_articles)
+
+    for article in created_articles:
+        portal_view_count = PortalViewCount(
+            article=article,
+            view_count=article.latest_portal_view_count,
+        )
+        new_portal_view_counts.append(portal_view_count)
+
     PortalViewCount.objects.bulk_create(new_portal_view_counts)
 
     for i in range(len(created_articles)):
         print(f"crawled article: {created_articles[i].title}")
 
+    print(f"created {len(created_articles)} articles")
 
 def list_contains_article(articles, article_info):
     for a in articles:
@@ -353,9 +364,7 @@ def crawl_all():
 
             with transaction.atomic():
                 for link in tqdm(links):
-                    board_id = link.split("/")[-2]
-                    num = link.split("/")[-1]
-                    full_link = f"{BASE_URL}/board/read.brd?cmd=READ&boardId={board_id}&bltnNo={num}&lang_knd=ko"
+                    full_link = _list_link_to_full_link(link)    
                     info = _get_portal_article(full_link, session)
 
                     user_exist = UserProfile.objects.filter(
@@ -400,11 +409,92 @@ def crawl_all():
         else:
             break
 
-
 def crawl_view():
-    # TODO: update all portal_view_count of portal articles 
-    # from a week ago until now
-    pass
+    '''
+    update all portal_view_count of portal articles
+    from a week ago until now
+    '''
+    print(f"crawl_view running on {timezone.datetime.today().date()}")
+
+    week_ago = timezone.get_current_timezone().localize(datetime.today() - timedelta(days=7))
+
+    session = _login_kaist_portal()
+
+    def _get_board_week(page_num):
+        board_req = session.get(
+            f"{BASE_URL}/board/list.brd?boardId=today_notice&lang_knd=ko&userAgent=Chrome&isMobile=false&page={page_num}&userAgent=Chrome&isMobile=False&sortColumn=REG_DATIM&sortMethod=DESC",
+            cookies=COOKIES,
+        )
+        soup = bs(board_req.text, "lxml")
+        table = soup.select('.req_tbl_01')[0]
+        info_list_per_page = []
+
+        for row in table.find('tbody').find_all('tr'):
+            cells = row.find_all("td")
+            created_at_str = cells[4].text.strip()
+            created_at = timezone.get_current_timezone().localize(
+                datetime.strptime(created_at_str, "%Y.%m.%d")
+            )
+
+            if week_ago > created_at:
+                return info_list_per_page, True # stop
+
+            info = {
+                "title": cells[0].text.strip(),
+                "view_count": int(cells[3].text.strip()),
+                "link": cells[0].find('a').attrs["href"],
+                "created_at": created_at,
+            }
+
+            info_list_per_page.append(info)
+
+        return info_list_per_page, False
+
+    info_list = []
+    page_num = 1
+
+    while True:
+        info_list_per_page, stop = _get_board_week(page_num)
+        info_list.extend(info_list_per_page)
+        if stop:
+            break
+
+        page_num += 1
+
+    if len(info_list) == 0:
+        print("no portal notice in a week")
+        return
+
+    articles = Article.objects.filter(created_at__gte=week_ago, parent_board_id=1)
+    article_dict = dict()
+
+    for a in articles:
+        article_dict[a.url] = a
+
+    new_portal_view_counts = []
+    updated_articles = []
+
+    for info in info_list:
+        full_link = _list_link_to_full_link(info['link'])
+
+        if full_link not in article_dict.keys():
+            continue
+
+        article = article_dict[full_link]
+
+        portal_view_count = PortalViewCount(
+            article=article,
+            view_count=info["view_count"],
+        )
+
+        new_portal_view_counts.append(portal_view_count)
+
+        article.latest_portal_view_count = info["view_count"]
+        updated_articles.append(article)
+
+    Article.objects.bulk_update(updated_articles, ["latest_portal_view_count"])
+    PortalViewCount.objects.bulk_create(new_portal_view_counts)
+    print(f"crawled view count of {len(new_portal_view_counts)} portal notices")
 
 if __name__ == "__main__":
     _login_kaist_portal()
