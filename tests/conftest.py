@@ -10,7 +10,11 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.user.models import UserProfile
-from ara import redis
+from ara import redis, firebase
+
+
+def pytest_configure(config):
+    firebase.FIREBASE_ACTIVE = False
 
 
 @pytest.fixture(scope="class")

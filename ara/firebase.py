@@ -5,6 +5,7 @@ from firebase_admin import messaging
 
 from apps.user.models import FCMToken
 
+FIREBASE_ACTIVE = True
 
 def fcm_notify_comment(user, title, body, open_url):
     targets = FCMToken.objects.filter(user=user)
@@ -18,10 +19,13 @@ def fcm_notify_comment(user, title, body, open_url):
             fcm_simple(i.token, title, body, open_url)
         except:
             FCMToken.objects.filter(token=i.token).delete()
-    pass
 
 
 def fcm_simple(FCM_token, title="Title", body="Body", open_url="/"):
+    # Do not send message in test environment
+    if not FIREBASE_ACTIVE:
+        return
+
     # This registration token comes from the client FCM SDKs.
     # See documentation on defining a message payload.
     message = messaging.Message(
