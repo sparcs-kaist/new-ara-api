@@ -94,6 +94,10 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 name_type=BoardNameType.ANONYMOUS
             )
 
+            queryset = queryset.prefetch_related(
+                'attachments'
+            )
+
             # optimizing queryset for list action
             queryset = queryset.select_related(
                 'created_by',
