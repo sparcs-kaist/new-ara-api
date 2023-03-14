@@ -95,7 +95,8 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             )
 
             queryset = queryset.prefetch_related(
-                'attachments'
+                'attachments',
+                'communication_article',
             )
 
             # optimizing queryset for list action
