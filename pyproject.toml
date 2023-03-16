@@ -16,7 +16,7 @@ django-extensions = "^2.2"
 djangorestframework-filters = "^1.0.0.dev0"
 drf-yasg = "^1.17"
 bleach = "^3.1"
-Pillow = "^9.0"
+pillow = "^9.4.0"
 django-environ = "^0.4.5"
 gunicorn = "^19.9"
 pytest = "^5.4.2"
@@ -42,6 +42,10 @@ html5lib = "^1.1"
 pyotp = "^2.6.0"
 Django = "^3.2.13"
 importlib-metadata = "4.8.1"
+firebase-admin = "^6.0.1"
+django-dotenv = "^1.4.2"
+elasticsearch-dsl = "^7.0.0"
+blessings = "^1.7"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
@@ -54,5 +58,5 @@ pre-commit = "^2.8.2"
 black = "^22.10.0"
 
 [build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

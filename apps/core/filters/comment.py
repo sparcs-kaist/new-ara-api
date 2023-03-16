@@ -7,19 +7,19 @@ class CommentFilter(filters.FilterSet):
     class Meta:
         model = Comment
         fields = {
-            'content': [
-                'contains',
+            "content": [
+                "contains",
             ],
-            'parent_article': [
-                'exact',
+            "parent_article": [
+                "exact",
             ],
-            'parent_comment': [
-                'exact',
+            "parent_comment": [
+                "exact",
             ],
-            'name_type': [
-                'exact',
+            "name_type": [
+                "exact",
             ],
-            'created_by': [
-                'exact',
+            "created_by": [
+                "exact",
             ],
         }

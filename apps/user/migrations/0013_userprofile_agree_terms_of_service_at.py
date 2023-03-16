@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('user', '0012_manual_user_email_unique'),
+        ("user", "0012_manual_user_email_unique"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='userprofile',
-            name='agree_terms_of_service_at',
-            field=models.DateTimeField(default=None, null=True, verbose_name='약관 동의 일시'),
+            model_name="userprofile",
+            name="agree_terms_of_service_at",
+            field=models.DateTimeField(
+                default=None, null=True, verbose_name="약관 동의 일시"
+            ),
         ),
     ]

@@ -6,22 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0041_remove_communicationarticle_confirmed_by_school_at'),
+        ("core", "0041_remove_communicationarticle_confirmed_by_school_at"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='board',
-            name='access_mask',
+            model_name="board",
+            name="access_mask",
         ),
         migrations.AddField(
-            model_name='board',
-            name='read_access_mask',
-            field=models.SmallIntegerField(default=222, verbose_name='읽기 권한'),
+            model_name="board",
+            name="read_access_mask",
+            field=models.SmallIntegerField(default=222, verbose_name="읽기 권한"),
         ),
         migrations.AddField(
-            model_name='board',
-            name='write_access_mask',
-            field=models.SmallIntegerField(default=218, verbose_name='쓰기 권한'),
+            model_name="board",
+            name="write_access_mask",
+            field=models.SmallIntegerField(default=218, verbose_name="쓰기 권한"),
         ),
     ]
