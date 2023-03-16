@@ -129,17 +129,20 @@ class Article(MetaDataModel):
         null=True,
         default=None,
     )
+
     url = models.URLField(
-        verbose_name="포탈 링크",
-        max_length=200,
+        null=True,
         blank=True,
         default=None,
-        verbose_name="링크",
-        # TODO: length 제한 후 index 걸기
+        verbose_name="포탈 링크",
+        max_length=256,
+        db_index=True,
     )
 
-    latest_portal_view_count = models.IntegerField(
+    latest_portal_view_count = models.PositiveIntegerField(
         null=True,
+        blank=True,
+        default=None,
         verbose_name="포탈조회수",
     )
 
