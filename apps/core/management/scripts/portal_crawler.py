@@ -43,7 +43,7 @@ COOKIES = {"JSESSIONID": PORTAL_JSESSIONID}
 BASE_URL = "https://portal.kaist.ac.kr"
 
 KST = pytz_timezone("Asia/Seoul")
-
+PORTAL_NOTICE_BOARD_ID = 1
 
 def _login_kaist_portal():
     session = requests.Session()
@@ -234,14 +234,13 @@ def crawl_hour(day=None):
 
     last_portal_article_in_db = (
         Article.objects.filter(
-            parent_board_id=1,
+            parent_board_id=PORTAL_NOTICE_BOARD_ID,
         )
         .order_by("-created_at")
         .first()
     )
 
     new_articles = []
-    new_portal_view_counts = []
     prev_title = ""
 
     for link in links:
@@ -277,7 +276,7 @@ def crawl_hour(day=None):
             )
 
         article = Article(
-            parent_board_id=1,
+            parent_board_id=PORTAL_NOTICE_BOARD_ID,
             title=info["title"],
             content=info["content"],
             content_text=info["content_text"],
@@ -310,6 +309,8 @@ def crawl_hour(day=None):
         new_articles.pop()
 
     created_articles = Article.objects.bulk_create(new_articles)
+
+    new_portal_view_counts = []
 
     for article in created_articles:
         portal_view_count = PortalViewCount(
@@ -383,7 +384,7 @@ def crawl_all():
                         )
 
                     a, article_created = Article.objects.get_or_create(
-                        parent_board_id=1,  # 포탈공지 게시판
+                        parent_board_id=PORTAL_NOTICE_BOARD_ID,  # 포탈공지 게시판
                         title=info["title"],
                         content=info["content"],
                         content_text=info["content_text"],
@@ -467,8 +468,10 @@ def crawl_view():
         log.info("no portal notice in a week")
         return
 
-    articles = Article.objects.filter(created_at__gte=week_ago, parent_board_id=1)
-    article_dict = dict()
+    articles = Article.objects.filter(
+        created_at__gte=week_ago, parent_board_id=PORTAL_NOTICE_BOARD_ID
+    )
+    article_dict = {}
 
     for a in articles:
         article_dict[a.url] = a
