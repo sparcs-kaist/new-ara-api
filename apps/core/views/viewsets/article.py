@@ -357,6 +357,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             'created_by__profile',
             'parent_board',
             'parent_topic',
+            'attachments',
             ArticleReadLog.prefetch_my_article_read_log(self.request.user)
         )
 
