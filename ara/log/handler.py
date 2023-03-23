@@ -13,7 +13,11 @@ from ara.log.log_object import ErrorLogObject
 class LogMiddlewareHandler(logging.Handler):
     @staticmethod
     def message_from_record(record):
-        if isinstance(record.msg, dict) or isinstance(record.msg, str):
+        if (
+            isinstance(record.msg, dict)
+            or isinstance(record.msg, str)
+            or isinstance(record.msg, int)
+        ):
             message = {"raw": record.msg}
         elif isinstance(record.msg, Exception):
             message = ErrorLogObject.format_exception(record.msg)
