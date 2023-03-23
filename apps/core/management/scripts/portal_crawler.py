@@ -102,6 +102,10 @@ def _get_portal_article(url, session):
     def _get_new_url_and_save_to_s3(url, session):
         if url.startswith("data:") or "." in url.split("/")[-1]:  # not a portal image
             return url
+
+        if url.startswith("/board"):
+            return f"https://{BASE_URL}/${url}"
+
         enc = hashlib.md5()
         enc.update(url.encode())
         hash = enc.hexdigest()[:20]
@@ -118,8 +122,12 @@ def _get_portal_article(url, session):
         soup = bs(html, "lxml")
         for child in soup.find_all("img", {}):
             old_url = child.attrs.get("src")
-            new_url = _get_new_url_and_save_to_s3(old_url, session)
-            child["src"] = new_url
+            try:
+                new_url = _get_new_url_and_save_to_s3(old_url, session)
+                child["src"] = new_url
+            except Exception as exc:
+                log.info(child)
+                raise exec
 
         return str(soup)
 
