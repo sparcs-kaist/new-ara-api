@@ -1,13 +1,12 @@
+import binascii
 import hashlib
 import hmac
+import os
 import time
-
-from sentry_sdk import capture_exception
 from urllib.parse import urlencode
 
-import binascii
-import os
 import requests
+from sentry_sdk import capture_exception
 
 # SPARCS SSO V2 Client Version 1.1
 # VALID ONLY AFTER 2016-09-10T01:00+09:00
@@ -15,24 +14,24 @@ import requests
 
 
 class Client:
-    SERVER_DOMAIN = 'https://sparcssso.kaist.ac.kr/'
-    BETA_DOMAIN = 'https://ssobeta.sparcs.org/'
+    SERVER_DOMAIN = "https://sparcssso.kaist.ac.kr/"
+    BETA_DOMAIN = "https://ssobeta.sparcs.org/"
     DOMAIN = None
 
-    API_PREFIX = 'api/'
-    VERSION_PREFIX = 'v2/'
+    API_PREFIX = "api/"
+    VERSION_PREFIX = "v2/"
     TIMEOUT = 60
 
     URLS = {
-        'token_require': 'token/require/',
-        'token_info': 'token/info/',
-        'logout': 'logout/',
-        'unregister': 'unregister/',
-        'point': 'point/',
-        'notice': 'notice/',
+        "token_require": "token/require/",
+        "token_info": "token/info/",
+        "logout": "logout/",
+        "unregister": "unregister/",
+        "point": "point/",
+        "notice": "notice/",
     }
 
-    def __init__(self, client_id, secret_key, is_beta=False, server_addr=''):
+    def __init__(self, client_id, secret_key, is_beta=False, server_addr=""):
         """
         Initialize SPARCS SSO Client
         :param client_id: your client id
@@ -43,8 +42,8 @@ class Client:
         self.DOMAIN = self.BETA_DOMAIN if is_beta else self.SERVER_DOMAIN
         self.DOMAIN = server_addr if server_addr else self.DOMAIN
 
-        base_url = ''.join([self.DOMAIN, self.API_PREFIX, self.VERSION_PREFIX])
-        self.URLS = {k: ''.join([base_url, v]) for k, v in self.URLS.items()}
+        base_url = "".join([self.DOMAIN, self.API_PREFIX, self.VERSION_PREFIX])
+        self.URLS = {k: "".join([base_url, v]) for k, v in self.URLS.items()}
 
         self.client_id = client_id
         self.secret_key = secret_key.encode()
@@ -54,7 +53,7 @@ class Client:
         if append_timestamp:
             payload.append(timestamp)
 
-        msg = ''.join(list(map(str, payload))).encode()
+        msg = "".join(list(map(str, payload))).encode()
         sign = hmac.new(self.secret_key, msg, hashlib.md5).hexdigest()
         return sign, timestamp
 
@@ -82,7 +81,7 @@ class Client:
             return r.json()
 
         except:
-            raise RuntimeError('INVALID_OBJECT')
+            raise RuntimeError("INVALID_OBJECT")
 
     def get_login_params(self):
         """
@@ -92,10 +91,10 @@ class Client:
         """
         state = binascii.hexlify(os.urandom(10)).decode("utf-8")
         params = {
-            'client_id': self.client_id,
-            'state': state,
+            "client_id": self.client_id,
+            "state": state,
         }
-        url = '?'.join([self.URLS['token_require'], urlencode(params)])
+        url = "?".join([self.URLS["token_require"], urlencode(params)])
         return [url, state]
 
     def get_user_info(self, code):
@@ -106,12 +105,12 @@ class Client:
         """
         sign, timestamp = self._sign_payload([code])
         params = {
-            'client_id': self.client_id,
-            'code': code,
-            'timestamp': timestamp,
-            'sign': sign,
+            "client_id": self.client_id,
+            "code": code,
+            "timestamp": timestamp,
+            "sign": sign,
         }
-        return self._post_data(self.URLS['token_info'], params)
+        return self._post_data(self.URLS["token_info"], params)
 
     def get_logout_url(self, sid, redirect_uri) -> str:
         """
@@ -122,13 +121,13 @@ class Client:
         """
         sign, timestamp = self._sign_payload([sid, redirect_uri])
         params = {
-            'client_id': self.client_id,
-            'sid': sid,
-            'timestamp': timestamp,
-            'redirect_uri': redirect_uri,
-            'sign': sign,
+            "client_id": self.client_id,
+            "sid": sid,
+            "timestamp": timestamp,
+            "redirect_uri": redirect_uri,
+            "sign": sign,
         }
-        return '?'.join([self.URLS['logout'], urlencode(params)])
+        return "?".join([self.URLS["logout"], urlencode(params)])
 
     def get_point(self, sid):
         """
@@ -136,7 +135,7 @@ class Client:
         :param sid: the user's service id
         :returns: the user's point
         """
-        return self.modify_point(sid, 0, '')['point']
+        return self.modify_point(sid, 0, "")["point"]
 
     def modify_point(self, sid, delta, message, lower_bound=0):
         """
@@ -147,19 +146,24 @@ class Client:
         :param lower_bound: a minimum point value that required
         :returns: a server response; check the full docs
         """
-        sign, timestamp = self._sign_payload([
-            sid, delta, message, lower_bound,
-        ])
+        sign, timestamp = self._sign_payload(
+            [
+                sid,
+                delta,
+                message,
+                lower_bound,
+            ]
+        )
         params = {
-            'client_id': self.client_id,
-            'sid': sid,
-            'delta': delta,
-            'message': message,
-            'lower_bound': lower_bound,
-            'timestamp': timestamp,
-            'sign': sign,
+            "client_id": self.client_id,
+            "sid": sid,
+            "delta": delta,
+            "message": message,
+            "lower_bound": lower_bound,
+            "timestamp": timestamp,
+            "sign": sign,
         }
-        return self._post_data(self.URLS['point'], params)
+        return self._post_data(self.URLS["point"], params)
 
     def get_notice(self, offset=0, limit=3, date_after=0):
         """
@@ -170,11 +174,11 @@ class Client:
         :returns: a server response; check the full docs
         """
         params = {
-            'offset': offset,
-            'limit': limit,
-            'date_after': date_after,
+            "offset": offset,
+            "limit": limit,
+            "date_after": date_after,
         }
-        r = requests.get(self.URLS['notice'], data=params)
+        r = requests.get(self.URLS["notice"], data=params)
         return r.json()
 
     def parse_unregister_request(self, data_dict):
@@ -184,15 +188,15 @@ class Client:
         :returns: the user's service id
         :raises RuntimeError: raise iff the request is invalid
         """
-        client_id = data_dict.get('client_id', '')
-        sid = data_dict.get('sid', '')
-        timestamp = data_dict.get('timestamp', '')
-        sign = data_dict.get('sign', '')
+        client_id = data_dict.get("client_id", "")
+        sid = data_dict.get("sid", "")
+        timestamp = data_dict.get("timestamp", "")
+        sign = data_dict.get("sign", "")
 
         if client_id != self.client_id:
-            raise RuntimeError('INVALID_REQUEST')
+            raise RuntimeError("INVALID_REQUEST")
         elif not self._validate_sign([sid], timestamp, sign):
-            raise RuntimeError('INVALID_REQUEST')
+            raise RuntimeError("INVALID_REQUEST")
         return sid
 
     def unregister(self, sid):
@@ -200,14 +204,14 @@ class Client:
         sign, timestamp = self._sign_payload([sid])
 
         params = {
-            'client_id': self.client_id,
-            'sid': sid,
-            'timestamp': timestamp,
-            'sign': sign,
+            "client_id": self.client_id,
+            "sid": sid,
+            "timestamp": timestamp,
+            "sign": sign,
         }
 
         # For unregister error in SPARCSSSO
         try:
-            return self._post_data(self.URLS['unregister'], params)['success']
+            return self._post_data(self.URLS["unregister"], params)["success"]
         except RuntimeError:
             return True

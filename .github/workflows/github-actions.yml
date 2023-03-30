@@ -17,6 +17,8 @@ env:
   SSO_CLIENT_ID: ${{ secrets.SSO_CLIENT_ID }}
   SSO_SECRET_KEY: ${{ secrets.SSO_SECRET_KEY }}
   PORTAL_2FA_KEY: ${{ secrets.PORTAL_2FA_KEY }}
+  FIREBASE_SERVICE_ACCOUNT_KEY_DEV: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY_DEV }}
+  FIREBASE_SERVICE_ACCOUNT_KEY_PROD: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY_PROD }}
   AWS_REGION: ap-northeast-2
 
 jobs:
@@ -41,6 +43,7 @@ jobs:
       - name: Install
         run: |
           chmod +x .github/workflows/generate-docker-tag.sh
+          touch firebaseServiceAccountKey.json
           . .github/workflows/generate-docker-tag.sh
           echo "PUSH=$PUSH" >> $GITHUB_ENV
           echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV

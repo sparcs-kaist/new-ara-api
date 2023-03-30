@@ -3,73 +3,76 @@ import time
 from django.db import models
 from django.http import Http404
 from django.utils.translation import gettext
-from rest_framework import status, viewsets, response, decorators, serializers, permissions
+from rest_framework import (
+    decorators,
+    permissions,
+    response,
+    serializers,
+    status,
+    viewsets,
+)
 from rest_framework.response import Response
-from apps.core.models.board import BoardNameType
 
+from apps.core.documents import ArticleDocument
+from apps.core.filters.article import ArticleFilter
+from apps.core.models import (
+    Article,
+    ArticleDeleteLog,
+    ArticleReadLog,
+    ArticleUpdateLog,
+    Board,
+    Comment,
+    CommunicationArticle,
+    Scrap,
+    Vote,
+)
+from apps.core.models.board import BoardNameType
+from apps.core.permissions.article import ArticlePermission, ArticleReadPermission
+from apps.core.serializers.article import (
+    ArticleCreateActionSerializer,
+    ArticleListActionSerializer,
+    ArticleSerializer,
+    ArticleUpdateActionSerializer,
+)
 from ara import redis
 from ara.classes.viewset import ActionAPIViewSet
 from ara.settings import SCHOOL_RESPONSE_VOTE_THRESHOLD
 
-from apps.core.models import (
-    Article,
-    ArticleReadLog,
-    ArticleUpdateLog,
-    ArticleDeleteLog,
-    Board,
-    Comment,
-    Vote,
-    Scrap, CommunicationArticle,
-)
-from apps.core.filters.article import ArticleFilter
-from apps.core.permissions.article import (
-    ArticlePermission,
-    ArticleReadPermission
-)
-from apps.core.serializers.article import (
-    ArticleSerializer,
-    ArticleListActionSerializer,
-    ArticleCreateActionSerializer,
-    ArticleUpdateActionSerializer,
-)
-
-from apps.core.documents import ArticleDocument
-
 
 class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     queryset = Article.objects.all()
-    
+
     filterset_class = ArticleFilter
-    ordering_fields = ['created_at', 'positive_vote_count']
+    ordering_fields = ["created_at", "positive_vote_count"]
 
     serializer_class = ArticleSerializer
     action_serializer_class = {
-        'list': ArticleListActionSerializer,
-        'create': ArticleCreateActionSerializer,
-        'update': ArticleUpdateActionSerializer,
-        'partial_update': ArticleUpdateActionSerializer,
-        'vote_positive': serializers.Serializer,
-        'vote_negative': serializers.Serializer,
-        'recent': ArticleListActionSerializer,
+        "list": ArticleListActionSerializer,
+        "create": ArticleCreateActionSerializer,
+        "update": ArticleUpdateActionSerializer,
+        "partial_update": ArticleUpdateActionSerializer,
+        "vote_positive": serializers.Serializer,
+        "vote_negative": serializers.Serializer,
+        "recent": ArticleListActionSerializer,
     }
     permission_classes = (
         ArticlePermission,
         ArticleReadPermission,
     )
     action_permission_classes = {
-        'create': (
+        "create": (
             permissions.IsAuthenticated,
             # Check WritePermission in ArticleCreateActionSerializer
         ),
-        'vote_cancel': (
+        "vote_cancel": (
             permissions.IsAuthenticated,
             ArticleReadPermission,
         ),
-        'vote_positive': (
+        "vote_positive": (
             permissions.IsAuthenticated,
             ArticleReadPermission,
         ),
-        'vote_negative': (
+        "vote_negative": (
             permissions.IsAuthenticated,
             ArticleReadPermission,
         ),
@@ -78,11 +81,11 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
 
-        if self.action == 'destroy':
+        if self.action == "destroy":
             pass
 
-        elif self.action == 'list':
-            created_by = self.request.query_params.get('created_by')
+        elif self.action == "list":
+            created_by = self.request.query_params.get("created_by")
             if created_by and int(created_by) != self.request.user.id:
                 # exclude someone's anonymous or realname article in one's profile
                 exclude_list = [BoardNameType.ANONYMOUS, BoardNameType.REALNAME]
@@ -90,8 +93,8 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
             # exclude article written by blocked users in anonymous board
             queryset = queryset.exclude(
-                created_by__id__in=self.request.user.block_set.values('user'),
-                name_type=BoardNameType.ANONYMOUS
+                created_by__id__in=self.request.user.block_set.values("user"),
+                name_type=BoardNameType.ANONYMOUS,
             )
 
             queryset = queryset.prefetch_related(
@@ -101,10 +104,10 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
             # optimizing queryset for list action
             queryset = queryset.select_related(
-                'created_by',
-                'created_by__profile',
-                'parent_topic',
-                'parent_board',
+                "created_by",
+                "created_by__profile",
+                "parent_topic",
+                "parent_board",
             ).prefetch_related(
                 ArticleReadLog.prefetch_my_article_read_log(self.request.user),
             )
@@ -112,32 +115,36 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         # optimizing queryset for create, update, retrieve actions
         else:
             queryset = queryset.select_related(
-                'created_by',
-                'created_by__profile',
-                'parent_topic',
-                'parent_board',
+                "created_by",
+                "created_by__profile",
+                "parent_topic",
+                "parent_board",
             ).prefetch_related(
-                'attachments',
+                "attachments",
                 models.Prefetch(
-                    'vote_set',
+                    "vote_set",
                     queryset=Vote.objects.select_related(
-                        'voted_by',
+                        "voted_by",
                     ),
                 ),
                 Scrap.prefetch_my_scrap(self.request.user),
                 models.Prefetch(
-                    'comment_set',
-                    queryset=Comment.objects.reverse().select_related(
-                        'created_by',
-                        'created_by__profile',
-                    ).prefetch_related(
+                    "comment_set",
+                    queryset=Comment.objects.reverse()
+                    .select_related(
+                        "created_by",
+                        "created_by__profile",
+                    )
+                    .prefetch_related(
                         Vote.prefetch_my_vote(self.request.user),
                         models.Prefetch(
-                            'comment_set',
-                            queryset=Comment.objects.reverse().select_related(
-                                'created_by',
-                                'created_by__profile',
-                            ).prefetch_related(
+                            "comment_set",
+                            queryset=Comment.objects.reverse()
+                            .select_related(
+                                "created_by",
+                                "created_by__profile",
+                            )
+                            .prefetch_related(
                                 Vote.prefetch_my_vote(self.request.user),
                             ),
                         ),
@@ -150,11 +157,13 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def perform_create(self, serializer):
         serializer.save(
             created_by=self.request.user,
-            name_type=Board.objects.get(pk=self.request.data['parent_board']).name_type
+            name_type=Board.objects.get(pk=self.request.data["parent_board"]).name_type,
         )
 
         instance = serializer.instance
-        if Board.objects.get(pk=self.request.data['parent_board']).is_school_communication:
+        if Board.objects.get(
+            pk=self.request.data["parent_board"]
+        ).is_school_communication:
             communication_article = CommunicationArticle.objects.create(
                 article=instance,
             )
@@ -163,8 +172,10 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def update(self, request, *args, **kwargs):
         article = self.get_object()
         if article.is_hidden_by_reported():
-            return response.Response({'message': gettext('Cannot modify articles hidden by reports')},
-                                     status=status.HTTP_403_FORBIDDEN)
+            return response.Response(
+                {"message": gettext("Cannot modify articles hidden by reports")},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         return super().update(request, *args, **kwargs)
 
     def perform_update(self, serializer):
@@ -184,8 +195,10 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def destroy(self, request, *args, **kwargs):
         article = self.get_object()
         if article.is_hidden_by_reported():
-            return response.Response({'message': gettext('Cannot delete articles hidden by reports')},
-                                     status=status.HTTP_403_FORBIDDEN)
+            return response.Response(
+                {"message": gettext("Cannot delete articles hidden by reports")},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         return super().destroy(request, *args, **kwargs)
 
     def perform_destroy(self, instance):
@@ -200,12 +213,12 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         try:
             article = self.get_object()
         except Http404 as e:
-            if Article.objects.queryset_with_deleted.filter(id=kwargs['pk']).exists():
+            if Article.objects.queryset_with_deleted.filter(id=kwargs["pk"]).exists():
                 return response.Response(status=status.HTTP_410_GONE)
             else:
                 raise e
 
-        override_hidden = 'override_hidden' in self.request.query_params
+        override_hidden = "override_hidden" in self.request.query_params
 
         ArticleReadLog.objects.create(
             read_by=self.request.user,
@@ -215,27 +228,47 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         article.update_hit_count()
 
         pipe = redis.pipeline()
-        redis_key = 'articles:hit'
-        pipe.zadd(redis_key, {f'{article.id}:1:{self.request.user.id}:{time.time()}': time.time()})
+        redis_key = "articles:hit"
+        pipe.zadd(
+            redis_key,
+            {f"{article.id}:1:{self.request.user.id}:{time.time()}": time.time()},
+        )
         pipe.execute(raise_on_error=True)
 
-        serialized = ArticleSerializer(article, context={'request': request, 'override_hidden': override_hidden})
+        serialized = ArticleSerializer(
+            article, context={"request": request, "override_hidden": override_hidden}
+        )
 
         if not request.user.profile.is_school_admin:
             serialized.days_left = None
         return Response(serialized.data)
 
-    @decorators.action(detail=True, methods=['post'])
+    @decorators.action(detail=True, methods=["post"])
     def vote_cancel(self, request, *args, **kwargs):
         article = self.get_object()
 
         if article.is_hidden_by_reported():
-            return response.Response({'message': gettext('Cannot cancel vote on articles hidden by reports')},
-                                     status=status.HTTP_403_FORBIDDEN)
+            return response.Response(
+                {
+                    "message": gettext(
+                        "Cannot cancel vote on articles hidden by reports"
+                    )
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
-        if article.name_type == BoardNameType.REALNAME and article.positive_vote_count >= SCHOOL_RESPONSE_VOTE_THRESHOLD:
-            return response.Response({'message': gettext('It is not available to cancel a vote for a real name article with more than 30 votes.')},
-                                     status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        if (
+            article.name_type == BoardNameType.REALNAME
+            and article.positive_vote_count >= SCHOOL_RESPONSE_VOTE_THRESHOLD
+        ):
+            return response.Response(
+                {
+                    "message": gettext(
+                        "It is not available to cancel a vote for a real name article with more than 30 votes."
+                    )
+                },
+                status=status.HTTP_405_METHOD_NOT_ALLOWED,
+            )
 
         if not Vote.objects.filter(
             voted_by=request.user,
@@ -253,58 +286,71 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         if vote.is_positive:
             pipe = redis.pipeline()
-            redis_key = 'articles:vote'
-            pipe.zadd(redis_key, {f'{article.id}:-1:{request.user.id}:{time.time()}': time.time()})
+            redis_key = "articles:vote"
+            pipe.zadd(
+                redis_key,
+                {f"{article.id}:-1:{request.user.id}:{time.time()}": time.time()},
+            )
             pipe.execute(raise_on_error=True)
 
         return response.Response(status=status.HTTP_200_OK)
 
-    @decorators.action(detail=True, methods=['post'])
+    @decorators.action(detail=True, methods=["post"])
     def vote_positive(self, request, *args, **kwargs):
         article = self.get_object()
 
         if article.created_by_id == request.user.id:
-            return response.Response({'message': gettext('Cannot vote on your own article')},
-                                     status=status.HTTP_403_FORBIDDEN)
+            return response.Response(
+                {"message": gettext("Cannot vote on your own article")},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         if article.is_hidden_by_reported():
-            return response.Response({'message': gettext('Cannot vote on articles hidden by reports')},
-                                     status=status.HTTP_403_FORBIDDEN)
+            return response.Response(
+                {"message": gettext("Cannot vote on articles hidden by reports")},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         Vote.objects.update_or_create(
             voted_by=request.user,
             parent_article=article,
             defaults={
-                'is_positive': True,
+                "is_positive": True,
             },
         )
 
         article.update_vote_status()
 
         pipe = redis.pipeline()
-        redis_key = 'articles:vote'
-        pipe.zadd(redis_key, {f'{article.id}:1:{request.user.id}:{time.time()}': time.time()})
+        redis_key = "articles:vote"
+        pipe.zadd(
+            redis_key, {f"{article.id}:1:{request.user.id}:{time.time()}": time.time()}
+        )
         pipe.execute(raise_on_error=True)
 
         return response.Response(status=status.HTTP_200_OK)
 
-    @decorators.action(detail=True, methods=['post'])
+    @decorators.action(detail=True, methods=["post"])
     def vote_negative(self, request, *args, **kwargs):
         article = self.get_object()
 
         if article.created_by_id == request.user.id:
-            return response.Response({'message': gettext('Cannot vote on your own article')},
-                                     status=status.HTTP_403_FORBIDDEN)
+            return response.Response(
+                {"message": gettext("Cannot vote on your own article")},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         if article.is_hidden_by_reported():
-            return response.Response({'message': gettext('Cannot vote on articles hidden by reports')},
-                                     status=status.HTTP_403_FORBIDDEN)
+            return response.Response(
+                {"message": gettext("Cannot vote on articles hidden by reports")},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         Vote.objects.update_or_create(
             voted_by=request.user,
             parent_article=article,
             defaults={
-                'is_positive': False,
+                "is_positive": False,
             },
         )
 
@@ -312,34 +358,41 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         return response.Response(status=status.HTTP_200_OK)
 
-    @decorators.action(detail=False, methods=['get'])
+    @decorators.action(detail=False, methods=["get"])
     def recent(self, request, *args, **kwargs):
 
-        search_keyword = request.query_params.get('main_search__contains')
-        search_restriction_sql = ''
+        search_keyword = request.query_params.get("main_search__contains")
+        search_restriction_sql = ""
         if search_keyword:
             id_set = ArticleDocument.get_main_search_id_set(search_keyword)
             if id_set:
-                search_restriction_sql = 'AND `core_articlereadlog`.`article_id` IN %s'
+                search_restriction_sql = "AND `core_articlereadlog`.`article_id` IN %s"
             else:
                 # There is no search result! Return empty result
                 self.paginate_queryset(ArticleReadLog.objects.none())
                 return self.paginator.get_paginated_response([])
 
         # Cardinality of this queryset is same with actual query
-        count_queryset = ArticleReadLog.objects.values("article_id").filter(read_by=request.user).distinct()
+        count_queryset = (
+            ArticleReadLog.objects.values("article_id")
+            .filter(read_by=request.user)
+            .distinct()
+        )
         if search_keyword:
             count_queryset = count_queryset.filter(article_id__in=id_set)
 
         self.paginate_queryset(count_queryset)
 
-        query_params = [self.request.user.id, self.paginator.get_page_size(request),
-                        max(0, self.paginator.page.start_index() - 1)]
+        query_params = [
+            self.request.user.id,
+            self.paginator.get_page_size(request),
+            max(0, self.paginator.page.start_index() - 1),
+        ]
         if search_keyword:
             query_params.insert(1, id_set)
 
         queryset = Article.objects.raw(
-            f'''
+            f"""
             SELECT * FROM `core_article`
             JOIN (
                 SELECT `core_articlereadlog`.`article_id`, MAX(`core_articlereadlog`.`created_at`) AS my_last_read_at
@@ -350,8 +403,8 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 LIMIT %s OFFSET %s
             ) recents ON recents.article_id = `core_article`.id
             ORDER BY recents.my_last_read_at desc
-            ''',
-            query_params
+            """,
+            query_params,
         ).prefetch_related(
             'created_by',
             'created_by__profile',
@@ -362,5 +415,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             ArticleReadLog.prefetch_my_article_read_log(self.request.user),
         )
 
-        serializer = self.get_serializer_class()([v for v in queryset], many=True, context={"request": request})
+        serializer = self.get_serializer_class()(
+            [v for v in queryset], many=True, context={"request": request}
+        )
         return self.paginator.get_paginated_response(serializer.data)

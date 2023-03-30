@@ -200,6 +200,9 @@ celerybeat-schedule
 # dotenv
 .env
 
+# firebase
+firebaseServiceAccountKey.json
+
 # virtualenv
 .venv
 venv/

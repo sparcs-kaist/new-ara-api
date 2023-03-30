@@ -6,13 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0031_set_created_at_to_timezone_now'),
+        ("core", "0031_set_created_at_to_timezone_now"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='board',
-            name='is_anonymous',
-            field=models.BooleanField(db_index=True, default=False, help_text='게시판의 글과 댓글들이 익명이도록 합니다.', verbose_name='익명 게시판'),
+            model_name="board",
+            name="is_anonymous",
+            field=models.BooleanField(
+                db_index=True,
+                default=False,
+                help_text="게시판의 글과 댓글들이 익명이도록 합니다.",
+                verbose_name="익명 게시판",
+            ),
         ),
     ]

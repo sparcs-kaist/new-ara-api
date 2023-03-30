@@ -1,4 +1,5 @@
 import typing
+
 from rest_framework import serializers
 
 
@@ -6,7 +7,7 @@ class HiddenSerializerMixin(metaclass=serializers.SerializerMetaclass):
     CAN_OVERRIDE_REASONS = []
 
     def get_is_mine(self, obj) -> bool:
-        return self.context['request'].user == obj.created_by
+        return self.context["request"].user == obj.created_by
 
     def get_is_hidden(self, obj) -> bool:
         return not self.visible_verdict(obj)
@@ -27,12 +28,17 @@ class HiddenSerializerMixin(metaclass=serializers.SerializerMetaclass):
 
     @property
     def requested_override_hidden(self):
-        return 'override_hidden' in self.context and self.context['override_hidden'] is True
+        return (
+            "override_hidden" in self.context
+            and self.context["override_hidden"] is True
+        )
 
     def hidden_info(self, obj) -> typing.Tuple[bool, bool, typing.List]:
-        user = self.context['request'].user
+        user = self.context["request"].user
         reasons = obj.hidden_reasons(user)
-        cannot_override_reasons = [reason for reason in reasons if reason not in self.CAN_OVERRIDE_REASONS]
+        cannot_override_reasons = [
+            reason for reason in reasons if reason not in self.CAN_OVERRIDE_REASONS
+        ]
         can_override = len(cannot_override_reasons) == 0
         return len(reasons) > 0, can_override, reasons
 

@@ -1,14 +1,13 @@
 from rest_framework import serializers
 
-from ara.classes.serializers import MetaDataModelSerializer
-
 from apps.core.models import CommentUpdateLog
+from ara.classes.serializers import MetaDataModelSerializer
 
 
 class BaseCommentUpdateLogSerializer(MetaDataModelSerializer):
     class Meta:
         model = CommentUpdateLog
-        fields = '__all__'
+        fields = "__all__"
 
 
 class CommentUpdateLogSerializer(BaseCommentUpdateLogSerializer):

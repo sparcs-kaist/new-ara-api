@@ -6,17 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0013_set_minimum_datetime_timezone'),
+        ("core", "0013_set_minimum_datetime_timezone"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='board',
-            name='is_kaist',
+            model_name="board",
+            name="is_kaist",
         ),
         migrations.AddField(
-            model_name='board',
-            name='access_mask',
-            field=models.IntegerField(default=2, verbose_name='접근 권한 값'),
+            model_name="board",
+            name="access_mask",
+            field=models.IntegerField(default=2, verbose_name="접근 권한 값"),
         ),
     ]

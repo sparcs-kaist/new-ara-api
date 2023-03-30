@@ -1,3 +1,3 @@
 import logging
 
-log = logging.getLogger('ara_logger')
+log = logging.getLogger("ara_logger")

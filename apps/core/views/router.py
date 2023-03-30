@@ -6,60 +6,60 @@ router = routers.DefaultRouter()
 
 # BoardViewSet
 router.register(
-    prefix=r'boards',
+    prefix=r"boards",
     viewset=viewsets.BoardViewSet,
 )
 
 # ArticleViewSet
 router.register(
-    prefix=r'articles',
+    prefix=r"articles",
     viewset=viewsets.ArticleViewSet,
 )
 
 # CommentViewSet
 router.register(
-    prefix=r'comments',
+    prefix=r"comments",
     viewset=viewsets.CommentViewSet,
 )
 
 # ReportViewSet
 router.register(
-    prefix=r'reports',
+    prefix=r"reports",
     viewset=viewsets.ReportViewSet,
 )
 
 # BlockViewSet
 router.register(
-    prefix=r'blocks',
+    prefix=r"blocks",
     viewset=viewsets.BlockViewSet,
 )
 
 # AttachmentViewSet
 router.register(
-    prefix=r'attachments',
+    prefix=r"attachments",
     viewset=viewsets.AttachmentViewSet,
 )
 
 # ScrapViewSet
 router.register(
-    prefix=r'scraps',
+    prefix=r"scraps",
     viewset=viewsets.ScrapViewSet,
 )
 
 # NotificationViewSet
 router.register(
-    prefix=r'notifications',
+    prefix=r"notifications",
     viewset=viewsets.NotificationViewSet,
 )
 
 # FAQViewSet
 router.register(
-    prefix=r'faqs',
+    prefix=r"faqs",
     viewset=viewsets.FAQViewSet,
 )
 
 # BestSearchViewSet
 router.register(
-    prefix=r'best_searches',
+    prefix=r"best_searches",
     viewset=viewsets.BestSearchViewSet,
 )

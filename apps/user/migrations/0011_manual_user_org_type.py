@@ -6,18 +6,26 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('user', '0010_manualuser'),
+        ("user", "0010_manualuser"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='manualuser',
-            old_name='organization_name',
-            new_name='org_name',
+            model_name="manualuser",
+            old_name="organization_name",
+            new_name="org_name",
         ),
         migrations.AddField(
-            model_name='manualuser',
-            name='org_type',
-            field=models.IntegerField(choices=[(0, 'Unauthorized user'), (1, 'KAIST member'), (2, 'Restaurant employee'), (3, 'Other employee')], default=0),
+            model_name="manualuser",
+            name="org_type",
+            field=models.IntegerField(
+                choices=[
+                    (0, "Unauthorized user"),
+                    (1, "KAIST member"),
+                    (2, "Restaurant employee"),
+                    (3, "Other employee"),
+                ],
+                default=0,
+            ),
         ),
     ]
