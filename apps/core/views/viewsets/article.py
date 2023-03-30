@@ -358,7 +358,8 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             'parent_board',
             'parent_topic',
             'attachments',
-            ArticleReadLog.prefetch_my_article_read_log(self.request.user)
+            'communication_article',
+            ArticleReadLog.prefetch_my_article_read_log(self.request.user),
         )
 
         serializer = self.get_serializer_class()([v for v in queryset], many=True, context={"request": request})
