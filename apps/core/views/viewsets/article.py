@@ -411,6 +411,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             'parent_board',
             'parent_topic',
             'attachments',
+            'communication_article',
             ArticleReadLog.prefetch_my_article_read_log(self.request.user),
         )
 
