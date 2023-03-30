@@ -138,11 +138,12 @@ class Article(MetaDataModel):
         verbose_name="마지막 댓글 시간",
     )
 
-    url = models.TextField(
+    url = models.URLField(
         null=True,
+        max_length=200,
         blank=True,
         default=None,
-        verbose_name="링크",
+        verbose_name="포탈 링크",
     )
 
     content_updated_at = models.DateTimeField(
