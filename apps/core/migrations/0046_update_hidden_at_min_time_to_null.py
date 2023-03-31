@@ -9,6 +9,9 @@ def update_hidden_at(apps, schema_editor):
     Article = apps.get_model("core", "Article")
     Article.objects.filter(hidden_at=MIN_TIME).update(hidden_at=None)
 
+    Comment = apps.get_model("core", "Comment")
+    Comment.objects.filter(hidden_at=MIN_TIME).update(hidden_at=None)
+
 
 class Migration(migrations.Migration):
 
