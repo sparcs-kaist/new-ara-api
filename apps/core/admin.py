@@ -81,6 +81,7 @@ class FAQAdmin(MetaDataModelAdmin):
 
 @admin.register(Article)
 class ArticleAdmin(MetaDataModelAdmin):
+    actions = ("restore_hidden_articles",)
     list_filter = (
         "name_type",
         "is_content_sexual",
@@ -91,27 +92,62 @@ class ArticleAdmin(MetaDataModelAdmin):
     )
     list_display = (
         "title",
+        "parent_board",
+        "user_nickname",
+        "user_email",
+        "hit_count",
+        "report_count",
+        "created_at",
+        "hidden_at",
+    )
+    raw_id_fields = ("created_by",)
+    search_fields = (
+        "title",
+        "content",
+        "hidden_at",
+        "created_by__email",
+    )
+    fields = (
+        "title",
+        "content",
+        "created_by",
+        "parent_board",
+        "parent_topic",
+        "name_type",
+        ("is_content_sexual", "is_content_social"),
+        ("hit_count", "migrated_hit_count"),
+        ("positive_vote_count", "migrated_positive_vote_count"),
+        ("negative_vote_count", "migrated_negative_vote_count"),
+        ("comment_count", "report_count"),
+        "attachments",
+        "content_updated_at",
+        "commented_at",
+        "url",
+        "hidden_at",
+    )
+    readonly_fields = (
         "hit_count",
         "positive_vote_count",
         "negative_vote_count",
-        "name_type",
-        "is_content_sexual",
-        "is_content_social",
+        "comment_count",
         "report_count",
-        "hidden_at",
+        "commented_at",
+        "content_updated_at",
     )
-    raw_id_fields = (
-        "created_by",
-        "parent_topic",
-        "parent_board",
-    )
-    search_fields = ("title", "content", "hidden_at", "created_by__email")
-    actions = ("restore_hidden_articles",)
+    filter_horizontal = ("attachments",)
 
     @admin.action(description=gettext("Restore hidden articles"))
     def restore_hidden_articles(self, request, queryset):
         rows_updated = queryset.update(hidden_at=None)
         self.message_user(request, f"{rows_updated}개의 게시물(들)이 성공적으로 복구되었습니다.")
+
+    @admin.display(description="닉네임")
+    def user_nickname(self, obj: Article):
+        return obj.created_by_nickname
+
+    @admin.display(description="이메일")
+    def user_email(self, obj: Article):
+        return obj.created_by.email
 
 
 @admin.register(Comment)
