@@ -153,7 +153,9 @@ class Article(MetaDataModel):
     )
 
     hidden_at = models.DateTimeField(
-        default=MIN_TIME,
+        null=True,
+        blank=True,
+        default=None,
         verbose_name="숨김 시간",
     )
 
@@ -248,7 +250,7 @@ class Article(MetaDataModel):
         self.save()
 
     def is_hidden_by_reported(self) -> bool:
-        return self.hidden_at != MIN_TIME
+        return self.hidden_at is not None
 
     @property
     def created_by_nickname(self):
