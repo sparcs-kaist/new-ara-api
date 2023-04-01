@@ -97,6 +97,11 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 name_type=BoardNameType.ANONYMOUS,
             )
 
+            queryset = queryset.prefetch_related(
+                'attachments',
+                'communication_article',
+            )
+
             # optimizing queryset for list action
             queryset = queryset.select_related(
                 "created_by",
@@ -401,10 +406,12 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             """,
             query_params,
         ).prefetch_related(
-            "created_by",
-            "created_by__profile",
-            "parent_board",
-            "parent_topic",
+            'created_by',
+            'created_by__profile',
+            'parent_board',
+            'parent_topic',
+            'attachments',
+            'communication_article',
             ArticleReadLog.prefetch_my_article_read_log(self.request.user),
         )
 
