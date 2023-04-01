@@ -4,6 +4,9 @@ from apps.user.models import FCMToken
 
 
 def fcm_notify_comment(user, title, body, open_url):
+    ################## Disable FCM ####################
+    return
+
     targets = FCMToken.objects.filter(user=user)
     for i in targets:
         try:
@@ -16,6 +19,9 @@ def fcm_notify_comment(user, title, body, open_url):
 def fcm_simple(FCM_token, title="Title", body="Body", open_url="/"):
     # This registration token comes from the client FCM SDKs.
     # See documentation on defining a message payload.
+
+    ################## Disable FCM ####################
+    return
     message = messaging.Message(
         notification=messaging.Notification(
             title=title,
