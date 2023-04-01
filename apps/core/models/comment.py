@@ -94,7 +94,9 @@ class Comment(MetaDataModel):
         verbose_name="댓글",
     )
     hidden_at = models.DateTimeField(
-        default=MIN_TIME,
+        null=True,
+        blank=True,
+        default=None,
         verbose_name="숨김 시간",
     )
 
@@ -147,7 +149,7 @@ class Comment(MetaDataModel):
         return self.parent_comment.parent_article
 
     def is_hidden_by_reported(self) -> bool:
-        return self.hidden_at != MIN_TIME
+        return self.hidden_at is not None
 
     def is_deleted(self) -> bool:
         return self.deleted_at != MIN_TIME

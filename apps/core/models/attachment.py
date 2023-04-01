@@ -24,3 +24,6 @@ class Attachment(MetaDataModel):
         max_length=128,
         verbose_name="타입",
     )
+
+    def __str__(self) -> str:
+        return self.file.name
