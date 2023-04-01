@@ -8,12 +8,12 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 RUN apt-get update && apt-get install netcat-openbsd supervisor vim gettext -y
 
-ADD ./ /newara/www
-
 WORKDIR /newara/www
+COPY poetry.lock pyproject.toml /newara/www/
 RUN pip install poetry
 RUN poetry config virtualenvs.create false && poetry install
 
+ADD ./ /newara/www
 RUN mkdir -p /var/log/newara/
 RUN chmod +x /newara/www/.docker/run.sh
 RUN chmod +x /newara/www/.docker/run-celery.sh
