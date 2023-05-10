@@ -11,7 +11,7 @@ from rest_framework import (
 
 from apps.core.filters.comment import CommentFilter
 from apps.core.models import Article, Comment, CommentDeleteLog, UserProfile, Vote
-from apps.core.models.board import BoardAccessPermissionType, BoardNameType
+from apps.core.models.board import BoardAccessPermissionType, NameType
 from apps.core.permissions.comment import CommentPermission
 from apps.core.serializers.comment import (
     CommentCreateActionSerializer,
@@ -86,7 +86,7 @@ class CommentViewSet(
         )
 
         if is_school_admin:
-            name_type = BoardNameType.REGULAR
+            name_type = NameType.REGULAR
         elif parent_article:
             name_type = parent_article.name_type
         else:

@@ -4,7 +4,7 @@ from django.utils import timezone
 from rest_framework import status
 
 from apps.core.models import Article, Block, Board, Comment, Topic, Vote
-from apps.core.models.board import BoardAccessPermissionType, BoardNameType
+from apps.core.models.board import BoardAccessPermissionType, NameType
 from apps.user.models import UserProfile
 from ara.settings import MIN_TIME, SCHOOL_RESPONSE_VOTE_THRESHOLD
 from tests.conftest import RequestSetting, TestCase
@@ -18,7 +18,7 @@ def set_boards(request):
         en_name="Test Board",
         ko_description="테스트 게시판입니다",
         en_description="This is a board for testing",
-        name_type=BoardNameType.REGULAR,
+        name_type=NameType.REGULAR,
     )
 
     request.cls.anon_board = Board.objects.create(
@@ -27,7 +27,7 @@ def set_boards(request):
         en_name="Anonymous",
         ko_description="익명 게시판",
         en_description="Anonymous",
-        name_type=BoardNameType.ANONYMOUS,
+        name_type=NameType.ANONYMOUS,
     )
 
     request.cls.realname_board = Board.objects.create(
@@ -36,7 +36,7 @@ def set_boards(request):
         en_name="Test realname Board",
         ko_description="테스트 실명 게시판입니다",
         en_description="This is a realname board for testing",
-        name_type=BoardNameType.REALNAME,
+        name_type=NameType.REALNAME,
     )
 
     request.cls.regular_access_board = Board.objects.create(
@@ -117,7 +117,7 @@ def set_articles(request):
         title="example article",
         content="example content",
         content_text="example content text",
-        name_type=BoardNameType.REGULAR,
+        name_type=NameType.REGULAR,
         is_content_sexual=False,
         is_content_social=False,
         hit_count=0,
@@ -153,7 +153,7 @@ def set_realname_article(request):
         title="Realname Test Article",
         content="Content of test realname article",
         content_text="Content of test article in text",
-        name_type=BoardNameType.REALNAME,
+        name_type=NameType.REALNAME,
         is_content_sexual=False,
         is_content_social=False,
         hit_count=0,
@@ -201,7 +201,7 @@ def set_kaist_articles(request):
         title="example article",
         content="example content",
         content_text="example content text",
-        name_type=BoardNameType.REGULAR,
+        name_type=NameType.REGULAR,
         is_content_sexual=False,
         is_content_social=False,
         hit_count=0,
@@ -268,7 +268,7 @@ class TestArticle(TestCase, RequestSetting):
             title="example article",
             content="example content",
             content_text="example content text",
-            name_type=BoardNameType.REGULAR,
+            name_type=NameType.REGULAR,
             is_content_sexual=False,
             is_content_social=False,
             hit_count=0,
@@ -284,7 +284,7 @@ class TestArticle(TestCase, RequestSetting):
             title="example article",
             content="example content",
             content_text="example content text",
-            name_type=BoardNameType.REGULAR,
+            name_type=NameType.REGULAR,
             is_content_sexual=False,
             is_content_social=False,
             hit_count=0,
@@ -320,7 +320,7 @@ class TestArticle(TestCase, RequestSetting):
             title="example anonymous article",
             content="example anonymous content",
             content_text="example anonymous content text",
-            name_type=BoardNameType.ANONYMOUS,
+            name_type=NameType.ANONYMOUS,
             is_content_sexual=False,
             is_content_social=False,
             hit_count=0,
@@ -334,11 +334,11 @@ class TestArticle(TestCase, RequestSetting):
 
         # 익명 게시글을 GET할 때, 작성자의 정보가 전달되지 않는 것 확인
         res = self.http_request(self.user, "get", f"articles/{anon_article.id}").data
-        assert res.get("name_type") == BoardNameType.ANONYMOUS
+        assert res.get("name_type") == NameType.ANONYMOUS
         assert res.get("created_by")["username"] != anon_article.created_by.username
 
         res2 = self.http_request(self.user2, "get", f"articles/{anon_article.id}").data
-        assert res2.get("name_type") == BoardNameType.ANONYMOUS
+        assert res2.get("name_type") == NameType.ANONYMOUS
         assert res2.get("created_by")["username"] != anon_article.created_by.username
 
     def test_create(self):
@@ -348,7 +348,7 @@ class TestArticle(TestCase, RequestSetting):
             "title": "article for test_create",
             "content": "content for test_create",
             "content_text": "content_text for test_create",
-            "name_type": BoardNameType.REGULAR,
+            "name_type": NameType.REGULAR,
             "is_content_sexual": False,
             "is_content_social": False,
             "parent_topic": self.topic.id,
@@ -424,11 +424,11 @@ class TestArticle(TestCase, RequestSetting):
 
         result = self.http_request(self.user, "post", "articles", user_data)
 
-        assert result.data["name_type"] == BoardNameType.ANONYMOUS
+        assert result.data["name_type"] == NameType.ANONYMOUS
 
         user_data.update({"parent_topic": self.topic.id, "parent_board": self.board.id})
         result = self.http_request(self.user, "post", "articles", user_data)
-        assert not result.data["name_type"] == BoardNameType.ANONYMOUS
+        assert not result.data["name_type"] == NameType.ANONYMOUS
 
     def test_update_cache_sync(self):
         new_title = "title changed!"
@@ -437,7 +437,7 @@ class TestArticle(TestCase, RequestSetting):
             title="example article",
             content="example content",
             content_text="example content text",
-            name_type=BoardNameType.REGULAR,
+            name_type=NameType.REGULAR,
             is_content_sexual=False,
             is_content_social=False,
             hit_count=0,
@@ -592,7 +592,7 @@ class TestArticle(TestCase, RequestSetting):
             "title": "article for test_create",
             "content": "content for test_create",
             "content_text": "content_text for test_create",
-            "name_type": BoardNameType.REGULAR,
+            "name_type": NameType.REGULAR,
             "is_content_sexual": False,
             "is_content_social": False,
             "parent_board": self.readonly_board.id,
@@ -637,7 +637,7 @@ class TestArticle(TestCase, RequestSetting):
         self.article.save()
         Comment.objects.create(
             content="this is a test comment",
-            name_type=BoardNameType.REGULAR,
+            name_type=NameType.REGULAR,
             created_by=self.user,
             parent_article=self.article,
         )
@@ -671,7 +671,7 @@ class TestRealnameArticle(TestCase, RequestSetting):
             title="example realname article with kinfo",
             content="example realname content with kinfo",
             content_text="example realname content text with kinfo",
-            name_type=BoardNameType.REALNAME,
+            name_type=NameType.REALNAME,
             is_content_sexual=False,
             is_content_social=False,
             hit_count=0,
@@ -688,7 +688,7 @@ class TestRealnameArticle(TestCase, RequestSetting):
             title="example realname article without_kinfo",
             content="example realname content without_kinfo",
             content_text="example realname content text without_kinfo",
-            name_type=BoardNameType.REALNAME,
+            name_type=NameType.REALNAME,
             is_content_sexual=False,
             is_content_social=False,
             hit_count=0,
@@ -705,7 +705,7 @@ class TestRealnameArticle(TestCase, RequestSetting):
             "get",
             f"articles/{realname_article_with_kinfo.id}",
         ).data
-        assert res.get("name_type") == BoardNameType.REALNAME
+        assert res.get("name_type") == NameType.REALNAME
         assert (
             res.get("created_by")["username"]
             == realname_article_with_kinfo.created_by.profile.realname
@@ -716,7 +716,7 @@ class TestRealnameArticle(TestCase, RequestSetting):
             "get",
             f"articles/{realname_article_without_kinfo.id}",
         ).data
-        assert res2.get("name_type") == BoardNameType.REALNAME
+        assert res2.get("name_type") == NameType.REALNAME
         assert (
             res2.get("created_by")["username"]
             == realname_article_without_kinfo.created_by.profile.realname
@@ -738,17 +738,15 @@ class TestRealnameArticle(TestCase, RequestSetting):
             self.user_with_kaist_info, "post", "articles", article_data
         ).data
 
-        assert result.get("name_type") == BoardNameType.REALNAME
-        assert (
-            Article.objects.get(title=article_title).name_type == BoardNameType.REALNAME
-        )
+        assert result.get("name_type") == NameType.REALNAME
+        assert Article.objects.get(title=article_title).name_type == NameType.REALNAME
 
     def test_update_realname_article(self):
         article = Article.objects.create(
             title="realname article for test_create",
             content="realname content for test_create",
             content_text="realname content_text for test_create",
-            name_type=BoardNameType.REALNAME,
+            name_type=NameType.REALNAME,
             is_content_sexual=False,
             is_content_social=False,
             hit_count=0,
@@ -770,8 +768,8 @@ class TestRealnameArticle(TestCase, RequestSetting):
             {"title": new_title, "content": new_content},
         ).data
 
-        assert result.get("name_type") == BoardNameType.REALNAME
-        assert Article.objects.get(title=new_title).name_type == BoardNameType.REALNAME
+        assert result.get("name_type") == NameType.REALNAME
+        assert Article.objects.get(title=new_title).name_type == NameType.REALNAME
 
     def test_ban_vote_cancellation_after_30(self):
         # SCHOOL_RESPONSE_VOTE_THRESHOLD is 3 in test
@@ -843,7 +841,7 @@ class TestHiddenArticles(TestCase, RequestSetting):
             title="example article",
             content="example content",
             content_text="example content text",
-            name_type=BoardNameType.REGULAR,
+            name_type=NameType.REGULAR,
             hit_count=0,
             is_content_sexual=is_content_sexual,
             is_content_social=is_content_social,

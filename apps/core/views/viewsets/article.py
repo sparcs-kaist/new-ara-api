@@ -26,7 +26,7 @@ from apps.core.models import (
     Scrap,
     Vote,
 )
-from apps.core.models.board import BoardNameType
+from apps.core.models.board import NameType
 from apps.core.permissions.article import ArticlePermission, ArticleReadPermission
 from apps.core.serializers.article import (
     ArticleCreateActionSerializer,
@@ -88,18 +88,18 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             created_by = self.request.query_params.get("created_by")
             if created_by and int(created_by) != self.request.user.id:
                 # exclude someone's anonymous or realname article in one's profile
-                exclude_list = [BoardNameType.ANONYMOUS, BoardNameType.REALNAME]
+                exclude_list = [NameType.ANONYMOUS, NameType.REALNAME]
                 queryset = queryset.exclude(name_type__in=exclude_list)
 
             # exclude article written by blocked users in anonymous board
             queryset = queryset.exclude(
                 created_by__id__in=self.request.user.block_set.values("user"),
-                name_type=BoardNameType.ANONYMOUS,
+                name_type=NameType.ANONYMOUS,
             )
 
             queryset = queryset.prefetch_related(
-                'attachments',
-                'communication_article',
+                "attachments",
+                "communication_article",
             )
 
             # optimizing queryset for list action
@@ -154,6 +154,8 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         return queryset
 
+    # TODO: name type을 request에서 받아와야 함
+    # 이때 자유게시판에서만 익명으로 설정할 수 있게 하고, 학교에게 전합니다는 원래대로 name type 설정
     def perform_create(self, serializer):
         serializer.save(
             created_by=self.request.user,
@@ -258,7 +260,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             )
 
         if (
-            article.name_type == BoardNameType.REALNAME
+            article.name_type == NameType.REALNAME
             and article.positive_vote_count >= SCHOOL_RESPONSE_VOTE_THRESHOLD
         ):
             return response.Response(
@@ -360,7 +362,6 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
     @decorators.action(detail=False, methods=["get"])
     def recent(self, request, *args, **kwargs):
-
         search_keyword = request.query_params.get("main_search__contains")
         search_restriction_sql = ""
         if search_keyword:
@@ -406,12 +407,12 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             """,
             query_params,
         ).prefetch_related(
-            'created_by',
-            'created_by__profile',
-            'parent_board',
-            'parent_topic',
-            'attachments',
-            'communication_article',
+            "created_by",
+            "created_by__profile",
+            "parent_board",
+            "parent_topic",
+            "attachments",
+            "communication_article",
             ArticleReadLog.prefetch_my_article_read_log(self.request.user),
         )
 

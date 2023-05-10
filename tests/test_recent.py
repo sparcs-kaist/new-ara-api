@@ -6,7 +6,7 @@ from django.core.management import call_command
 from django.utils import timezone
 
 from apps.core.models import Article, Board, Topic
-from apps.core.models.board import BoardNameType
+from apps.core.models.board import NameType
 from tests.conftest import RequestSetting, TestCase
 
 
@@ -43,7 +43,7 @@ def set_articles(request):
             title=f"Test Article{n}",
             content=f"Content of test article {n}",
             content_text=f"Content_text of test article {n}",
-            name_type=BoardNameType.REGULAR,
+            name_type=NameType.REGULAR,
             is_content_sexual=False,
             is_content_social=False,
             hit_count=0,
@@ -65,7 +65,6 @@ def set_index(request):
 
 
 def generate_order(string):
-
     length = 10  # number of articles
     seed = int(
         hashlib.sha224(string.encode("utf-8")).hexdigest(), base=16
@@ -175,7 +174,6 @@ class TestRecent(TestCase, RequestSetting):
 
     # 매우 복잡한 읽기 패턴에 대한 테스트
     def test_read_article_complex_pattern(self):
-
         order, expected_order = generate_order("foobarbaz")
 
         # read articles in created order
@@ -192,7 +190,6 @@ class TestRecent(TestCase, RequestSetting):
 
     # 매우 복잡한 읽기 패턴에 대한 side_article 테스트
     def test_read_article_complex_pattern_side_article(self):
-
         order, expected_order = generate_order("foobarbaz")
 
         for num in order:
@@ -213,7 +210,6 @@ class TestRecent(TestCase, RequestSetting):
 
     # 매우 복잡한 읽기 패턴에 대한 검색 테스트
     def test_read_article_complex_pattern_search(self):
-
         order, expected_order = generate_order("foobarbaz")
 
         for num in order:
@@ -243,7 +239,6 @@ class TestRecent(TestCase, RequestSetting):
 
     # 매우 복잡한 읽기 패턴에 대한 검색 및 side_article 테스트
     def test_read_article_complex_pattern_search_side_article(self):
-
         order, expected_order = generate_order("foobarbaz")
 
         for num in order:
@@ -275,7 +270,6 @@ class TestRecent(TestCase, RequestSetting):
 
     # 첫 번째 읽기가 from_view=recent일 경우 테스트
     def test_read_first_article_from_recent(self):
-
         resp = self.http_request(
             self.user,
             "get",

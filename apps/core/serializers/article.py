@@ -6,7 +6,7 @@ from rest_framework import exceptions, serializers
 
 from apps.core.documents import ArticleDocument
 from apps.core.models import Article, ArticleHiddenReason, Block, Board, Comment, Scrap
-from apps.core.models.board import BoardAccessPermissionType, BoardNameType
+from apps.core.models.board import BoardAccessPermissionType, NameType
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.mixins.hidden import (
     HiddenSerializerFieldMixin,
@@ -68,7 +68,7 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
         return None
 
     def get_created_by(self, obj) -> dict:
-        if obj.name_type in (BoardNameType.ANONYMOUS, BoardNameType.REALNAME):
+        if obj.name_type in (NameType.ANONYMOUS, NameType.REALNAME):
             return obj.postprocessed_created_by
         else:
             data = PublicUserSerializer(obj.postprocessed_created_by).data
@@ -329,14 +329,17 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
             obj.parent_board.is_school_communication
             and created_by.profile.is_school_admin
         ):
-            name_type = BoardNameType.REGULAR
+            name_type = NameType.REGULAR
 
         fake_comment = Comment(
             created_by=created_by,
             name_type=name_type,
             parent_article=obj,
         )
-        if fake_comment.name_type in (BoardNameType.ANONYMOUS, BoardNameType.REALNAME):
+        if fake_comment.name_type in (
+            NameType.ANONYMOUS,
+            NameType.REALNAME,
+        ):
             return fake_comment.postprocessed_created_by
         else:
             data = PublicUserSerializer(fake_comment.postprocessed_created_by).data
