@@ -19,26 +19,18 @@ class BoardAccessPermissionType(IntEnum):
 
 
 class Board(MetaDataModel):
-    class Meta(MetaDataModel.Meta):
-        verbose_name = "게시판"
-        verbose_name_plural = "게시판 목록"
-        unique_together = (
-            ("ko_name", "deleted_at"),
-            ("en_name", "deleted_at"),
-        )
-
     slug = AutoSlugField(
         populate_from=[
             "en_name",
         ],
     )
     ko_name = models.CharField(
-        max_length=32,
         verbose_name="게시판 국문 이름",
+        max_length=32,
     )
     en_name = models.CharField(
-        max_length=32,
         verbose_name="게시판 영문 이름",
+        max_length=32,
     )
     ko_description = models.TextField(
         verbose_name="게시판 국문 소개",
@@ -51,69 +43,77 @@ class Board(MetaDataModel):
     # 사용자 그룹의 값들은 `UserGroup`을 참고하세요.
     read_access_mask = models.SmallIntegerField(
         # UNAUTHORIZED, EXTERNAL_ORG 제외 모든 사용자 읽기 권한 부여
-        default=0b011011110,
-        null=False,
         verbose_name="읽기 권한",
+        default=0b011011110,
     )
     write_access_mask = models.SmallIntegerField(
         # UNAUTHORIZED, STORE_EMPLOYEE, EXTERNAL_ORG 제외 모든 사용자 쓰기 권한 부여
-        default=0b011011010,
-        null=False,
         verbose_name="쓰기 권한",
+        default=0b011011010,
     )
     comment_access_mask = models.SmallIntegerField(
         # UNAUTHORIZED 제외 모든 사용자 댓글 권한 부여
-        default=0b011111110,
-        null=False,
         verbose_name="댓글 권한",
+        default=0b011111110,
     )
     is_readonly = models.BooleanField(
         verbose_name="읽기 전용 게시판",
-        help_text="활성화했을 때 관리자만 글을 쓸 수 있습니다. (ex. 포탈공지)",
         default=False,
+        help_text="활성화했을 때 관리자만 글을 쓸 수 있습니다. (ex. 포탈공지)",
     )
     is_hidden = models.BooleanField(
         verbose_name="리스트 숨김 게시판",
-        help_text="활성화했을 때 메인페이지 상단바 리스트에 나타나지 않습니다. (ex. 뉴아라공지)",
-        default=False,
         db_index=True,
+        default=False,
+        help_text="활성화했을 때 메인페이지 상단바 리스트에 나타나지 않습니다. (ex. 뉴아라공지)",
     )
     name_type = models.SmallIntegerField(
         verbose_name="익명/실명 게시판",
-        help_text="게시판의 글과 댓글들이 익명 혹은 실명이도록 합니다.",
-        default=BoardNameType.REGULAR,
         db_index=True,
+        default=BoardNameType.REGULAR,
+        help_text="게시판의 글과 댓글들이 익명 혹은 실명이도록 합니다.",
     )
     is_school_communication = models.BooleanField(
         verbose_name="학교와의 소통 게시판",
-        help_text="학교 소통 게시판 글임을 표시",
-        default=False,
         db_index=True,
+        default=False,
+        help_text="학교 소통 게시판 글임을 표시",
     )
-    group_id = models.IntegerField(verbose_name="그룹 ID", default=1)
+    group_id = models.IntegerField(
+        verbose_name="그룹 ID",
+        default=1,
+    )
     banner_image = models.ImageField(
-        default="default_banner.png",
-        upload_to="board_banner_images",
         verbose_name="게시판 배너 이미지",
+        upload_to="board_banner_images",
+        default="default_banner.png",
     )
     ko_banner_description = models.TextField(
-        null=True,
-        blank=True,
-        default=None,
         verbose_name="게시판 배너에 삽입되는 국문 소개",
+        blank=True,
+        null=True,
+        default=None,
     )
     en_banner_description = models.TextField(
-        null=True,
-        blank=True,
-        default=None,
         verbose_name="게시판 배너에 삽입되는 영문 소개",
+        blank=True,
+        null=True,
+        default=None,
     )
     banner_url = models.TextField(
-        null=True,
-        blank=True,
-        default=None,
         verbose_name="게시판 배너를 클릭 시에 이동하는 링크",
+        blank=True,
+        null=True,
+        default=None,
     )
+
+    class Meta(MetaDataModel.Meta):
+        verbose_name = "게시판"
+        verbose_name_plural = "게시판 목록"
+        unique_together = (
+            ("ko_name", "deleted_at"),
+            ("en_name", "deleted_at"),
+        )
 
     def __str__(self) -> str:
         return self.ko_name
