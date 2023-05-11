@@ -145,6 +145,12 @@ class Article(MetaDataModel):
         null=True,
         default=None,
     )
+    topped_at = models.DateTimeField(
+        verbose_name="인기글 달성 시각",
+        blank=True,
+        null=True,
+        default=None,
+    )
 
     class Meta(MetaDataModel.Meta):
         verbose_name = "게시물"
