@@ -106,6 +106,10 @@ class Board(MetaDataModel):
         null=True,
         default=None,
     )
+    top_threshold = models.SmallIntegerField(
+        verbose_name="인기글 달성 기준 좋아요 개수",
+        default=10,
+    )
 
     class Meta(MetaDataModel.Meta):
         verbose_name = "게시판"
