@@ -220,7 +220,7 @@ class Article(MetaDataModel):
 
         self.save()
 
-    def update_vote_status(self):
+    def update_vote_status(self) -> None:
         self.positive_vote_count = (
             self.vote_set.filter(is_positive=True).count()
             + self.migrated_positive_vote_count
@@ -229,6 +229,12 @@ class Article(MetaDataModel):
             self.vote_set.filter(is_positive=False).count()
             + self.migrated_negative_vote_count
         )
+
+        if (
+            self.topped_at is None
+            and self.positive_vote_count >= self.parent_board.top_threshold
+        ):
+            self.topped_at = timezone.now()
 
         if (
             self.parent_board.is_school_communication
