@@ -123,7 +123,7 @@ class ArticleAdmin(MetaDataModelAdmin):
         "content_updated_at",
         "commented_at",
         "url",
-        "hidden_at",
+        ("hidden_at", "topped_at"),
     )
     readonly_fields = (
         "hit_count",

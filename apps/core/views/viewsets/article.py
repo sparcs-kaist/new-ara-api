@@ -98,8 +98,8 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             )
 
             queryset = queryset.prefetch_related(
-                'attachments',
-                'communication_article',
+                "attachments",
+                "communication_article",
             )
 
             # optimizing queryset for list action
@@ -406,12 +406,12 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             """,
             query_params,
         ).prefetch_related(
-            'created_by',
-            'created_by__profile',
-            'parent_board',
-            'parent_topic',
-            'attachments',
-            'communication_article',
+            "created_by",
+            "created_by__profile",
+            "parent_board",
+            "parent_topic",
+            "attachments",
+            "communication_article",
             ArticleReadLog.prefetch_my_article_read_log(self.request.user),
         )
 
@@ -419,3 +419,14 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             [v for v in queryset], many=True, context={"request": request}
         )
         return self.paginator.get_paginated_response(serializer.data)
+
+    @decorators.action(detail=False, methods=["get"])
+    def top(self, request):
+        top_articles = Article.objects.exclude(topped_at__isnull=True)
+        page = self.paginate_queryset(top_articles)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(top_articles, many=True)
+        return response.Response(data=serializer.data, status=status.HTTP_200_OK)
