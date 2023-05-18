@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 from django.contrib.auth.models import User
 from django.utils import timezone
-from rest_framework.status import HTTP_200_OK
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from rest_framework.test import APIClient
 
 from apps.core.models import Article, Board
@@ -134,7 +134,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             "content_text": "Content Text made in factory",
             "created_by": self.user.id,
             "parent_board": self.communication_board.id,
-            "name_type": NameType.REALNAME,
+            "name_type": NameType.REALNAME.name,
         }
         res = self.http_request(self.user, "post", "articles", article_data)
 
@@ -163,6 +163,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             "content_text": "test_create_communication_article",
             "creted_by": self.user.id,
             "parent_board": self.communication_board.id,
+            "name_type": NameType.REALNAME.name,
         }
         self.http_request(self.user, "post", "articles", user_data)
 
@@ -194,6 +195,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             "content_text": "test_non_communication_article",
             "creted_by": self.user.id,
             "parent_board": self.non_communication_board.id,
+            "name_type": NameType.REGULAR.name,
         }
         self.http_request(self.user, "post", "articles", user_data)
 
@@ -400,10 +402,10 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             "content_text": "Content text of anonymous article",
             "created_by": self.user.id,
             "parent_board": self.communication_board.id,
-            "name_type": NameType.ANONYMOUS,
+            "name_type": NameType.ANONYMOUS.name,
         }
-        res = self.http_request(self.user, "post", "articles", article_data).data
-        assert res.get("name_type") == NameType.REALNAME
+        result = self.http_request(self.user, "post", "articles", article_data)
+        assert result.status_code == HTTP_400_BAD_REQUEST
 
     # 익명 댓글 작성 불가 확인
     def test_anonymous_comment(self):

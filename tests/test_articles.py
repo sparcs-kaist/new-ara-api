@@ -30,6 +30,15 @@ def set_boards(request):
         name_type=NameType.ANONYMOUS,
     )
 
+    request.cls.free_board = Board.objects.create(
+        slug="free",
+        ko_name="자유 게시판",
+        en_name="Free",
+        ko_description="자유 게시판",
+        en_description="Free",
+        name_type=NameType.ANONYMOUS | NameType.REGULAR,
+    )
+
     request.cls.realname_board = Board.objects.create(
         slug="test realname board",
         ko_name="테스트 실명 게시판",
@@ -348,7 +357,7 @@ class TestArticle(TestCase, RequestSetting):
             "title": "article for test_create",
             "content": "content for test_create",
             "content_text": "content_text for test_create",
-            "name_type": NameType.REGULAR,
+            "name_type": NameType.REGULAR.name,
             "is_content_sexual": False,
             "is_content_social": False,
             "parent_topic": self.topic.id,
@@ -401,6 +410,7 @@ class TestArticle(TestCase, RequestSetting):
                         "content": "content in write permission test",
                         "content_text": "content_text in write permission test",
                         "parent_board": board.id,
+                        "name_type": NameType.REGULAR.name,
                     },
                 )
 
@@ -420,15 +430,72 @@ class TestArticle(TestCase, RequestSetting):
             "is_content_social": False,
             "parent_topic": None,
             "parent_board": self.anon_board.id,
+            "name_type": NameType.ANONYMOUS.name,
         }
 
         result = self.http_request(self.user, "post", "articles", user_data)
 
         assert result.data["name_type"] == NameType.ANONYMOUS
 
-        user_data.update({"parent_topic": self.topic.id, "parent_board": self.board.id})
+        user_data.update(
+            {
+                "parent_topic": self.topic.id,
+                "parent_board": self.board.id,
+                "name_type": NameType.REGULAR.name,
+            }
+        )
         result = self.http_request(self.user, "post", "articles", user_data)
         assert not result.data["name_type"] == NameType.ANONYMOUS
+
+    # 자유게시판에 익명, 닉네임 게시글 만들 수 있다
+    def test_create_free(self):
+        for name_type in [NameType.ANONYMOUS, NameType.REGULAR]:
+            user_data = {
+                "title": "article for test_create",
+                "content": "content for test_create",
+                "content_text": "content_text for test_create",
+                "is_content_sexual": False,
+                "is_content_social": False,
+                "parent_topic": None,
+                "parent_board": self.free_board.id,
+                "name_type": name_type.name,
+            }
+
+            result = self.http_request(self.user, "post", "articles", user_data)
+            assert result.data["name_type"] == name_type
+
+    # 일반 게시판에 익명 게시글을 만들 수 없다
+    def test_create_invalid1(self):
+        user_data = {
+            "title": "article for test_create",
+            "content": "content for test_create",
+            "content_text": "content_text for test_create",
+            "is_content_sexual": False,
+            "is_content_social": False,
+            "parent_topic": None,
+            "parent_board": self.board.id,
+            "name_type": NameType.ANONYMOUS.name,
+        }
+
+        result = self.http_request(self.user, "post", "articles", user_data)
+        assert result.status_code == status.HTTP_400_BAD_REQUEST
+
+    # 실명 게시판에 익명 게시글, 닉네임 게시글을 만들 수 없다
+    def test_create_invalid2(self):
+        for name_type in [NameType.ANONYMOUS, NameType.REGULAR]:
+            user_data = {
+                "title": "article for test_create",
+                "content": "content for test_create",
+                "content_text": "content_text for test_create",
+                "is_content_sexual": False,
+                "is_content_social": False,
+                "parent_topic": None,
+                "parent_board": self.realname_board.id,
+                "name_type": name_type.name,
+            }
+
+            result = self.http_request(self.user, "post", "articles", user_data)
+            assert result.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_update_cache_sync(self):
         new_title = "title changed!"
@@ -592,7 +659,7 @@ class TestArticle(TestCase, RequestSetting):
             "title": "article for test_create",
             "content": "content for test_create",
             "content_text": "content_text for test_create",
-            "name_type": NameType.REGULAR,
+            "name_type": NameType.REGULAR.name,
             "is_content_sexual": False,
             "is_content_social": False,
             "parent_board": self.readonly_board.id,
@@ -732,6 +799,7 @@ class TestRealnameArticle(TestCase, RequestSetting):
             "is_content_social": False,
             "parent_topic": self.realname_topic.id,
             "parent_board": self.realname_board.id,
+            "name_type": NameType.REALNAME.name,
         }
 
         result = self.http_request(
