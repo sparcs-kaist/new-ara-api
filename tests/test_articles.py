@@ -421,6 +421,23 @@ class TestArticle(TestCase, RequestSetting):
                 else:
                     assert res.status_code == status.HTTP_403_FORBIDDEN
 
+
+    def test_create_regular(self):
+        user_data = {
+            "title": "article for test_create",
+            "content": "content for test_create",
+            "content_text": "content_text for test_create",
+            "is_content_sexual": False,
+            "is_content_social": False,
+            "parent_topic": self.topic.id,
+            "parent_board": self.board.id,
+            "name_type": NameType.REGULAR.name,
+        }
+
+        result = self.http_request(self.user, "post", "articles", user_data)
+
+        assert result.data["name_type"] == NameType.REGULAR
+
     def test_create_anonymous(self):
         user_data = {
             "title": "article for test_create",
@@ -436,16 +453,6 @@ class TestArticle(TestCase, RequestSetting):
         result = self.http_request(self.user, "post", "articles", user_data)
 
         assert result.data["name_type"] == NameType.ANONYMOUS
-
-        user_data.update(
-            {
-                "parent_topic": self.topic.id,
-                "parent_board": self.board.id,
-                "name_type": NameType.REGULAR.name,
-            }
-        )
-        result = self.http_request(self.user, "post", "articles", user_data)
-        assert not result.data["name_type"] == NameType.ANONYMOUS
 
     # 자유게시판에 익명, 닉네임 게시글 만들 수 있다
     def test_create_free(self):
