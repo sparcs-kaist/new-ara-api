@@ -154,18 +154,39 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         return queryset
 
-    # TODO: name type을 request에서 받아와야 함
-    # 이때 자유게시판에서만 익명으로 설정할 수 있게 하고, 학교에게 전합니다는 원래대로 name type 설정
+    def create(self, request, *args, **kwargs):
+        def _get_name_type(name_type_name: str):
+            for name_type in NameType:
+                if name_type.name == name_type_name:
+                    return name_type
+
+            return None
+
+        parent_board = Board.objects.get(pk=self.request.data["parent_board"])
+        name_type_name = self.request.data["name_type"]
+        name_type = _get_name_type(name_type_name)
+
+        if name_type is None or name_type not in NameType(parent_board.name_type):
+            return response.Response(
+                {
+                    "message": gettext(
+                        f"Cannot set name type as {name_type_name} in board {parent_board}"
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        request.data["name_type"] = name_type.value
+        return super().create(request, *args, **kwargs)
+
     def perform_create(self, serializer):
+        parent_board = Board.objects.get(pk=self.request.data["parent_board"])
         serializer.save(
             created_by=self.request.user,
-            name_type=Board.objects.get(pk=self.request.data["parent_board"]).name_type,
         )
 
         instance = serializer.instance
-        if Board.objects.get(
-            pk=self.request.data["parent_board"]
-        ).is_school_communication:
+        if parent_board.is_school_communication:
             communication_article = CommunicationArticle.objects.create(
                 article=instance,
             )
