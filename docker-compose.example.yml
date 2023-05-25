@@ -75,7 +75,7 @@ services:
 
   db:
     container_name: db
-    image: mysql:5.7
+    image: mysql:8.0
     expose:
       - 3306
     ports:
