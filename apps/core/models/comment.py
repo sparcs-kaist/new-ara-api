@@ -17,7 +17,7 @@ from ara.sanitizer import sanitize
 from ara.settings import HASH_SECRET_VALUE, MIN_TIME
 
 from .block import Block
-from .board import BoardNameType
+from .board import NameType
 from .report import Report
 
 
@@ -40,7 +40,7 @@ class Comment(MetaDataModel):
     )
 
     name_type = models.SmallIntegerField(
-        default=BoardNameType.REGULAR,
+        default=NameType.REGULAR,
         verbose_name="익명 혹은 실명",
     )
 
@@ -167,7 +167,7 @@ class Comment(MetaDataModel):
     # API 상에서 보이는 사용자 (익명일 경우 익명화된 글쓴이, 그 외는 그냥 글쓴이)
     @cached_property
     def postprocessed_created_by(self) -> Union[settings.AUTH_USER_MODEL, Dict]:
-        if self.name_type == BoardNameType.REGULAR:
+        if self.name_type == NameType.REGULAR:
             return self.created_by
 
         parent_article = self.get_parent_article()
@@ -182,7 +182,7 @@ class Comment(MetaDataModel):
         user_hash_int = int(user_hash[-4:], 16)
         user_profile_picture = get_profile_picture(user_hash_int)
 
-        if self.name_type == BoardNameType.ANONYMOUS:
+        if self.name_type == NameType.ANONYMOUS:
             if parent_article_created_by_id == comment_created_by_id:
                 user_name = gettext("author")
             else:
@@ -200,7 +200,7 @@ class Comment(MetaDataModel):
                 },
             }
 
-        if self.name_type == BoardNameType.REALNAME:
+        if self.name_type == NameType.REALNAME:
             if parent_article_created_by_id == comment_created_by_id:
                 user_realname = gettext("author")
             else:

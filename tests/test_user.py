@@ -6,7 +6,7 @@ from django.core.validators import URLValidator
 from django.utils import timezone
 
 from apps.core.models import Article, Board, Comment
-from apps.core.models.board import BoardNameType
+from apps.core.models.board import NameType
 from ara.settings import MIN_TIME
 from tests.conftest import RequestSetting, TestCase
 
@@ -27,7 +27,7 @@ def set_boards(request):
         en_name="Realname Board",
         ko_description="실명 게시판",
         en_description="Realname Board",
-        name_type=BoardNameType.REALNAME,
+        name_type=NameType.REALNAME,
     )
 
 
@@ -37,7 +37,7 @@ def set_articles(request):
     common_kwargs = {
         "content": "example content",
         "content_text": "example content text",
-        "name_type": BoardNameType.REGULAR,
+        "name_type": NameType.REGULAR,
         "created_by": request.cls.user2,
         "parent_board": request.cls.board,
         "hit_count": 0,
@@ -80,7 +80,7 @@ def set_anonymous_article(request):
         title="익명글",
         is_content_sexual=False,
         is_content_social=False,
-        name_type=BoardNameType.ANONYMOUS,
+        name_type=NameType.ANONYMOUS,
         content="example content",
         content_text="example content text",
         created_by=request.cls.user2,
@@ -96,7 +96,7 @@ def set_realname_article(request):
         title="실명글",
         is_content_sexual=False,
         is_content_social=False,
-        name_type=BoardNameType.REALNAME,
+        name_type=NameType.REALNAME,
         content="example content",
         content_text="example content text",
         created_by=request.cls.user_with_kaist_info,
@@ -110,7 +110,7 @@ def set_anonymous_comment(request):
     """set_anonymous_articles 먼저 적용"""
     request.cls.comment_anonymous = Comment.objects.create(
         content="example comment",
-        name_type=BoardNameType.ANONYMOUS,
+        name_type=NameType.ANONYMOUS,
         created_by=request.cls.user,
         parent_article=request.cls.article_anonymous,
     )
@@ -121,7 +121,7 @@ def set_realname_comment(request):
     """set_realname_article, set_user_with_kaist_info 먼저 적용"""
     request.cls.realname_comment = Comment.objects.create(
         content="example comment",
-        name_type=BoardNameType.REALNAME,
+        name_type=NameType.REALNAME,
         created_by=request.cls.user_with_kaist_info,
         parent_article=request.cls.realname_article,
     )

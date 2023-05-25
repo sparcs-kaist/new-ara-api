@@ -7,7 +7,7 @@ from django.utils.translation import gettext
 from rest_framework import status
 
 from apps.core.models import Article, Block, Board, Comment, Topic, Vote
-from apps.core.models.board import BoardNameType
+from apps.core.models.board import NameType
 from ara.settings import MIN_TIME
 from tests.conftest import RequestSetting, TestCase
 
@@ -18,7 +18,7 @@ def set_boards(request):
         slug="test board",
         ko_name="테스트 게시판",
         en_name="Test Board",
-        name_type=BoardNameType.REGULAR,
+        name_type=NameType.REGULAR,
         ko_description="테스트 게시판입니다",
         en_description="This is a board for testing",
     )
@@ -27,7 +27,7 @@ def set_boards(request):
         slug="test realname board",
         ko_name="테스트 실명 게시판",
         en_name="Test realname Board",
-        name_type=BoardNameType.REALNAME,
+        name_type=NameType.REALNAME,
         ko_description="테스트 실명 게시판입니다",
         en_description="This is a realname board for testing",
     )
@@ -62,7 +62,7 @@ def set_articles(request):
         title="Test Article",
         content="Content of test article",
         content_text="Content of test article in text",
-        name_type=BoardNameType.REGULAR,
+        name_type=NameType.REGULAR,
         is_content_sexual=False,
         is_content_social=False,
         hit_count=0,
@@ -79,7 +79,7 @@ def set_articles(request):
         title="Anonymous Test Article",
         content="Content of test article",
         content_text="Content of test article in text",
-        name_type=BoardNameType.ANONYMOUS,
+        name_type=NameType.ANONYMOUS,
         is_content_sexual=False,
         is_content_social=False,
         hit_count=0,
@@ -96,7 +96,7 @@ def set_articles(request):
         title="Realname Test Article",
         content="Content of test realname article",
         content_text="Content of test article in text",
-        name_type=BoardNameType.REALNAME,
+        name_type=NameType.REALNAME,
         is_content_sexual=False,
         is_content_social=False,
         hit_count=0,
@@ -113,7 +113,7 @@ def set_articles(request):
         title="Realname Test Article",
         content="Content of test realname article",
         content_text="Content of test article in text",
-        name_type=BoardNameType.REALNAME,
+        name_type=NameType.REALNAME,
         is_content_sexual=False,
         is_content_social=False,
         hit_count=0,
@@ -131,21 +131,21 @@ def set_comments(request):
     """set_article 먼저 적용"""
     request.cls.comment = Comment.objects.create(
         content="this is a test comment",
-        name_type=BoardNameType.REGULAR,
+        name_type=NameType.REGULAR,
         created_by=request.cls.user,
         parent_article=request.cls.article_regular,
     )
 
     request.cls.comment_anonymous = Comment.objects.create(
         content="this is an anonymous test comment",
-        name_type=BoardNameType.ANONYMOUS,
+        name_type=NameType.ANONYMOUS,
         created_by=request.cls.user,
         parent_article=request.cls.article_anonymous,
     )
 
     request.cls.realname_comment = Comment.objects.create(
         content="this is an realname test comment",
-        name_type=BoardNameType.REALNAME,
+        name_type=NameType.REALNAME,
         created_by=request.cls.user_with_kaist_info,
         parent_article=request.cls.realname_article,
     )
@@ -172,13 +172,13 @@ class TestComments(TestCase, RequestSetting):
 
         comment2 = Comment.objects.create(
             content="Test comment 2",
-            name_type=BoardNameType.REGULAR,
+            name_type=NameType.REGULAR,
             created_by=self.user,
             parent_article=self.article_regular,
         )
         comment3 = Comment.objects.create(
             content="Test comment 3",
-            name_type=BoardNameType.REGULAR,
+            name_type=NameType.REGULAR,
             created_by=self.user,
             parent_article=self.article_regular,
         )
@@ -223,14 +223,13 @@ class TestComments(TestCase, RequestSetting):
 
     # 대댓글의 생성과 삭제에 따라서 article의 comment_count가 맞게 바뀌는지 확인
     def test_article_comment_count_with_subcomments(self):
-
         article = Article.objects.get(id=self.article_regular.id)
         print("comment set: ", article.comment_set)
         assert article.comment_count == 1
 
         subcomment1 = Comment.objects.create(
             content="Test comment 2",
-            name_type=BoardNameType.REGULAR,
+            name_type=NameType.REGULAR,
             created_by=self.user,
             parent_comment=self.comment,
         )
@@ -241,7 +240,7 @@ class TestComments(TestCase, RequestSetting):
 
         subcomment2 = Comment.objects.create(
             content="Test comment 3",
-            name_type=BoardNameType.REGULAR,
+            name_type=NameType.REGULAR,
             created_by=self.user,
             parent_comment=self.comment,
         )
@@ -280,7 +279,7 @@ class TestComments(TestCase, RequestSetting):
     def test_delete_comment_with_subcomment(self):
         subcomment = Comment.objects.create(
             content="Test subcomment",
-            name_type=BoardNameType.REGULAR,
+            name_type=NameType.REGULAR,
             created_by=self.user,
             parent_comment=self.comment,
         )
@@ -316,18 +315,18 @@ class TestComments(TestCase, RequestSetting):
         # 익명 댓글 생성
         anon_comment = Comment.objects.create(
             content="Anonymous test comment",
-            name_type=BoardNameType.ANONYMOUS,
+            name_type=NameType.ANONYMOUS,
             created_by=self.user,
             parent_article=self.article_regular,
         )
 
         # 익명 댓글을 GET할 때, 작성자의 정보가 전달되지 않는 것 확인
         res = self.http_request(self.user, "get", f"comments/{anon_comment.id}").data
-        assert res.get("name_type") == BoardNameType.ANONYMOUS
+        assert res.get("name_type") == NameType.ANONYMOUS
         assert res.get("created_by")["username"] != anon_comment.created_by.username
 
         res2 = self.http_request(self.user2, "get", f"comments/{anon_comment.id}").data
-        assert res2.get("name_type") == BoardNameType.ANONYMOUS
+        assert res2.get("name_type") == NameType.ANONYMOUS
         assert res2.get("created_by")["username"] != anon_comment.created_by.username
 
     # 익명글의 글쓴이가 본인의 글에 남긴 댓글에 대해, user_id가 같은지 확인
@@ -335,7 +334,7 @@ class TestComments(TestCase, RequestSetting):
         # 익명 댓글 생성
         Comment.objects.create(
             content="Anonymous test comment",
-            name_type=BoardNameType.ANONYMOUS,
+            name_type=NameType.ANONYMOUS,
             created_by=self.user,
             parent_article=self.article_anonymous,
         )
@@ -369,8 +368,8 @@ class TestComments(TestCase, RequestSetting):
         }
         res = self.http_request(self.user, "post", "comments", comment_data)
 
-        assert res.data["name_type"] == BoardNameType.REGULAR
-        assert Comment.objects.get(pk=res.data["id"]).name_type == BoardNameType.REGULAR
+        assert res.data["name_type"] == NameType.REGULAR
+        assert Comment.objects.get(pk=res.data["id"]).name_type == NameType.REGULAR
 
     def test_comment_on_regular_parent_comment(self):
         comment_str = "This is a comment on a regular parent comment"
@@ -383,7 +382,7 @@ class TestComments(TestCase, RequestSetting):
         self.http_request(self.user, "post", "comments", comment_data)
         assert (
             Comment.objects.filter(content=comment_str).first().name_type
-            == BoardNameType.REGULAR
+            == NameType.REGULAR
         )
 
     def test_comment_on_anonymous_parent_article(self):
@@ -397,7 +396,7 @@ class TestComments(TestCase, RequestSetting):
         self.http_request(self.user, "post", "comments", comment_data)
         assert (
             Comment.objects.filter(content=comment_str).first().name_type
-            == BoardNameType.ANONYMOUS
+            == NameType.ANONYMOUS
         )
 
     def test_comment_on_anonymous_parent_comment(self):
@@ -409,10 +408,8 @@ class TestComments(TestCase, RequestSetting):
         }
         res = self.http_request(self.user, "post", "comments", comment_data)
 
-        assert res.data["name_type"] == BoardNameType.ANONYMOUS
-        assert (
-            Comment.objects.get(pk=res.data["id"]).name_type == BoardNameType.ANONYMOUS
-        )
+        assert res.data["name_type"] == NameType.ANONYMOUS
+        assert Comment.objects.get(pk=res.data["id"]).name_type == NameType.ANONYMOUS
 
     def test_comment_on_deleted_article(self):
         deleted_article = Article.objects.create(
@@ -430,7 +427,7 @@ class TestComments(TestCase, RequestSetting):
             {
                 "content": "deleted article comment content",
                 "parent_article": deleted_article.id,
-                "name_type": BoardNameType.REGULAR,
+                "name_type": NameType.REGULAR,
             },
         )
         assert res.status_code == status.HTTP_404_NOT_FOUND
@@ -452,7 +449,7 @@ class TestComments(TestCase, RequestSetting):
             {
                 "content": "report hidden article comment content",
                 "parent_article": report_hidden_article.id,
-                "name_type": BoardNameType.REGULAR,
+                "name_type": NameType.REGULAR,
             },
         )
         assert res.status_code == status.HTTP_201_CREATED
@@ -532,14 +529,14 @@ class TestRealnameComments(TestCase, RequestSetting):
     def test_get_realname_comment(self):
         comment1 = Comment.objects.create(
             content="Realname test comment1",
-            name_type=BoardNameType.REALNAME,
+            name_type=NameType.REALNAME,
             created_by=self.user_without_kaist_info,
             parent_article=self.realname_article,
         )
 
         comment2 = Comment.objects.create(
             content="Realname test comment2",
-            name_type=BoardNameType.REALNAME,
+            name_type=NameType.REALNAME,
             created_by=self.user_with_kaist_info,
             parent_article=self.realname_article_without_kinfo,
         )
@@ -547,7 +544,7 @@ class TestRealnameComments(TestCase, RequestSetting):
         res1 = self.http_request(
             self.user_without_kaist_info, "get", f"comments/{comment1.id}"
         ).data
-        assert res1.get("name_type") == BoardNameType.REALNAME
+        assert res1.get("name_type") == NameType.REALNAME
         assert (
             res1.get("created_by")["username"] == comment1.created_by.profile.realname
         )
@@ -555,7 +552,7 @@ class TestRealnameComments(TestCase, RequestSetting):
         res2 = self.http_request(
             self.user_with_kaist_info, "get", f"comments/{comment2.id}"
         ).data
-        assert res2.get("name_type") == BoardNameType.REALNAME
+        assert res2.get("name_type") == NameType.REALNAME
         assert (
             res2.get("created_by")["username"] == comment2.created_by.profile.realname
         )
@@ -564,7 +561,7 @@ class TestRealnameComments(TestCase, RequestSetting):
         res = self.http_request(
             self.user_with_kaist_info, "get", f"comments/{self.realname_comment.id}"
         ).data
-        assert res.get("name_type") == BoardNameType.REALNAME
+        assert res.get("name_type") == NameType.REALNAME
         assert res.get("created_by")["username"] == gettext("author")
 
     def test_create_realname_comment(self):
@@ -579,10 +576,8 @@ class TestRealnameComments(TestCase, RequestSetting):
         res = self.http_request(
             self.user_with_kaist_info, "post", "comments", comment_data
         ).data
-        assert res.get("name_type") == BoardNameType.REALNAME
-        assert (
-            Comment.objects.get(content=comment_str).name_type == BoardNameType.REALNAME
-        )
+        assert res.get("name_type") == NameType.REALNAME
+        assert Comment.objects.get(content=comment_str).name_type == NameType.REALNAME
 
     def test_create_realname_subcomment(self):
         comment_str = "This is a subcomment on a realname comment"
@@ -596,10 +591,8 @@ class TestRealnameComments(TestCase, RequestSetting):
         res = self.http_request(
             self.user_with_kaist_info, "post", "comments", comment_data
         ).data
-        assert res.get("name_type") == BoardNameType.REALNAME
-        assert (
-            Comment.objects.get(content=comment_str).name_type == BoardNameType.REALNAME
-        )
+        assert res.get("name_type") == NameType.REALNAME
+        assert Comment.objects.get(content=comment_str).name_type == NameType.REALNAME
 
     def test_create_school_admin_comment(self):
         comment_str = "This is a school_admin comment on a realname article"
@@ -613,10 +606,8 @@ class TestRealnameComments(TestCase, RequestSetting):
         res = self.http_request(
             self.school_admin, "post", "comments", comment_data
         ).data
-        assert res.get("name_type") == BoardNameType.REGULAR
-        assert (
-            Comment.objects.get(content=comment_str).name_type == BoardNameType.REGULAR
-        )
+        assert res.get("name_type") == NameType.REGULAR
+        assert Comment.objects.get(content=comment_str).name_type == NameType.REGULAR
 
     def test_create_school_admin_subcomment(self):
         comment_str = "This is a school_admin subcomment on a realname comment"
@@ -630,10 +621,8 @@ class TestRealnameComments(TestCase, RequestSetting):
         res = self.http_request(
             self.school_admin, "post", "comments", comment_data
         ).data
-        assert res.get("name_type") == BoardNameType.REGULAR
-        assert (
-            Comment.objects.get(content=comment_str).name_type == BoardNameType.REGULAR
-        )
+        assert res.get("name_type") == NameType.REGULAR
+        assert Comment.objects.get(content=comment_str).name_type == NameType.REGULAR
 
 
 @pytest.mark.usefixtures(
@@ -650,7 +639,7 @@ class TestHiddenComments(TestCase, RequestSetting):
     def _comment_factory(self, **comment_kwargs):
         return Comment.objects.create(
             content="example comment",
-            name_type=BoardNameType.REGULAR,
+            name_type=NameType.REGULAR,
             created_by=self.user,
             parent_article=self.article_regular,
             **comment_kwargs,
@@ -673,7 +662,7 @@ class TestHiddenComments(TestCase, RequestSetting):
         Block.objects.create(blocked_by=self.user, user=self.user2)
         comment2 = Comment.objects.create(
             content="example comment",
-            name_type=BoardNameType.REGULAR,
+            name_type=NameType.REGULAR,
             created_by=self.user2,
             parent_article=self.article_regular,
         )

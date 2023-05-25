@@ -2,11 +2,10 @@
 
 from django.db import migrations, models
 
-import apps.core.models.board
+from apps.core.models.board import NameType
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("core", "0037_board_banner_url"),
     ]
@@ -21,7 +20,7 @@ class Migration(migrations.Migration):
             model_name="article",
             name="name_type",
             field=models.SmallIntegerField(
-                default=apps.core.models.board.BoardNameType["REGULAR"],
+                default=NameType["REGULAR"],
                 verbose_name="익명 혹은 실명 여부",
             ),
         ),
@@ -35,7 +34,7 @@ class Migration(migrations.Migration):
             name="name_type",
             field=models.SmallIntegerField(
                 db_index=True,
-                default=apps.core.models.board.BoardNameType["REGULAR"],
+                default=NameType["REGULAR"],
                 help_text="게시판의 글과 댓글들이 익명 혹은 실명이도록 합니다.",
                 verbose_name="익명/실명 게시판",
             ),
@@ -49,7 +48,7 @@ class Migration(migrations.Migration):
             model_name="comment",
             name="name_type",
             field=models.SmallIntegerField(
-                default=apps.core.models.board.BoardNameType["REGULAR"],
+                default=NameType["REGULAR"],
                 verbose_name="익명 혹은 실명",
             ),
         ),

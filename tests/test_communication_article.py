@@ -5,11 +5,11 @@ from unittest.mock import patch
 import pytest
 from django.contrib.auth.models import User
 from django.utils import timezone
-from rest_framework.status import HTTP_200_OK
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from rest_framework.test import APIClient
 
 from apps.core.models import Article, Board
-from apps.core.models.board import BoardNameType
+from apps.core.models.board import NameType
 from apps.core.models.communication_article import (
     CommunicationArticle,
     SchoolResponseStatus,
@@ -29,7 +29,7 @@ def set_communication_board(request):
         ko_description="학교와의 게시판 (테스트)",
         en_description="With School (Test)",
         is_school_communication=True,
-        name_type=BoardNameType.REALNAME,
+        name_type=NameType.REALNAME,
         read_access_mask=0b11011110,
         write_access_mask=0b11011010,
     )
@@ -56,7 +56,7 @@ def set_article(request):
         content_text="Communication Article Content Text",
         created_by=request.cls.user,
         parent_board=request.cls.communication_board,
-        name_type=BoardNameType.REALNAME,
+        name_type=NameType.REALNAME,
     )
 
 
@@ -80,7 +80,6 @@ def set_communication_article(request):
     "set_communication_article",
 )
 class TestCommunicationArticle(TestCase, RequestSetting):
-
     # ======================================================================= #
     #                            Helper Functions                             #
     # ======================================================================= #
@@ -135,7 +134,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             "content_text": "Content Text made in factory",
             "created_by": self.user.id,
             "parent_board": self.communication_board.id,
-            "name_type": BoardNameType.REALNAME,
+            "name_type": NameType.REALNAME.name,
         }
         res = self.http_request(self.user, "post", "articles", article_data)
 
@@ -164,6 +163,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             "content_text": "test_create_communication_article",
             "creted_by": self.user.id,
             "parent_board": self.communication_board.id,
+            "name_type": NameType.REALNAME.name,
         }
         self.http_request(self.user, "post", "articles", user_data)
 
@@ -195,6 +195,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             "content_text": "test_non_communication_article",
             "creted_by": self.user.id,
             "parent_board": self.non_communication_board.id,
+            "name_type": NameType.REGULAR.name,
         }
         self.http_request(self.user, "post", "articles", user_data)
 
@@ -401,10 +402,10 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             "content_text": "Content text of anonymous article",
             "created_by": self.user.id,
             "parent_board": self.communication_board.id,
-            "name_type": BoardNameType.ANONYMOUS,
+            "name_type": NameType.ANONYMOUS.name,
         }
-        res = self.http_request(self.user, "post", "articles", article_data).data
-        assert res.get("name_type") == BoardNameType.REALNAME
+        result = self.http_request(self.user, "post", "articles", article_data)
+        assert result.status_code == HTTP_400_BAD_REQUEST
 
     # 익명 댓글 작성 불가 확인
     def test_anonymous_comment(self):
@@ -412,10 +413,10 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             "content": "Anonymous comment",
             "created_by": self.user.id,
             "parent_article": self.article.id,
-            "name_type": BoardNameType.ANONYMOUS,
+            "name_type": NameType.ANONYMOUS,
         }
         res = self.http_request(self.user, "post", "comments", comment_data).data
-        assert res.get("name_type") == BoardNameType.REALNAME
+        assert res.get("name_type") == NameType.REALNAME
 
     # ======================================================================= #
     #                               School Admin                              #
