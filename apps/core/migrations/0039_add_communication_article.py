@@ -5,7 +5,6 @@ import datetime
 import django.db.models.deletion
 import django.utils.timezone
 from django.db import migrations, models
-from django.utils.timezone import utc
 
 import apps.core.models.communication_article
 
@@ -57,28 +56,28 @@ class Migration(migrations.Migration):
                     "deleted_at",
                     models.DateTimeField(
                         db_index=True,
-                        default=datetime.datetime(1, 1, 1, 0, 0, tzinfo=utc),
+                        default=datetime.datetime(1, 1, 1, 0, 0, tzinfo=datetime.timezone.utc),
                         verbose_name="삭제 시간",
                     ),
                 ),
                 (
                     "response_deadline",
                     models.DateTimeField(
-                        default=datetime.datetime(1, 1, 1, 0, 0, tzinfo=utc),
+                        default=datetime.datetime(1, 1, 1, 0, 0, tzinfo=datetime.timezone.utc),
                         verbose_name="답변 요청 기한",
                     ),
                 ),
                 (
                     "confirmed_by_school_at",
                     models.DateTimeField(
-                        default=datetime.datetime(1, 1, 1, 0, 0, tzinfo=utc),
+                        default=datetime.datetime(1, 1, 1, 0, 0, tzinfo=datetime.timezone.utc),
                         verbose_name="학교측 문의 확인 시각",
                     ),
                 ),
                 (
                     "answered_at",
                     models.DateTimeField(
-                        default=datetime.datetime(1, 1, 1, 0, 0, tzinfo=utc),
+                        default=datetime.datetime(1, 1, 1, 0, 0, tzinfo=datetime.timezone.utc),
                         verbose_name="학교측 답변을 받은 시각",
                     ),
                 ),

@@ -6,7 +6,6 @@ import django.db.models.deletion
 import django.utils.timezone
 from django.conf import settings
 from django.db import migrations, models
-from django.utils.timezone import utc
 
 
 class Migration(migrations.Migration):
@@ -38,7 +37,7 @@ class Migration(migrations.Migration):
                     "deleted_at",
                     models.DateTimeField(
                         db_index=True,
-                        default=datetime.datetime(1, 1, 1, 0, 0, tzinfo=utc),
+                        default=datetime.datetime(1, 1, 1, 0, 0, tzinfo=datetime.timezone.utc),
                         verbose_name="삭제 시간",
                     ),
                 ),

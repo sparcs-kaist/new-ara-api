@@ -3,7 +3,6 @@
 import datetime
 
 from django.db import migrations, models
-from django.utils.timezone import utc
 
 
 class Migration(migrations.Migration):
@@ -18,7 +17,7 @@ class Migration(migrations.Migration):
             name="hidden_at",
             field=models.DateTimeField(
                 db_index=True,
-                default=datetime.datetime(1, 1, 1, 0, 0, tzinfo=utc),
+                default=datetime.datetime(1, 1, 1, 0, 0, tzinfo=datetime.timezone.utc),
                 verbose_name="임시 삭제 시간",
             ),
         ),
@@ -32,7 +31,7 @@ class Migration(migrations.Migration):
             name="hidden_at",
             field=models.DateTimeField(
                 db_index=True,
-                default=datetime.datetime(1, 1, 1, 0, 0, tzinfo=utc),
+                default=datetime.datetime(1, 1, 1, 0, 0, tzinfo=datetime.timezone.utc),
                 verbose_name="임시 삭제 시간",
             ),
         ),

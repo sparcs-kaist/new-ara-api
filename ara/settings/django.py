@@ -1,7 +1,7 @@
 import os
 from os import environ as os_environ
 
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from .env import env, root
 
@@ -89,7 +89,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
 LANGUAGE_CODE = "ko-kr"
-LANGUAGES = [("ko", ugettext_lazy("Korean")), ("en", ugettext_lazy("English"))]
+LANGUAGES = [("ko", gettext_lazy("Korean")), ("en", gettext_lazy("English"))]
 LOCALE_PATHS = [os.path.join(BASE_DIR, "ara/locale")]
 
 TIME_ZONE = "Asia/Seoul"
