@@ -7,7 +7,7 @@ from apps.core.models import Article, Block, Board, Comment, Topic, Vote
 from apps.core.models.board import BoardAccessPermissionType, BoardNameType
 from apps.user.models import UserProfile
 from ara.settings import MIN_TIME, SCHOOL_RESPONSE_VOTE_THRESHOLD
-from tests.conftest import RequestSetting, TestCase
+from tests.conftest import RequestSetting, TestCase, Utils
 
 
 @pytest.fixture(scope="class")
@@ -241,24 +241,6 @@ def set_readonly_board(request):
     "set_articles",
 )
 class TestArticle(TestCase, RequestSetting):
-    def _create_user_by_group(self, group):
-        user, created = User.objects.get_or_create(
-            username=f"User in group {group}", email=f"group{group}user@sparcs.org"
-        )
-        if created:
-            UserProfile.objects.create(
-                user=user,
-                nickname=f"Nickname in group {group}",
-                group=group,
-                agree_terms_of_service_at=timezone.now(),
-                sso_user_info={
-                    "kaist_info": '{"ku_kname": "\\ud669"}',
-                    "first_name": f"Group{group}User_FirstName",
-                    "last_name": f"Group{group}User_LastName",
-                },
-            )
-        return user
-
     def test_list(self):
         # article 개수를 확인하는 테스트
         res = self.http_request(self.user, "get", "articles")
@@ -360,9 +342,12 @@ class TestArticle(TestCase, RequestSetting):
 
     # get request 시 user의 read 권한 확인 테스트
     def test_check_read_permission_when_get(self):
-        group_users = [
-            self._create_user_by_group(group) for group in UserProfile.UserGroup
-        ]
+        group_users = []
+        for idx, group in enumerate(UserProfile.UserGroup):
+            user = Utils.create_user_with_index(idx, group)
+            group_users.append(user)
+        assert len(group_users) == len(UserProfile.UserGroup)
+
         articles = [self.regular_access_article, self.advertiser_accessible_article]
 
         for user in group_users:
@@ -379,9 +364,12 @@ class TestArticle(TestCase, RequestSetting):
 
     # create 단계에서 user의 write 권한 확인 테스트
     def test_check_write_permission_when_create(self):
-        group_users = [
-            self._create_user_by_group(group) for group in UserProfile.UserGroup
-        ]
+        group_users = []
+        for idx, group in enumerate(UserProfile.UserGroup):
+            user = Utils.create_user_with_index(idx, group)
+            group_users.append(user)
+        assert len(group_users) == len(UserProfile.UserGroup)
+
         boards = [
             self.regular_access_board,
             self.nonwritable_board,
