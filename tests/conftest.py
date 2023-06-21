@@ -2,15 +2,18 @@
  Python 3.5 이후로는 pytest-django를 쓸 때 module-scope fixture에서 DB접근이 안되기 때문에 class-scope fixture 사용
  https://github.com/pytest-dev/pytest-django/issues/53#issuecomment-407073682
 """
+from typing import List
 
 import pytest
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.test import TestCase as DjangoTestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.user.models import UserProfile
 from ara import redis
+
+User = get_user_model()
 
 
 @pytest.fixture(scope="class")
@@ -181,3 +184,27 @@ class TestCase(DjangoTestCase):
     def tearDown(self):
         redis.flushall()
         super().tearDown()
+
+
+class Utils:
+    @staticmethod
+    def create_users(num: int) -> List[User]:
+        users: List[User] = []
+        for idx in range(num):
+            user, created = User.objects.get_or_create(
+                username=f"User{idx}", email=f"user{idx}@sparcs.org"
+            )
+            if created:
+                UserProfile.objects.create(
+                    user=user,
+                    nickname=f"Nickname{idx}",
+                    group=UserProfile.UserGroup.KAIST_MEMBER,
+                    agree_terms_of_service_at=timezone.now(),
+                    sso_user_info={
+                        "kaist_info": '{"ku_kname": "\\ud669"}',
+                        "first_name": f"User{idx}_First",
+                        "last_name": f"User{idx}_Last",
+                    },
+                )
+            users.append(user)
+        return users
