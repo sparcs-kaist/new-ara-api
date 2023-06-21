@@ -422,7 +422,10 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
     @decorators.action(detail=False, methods=["get"])
     def top(self, request):
-        top_articles = Article.objects.exclude(topped_at__isnull=True)
+        # The most recent article at the top
+        top_articles = Article.objects.exclude(topped_at__isnull=True).order_by(
+            "-topped_at", "-pk"
+        )
         page = self.paginate_queryset(top_articles)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
