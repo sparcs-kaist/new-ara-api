@@ -456,9 +456,9 @@ class TestArticle(TestCase, RequestSetting):
             f"articles/{article.id}",
             {"title": new_title, "content": new_content},
         )
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_200_OK
         response = self.http_request(self.user, "get", f"articles/{article.id}")
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_200_OK
         assert response.data.get("title") == new_title
         assert response.data.get("content") == new_content
 
@@ -571,7 +571,7 @@ class TestArticle(TestCase, RequestSetting):
         resp = self.http_request(
             self.user, "post", f"articles/{self.article.id}/vote_positive"
         )
-        assert resp.status_code == 403
+        assert resp.status_code == status.HTTP_403_FORBIDDEN
         assert resp.data["message"] is not None
         article = Article.objects.get(id=self.article.id)
         assert article.positive_vote_count == 0
@@ -580,7 +580,7 @@ class TestArticle(TestCase, RequestSetting):
         resp = self.http_request(
             self.user, "post", f"articles/{self.article.id}/vote_negative"
         )
-        assert resp.status_code == 403
+        assert resp.status_code == status.HTTP_403_FORBIDDEN
         assert resp.data["message"] is not None
         article = Article.objects.get(id=self.article.id)
         assert article.positive_vote_count == 0
@@ -598,7 +598,7 @@ class TestArticle(TestCase, RequestSetting):
             "parent_board": self.readonly_board.id,
         }
         response = self.http_request(self.user, "post", "articles", user_data)
-        assert response.status_code == 400
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_read_status(self):
         # user1, user2 모두 아직 안읽음
@@ -1016,7 +1016,7 @@ class TestHiddenArticles(TestCase, RequestSetting):
             },
         )
 
-        assert res.status_code == 404
+        assert res.status_code == status.HTTP_404_NOT_FOUND
 
     def test_modify_report_hidden_article(self):
         target_article = self._create_report_hidden_article()
@@ -1033,7 +1033,7 @@ class TestHiddenArticles(TestCase, RequestSetting):
             },
         )
 
-        assert res.status_code == 403
+        assert res.status_code == status.HTTP_403_FORBIDDEN
 
     def test_get_deleted_article(self):
         target_article = self._create_deleted_article()
@@ -1053,12 +1053,12 @@ class TestHiddenArticles(TestCase, RequestSetting):
     def test_delete_already_deleted_article(self):
         target_article = self._create_deleted_article()
         res = self.http_request(self.user, "delete", f"articles/{target_article.id}")
-        assert res.status_code == 404
+        assert res.status_code == status.HTTP_404_NOT_FOUND
 
     def test_delete_report_hidden_article(self):
         target_article = self._create_report_hidden_article()
         res = self.http_request(self.user, "delete", f"articles/{target_article.id}")
-        assert res.status_code == 403
+        assert res.status_code == status.HTTP_403_FORBIDDEN
 
     def test_vote_deleted_article(self):
         target_article = self._create_deleted_article()
@@ -1066,17 +1066,17 @@ class TestHiddenArticles(TestCase, RequestSetting):
         positive_vote_result = self.http_request(
             self.user2, "post", f"articles/{target_article.id}/vote_positive"
         )
-        assert positive_vote_result.status_code == 404
+        assert positive_vote_result.status_code == status.HTTP_404_NOT_FOUND
 
         negative_vote_result = self.http_request(
             self.user2, "post", f"articles/{target_article.id}/vote_negative"
         )
-        assert negative_vote_result.status_code == 404
+        assert negative_vote_result.status_code == status.HTTP_404_NOT_FOUND
 
         cancel_vote_result = self.http_request(
             self.user2, "post", f"articles/{target_article.id}/vote_positive"
         )
-        assert cancel_vote_result.status_code == 404
+        assert cancel_vote_result.status_code == status.HTTP_404_NOT_FOUND
 
     def test_vote_report_hidden_article(self):
         target_article = self._create_report_hidden_article()
@@ -1084,12 +1084,12 @@ class TestHiddenArticles(TestCase, RequestSetting):
         positive_vote_result = self.http_request(
             self.user2, "post", f"articles/{target_article.id}/vote_positive"
         )
-        assert positive_vote_result.status_code == 403
+        assert positive_vote_result.status_code == status.HTTP_403_FORBIDDEN
 
         negative_vote_result = self.http_request(
             self.user2, "post", f"articles/{target_article.id}/vote_negative"
         )
-        assert negative_vote_result.status_code == 403
+        assert negative_vote_result.status_code == status.HTTP_403_FORBIDDEN
 
         Vote.objects.create(
             voted_by=self.user2,
@@ -1101,7 +1101,7 @@ class TestHiddenArticles(TestCase, RequestSetting):
         cancel_vote_result = self.http_request(
             self.user2, "post", f"articles/{target_article.id}/vote_cancel"
         )
-        assert cancel_vote_result.status_code == 403
+        assert cancel_vote_result.status_code == status.HTTP_403_FORBIDDEN
         assert Article.objects.get(id=target_article.id).positive_vote_count == 1
 
     def test_report_deleted_article(self):
@@ -1117,7 +1117,7 @@ class TestHiddenArticles(TestCase, RequestSetting):
             },
         )
 
-        assert res.status_code == 403
+        assert res.status_code == status.HTTP_403_FORBIDDEN
 
     def test_report_already_hidden_article(self):
         target_article = self._create_report_hidden_article()
@@ -1132,4 +1132,4 @@ class TestHiddenArticles(TestCase, RequestSetting):
             },
         )
 
-        assert res.status_code == 403
+        assert res.status_code == status.HTTP_403_FORBIDDEN
