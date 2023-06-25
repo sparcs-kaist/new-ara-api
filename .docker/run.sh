@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 set -ex
 
@@ -21,6 +21,15 @@ done
 if [ "$1" = "test" ]; then
     venv/bin/python manage.py compilemessages -l en -l ko
     venv/bin/pytest tests --verbose
+elif [ "$1" = "dx" ]; then
+    if [ ! -f .init.lock.log ]; then
+        venv/bin/python manage.py collectstatic --noinput
+        venv/bin/python manage.py migrate --no-input
+        venv/bin/python manage.py compilemessages -l en -l ko
+        touch .init.lock.log
+    fi
+    source venv/bin/activate;
+    sleep infinity
 else
     venv/bin/python manage.py collectstatic --noinput
     venv/bin/python manage.py migrate --no-input
