@@ -643,7 +643,8 @@ class TestArticle(TestCase, RequestSetting):
 
     def test_being_topped(self):
         """
-        `Article.topped_at` is set when `Article.positive_vote_count >= Board.top_threshold`
+        `Article.topped_at` is set when `Article.positive_vote_count >=
+        Board.top_threshold`
         """
         THRESHOLD = 5
         board = Board.objects.create(top_threshold=THRESHOLD)
