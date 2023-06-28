@@ -641,6 +641,58 @@ class TestArticle(TestCase, RequestSetting):
         )
         assert self.article.comment_count == 0
 
+    def test_being_topped(self):
+        """
+        `Article.topped_at` is set when `Article.positive_vote_count >= Board.top_threshold`
+        """
+        THRESHOLD = 5
+        board = Board.objects.create(top_threshold=THRESHOLD)
+        article = Article.objects.create(created_by=self.user, parent_board=board)
+        pk = article.pk
+
+        users = Utils.create_users(THRESHOLD)
+        *users_ex_one, last_user = users
+
+        for user in users_ex_one:
+            self.http_request(user, "post", f"articles/{pk}/vote_positive")
+
+        article = Article.objects.get(pk=pk)
+        assert article.positive_vote_count == THRESHOLD - 1
+        assert article.topped_at is None
+
+        self.http_request(last_user, "post", f"articles/{pk}/vote_positive")
+        article = Article.objects.get(pk=pk)
+        assert article.positive_vote_count == THRESHOLD
+        assert article.topped_at is not None
+
+    def test_top_ordered(self):
+        """
+        The most recently topped article must come first. If the same, then
+        the most recent article must come first.
+        """
+        board = Board.objects.create()
+        articles = [
+            Article.objects.create(created_by=self.user, parent_board=board)
+            for _ in range(3)
+        ]
+
+        time_early = timezone.datetime(2001, 10, 18)  # retro's birthday
+        time_late = timezone.datetime(2003, 6, 17)  # yuwol's birthday
+
+        articles[0].topped_at = time_early
+        articles[1].topped_at = time_early
+        articles[2].topped_at = time_late
+        for article in articles:
+            article.save()
+
+        response = self.http_request(self.user, "get", "articles/top")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["num_items"] == 3
+
+        oracle_indices = [2, 1, 0]
+        for idx, res in zip(oracle_indices, response.data["results"]):
+            assert articles[idx].pk == res["id"]
+
 
 @pytest.mark.usefixtures(
     "set_user_client",
