@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("core", "0046_update_hidden_at_min_time_to_null"),
+        ("core", "0048_update_board_name_type_flag"),
     ]
 
     operations = [
