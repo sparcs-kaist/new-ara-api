@@ -1,4 +1,4 @@
-from enum import IntEnum
+from enum import IntEnum, IntFlag, auto
 
 from django.db import models
 from django_extensions.db.fields import AutoSlugField
@@ -6,10 +6,10 @@ from django_extensions.db.fields import AutoSlugField
 from ara.db.models import MetaDataModel
 
 
-class BoardNameType(IntEnum):
-    REGULAR = 0
-    ANONYMOUS = 1
-    REALNAME = 2
+class NameType(IntFlag):
+    REGULAR = auto()
+    ANONYMOUS = auto()
+    REALNAME = auto()
 
 
 class BoardAccessPermissionType(IntEnum):
@@ -67,8 +67,11 @@ class Board(MetaDataModel):
         default=False,
         help_text="활성화했을 때 메인페이지 상단바 리스트에 나타나지 않습니다. (ex. 뉴아라공지)",
     )
+
     name_type = models.SmallIntegerField(
-        verbose_name="익명/실명 게시판",
+        verbose_name="닉네임/익명/실명글 허용 여부 설정",
+        help_text="글과 댓글을 어떤 이름 설정(닉네임/익명/실명)으로 작성할 수 있는지 정의합니다.",
+        default=NameType.REGULAR,
         db_index=True,
         default=BoardNameType.REGULAR,
         help_text="게시판의 글과 댓글들이 익명 혹은 실명이도록 합니다.",

@@ -3,7 +3,7 @@ import typing
 from rest_framework import serializers
 
 from apps.core.models import Block, Comment, CommentHiddenReason
-from apps.core.models.board import BoardNameType
+from apps.core.models.board import NameType
 from apps.core.serializers.mixins.hidden import (
     HiddenSerializerFieldMixin,
     HiddenSerializerMixin,
@@ -36,7 +36,7 @@ class BaseCommentSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
         return None
 
     def get_created_by(self, obj) -> dict:
-        if obj.name_type in (BoardNameType.ANONYMOUS, BoardNameType.REALNAME):
+        if obj.name_type in (NameType.ANONYMOUS, NameType.REALNAME):
             return obj.postprocessed_created_by
         else:
             data = PublicUserSerializer(obj.postprocessed_created_by).data
