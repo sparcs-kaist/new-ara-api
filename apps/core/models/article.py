@@ -49,9 +49,8 @@ class Article(MetaDataModel):
         editable=False,
     )
     name_type = models.SmallIntegerField(
-        default=NameType.REGULAR,
         verbose_name="익명 혹은 실명 여부",
-        default=BoardNameType.REGULAR,
+        default=NameType.REGULAR,
     )
     is_content_sexual = models.BooleanField(
         verbose_name="성인/음란성 내용",

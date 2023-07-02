@@ -70,11 +70,9 @@ class Board(MetaDataModel):
 
     name_type = models.SmallIntegerField(
         verbose_name="닉네임/익명/실명글 허용 여부 설정",
-        help_text="글과 댓글을 어떤 이름 설정(닉네임/익명/실명)으로 작성할 수 있는지 정의합니다.",
-        default=NameType.REGULAR,
         db_index=True,
-        default=BoardNameType.REGULAR,
-        help_text="게시판의 글과 댓글들이 익명 혹은 실명이도록 합니다.",
+        default=NameType.REGULAR,
+        help_text="글과 댓글을 어떤 이름 설정(닉네임/익명/실명)으로 작성할 수 있는지 정의합니다.",
     )
     is_school_communication = models.BooleanField(
         verbose_name="학교와의 소통 게시판",
