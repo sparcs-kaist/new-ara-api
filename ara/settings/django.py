@@ -20,7 +20,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework.authtoken",
-    "rest_framework_filters",
     "django_extensions",
     "django_s3_storage",
     "django_celery_beat",

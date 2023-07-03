@@ -1,9 +1,9 @@
-import rest_framework_filters as filters
+from django_filters.rest_framework import BooleanFilter, FilterSet
 
 from apps.core.models import Notification
 
 
-class NotificationFilter(filters.FilterSet):
+class NotificationFilter(FilterSet):
     class Meta:
         model = Notification
         fields = {
@@ -27,7 +27,7 @@ class NotificationFilter(filters.FilterSet):
             ],
         }
 
-    is_read = filters.BooleanFilter(
+    is_read = BooleanFilter(
         field_name="is_read",
         label="조회 여부",
         method="get_is_read",
