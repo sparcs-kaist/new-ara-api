@@ -1,6 +1,6 @@
-from cached_property import cached_property
 from django.conf import settings
 from django.db import IntegrityError, models
+from django.utils.functional import cached_property
 
 from ara.db.models import MetaDataModel
 
