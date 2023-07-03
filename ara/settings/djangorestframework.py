@@ -11,4 +11,5 @@ REST_FRAMEWORK = {
     "SERIALIZER_EXTENSIONS": {
         "AUTO_OPTIMIZE": True,
     },
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }

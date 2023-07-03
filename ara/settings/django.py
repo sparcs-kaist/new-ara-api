@@ -24,7 +24,7 @@ INSTALLED_APPS = [
     "django_s3_storage",
     "django_celery_beat",
     "django_celery_results",
-    "drf_yasg",
+    "drf_spectacular",
     "cacheops",
     "django_elasticsearch_dsl",
     "django_filters",
