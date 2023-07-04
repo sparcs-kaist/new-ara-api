@@ -4,7 +4,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "ara.classes.pagination.PageNumberPagination",
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
-        "django_filters.rest_framework.OrderingFilter",
+        "rest_framework.filters.OrderingFilter",
     ],
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
     "PAGE_SIZE": 15,
