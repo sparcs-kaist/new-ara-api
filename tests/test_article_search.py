@@ -30,7 +30,11 @@ def set_authors(request):
             username=f"User{i+1}", email=f"user{i+1}@sparcs.org"
         )
         if not hasattr(new_user, "profile"):
-            UserProfile.objects.get_or_create(user=new_user, nickname=f"User{i+1}")
+            UserProfile.objects.get_or_create(
+                user=new_user,
+                nickname=f"User{i + 1}",
+                sso_user_info={},
+            )
         request.cls.authors.append(new_user)
 
 

@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.db import models
-from django_mysql.models import JSONField
 
 from ara.db.models import MetaDataManager, MetaDataModel, MetaDataQuerySet
 
@@ -31,7 +30,7 @@ class CommentUpdateLog(MetaDataModel):
         queryset_class=CommentUpdateLogQuerySet
     )()
 
-    data = JSONField()
+    data = models.JSONField(default=dict)
 
     updated_by = models.ForeignKey(
         on_delete=models.CASCADE,

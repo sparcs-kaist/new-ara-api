@@ -185,6 +185,7 @@ def set_kaist_articles(request):
             user=request.cls.non_kaist_user,
             nickname="Not a KAIST User",
             agree_terms_of_service_at=timezone.now(),
+            sso_user_info={},
         )
     request.cls.kaist_user, _ = User.objects.get_or_create(
         username="KaistUser", email="kaist-user@sparcs.org"
@@ -195,6 +196,7 @@ def set_kaist_articles(request):
             nickname="KAIST User",
             agree_terms_of_service_at=timezone.now(),
             group=UserProfile.UserGroup.KAIST_MEMBER,
+            sso_user_info={},
         )
 
     request.cls.kaist_board, _ = Board.objects.get_or_create(
@@ -421,7 +423,6 @@ class TestArticle(TestCase, RequestSetting):
                 else:
                     assert res.status_code == status.HTTP_403_FORBIDDEN
 
-
     def test_create_regular(self):
         user_data = {
             "title": "article for test_create",
@@ -526,7 +527,7 @@ class TestArticle(TestCase, RequestSetting):
         self.http_request(self.user, "get", f"articles/{article.id}")
         response = self.http_request(
             self.user,
-            "put",
+            "patch",
             f"articles/{article.id}",
             {"title": new_title, "content": new_content},
         )
@@ -893,6 +894,7 @@ class TestHiddenArticles(TestCase, RequestSetting):
                     "user": user_instance,
                     "agree_terms_of_service_at": timezone.now(),
                     "group": UserProfile.UserGroup.KAIST_MEMBER,
+                    "sso_user_info": {},
                 }
             )
         return user_instance
@@ -902,11 +904,21 @@ class TestHiddenArticles(TestCase, RequestSetting):
         super().setUpClass()
         cls.clean_mind_user = cls._user_factory(
             {"username": "clean-mind-user", "email": "iamclean@sparcs.org"},
-            {"nickname": "clean", "see_social": False, "see_sexual": False},
+            {
+                "nickname": "clean",
+                "see_social": False,
+                "see_sexual": False,
+                "sso_user_info": {},
+            },
         )
         cls.dirty_mind_user = cls._user_factory(
             {"username": "dirty-mind-user", "email": "kbdwarrior@sparcs.org"},
-            {"nickname": "kbdwarrior", "see_social": True, "see_sexual": True},
+            {
+                "nickname": "kbdwarrior",
+                "see_social": True,
+                "see_sexual": True,
+                "sso_user_info": {},
+            },
         )
 
     def _article_factory(

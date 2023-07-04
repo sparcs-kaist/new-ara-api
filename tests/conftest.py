@@ -62,6 +62,11 @@ def set_user_client2(request):
             nickname="User2",
             group=UserProfile.UserGroup.KAIST_MEMBER,
             agree_terms_of_service_at=timezone.now(),
+            sso_user_info={
+                "kaist_info": '{"ku_kname": "\\ud669"}',
+                "first_name": "FirstName",
+                "last_name": "LastName",
+            },
         )
     request.cls.api_client = APIClient()
 
@@ -77,6 +82,11 @@ def set_user_client3(request):
             nickname="User3",
             group=UserProfile.UserGroup.KAIST_MEMBER,
             agree_terms_of_service_at=timezone.now(),
+            sso_user_info={
+                "kaist_info": '{"ku_kname": "\\ud669"}',
+                "first_name": "FirstName",
+                "last_name": "LastName",
+            },
         )
 
     request.cls.api_client = APIClient()
@@ -93,6 +103,11 @@ def set_user_client4(request):
             nickname="User4",
             group=UserProfile.UserGroup.KAIST_MEMBER,
             agree_terms_of_service_at=timezone.now(),
+            sso_user_info={
+                "kaist_info": '{"ku_kname": "\\ud669"}',
+                "first_name": "FirstName",
+                "last_name": "LastName",
+            },
         )
 
     request.cls.api_client = APIClient()

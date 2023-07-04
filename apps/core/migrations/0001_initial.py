@@ -6,13 +6,11 @@ import datetime
 
 import django.db.models.deletion
 import django_extensions.db.fields
-import django_mysql.models
 from django.conf import settings
 from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -230,7 +228,7 @@ class Migration(migrations.Migration):
                         default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="삭제 시간"
                     ),
                 ),
-                ("data", django_mysql.models.JSONField(default=dict)),
+                ("data", models.JSONField(default=dict)),
                 (
                     "article",
                     models.ForeignKey(
@@ -705,7 +703,7 @@ class Migration(migrations.Migration):
                         default=datetime.datetime(1, 1, 1, 0, 0), verbose_name="삭제 시간"
                     ),
                 ),
-                ("data", django_mysql.models.JSONField(default=dict)),
+                ("data", models.JSONField(default=dict)),
                 (
                     "comment",
                     models.ForeignKey(
