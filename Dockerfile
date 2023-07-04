@@ -1,19 +1,14 @@
 FROM python:3.11
 
-RUN pip install --upgrade pip virtualenv awscli
-
-ENV VIRTUAL_ENV=/newara/www/venv
-RUN virtualenv -p python3 $VIRTUAL_ENV
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-
-RUN apt-get update && apt-get install netcat-openbsd supervisor vim gettext -y
+RUN apt update && apt install netcat-openbsd supervisor gettext -y
 
 WORKDIR /newara/www
-COPY poetry.lock pyproject.toml /newara/www/
-RUN pip install poetry
-RUN poetry config virtualenvs.create false && poetry install
 
-ADD ./ /newara/www
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
 RUN mkdir -p /var/log/newara/
 RUN chmod +x /newara/www/.docker/run.sh
 RUN chmod +x /newara/www/.docker/run-celery.sh

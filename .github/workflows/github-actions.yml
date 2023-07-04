@@ -24,7 +24,7 @@ env:
 jobs:
   deploy:
     name: Run Tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout

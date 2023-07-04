@@ -1,0 +1,44 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+django = "~=4.2"
+djangorestframework = "~=3.14"
+python-dotenv = "*"
+awscli = "*"
+gunicorn = "*"
+celery = "*"
+django-environ = "*"
+firebase-admin = "*"
+sentry-sdk = "*"
+redis = "*"
+django-filter = "*"
+django-extensions = "*"
+django-s3-storage = "*"
+django-celery-beat = "*"
+django-celery-results = "*"
+drf-spectacular = "*"
+django-cacheops = "*"
+django-elasticsearch-dsl = "~=7.3"
+mysqlclient = "*"
+beautifulsoup4 = "*"
+bleach = "*"
+django-redis = "*"
+pillow = "*"
+html5lib = "*"
+
+[dev-packages]
+black = "*"
+isort = "*"
+pre-commit = "*"
+ipython = "*"
+pytest = "*"
+pytest-django = "*"
+django-cors-headers = "*"
+django-debug-toolbar = "*"
+django-debug-toolbar-force = "*"
+
+[requires]
+python_version = "3.11"
