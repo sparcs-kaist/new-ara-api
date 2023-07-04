@@ -44,9 +44,9 @@ def sanitize(content):
 
     allowed_tags = (
         bleach.ALLOWED_TAGS
-        + ["p", "pre", "span", "h1", "h2", "h3", "br", "hr", "s", "u", "ol"]
-        + ["img", "iframe", "video", "audio", "source"]
-        + [
+        | {"p", "pre", "span", "h1", "h2", "h3", "br", "hr", "s", "u", "ol"}
+        | {"img", "iframe", "video", "audio", "source"}
+        | {
             "sub",
             "sup",
             "table",
@@ -59,7 +59,7 @@ def sanitize(content):
             "tt",
             "u",
             "ul",
-        ]
+        }
     )
 
     return bleach.linkify(
