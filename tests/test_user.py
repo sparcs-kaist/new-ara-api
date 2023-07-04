@@ -142,12 +142,10 @@ class TestUser(TestCase, RequestSetting):
         assert res.data.get("see_sexual") == self.user.profile.see_sexual
         assert res.data.get("see_social") == self.user.profile.see_social
         assert res.data.get("nickname") == self.user.profile.nickname
-        assert res.data.get("extra_preferences") == self.user.profile.extra_preferences
 
         update_data = {
             "see_sexual": True,
             "see_social": True,
-            "extra_preferences": '{"test": 1}',
         }
         res = self.http_request(
             self.user, "put", f"user_profiles/{self.user.id}", data=update_data
@@ -156,7 +154,6 @@ class TestUser(TestCase, RequestSetting):
         res = self.http_request(self.user, "get", f"user_profiles/{self.user.id}")
         assert res.data.get("see_sexual")
         assert res.data.get("see_social")
-        assert res.data.get("extra_preferences") == '{"test": 1}'
 
     def test_filter_articles_list(self):
         # 사용자의 게시물 필터에 따라 게시물 목록에서 필터링이 잘 되는지 테스트합니다.
@@ -218,7 +215,6 @@ class TestUserNickname(TestCase, RequestSetting):
         update_data = {
             "see_sexual": False,
             "see_social": False,
-            "extra_preferences": '{"test": 1}',
             "nickname": "foo",
         }
         r = self.http_request(

@@ -6,7 +6,6 @@ from django.db import models
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
-from django_mysql.models import JSONField
 
 from ara.db.models import MetaDataModel
 from ara.settings import MIN_TIME
@@ -56,7 +55,7 @@ class UserProfile(MetaDataModel):
         max_length=30,
         verbose_name="Sparcs SSO sid",
     )
-    sso_user_info = JSONField(
+    sso_user_info = models.JSONField(
         editable=False,
         verbose_name="Sparcs SSO 정보",
     )
@@ -83,10 +82,6 @@ class UserProfile(MetaDataModel):
     see_social = models.BooleanField(
         default=False,
         verbose_name="정치/사회성 보기",
-    )
-    extra_preferences = JSONField(
-        editable=False,
-        verbose_name="기타 설정",
     )
     group = models.IntegerField(
         choices=UserGroup.choices, default=UserGroup.UNAUTHORIZED
