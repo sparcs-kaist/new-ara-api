@@ -1,4 +1,4 @@
-from django.utils import timezone
+from datetime import datetime, timezone
 
 from ara.settings import MIDDLEWARE, REST_FRAMEWORK
 
@@ -28,4 +28,4 @@ REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = ("rest_framework.renderers.JSONRend
 REPORT_THRESHOLD = 4
 SCHOOL_RESPONSE_VOTE_THRESHOLD = 20
 ANSWER_PERIOD = 14
-MIN_TIME = timezone.datetime.min.replace(tzinfo=timezone.utc)
+MIN_TIME = datetime.min.replace(tzinfo=timezone.utc)
