@@ -2,15 +2,18 @@
  Python 3.5 이후로는 pytest-django를 쓸 때 module-scope fixture에서 DB접근이 안되기 때문에 class-scope fixture 사용
  https://github.com/pytest-dev/pytest-django/issues/53#issuecomment-407073682
 """
+from typing import List
 
 import pytest
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.test import TestCase as DjangoTestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.user.models import UserProfile
 from ara import redis
+
+User = get_user_model()
 
 
 @pytest.fixture(scope="class")
@@ -196,3 +199,45 @@ class TestCase(DjangoTestCase):
     def tearDown(self):
         redis.flushall()
         super().tearDown()
+
+
+class Utils:
+    @staticmethod
+    def create_user(
+        username: str = "User",
+        email: str = "user@sparcs.org",
+        nickname: str = "Nickname",
+        group: UserProfile.UserGroup = UserProfile.UserGroup.KAIST_MEMBER,
+    ) -> User:
+        user, created = User.objects.get_or_create(username=username, email=email)
+        if created:
+            UserProfile.objects.create(
+                user=user,
+                nickname=nickname,
+                group=group,
+                agree_terms_of_service_at=timezone.now(),
+                sso_user_info={
+                    "kaist_info": '{"ku_kname": "\\ud669"}',
+                    "first_name": f"Firstname",
+                    "last_name": f"Lastname",
+                },
+            )
+        return user
+
+    @classmethod
+    def create_user_with_index(cls, idx: int, group: UserProfile.UserGroup) -> User:
+        user = cls.create_user(
+            username=f"User{idx}",
+            email=f"user{idx}@sparcs.org",
+            nickname=f"Nickname{idx}",
+            group=group,
+        )
+        return user
+
+    @classmethod
+    def create_users(
+        cls,
+        num: int,
+        group: UserProfile.UserGroup = UserProfile.UserGroup.KAIST_MEMBER,
+    ) -> List[User]:
+        return [cls.create_user_with_index(idx, group) for idx in range(num)]

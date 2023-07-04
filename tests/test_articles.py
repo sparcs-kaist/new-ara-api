@@ -7,7 +7,7 @@ from apps.core.models import Article, Block, Board, Comment, Topic, Vote
 from apps.core.models.board import BoardAccessPermissionType, NameType
 from apps.user.models import UserProfile
 from ara.settings import MIN_TIME, SCHOOL_RESPONSE_VOTE_THRESHOLD
-from tests.conftest import RequestSetting, TestCase
+from tests.conftest import RequestSetting, TestCase, Utils
 
 
 @pytest.fixture(scope="class")
@@ -252,24 +252,6 @@ def set_readonly_board(request):
     "set_articles",
 )
 class TestArticle(TestCase, RequestSetting):
-    def _create_user_by_group(self, group):
-        user, created = User.objects.get_or_create(
-            username=f"User in group {group}", email=f"group{group}user@sparcs.org"
-        )
-        if created:
-            UserProfile.objects.create(
-                user=user,
-                nickname=f"Nickname in group {group}",
-                group=group,
-                agree_terms_of_service_at=timezone.now(),
-                sso_user_info={
-                    "kaist_info": '{"ku_kname": "\\ud669"}',
-                    "first_name": f"Group{group}User_FirstName",
-                    "last_name": f"Group{group}User_LastName",
-                },
-            )
-        return user
-
     def test_list(self):
         # article 개수를 확인하는 테스트
         res = self.http_request(self.user, "get", "articles")
@@ -371,9 +353,12 @@ class TestArticle(TestCase, RequestSetting):
 
     # get request 시 user의 read 권한 확인 테스트
     def test_check_read_permission_when_get(self):
-        group_users = [
-            self._create_user_by_group(group) for group in UserProfile.UserGroup
-        ]
+        group_users = []
+        for idx, group in enumerate(UserProfile.UserGroup):
+            user = Utils.create_user_with_index(idx, group)
+            group_users.append(user)
+        assert len(group_users) == len(UserProfile.UserGroup)
+
         articles = [self.regular_access_article, self.advertiser_accessible_article]
 
         for user in group_users:
@@ -390,9 +375,12 @@ class TestArticle(TestCase, RequestSetting):
 
     # create 단계에서 user의 write 권한 확인 테스트
     def test_check_write_permission_when_create(self):
-        group_users = [
-            self._create_user_by_group(group) for group in UserProfile.UserGroup
-        ]
+        group_users = []
+        for idx, group in enumerate(UserProfile.UserGroup):
+            user = Utils.create_user_with_index(idx, group)
+            group_users.append(user)
+        assert len(group_users) == len(UserProfile.UserGroup)
+
         boards = [
             self.regular_access_board,
             self.nonwritable_board,
@@ -531,9 +519,9 @@ class TestArticle(TestCase, RequestSetting):
             f"articles/{article.id}",
             {"title": new_title, "content": new_content},
         )
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_200_OK
         response = self.http_request(self.user, "get", f"articles/{article.id}")
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_200_OK
         assert response.data.get("title") == new_title
         assert response.data.get("content") == new_content
 
@@ -646,7 +634,7 @@ class TestArticle(TestCase, RequestSetting):
         resp = self.http_request(
             self.user, "post", f"articles/{self.article.id}/vote_positive"
         )
-        assert resp.status_code == 403
+        assert resp.status_code == status.HTTP_403_FORBIDDEN
         assert resp.data["message"] is not None
         article = Article.objects.get(id=self.article.id)
         assert article.positive_vote_count == 0
@@ -655,7 +643,7 @@ class TestArticle(TestCase, RequestSetting):
         resp = self.http_request(
             self.user, "post", f"articles/{self.article.id}/vote_negative"
         )
-        assert resp.status_code == 403
+        assert resp.status_code == status.HTTP_403_FORBIDDEN
         assert resp.data["message"] is not None
         article = Article.objects.get(id=self.article.id)
         assert article.positive_vote_count == 0
@@ -673,7 +661,7 @@ class TestArticle(TestCase, RequestSetting):
             "parent_board": self.readonly_board.id,
         }
         response = self.http_request(self.user, "post", "articles", user_data)
-        assert response.status_code == 400
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_read_status(self):
         # user1, user2 모두 아직 안읽음
@@ -727,6 +715,59 @@ class TestArticle(TestCase, RequestSetting):
             == 0
         )
         assert self.article.comment_count == 0
+
+    def test_being_topped(self):
+        """
+        `Article.topped_at` is set when `Article.positive_vote_count >=
+        Board.top_threshold`
+        """
+        THRESHOLD = 5
+        board = Board.objects.create(top_threshold=THRESHOLD)
+        article = Article.objects.create(created_by=self.user, parent_board=board)
+        pk = article.pk
+
+        users = Utils.create_users(THRESHOLD)
+        *users_ex_one, last_user = users
+
+        for user in users_ex_one:
+            self.http_request(user, "post", f"articles/{pk}/vote_positive")
+
+        article = Article.objects.get(pk=pk)
+        assert article.positive_vote_count == THRESHOLD - 1
+        assert article.topped_at is None
+
+        self.http_request(last_user, "post", f"articles/{pk}/vote_positive")
+        article = Article.objects.get(pk=pk)
+        assert article.positive_vote_count == THRESHOLD
+        assert article.topped_at is not None
+
+    def test_top_ordered(self):
+        """
+        The most recently topped article must come first. If the same, then
+        the most recent article must come first.
+        """
+        board = Board.objects.create()
+        articles = [
+            Article.objects.create(created_by=self.user, parent_board=board)
+            for _ in range(3)
+        ]
+
+        time_early = timezone.datetime(2001, 10, 18)  # retro's birthday
+        time_late = timezone.datetime(2003, 6, 17)  # yuwol's birthday
+
+        articles[0].topped_at = time_early
+        articles[1].topped_at = time_early
+        articles[2].topped_at = time_late
+        for article in articles:
+            article.save()
+
+        response = self.http_request(self.user, "get", "articles/top")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["num_items"] == 3
+
+        oracle_indices = [2, 1, 0]
+        for idx, res in zip(oracle_indices, response.data["results"]):
+            assert articles[idx].pk == res["id"]
 
 
 @pytest.mark.usefixtures(
@@ -1101,7 +1142,7 @@ class TestHiddenArticles(TestCase, RequestSetting):
             },
         )
 
-        assert res.status_code == 404
+        assert res.status_code == status.HTTP_404_NOT_FOUND
 
     def test_modify_report_hidden_article(self):
         target_article = self._create_report_hidden_article()
@@ -1118,7 +1159,7 @@ class TestHiddenArticles(TestCase, RequestSetting):
             },
         )
 
-        assert res.status_code == 403
+        assert res.status_code == status.HTTP_403_FORBIDDEN
 
     def test_get_deleted_article(self):
         target_article = self._create_deleted_article()
@@ -1138,12 +1179,12 @@ class TestHiddenArticles(TestCase, RequestSetting):
     def test_delete_already_deleted_article(self):
         target_article = self._create_deleted_article()
         res = self.http_request(self.user, "delete", f"articles/{target_article.id}")
-        assert res.status_code == 404
+        assert res.status_code == status.HTTP_404_NOT_FOUND
 
     def test_delete_report_hidden_article(self):
         target_article = self._create_report_hidden_article()
         res = self.http_request(self.user, "delete", f"articles/{target_article.id}")
-        assert res.status_code == 403
+        assert res.status_code == status.HTTP_403_FORBIDDEN
 
     def test_vote_deleted_article(self):
         target_article = self._create_deleted_article()
@@ -1151,17 +1192,17 @@ class TestHiddenArticles(TestCase, RequestSetting):
         positive_vote_result = self.http_request(
             self.user2, "post", f"articles/{target_article.id}/vote_positive"
         )
-        assert positive_vote_result.status_code == 404
+        assert positive_vote_result.status_code == status.HTTP_404_NOT_FOUND
 
         negative_vote_result = self.http_request(
             self.user2, "post", f"articles/{target_article.id}/vote_negative"
         )
-        assert negative_vote_result.status_code == 404
+        assert negative_vote_result.status_code == status.HTTP_404_NOT_FOUND
 
         cancel_vote_result = self.http_request(
             self.user2, "post", f"articles/{target_article.id}/vote_positive"
         )
-        assert cancel_vote_result.status_code == 404
+        assert cancel_vote_result.status_code == status.HTTP_404_NOT_FOUND
 
     def test_vote_report_hidden_article(self):
         target_article = self._create_report_hidden_article()
@@ -1169,12 +1210,12 @@ class TestHiddenArticles(TestCase, RequestSetting):
         positive_vote_result = self.http_request(
             self.user2, "post", f"articles/{target_article.id}/vote_positive"
         )
-        assert positive_vote_result.status_code == 403
+        assert positive_vote_result.status_code == status.HTTP_403_FORBIDDEN
 
         negative_vote_result = self.http_request(
             self.user2, "post", f"articles/{target_article.id}/vote_negative"
         )
-        assert negative_vote_result.status_code == 403
+        assert negative_vote_result.status_code == status.HTTP_403_FORBIDDEN
 
         Vote.objects.create(
             voted_by=self.user2,
@@ -1186,7 +1227,7 @@ class TestHiddenArticles(TestCase, RequestSetting):
         cancel_vote_result = self.http_request(
             self.user2, "post", f"articles/{target_article.id}/vote_cancel"
         )
-        assert cancel_vote_result.status_code == 403
+        assert cancel_vote_result.status_code == status.HTTP_403_FORBIDDEN
         assert Article.objects.get(id=target_article.id).positive_vote_count == 1
 
     def test_report_deleted_article(self):
@@ -1202,7 +1243,7 @@ class TestHiddenArticles(TestCase, RequestSetting):
             },
         )
 
-        assert res.status_code == 403
+        assert res.status_code == status.HTTP_403_FORBIDDEN
 
     def test_report_already_hidden_article(self):
         target_article = self._create_report_hidden_article()
@@ -1217,4 +1258,4 @@ class TestHiddenArticles(TestCase, RequestSetting):
             },
         )
 
-        assert res.status_code == 403
+        assert res.status_code == status.HTTP_403_FORBIDDEN

@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from unittest.mock import patch
 
 import pytest
-from django.contrib.auth.models import User
 from django.utils import timezone
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from rest_framework.test import APIClient
@@ -17,7 +16,8 @@ from apps.core.models.communication_article import (
 from apps.user.models import UserProfile
 from ara.settings import ANSWER_PERIOD, MIN_TIME
 from ara.settings.dev import SCHOOL_RESPONSE_VOTE_THRESHOLD
-from tests.conftest import RequestSetting, TestCase
+
+from .conftest import RequestSetting, TestCase, Utils
 
 
 @pytest.fixture(scope="class")
@@ -88,29 +88,8 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         res = self.http_request(self.user, "get", f"articles/{article.id}")
         return res.data.get("communication_article_status")
 
-    def _create_dummy_users(self, num):
-        dummy_users = []
-        for i in range(num):
-            user, created = User.objects.get_or_create(
-                username=f"DummyUser{i}", email=f"dummy_user{i}@sparcs.org"
-            )
-            if created:
-                UserProfile.objects.create(
-                    user=user,
-                    nickname=f"User{i} created at {timezone.now()}",
-                    group=UserProfile.UserGroup.KAIST_MEMBER,
-                    agree_terms_of_service_at=timezone.now(),
-                    sso_user_info={
-                        "kaist_info": '{"ku_kname": "\\ud669"}',
-                        "first_name": f"DummyUser{i}_FirstName",
-                        "last_name": f"DummyUser{i}_LastName",
-                    },
-                )
-            dummy_users.append(user)
-        return dummy_users
-
     def _add_positive_votes(self, article, num):
-        dummy_users = self._create_dummy_users(num)
+        dummy_users = Utils.create_users(num)
         for user in dummy_users:
             self.http_request(user, "post", f"articles/{article.id}/vote_positive")
 

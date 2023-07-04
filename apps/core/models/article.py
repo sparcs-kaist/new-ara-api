@@ -37,127 +37,124 @@ class ArticleHiddenReason(str, Enum):
 
 
 class Article(MetaDataModel):
-    class Meta(MetaDataModel.Meta):
-        verbose_name = "게시물"
-        verbose_name_plural = "게시물 목록"
-
     title = models.CharField(
-        max_length=256,
         verbose_name="제목",
+        max_length=256,
     )
     content = models.TextField(
         verbose_name="본문",
     )
     content_text = models.TextField(
-        editable=False,
         verbose_name="text 형식 본문",
+        editable=False,
     )
-
     name_type = models.SmallIntegerField(
-        default=NameType.REGULAR,
         verbose_name="익명 혹은 실명 여부",
+        default=NameType.REGULAR,
     )
     is_content_sexual = models.BooleanField(
-        default=False,
         verbose_name="성인/음란성 내용",
+        default=False,
     )
     is_content_social = models.BooleanField(
-        default=False,
         verbose_name="정치/사회성 내용",
+        default=False,
     )
-
     hit_count = models.IntegerField(
-        default=0,
         verbose_name="조회수",
+        default=0,
     )
     comment_count = models.IntegerField(
-        default=0,
         verbose_name="댓글 수",
+        default=0,
     )
     report_count = models.IntegerField(
-        default=0,
         verbose_name="신고 수",
+        default=0,
     )
     positive_vote_count = models.IntegerField(
-        default=0,
         verbose_name="좋아요 수",
+        default=0,
     )
     negative_vote_count = models.IntegerField(
-        default=0,
         verbose_name="싫어요 수",
-    )
-
-    migrated_hit_count = models.IntegerField(
         default=0,
+    )
+    migrated_hit_count = models.IntegerField(
         verbose_name="이전된 조회수",
+        default=0,
     )
     migrated_positive_vote_count = models.IntegerField(
-        default=0,
         verbose_name="이전된 좋아요 수",
+        default=0,
     )
     migrated_negative_vote_count = models.IntegerField(
-        default=0,
         verbose_name="이전된 싫어요 수",
+        default=0,
     )
-
     created_by = models.ForeignKey(
-        on_delete=models.CASCADE,
-        to=settings.AUTH_USER_MODEL,
-        db_index=True,
-        related_name="article_set",
         verbose_name="작성자",
+        to=settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="article_set",
+        db_index=True,
     )
     parent_topic = models.ForeignKey(
-        on_delete=models.CASCADE,
-        to="core.Topic",
-        null=True,
-        blank=True,
-        default=None,
-        db_index=True,
-        related_name="article_set",
         verbose_name="말머리",
+        to="core.Topic",
+        on_delete=models.CASCADE,
+        related_name="article_set",
+        blank=True,
+        null=True,
+        db_index=True,
+        default=None,
     )
     parent_board = models.ForeignKey(
-        on_delete=models.CASCADE,
-        to="core.Board",
-        db_index=True,
-        related_name="article_set",
         verbose_name="게시판",
+        to="core.Board",
+        on_delete=models.CASCADE,
+        related_name="article_set",
+        db_index=True,
     )
-
     attachments = models.ManyToManyField(
+        verbose_name="첨부 파일(들)",
         to="core.Attachment",
         blank=True,
         db_index=True,
-        verbose_name="첨부 파일(들)",
     )
-
     commented_at = models.DateTimeField(
+        verbose_name="마지막 댓글 시간",
         null=True,
         default=None,
-        verbose_name="마지막 댓글 시간",
     )
-
     url = models.URLField(
-        null=True,
+        verbose_name="포탈 링크",
         max_length=200,
         blank=True,
+        null=True,
         default=None,
-        verbose_name="포탈 링크",
     )
-
     content_updated_at = models.DateTimeField(
+        verbose_name="제목/본문/첨부파일 수정 시간",
         null=True,
         default=None,
-        verbose_name="제목/본문/첨부파일 수정 시간",
+    )
+    hidden_at = models.DateTimeField(
+        verbose_name="숨김 시간",
+        blank=True,
+        null=True,
+        default=None,
+    )
+    topped_at = models.DateTimeField(
+        verbose_name="인기글 달성 시각",
+        blank=True,
+        null=True,
+        default=None,
     )
 
-    hidden_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        default=None,
-        verbose_name="숨김 시간",
-    )
+    class Meta(MetaDataModel.Meta):
+        verbose_name = "게시물"
+        verbose_name_plural = "게시물 목록"
 
     def __str__(self):
         return self.title
@@ -223,7 +220,7 @@ class Article(MetaDataModel):
 
         self.save()
 
-    def update_vote_status(self):
+    def update_vote_status(self) -> None:
         self.positive_vote_count = (
             self.vote_set.filter(is_positive=True).count()
             + self.migrated_positive_vote_count
@@ -232,6 +229,12 @@ class Article(MetaDataModel):
             self.vote_set.filter(is_positive=False).count()
             + self.migrated_negative_vote_count
         )
+
+        if (
+            self.topped_at is None
+            and self.positive_vote_count >= self.parent_board.top_threshold
+        ):
+            self.topped_at = timezone.now()
 
         if (
             self.parent_board.is_school_communication
