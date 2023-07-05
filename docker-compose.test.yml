@@ -10,7 +10,7 @@ services:
       - elasticsearch
     environment:
       - DJANGO_SETTINGS_MODULE=ara.settings.test
-      - DJANGO_ENV=development
+      - DJANGO_ENV=${DJANGO_ENV}
       - SECRET_KEY=${SECRET_KEY}
       - AWS_BUCKET_NAME=sparcs-newara-dev
       - AWS_BUCKET_NAME_STATIC=sparcs-kaist-ara-beta-static
@@ -39,7 +39,7 @@ services:
       - elasticsearch
     environment:
       - DJANGO_SETTINGS_MODULE=main.settings.test
-      - DJANGO_ENV=development
+      - DJANGO_ENV=${DJANGO_ENV}
       - SECRET_KEY=${SECRET_KEY}
       - AWS_BUCKET_NAME=sparcs-newara-dev
       - AWS_BUCKET_NAME_STATIC=sparcs-kaist-ara-beta-static
