@@ -10,8 +10,8 @@ ALLOWED_HOSTS = [
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "newara.sparcs.org",
-    "ara.sparcs.org",
+    "https://newara.sparcs.org",
+    "https://ara.sparcs.org",
 ]
 
 SSO_IS_BETA = False

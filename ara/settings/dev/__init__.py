@@ -7,7 +7,10 @@ from ..djangorestframework import REST_FRAMEWORK
 DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
-CSRF_TRUSTED_ORIGINS = ["*"]
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.sparcs.org",
+    "http://localhost",
+]
 
 CORS_ORIGIN_ALLOW_ALL = True
 
