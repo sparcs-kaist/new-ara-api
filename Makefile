@@ -64,6 +64,3 @@ elasticsearch_index:
 
 show_sql:
 	python manage.py shell_plus --print-sql
-
-pip:
-	pipenv requirements > requirements.txt

@@ -28,17 +28,17 @@ bleach = "*"
 django-redis = "*"
 pillow = "*"
 html5lib = "*"
+pytest = "*"
+pytest-django = "*"
+django-cors-headers = "*"
+django-debug-toolbar = "*"
+django-debug-toolbar-force = "*"
 
 [dev-packages]
 black = "*"
 isort = "*"
 pre-commit = "*"
 ipython = "*"
-pytest = "*"
-pytest-django = "*"
-django-cors-headers = "*"
-django-debug-toolbar = "*"
-django-debug-toolbar-force = "*"
 
 [requires]
 python_version = "3.11"
