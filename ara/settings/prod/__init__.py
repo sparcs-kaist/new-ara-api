@@ -9,6 +9,11 @@ ALLOWED_HOSTS = [
     "ara.sparcs.org",
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    "newara.sparcs.org",
+    "ara.sparcs.org",
+]
+
 SSO_IS_BETA = False
 
 SESSION_COOKIE_SAMESITE = "Lax"

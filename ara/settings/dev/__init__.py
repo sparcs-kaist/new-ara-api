@@ -7,6 +7,7 @@ from ..djangorestframework import REST_FRAMEWORK
 DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
+CSRF_TRUSTED_ORIGINS = ["*"]
 
 CORS_ORIGIN_ALLOW_ALL = True
 
