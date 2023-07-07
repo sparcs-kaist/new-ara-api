@@ -28,7 +28,6 @@ elif [ "$1" = "dx" ]; then
         python manage.py compilemessages -l en -l ko
         touch .init.lock.log
     fi
-    source venv/bin/activate;
     sleep infinity
 else
     python3 manage.py collectstatic --noinput
