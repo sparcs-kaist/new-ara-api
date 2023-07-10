@@ -4,7 +4,6 @@ import uuid
 from datetime import datetime
 
 import boto3
-import pyotp
 import requests
 from bs4 import BeautifulSoup as bs
 from django.contrib.auth import get_user_model
@@ -17,7 +16,6 @@ from apps.core.models import Article
 from apps.user.models import UserProfile
 from ara.settings import (
     AWS_S3_BUCKET_NAME,
-    PORTAL_2FA_KEY,
     PORTAL_ID,
     PORTAL_JSESSIONID,
     PORTAL_PASSWORD,
@@ -39,11 +37,6 @@ LOGIN_INFO_SSO = {
 COOKIES = {"JSESSIONID": PORTAL_JSESSIONID}
 
 BASE_URL = "https://portal.kaist.ac.kr"
-
-
-def _make_2fa_token():
-    totp = pyotp.TOTP(PORTAL_2FA_KEY)
-    return totp.now()
 
 
 def _login_kaist_portal():
