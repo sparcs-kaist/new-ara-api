@@ -33,6 +33,8 @@ pytest-django = "*"
 django-cors-headers = "*"
 django-debug-toolbar = "*"
 django-debug-toolbar-force = "*"
+pyyaml = "*"
+uritemplate = "*"
 
 [dev-packages]
 black = "*"

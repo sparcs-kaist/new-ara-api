@@ -64,3 +64,6 @@ elasticsearch_index:
 
 show_sql:
 	python manage.py shell_plus --print-sql
+
+schema:
+	python3 manage.py spectacular --color --file schema.yml

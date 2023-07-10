@@ -1,0 +1,4210 @@
+openapi: 3.0.3
+info:
+  title: Ara API
+  version: 2.1.0
+  description: Restful API for Ara, KAIST's official community service
+  license:
+    name: MIT
+    url: https://opensource.org/license/mit/
+paths:
+  /api/articles/:
+    get:
+      operationId: articles_list
+      parameters:
+      - in: query
+        name: communication_article__school_response_status
+        schema:
+          type: integer
+      - in: query
+        name: communication_article__school_response_status__lt
+        schema:
+          type: integer
+      - in: query
+        name: content__contains
+        schema:
+          type: string
+      - in: query
+        name: content_text__contains
+        schema:
+          type: string
+      - in: query
+        name: created_by
+        schema:
+          type: integer
+      - in: query
+        name: created_by__profile__nickname
+        schema:
+          type: string
+      - in: query
+        name: created_by__profile__nickname__contains
+        schema:
+          type: string
+      - in: query
+        name: created_by__username
+        schema:
+          type: string
+      - in: query
+        name: created_by__username__contains
+        schema:
+          type: string
+      - in: query
+        name: is_content_sexual
+        schema:
+          type: boolean
+      - in: query
+        name: is_content_social
+        schema:
+          type: boolean
+      - in: query
+        name: main_search__contains
+        schema:
+          type: string
+        description: 메인 검색 (제목포함, 본문포함, 닉네임일치)
+      - in: query
+        name: name_type
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: parent_board
+        schema:
+          type: integer
+      - in: query
+        name: parent_board__in
+        schema:
+          type: array
+          items:
+            type: integer
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: parent_topic
+        schema:
+          type: integer
+      - in: query
+        name: parent_topic__in
+        schema:
+          type: array
+          items:
+            type: integer
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: title__contains
+        schema:
+          type: string
+      tags:
+      - articles
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedArticleListActionList'
+          description: ''
+    post:
+      operationId: articles_create
+      tags:
+      - articles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleCreateAction'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArticleCreateAction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArticleCreateAction'
+        required: true
+      security:
+      - basicAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleCreateAction'
+          description: ''
+  /api/articles/{id}/:
+    get:
+      operationId: articles_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 게시물.
+        required: true
+      tags:
+      - articles
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Article'
+          description: ''
+    put:
+      operationId: articles_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 게시물.
+        required: true
+      tags:
+      - articles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleUpdateAction'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArticleUpdateAction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArticleUpdateAction'
+        required: true
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleUpdateAction'
+          description: ''
+    patch:
+      operationId: articles_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 게시물.
+        required: true
+      tags:
+      - articles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleUpdateAction'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleUpdateAction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleUpdateAction'
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleUpdateAction'
+          description: ''
+    delete:
+      operationId: articles_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 게시물.
+        required: true
+      tags:
+      - articles
+      security:
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/articles/{id}/vote_cancel/:
+    post:
+      operationId: articles_vote_cancel_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 게시물.
+        required: true
+      tags:
+      - articles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Article'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Article'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Article'
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Article'
+          description: ''
+  /api/articles/{id}/vote_negative/:
+    post:
+      operationId: articles_vote_negative_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 게시물.
+        required: true
+      tags:
+      - articles
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/articles/{id}/vote_positive/:
+    post:
+      operationId: articles_vote_positive_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 게시물.
+        required: true
+      tags:
+      - articles
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/articles/recent/:
+    get:
+      operationId: articles_recent_retrieve
+      tags:
+      - articles
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleListAction'
+          description: ''
+  /api/articles/top/:
+    get:
+      operationId: articles_top_retrieve
+      tags:
+      - articles
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Article'
+          description: ''
+  /api/attachments/:
+    post:
+      operationId: attachments_create
+      tags:
+      - attachments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Attachment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Attachment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Attachment'
+        required: true
+      security:
+      - basicAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attachment'
+          description: ''
+  /api/attachments/{id}/:
+    get:
+      operationId: attachments_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 첨부파일.
+        required: true
+      tags:
+      - attachments
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attachment'
+          description: ''
+    delete:
+      operationId: attachments_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 첨부파일.
+        required: true
+      tags:
+      - attachments
+      security:
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/attachments/{id}/url/:
+    get:
+      operationId: attachments_url_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 첨부파일.
+        required: true
+      tags:
+      - attachments
+      security:
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attachment'
+          description: ''
+  /api/best_searches/:
+    get:
+      operationId: best_searches_list
+      parameters:
+      - in: query
+        name: latest
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - best_searches
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBestSearchList'
+          description: ''
+  /api/best_searches/{id}/:
+    get:
+      operationId: best_searches_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 추천 검색어.
+        required: true
+      tags:
+      - best_searches
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BestSearch'
+          description: ''
+  /api/blocks/:
+    get:
+      operationId: blocks_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - blocks
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBlockList'
+          description: ''
+    post:
+      operationId: blocks_create
+      tags:
+      - blocks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockCreateAction'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BlockCreateAction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BlockCreateAction'
+        required: true
+      security:
+      - basicAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockCreateAction'
+          description: ''
+  /api/blocks/{id}/:
+    get:
+      operationId: blocks_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 차단.
+        required: true
+      tags:
+      - blocks
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Block'
+          description: ''
+    delete:
+      operationId: blocks_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 차단.
+        required: true
+      tags:
+      - blocks
+      security:
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/blocks/without_id/:
+    post:
+      operationId: blocks_without_id_create
+      tags:
+      - blocks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockDestroyWithoutId'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BlockDestroyWithoutId'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BlockDestroyWithoutId'
+        required: true
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockDestroyWithoutId'
+          description: ''
+  /api/boards/:
+    get:
+      operationId: boards_list
+      parameters:
+      - in: query
+        name: is_hidden
+        schema:
+          type: boolean
+      - in: query
+        name: is_readonly
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      tags:
+      - boards
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BoardDetailAction'
+          description: ''
+  /api/boards/{id}/:
+    get:
+      operationId: boards_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 게시판.
+        required: true
+      tags:
+      - boards
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Board'
+          description: ''
+  /api/comments/:
+    post:
+      operationId: comments_create
+      tags:
+      - comments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreateAction'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CommentCreateAction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CommentCreateAction'
+      security:
+      - basicAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentCreateAction'
+          description: ''
+  /api/comments/{id}/:
+    get:
+      operationId: comments_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 댓글.
+        required: true
+      tags:
+      - comments
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+          description: ''
+    put:
+      operationId: comments_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 댓글.
+        required: true
+      tags:
+      - comments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentUpdateAction'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CommentUpdateAction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CommentUpdateAction'
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentUpdateAction'
+          description: ''
+    patch:
+      operationId: comments_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 댓글.
+        required: true
+      tags:
+      - comments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCommentUpdateAction'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCommentUpdateAction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCommentUpdateAction'
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentUpdateAction'
+          description: ''
+    delete:
+      operationId: comments_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 댓글.
+        required: true
+      tags:
+      - comments
+      security:
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/comments/{id}/vote_cancel/:
+    post:
+      operationId: comments_vote_cancel_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 댓글.
+        required: true
+      tags:
+      - comments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Comment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Comment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Comment'
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+          description: ''
+  /api/comments/{id}/vote_negative/:
+    post:
+      operationId: comments_vote_negative_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 댓글.
+        required: true
+      tags:
+      - comments
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/comments/{id}/vote_positive/:
+    post:
+      operationId: comments_vote_positive_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 댓글.
+        required: true
+      tags:
+      - comments
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/faqs/:
+    get:
+      operationId: faqs_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - faqs
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedFAQList'
+          description: ''
+  /api/faqs/{id}/:
+    get:
+      operationId: faqs_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this FAQ.
+        required: true
+      tags:
+      - faqs
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQ'
+          description: ''
+  /api/fcm_token/{mode}:
+    patch:
+      operationId: fcm_token_partial_update
+      parameters:
+      - in: path
+        name: mode
+        schema:
+          type: string
+        required: true
+      tags:
+      - fcm_token
+      security:
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/home/:
+    get:
+      operationId: home_retrieve
+      tags:
+      - home
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/me:
+    get:
+      operationId: me_retrieve
+      description: Get my information from token
+      tags:
+      - me
+      security:
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/notifications/:
+    get:
+      operationId: notifications_list
+      parameters:
+      - in: query
+        name: content__contains
+        schema:
+          type: string
+      - in: query
+        name: is_read
+        schema:
+          type: boolean
+        description: 조회 여부
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: related_article
+        schema:
+          type: integer
+      - in: query
+        name: related_article__in
+        schema:
+          type: array
+          items:
+            type: integer
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: related_comment
+        schema:
+          type: integer
+      - in: query
+        name: related_comment__in
+        schema:
+          type: array
+          items:
+            type: integer
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: title__contains
+        schema:
+          type: string
+      - in: query
+        name: type
+        schema:
+          type: string
+          title: 알림 종류
+          enum:
+          - article_commented
+          - comment_commented
+          - default
+        description: |-
+          * `default` - default
+          * `article_commented` - article_commented
+          * `comment_commented` - comment_commented
+      - in: query
+        name: type__in
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      tags:
+      - notifications
+      security:
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedNotificationList'
+          description: ''
+  /api/notifications/{id}/:
+    get:
+      operationId: notifications_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 알림.
+        required: true
+      tags:
+      - notifications
+      security:
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+          description: ''
+  /api/notifications/{id}/read/:
+    post:
+      operationId: notifications_read_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 알림.
+        required: true
+      tags:
+      - notifications
+      security:
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/notifications/read_all/:
+    post:
+      operationId: notifications_read_all_create
+      tags:
+      - notifications
+      security:
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/reports/:
+    get:
+      operationId: reports_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - reports
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedReportList'
+          description: ''
+    post:
+      operationId: reports_create
+      tags:
+      - reports
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportCreateAction'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReportCreateAction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReportCreateAction'
+      security:
+      - basicAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportCreateAction'
+          description: ''
+  /api/reports/{id}/:
+    delete:
+      operationId: reports_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 신고.
+        required: true
+      tags:
+      - reports
+      security:
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/schema/:
+    get:
+      operationId: schema_retrieve
+      description: |-
+        OpenApi3 schema for this API. Format can be selected via content negotiation.
+
+        - YAML: application/vnd.oai.openapi
+        - JSON: application/vnd.oai.openapi+json
+      parameters:
+      - in: query
+        name: format
+        schema:
+          type: string
+          enum:
+          - json
+          - yaml
+      - in: query
+        name: lang
+        schema:
+          type: string
+          enum:
+          - en
+          - ko
+      tags:
+      - schema
+      security:
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.oai.openapi:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/yaml:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/vnd.oai.openapi+json:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/scraps/:
+    get:
+      operationId: scraps_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - scraps
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedScrapList'
+          description: ''
+    post:
+      operationId: scraps_create
+      tags:
+      - scraps
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScrapCreateAction'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ScrapCreateAction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ScrapCreateAction'
+        required: true
+      security:
+      - basicAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScrapCreateAction'
+          description: ''
+  /api/scraps/{id}/:
+    delete:
+      operationId: scraps_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 스크랩.
+        required: true
+      tags:
+      - scraps
+      security:
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/status/:
+    get:
+      operationId: status_retrieve
+      tags:
+      - status
+      security:
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/user_profiles/{user}/:
+    get:
+      operationId: user_profiles_retrieve
+      parameters:
+      - in: path
+        name: user
+        schema:
+          type: integer
+          title: 사용자
+        description: A unique value identifying this 유저 프로필.
+        required: true
+      tags:
+      - user_profiles
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+          description: ''
+    put:
+      operationId: user_profiles_update
+      parameters:
+      - in: path
+        name: user
+        schema:
+          type: integer
+          title: 사용자
+        description: A unique value identifying this 유저 프로필.
+        required: true
+      tags:
+      - user_profiles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileUpdateAction'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserProfileUpdateAction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserProfileUpdateAction'
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileUpdateAction'
+          description: ''
+    patch:
+      operationId: user_profiles_partial_update
+      parameters:
+      - in: path
+        name: user
+        schema:
+          type: integer
+          title: 사용자
+        description: A unique value identifying this 유저 프로필.
+        required: true
+      tags:
+      - user_profiles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserProfileUpdateAction'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserProfileUpdateAction'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserProfileUpdateAction'
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileUpdateAction'
+          description: ''
+  /api/user_profiles/{user}/agree_terms_of_service/:
+    patch:
+      operationId: user_profiles_agree_terms_of_service_partial_update
+      parameters:
+      - in: path
+        name: user
+        schema:
+          type: integer
+          title: 사용자
+        description: A unique value identifying this 유저 프로필.
+        required: true
+      tags:
+      - user_profiles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserProfile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserProfile'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserProfile'
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+          description: ''
+  /api/users/{id}/sso_logout/:
+    delete:
+      operationId: users_sso_logout_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 사용자.
+        required: true
+      tags:
+      - users
+      security:
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/users/{id}/sso_unregister/:
+    post:
+      operationId: users_sso_unregister_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this 사용자.
+        required: true
+      tags:
+      - users
+      security:
+      - basicAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/users/sso_login/:
+    get:
+      operationId: users_sso_login_retrieve
+      tags:
+      - users
+      security:
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/users/sso_login_callback/:
+    get:
+      operationId: users_sso_login_callback_retrieve
+      tags:
+      - users
+      security:
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+components:
+  schemas:
+    Article:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        is_hidden:
+          type: boolean
+          readOnly: true
+        why_hidden:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        can_override_hidden:
+          type: boolean
+          nullable: true
+          readOnly: true
+        parent_topic:
+          allOf:
+          - $ref: '#/components/schemas/Topic'
+          readOnly: true
+        parent_board:
+          allOf:
+          - $ref: '#/components/schemas/Board'
+          readOnly: true
+        attachments:
+          type: string
+          readOnly: true
+        my_comment_profile:
+          type: string
+          readOnly: true
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleNestedCommentListAction'
+          readOnly: true
+        is_mine:
+          type: boolean
+          readOnly: true
+        title:
+          type: string
+          nullable: true
+          readOnly: true
+        content:
+          type: string
+          nullable: true
+          readOnly: true
+        my_vote:
+          type: boolean
+          nullable: true
+          readOnly: true
+        my_scrap:
+          type: object
+          additionalProperties: {}
+          nullable: true
+          readOnly: true
+        created_by:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        article_current_page:
+          type: integer
+          nullable: true
+          readOnly: true
+        side_articles:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        communication_article_status:
+          type: string
+          readOnly: true
+        days_left:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 삭제 시간
+        name_type:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          title: 익명 혹은 실명 여부
+        is_content_sexual:
+          type: boolean
+          title: 성인/음란성 내용
+        is_content_social:
+          type: boolean
+          title: 정치/사회성 내용
+        hit_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 조회수
+        comment_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 댓글 수
+        report_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 신고 수
+        positive_vote_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 좋아요 수
+        negative_vote_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 싫어요 수
+        commented_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 마지막 댓글 시간
+        url:
+          type: string
+          format: uri
+          nullable: true
+          title: 포탈 링크
+          maxLength: 200
+        content_updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 제목/본문/첨부파일 수정 시간
+        hidden_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 숨김 시간
+        topped_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 인기글 달성 시각
+      required:
+      - article_current_page
+      - attachments
+      - can_override_hidden
+      - comments
+      - communication_article_status
+      - content
+      - created_at
+      - created_by
+      - days_left
+      - deleted_at
+      - id
+      - is_hidden
+      - is_mine
+      - my_comment_profile
+      - my_scrap
+      - my_vote
+      - parent_board
+      - parent_topic
+      - side_articles
+      - title
+      - updated_at
+      - why_hidden
+    ArticleCreateAction:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 삭제 시간
+        title:
+          type: string
+          title: 제목
+          maxLength: 256
+        content:
+          type: string
+          title: 본문
+        name_type:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          title: 익명 혹은 실명 여부
+        is_content_sexual:
+          type: boolean
+          title: 성인/음란성 내용
+        is_content_social:
+          type: boolean
+          title: 정치/사회성 내용
+        hit_count:
+          type: integer
+          readOnly: true
+          title: 조회수
+        comment_count:
+          type: integer
+          readOnly: true
+          title: 댓글 수
+        report_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 신고 수
+        positive_vote_count:
+          type: integer
+          readOnly: true
+          title: 좋아요 수
+        negative_vote_count:
+          type: integer
+          readOnly: true
+          title: 싫어요 수
+        commented_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          title: 마지막 댓글 시간
+        url:
+          type: string
+          format: uri
+          nullable: true
+          title: 포탈 링크
+          maxLength: 200
+        content_updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 제목/본문/첨부파일 수정 시간
+        hidden_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 숨김 시간
+        topped_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 인기글 달성 시각
+        created_by:
+          type: integer
+          readOnly: true
+          title: 작성자
+        parent_topic:
+          type: integer
+          nullable: true
+          title: 말머리
+        parent_board:
+          type: integer
+          title: 게시판
+        attachments:
+          type: array
+          items:
+            type: integer
+            title: 첨부 파일(들)
+          title: 첨부 파일(들)
+      required:
+      - comment_count
+      - commented_at
+      - content
+      - created_at
+      - created_by
+      - deleted_at
+      - hit_count
+      - id
+      - negative_vote_count
+      - parent_board
+      - positive_vote_count
+      - title
+      - updated_at
+    ArticleListAction:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        is_hidden:
+          type: boolean
+          readOnly: true
+        why_hidden:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        can_override_hidden:
+          type: boolean
+          nullable: true
+          readOnly: true
+        parent_topic:
+          allOf:
+          - $ref: '#/components/schemas/Topic'
+          readOnly: true
+        parent_board:
+          allOf:
+          - $ref: '#/components/schemas/Board'
+          readOnly: true
+        title:
+          type: string
+          nullable: true
+          readOnly: true
+        created_by:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        read_status:
+          type: string
+          readOnly: true
+        attachment_type:
+          type: string
+          readOnly: true
+        communication_article_status:
+          type: string
+          readOnly: true
+        days_left:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 삭제 시간
+        name_type:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          title: 익명 혹은 실명 여부
+        is_content_sexual:
+          type: boolean
+          title: 성인/음란성 내용
+        is_content_social:
+          type: boolean
+          title: 정치/사회성 내용
+        hit_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 조회수
+        comment_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 댓글 수
+        report_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 신고 수
+        positive_vote_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 좋아요 수
+        negative_vote_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 싫어요 수
+        commented_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 마지막 댓글 시간
+        url:
+          type: string
+          format: uri
+          nullable: true
+          title: 포탈 링크
+          maxLength: 200
+        content_updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 제목/본문/첨부파일 수정 시간
+        hidden_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 숨김 시간
+        topped_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 인기글 달성 시각
+      required:
+      - attachment_type
+      - can_override_hidden
+      - communication_article_status
+      - created_at
+      - created_by
+      - days_left
+      - deleted_at
+      - id
+      - is_hidden
+      - parent_board
+      - parent_topic
+      - read_status
+      - title
+      - updated_at
+      - why_hidden
+    ArticleNestedCommentListAction:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        is_hidden:
+          type: boolean
+          readOnly: true
+        why_hidden:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        can_override_hidden:
+          type: boolean
+          nullable: true
+          readOnly: true
+        my_vote:
+          type: boolean
+          nullable: true
+          readOnly: true
+        is_mine:
+          type: boolean
+          readOnly: true
+        content:
+          type: string
+          nullable: true
+          readOnly: true
+        created_by:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommentNestedCommentListAction'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 삭제 시간
+        name_type:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          title: 익명 혹은 실명
+        report_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 신고 수
+        positive_vote_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 좋아요 수
+        negative_vote_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 싫어요 수
+        hidden_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 숨김 시간
+        parent_article:
+          type: integer
+          nullable: true
+          title: 글
+        parent_comment:
+          type: integer
+          nullable: true
+          title: 댓글
+      required:
+      - can_override_hidden
+      - comments
+      - content
+      - created_at
+      - created_by
+      - deleted_at
+      - id
+      - is_hidden
+      - is_mine
+      - my_vote
+      - updated_at
+      - why_hidden
+    ArticleUpdateAction:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 삭제 시간
+        title:
+          type: string
+          title: 제목
+          maxLength: 256
+        content:
+          type: string
+          title: 본문
+        name_type:
+          type: integer
+          readOnly: true
+          title: 익명 혹은 실명 여부
+        is_content_sexual:
+          type: boolean
+          title: 성인/음란성 내용
+        is_content_social:
+          type: boolean
+          title: 정치/사회성 내용
+        hit_count:
+          type: integer
+          readOnly: true
+          title: 조회수
+        comment_count:
+          type: integer
+          readOnly: true
+          title: 댓글 수
+        report_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 신고 수
+        positive_vote_count:
+          type: integer
+          readOnly: true
+          title: 좋아요 수
+        negative_vote_count:
+          type: integer
+          readOnly: true
+          title: 싫어요 수
+        commented_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          title: 마지막 댓글 시간
+        url:
+          type: string
+          format: uri
+          nullable: true
+          title: 포탈 링크
+          maxLength: 200
+        content_updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 제목/본문/첨부파일 수정 시간
+        hidden_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 숨김 시간
+        topped_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 인기글 달성 시각
+        created_by:
+          type: integer
+          readOnly: true
+          title: 작성자
+        parent_topic:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: 말머리
+        parent_board:
+          type: integer
+          readOnly: true
+          title: 게시판
+        attachments:
+          type: array
+          items:
+            type: integer
+            title: 첨부 파일(들)
+          title: 첨부 파일(들)
+      required:
+      - comment_count
+      - commented_at
+      - content
+      - created_at
+      - created_by
+      - deleted_at
+      - hit_count
+      - id
+      - name_type
+      - negative_vote_count
+      - parent_board
+      - parent_topic
+      - positive_vote_count
+      - title
+      - updated_at
+    Attachment:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 삭제 시간
+        file:
+          type: string
+          format: uri
+          title: 링크
+        size:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          title: 용량
+        mimetype:
+          type: string
+          title: 타입
+          maxLength: 128
+      required:
+      - created_at
+      - deleted_at
+      - file
+      - id
+      - updated_at
+    BaseArticle:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 삭제 시간
+        title:
+          type: string
+          title: 제목
+          maxLength: 256
+        name_type:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          title: 익명 혹은 실명 여부
+        is_content_sexual:
+          type: boolean
+          title: 성인/음란성 내용
+        is_content_social:
+          type: boolean
+          title: 정치/사회성 내용
+        hit_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 조회수
+        comment_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 댓글 수
+        report_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 신고 수
+        positive_vote_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 좋아요 수
+        negative_vote_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 싫어요 수
+        commented_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 마지막 댓글 시간
+        url:
+          type: string
+          format: uri
+          nullable: true
+          title: 포탈 링크
+          maxLength: 200
+        content_updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 제목/본문/첨부파일 수정 시간
+        hidden_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 숨김 시간
+        topped_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 인기글 달성 시각
+        created_by:
+          type: integer
+          title: 작성자
+        parent_topic:
+          type: integer
+          nullable: true
+          title: 말머리
+        parent_board:
+          type: integer
+          title: 게시판
+      required:
+      - created_at
+      - created_by
+      - deleted_at
+      - id
+      - parent_board
+      - title
+      - updated_at
+    BaseComment:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 삭제 시간
+        content:
+          type: string
+          title: 본문
+        name_type:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          title: 익명 혹은 실명
+        report_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 신고 수
+        positive_vote_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 좋아요 수
+        negative_vote_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 싫어요 수
+        hidden_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 숨김 시간
+        created_by:
+          type: integer
+          title: 작성자
+        parent_article:
+          type: integer
+          nullable: true
+          title: 글
+        parent_comment:
+          type: integer
+          nullable: true
+          title: 댓글
+      required:
+      - created_at
+      - created_by
+      - deleted_at
+      - id
+      - updated_at
+    BestSearch:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 삭제 시간
+        ko_word:
+          type: string
+          title: 검색어 국문
+          maxLength: 32
+        en_word:
+          type: string
+          title: 검색어 영문
+          maxLength: 32
+        registered_by:
+          allOf:
+          - $ref: '#/components/schemas/RegisteredByEnum'
+          title: 추천 검색어 등록 방법
+        latest:
+          type: boolean
+          title: 최신 추천 검색어
+      required:
+      - created_at
+      - deleted_at
+      - en_word
+      - id
+      - ko_word
+      - updated_at
+    BlankEnum:
+      enum:
+      - ''
+    Block:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/PublicUser'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          default: 0001-01-01T08:27:52+08:27:52
+          title: 삭제 시간
+        blocked_by:
+          type: integer
+          readOnly: true
+          title: 차단한 사람
+      required:
+      - blocked_by
+      - created_at
+      - deleted_at
+      - id
+      - updated_at
+      - user
+    BlockCreateAction:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          default: 0001-01-01T08:27:52+08:27:52
+          title: 삭제 시간
+        blocked_by:
+          type: integer
+          readOnly: true
+          title: 차단한 사람
+        user:
+          type: integer
+          title: 차단당한 사람
+      required:
+      - blocked_by
+      - created_at
+      - deleted_at
+      - id
+      - updated_at
+      - user
+    BlockDestroyWithoutId:
+      type: object
+      properties:
+        blocked:
+          type: integer
+      required:
+      - blocked
+    Board:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          default: 0001-01-01T08:27:52+08:27:52
+          title: 삭제 시간
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        ko_name:
+          type: string
+          title: 게시판 국문 이름
+          maxLength: 32
+        en_name:
+          type: string
+          title: 게시판 영문 이름
+          maxLength: 32
+        ko_description:
+          type: string
+          title: 게시판 국문 소개
+        en_description:
+          type: string
+          title: 게시판 영문 소개
+        read_access_mask:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          title: 읽기 권한
+        write_access_mask:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          title: 쓰기 권한
+        comment_access_mask:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          title: 댓글 권한
+        is_readonly:
+          type: boolean
+          title: 읽기 전용 게시판
+          description: 활성화했을 때 관리자만 글을 쓸 수 있습니다. (ex. 포탈공지)
+        is_hidden:
+          type: boolean
+          title: 리스트 숨김 게시판
+          description: 활성화했을 때 메인페이지 상단바 리스트에 나타나지 않습니다. (ex. 뉴아라공지)
+        name_type:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          title: 닉네임/익명/실명글 허용 여부 설정
+          description: 글과 댓글을 어떤 이름 설정(닉네임/익명/실명)으로 작성할 수 있는지 정의합니다.
+        is_school_communication:
+          type: boolean
+          title: 학교와의 소통 게시판
+          description: 학교 소통 게시판 글임을 표시
+        group_id:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 그룹 ID
+        banner_image:
+          type: string
+          format: uri
+          title: 게시판 배너 이미지
+        ko_banner_description:
+          type: string
+          nullable: true
+          title: 게시판 배너에 삽입되는 국문 소개
+        en_banner_description:
+          type: string
+          nullable: true
+          title: 게시판 배너에 삽입되는 영문 소개
+        banner_url:
+          type: string
+          nullable: true
+          title: 게시판 배너를 클릭 시에 이동하는 링크
+        top_threshold:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          title: 인기글 달성 기준 좋아요 개수
+      required:
+      - created_at
+      - deleted_at
+      - en_description
+      - en_name
+      - id
+      - ko_description
+      - ko_name
+      - slug
+      - updated_at
+    BoardDetailAction:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        topics:
+          type: array
+          items:
+            $ref: '#/components/schemas/Topic'
+          readOnly: true
+        user_readable:
+          type: string
+          readOnly: true
+        user_writable:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          default: 0001-01-01T08:27:52+08:27:52
+          title: 삭제 시간
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        ko_name:
+          type: string
+          title: 게시판 국문 이름
+          maxLength: 32
+        en_name:
+          type: string
+          title: 게시판 영문 이름
+          maxLength: 32
+        ko_description:
+          type: string
+          title: 게시판 국문 소개
+        en_description:
+          type: string
+          title: 게시판 영문 소개
+        read_access_mask:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          title: 읽기 권한
+        write_access_mask:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          title: 쓰기 권한
+        comment_access_mask:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          title: 댓글 권한
+        is_readonly:
+          type: boolean
+          title: 읽기 전용 게시판
+          description: 활성화했을 때 관리자만 글을 쓸 수 있습니다. (ex. 포탈공지)
+        is_hidden:
+          type: boolean
+          title: 리스트 숨김 게시판
+          description: 활성화했을 때 메인페이지 상단바 리스트에 나타나지 않습니다. (ex. 뉴아라공지)
+        name_type:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          title: 닉네임/익명/실명글 허용 여부 설정
+          description: 글과 댓글을 어떤 이름 설정(닉네임/익명/실명)으로 작성할 수 있는지 정의합니다.
+        is_school_communication:
+          type: boolean
+          title: 학교와의 소통 게시판
+          description: 학교 소통 게시판 글임을 표시
+        group_id:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 그룹 ID
+        banner_image:
+          type: string
+          format: uri
+          title: 게시판 배너 이미지
+        ko_banner_description:
+          type: string
+          nullable: true
+          title: 게시판 배너에 삽입되는 국문 소개
+        en_banner_description:
+          type: string
+          nullable: true
+          title: 게시판 배너에 삽입되는 영문 소개
+        banner_url:
+          type: string
+          nullable: true
+          title: 게시판 배너를 클릭 시에 이동하는 링크
+        top_threshold:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          title: 인기글 달성 기준 좋아요 개수
+      required:
+      - created_at
+      - deleted_at
+      - en_description
+      - en_name
+      - id
+      - ko_description
+      - ko_name
+      - slug
+      - topics
+      - updated_at
+      - user_readable
+      - user_writable
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        is_hidden:
+          type: boolean
+          readOnly: true
+        why_hidden:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        can_override_hidden:
+          type: boolean
+          nullable: true
+          readOnly: true
+        my_vote:
+          type: boolean
+          nullable: true
+          readOnly: true
+        is_mine:
+          type: boolean
+          readOnly: true
+        content:
+          type: string
+          nullable: true
+          readOnly: true
+        created_by:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 삭제 시간
+        name_type:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          title: 익명 혹은 실명
+        report_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 신고 수
+        positive_vote_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 좋아요 수
+        negative_vote_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 싫어요 수
+        hidden_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 숨김 시간
+        parent_article:
+          type: integer
+          nullable: true
+          title: 글
+        parent_comment:
+          type: integer
+          nullable: true
+          title: 댓글
+      required:
+      - can_override_hidden
+      - content
+      - created_at
+      - created_by
+      - deleted_at
+      - id
+      - is_hidden
+      - is_mine
+      - my_vote
+      - updated_at
+      - why_hidden
+    CommentCreateAction:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_by:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 삭제 시간
+        content:
+          type: string
+          title: 본문
+        name_type:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          title: 익명 혹은 실명
+        report_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 신고 수
+        positive_vote_count:
+          type: integer
+          readOnly: true
+          title: 좋아요 수
+        negative_vote_count:
+          type: integer
+          readOnly: true
+          title: 싫어요 수
+        hidden_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 숨김 시간
+        parent_article:
+          type: integer
+          nullable: true
+          title: 글
+        parent_comment:
+          type: integer
+          nullable: true
+          title: 댓글
+      required:
+      - created_at
+      - created_by
+      - deleted_at
+      - id
+      - negative_vote_count
+      - positive_vote_count
+      - updated_at
+    CommentListAction:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        is_hidden:
+          type: boolean
+          readOnly: true
+        why_hidden:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        can_override_hidden:
+          type: boolean
+          nullable: true
+          readOnly: true
+        my_vote:
+          type: boolean
+          nullable: true
+          readOnly: true
+        is_mine:
+          type: boolean
+          readOnly: true
+        content:
+          type: string
+          nullable: true
+          readOnly: true
+        created_by:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 삭제 시간
+        name_type:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          title: 익명 혹은 실명
+        report_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 신고 수
+        positive_vote_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 좋아요 수
+        negative_vote_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 싫어요 수
+        hidden_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 숨김 시간
+        parent_article:
+          type: integer
+          nullable: true
+          title: 글
+        parent_comment:
+          type: integer
+          nullable: true
+          title: 댓글
+      required:
+      - can_override_hidden
+      - content
+      - created_at
+      - created_by
+      - deleted_at
+      - id
+      - is_hidden
+      - is_mine
+      - my_vote
+      - updated_at
+      - why_hidden
+    CommentNestedCommentListAction:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        is_hidden:
+          type: boolean
+          readOnly: true
+        why_hidden:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        can_override_hidden:
+          type: boolean
+          nullable: true
+          readOnly: true
+        my_vote:
+          type: boolean
+          nullable: true
+          readOnly: true
+        is_mine:
+          type: boolean
+          readOnly: true
+        content:
+          type: string
+          nullable: true
+          readOnly: true
+        created_by:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 삭제 시간
+        name_type:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          title: 익명 혹은 실명
+        report_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 신고 수
+        positive_vote_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 좋아요 수
+        negative_vote_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 싫어요 수
+        hidden_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 숨김 시간
+        parent_article:
+          type: integer
+          nullable: true
+          title: 글
+        parent_comment:
+          type: integer
+          nullable: true
+          title: 댓글
+      required:
+      - can_override_hidden
+      - content
+      - created_at
+      - created_by
+      - deleted_at
+      - id
+      - is_hidden
+      - is_mine
+      - my_vote
+      - updated_at
+      - why_hidden
+    CommentUpdateAction:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_by:
+          allOf:
+          - $ref: '#/components/schemas/PublicUser'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 삭제 시간
+        content:
+          type: string
+          title: 본문
+        name_type:
+          type: integer
+          readOnly: true
+          title: 익명 혹은 실명
+        report_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 신고 수
+        positive_vote_count:
+          type: integer
+          readOnly: true
+          title: 좋아요 수
+        negative_vote_count:
+          type: integer
+          readOnly: true
+          title: 싫어요 수
+        hidden_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 숨김 시간
+        parent_article:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: 글
+        parent_comment:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: 댓글
+      required:
+      - created_at
+      - created_by
+      - deleted_at
+      - id
+      - name_type
+      - negative_vote_count
+      - parent_article
+      - parent_comment
+      - positive_vote_count
+      - updated_at
+    FAQ:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 삭제 시간
+        ko_question:
+          type: string
+          title: FAQ 국문 질문
+          maxLength: 32
+        en_question:
+          type: string
+          title: FAQ 영문 질문
+          maxLength: 32
+        ko_answer:
+          type: string
+          title: FAQ 국문 답변
+        en_answer:
+          type: string
+          title: FAQ 영문 답변
+      required:
+      - created_at
+      - deleted_at
+      - en_answer
+      - en_question
+      - id
+      - ko_answer
+      - ko_question
+      - updated_at
+    GroupEnum:
+      enum:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      type: integer
+      description: |-
+        * `0` - 미인증된 사용자
+        * `1` - 카이스트 구성원
+        * `2` - Store employee
+        * `3` - Other member
+        * `4` - KAIST organization
+        * `5` - External organization
+        * `6` - Communication board admin
+        * `7` - News board admin
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        is_read:
+          type: boolean
+          nullable: true
+          readOnly: true
+        related_article:
+          allOf:
+          - $ref: '#/components/schemas/BaseArticle'
+          readOnly: true
+        related_comment:
+          allOf:
+          - $ref: '#/components/schemas/BaseComment'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 삭제 시간
+        type:
+          allOf:
+          - $ref: '#/components/schemas/NotificationTypeEnum'
+          title: 알림 종류
+        title:
+          type: string
+          title: 제목
+          maxLength: 256
+        content:
+          type: string
+          title: 내용
+      required:
+      - content
+      - created_at
+      - deleted_at
+      - id
+      - is_read
+      - related_article
+      - related_comment
+      - title
+      - updated_at
+    NotificationTypeEnum:
+      enum:
+      - default
+      - article_commented
+      - comment_commented
+      type: string
+      description: |-
+        * `default` - default
+        * `article_commented` - article_commented
+        * `comment_commented` - comment_commented
+    PaginatedArticleListActionList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleListAction'
+    PaginatedBestSearchList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BestSearch'
+    PaginatedBlockList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Block'
+    PaginatedFAQList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/FAQ'
+    PaginatedNotificationList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+    PaginatedReportList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Report'
+    PaginatedScrapList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Scrap'
+    PatchedArticleUpdateAction:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 삭제 시간
+        title:
+          type: string
+          title: 제목
+          maxLength: 256
+        content:
+          type: string
+          title: 본문
+        name_type:
+          type: integer
+          readOnly: true
+          title: 익명 혹은 실명 여부
+        is_content_sexual:
+          type: boolean
+          title: 성인/음란성 내용
+        is_content_social:
+          type: boolean
+          title: 정치/사회성 내용
+        hit_count:
+          type: integer
+          readOnly: true
+          title: 조회수
+        comment_count:
+          type: integer
+          readOnly: true
+          title: 댓글 수
+        report_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 신고 수
+        positive_vote_count:
+          type: integer
+          readOnly: true
+          title: 좋아요 수
+        negative_vote_count:
+          type: integer
+          readOnly: true
+          title: 싫어요 수
+        commented_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          title: 마지막 댓글 시간
+        url:
+          type: string
+          format: uri
+          nullable: true
+          title: 포탈 링크
+          maxLength: 200
+        content_updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 제목/본문/첨부파일 수정 시간
+        hidden_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 숨김 시간
+        topped_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 인기글 달성 시각
+        created_by:
+          type: integer
+          readOnly: true
+          title: 작성자
+        parent_topic:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: 말머리
+        parent_board:
+          type: integer
+          readOnly: true
+          title: 게시판
+        attachments:
+          type: array
+          items:
+            type: integer
+            title: 첨부 파일(들)
+          title: 첨부 파일(들)
+    PatchedCommentUpdateAction:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_by:
+          allOf:
+          - $ref: '#/components/schemas/PublicUser'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 삭제 시간
+        content:
+          type: string
+          title: 본문
+        name_type:
+          type: integer
+          readOnly: true
+          title: 익명 혹은 실명
+        report_count:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          title: 신고 수
+        positive_vote_count:
+          type: integer
+          readOnly: true
+          title: 좋아요 수
+        negative_vote_count:
+          type: integer
+          readOnly: true
+          title: 싫어요 수
+        hidden_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 숨김 시간
+        parent_article:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: 글
+        parent_comment:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: 댓글
+    PatchedUserProfile:
+      type: object
+      properties:
+        user:
+          type: integer
+          title: 사용자
+        email:
+          type: string
+          nullable: true
+          readOnly: true
+        is_official:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          default: 0001-01-01T08:27:52+08:27:52
+          title: 삭제 시간
+        uid:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Sparcs SSO uid
+        sid:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Sparcs SSO sid
+        sso_user_info:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+          title: Sparcs SSO 정보
+        picture:
+          type: string
+          format: uri
+          nullable: true
+          title: 프로필
+        nickname:
+          type: string
+          default: ''
+          title: 닉네임
+          maxLength: 128
+        nickname_updated_at:
+          type: string
+          format: date-time
+          title: 최근 닉네임 변경일시
+        see_sexual:
+          type: boolean
+          title: 성인/음란성 보기
+        see_social:
+          type: boolean
+          title: 정치/사회성 보기
+        group:
+          allOf:
+          - $ref: '#/components/schemas/GroupEnum'
+          minimum: -2147483648
+          maximum: 2147483647
+        is_newara:
+          type: boolean
+          default: true
+          title: 뉴아라 사용자
+        ara_id:
+          type: string
+          title: 이전 아라 아이디
+          maxLength: 128
+        agree_terms_of_service_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 약관 동의 일시
+        inactive_due_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 활동정지 마감 일시
+    PatchedUserProfileUpdateAction:
+      type: object
+      properties:
+        user:
+          type: integer
+          readOnly: true
+          title: 사용자
+        email:
+          type: string
+          nullable: true
+          readOnly: true
+        is_official:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          default: 0001-01-01T08:27:52+08:27:52
+          title: 삭제 시간
+        uid:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Sparcs SSO uid
+        sid:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Sparcs SSO sid
+        sso_user_info:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+          title: Sparcs SSO 정보
+        picture:
+          type: string
+          format: uri
+          nullable: true
+          title: 프로필
+        nickname:
+          type: string
+          default: ''
+          title: 닉네임
+          maxLength: 128
+        nickname_updated_at:
+          type: string
+          format: date-time
+          title: 최근 닉네임 변경일시
+        see_sexual:
+          type: boolean
+          title: 성인/음란성 보기
+        see_social:
+          type: boolean
+          title: 정치/사회성 보기
+        group:
+          allOf:
+          - $ref: '#/components/schemas/GroupEnum'
+          minimum: -2147483648
+          maximum: 2147483647
+        is_newara:
+          type: boolean
+          default: true
+          title: 뉴아라 사용자
+        ara_id:
+          type: string
+          title: 이전 아라 아이디
+          maxLength: 128
+        agree_terms_of_service_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 약관 동의 일시
+        inactive_due_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 활동정지 마감 일시
+    PublicUser:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          title: 사용자 이름
+          description: 150자 이하 문자, 숫자 그리고 @/./+/-/_만 가능합니다.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        profile:
+          allOf:
+          - $ref: '#/components/schemas/PublicUserProfile'
+          readOnly: true
+      required:
+      - id
+      - profile
+      - username
+    PublicUserProfile:
+      type: object
+      properties:
+        picture:
+          type: string
+          format: uri
+          nullable: true
+          title: 프로필
+        nickname:
+          type: string
+          title: 닉네임
+          maxLength: 128
+        user:
+          type: integer
+          title: 사용자
+        is_official:
+          type: boolean
+          readOnly: true
+        is_school_admin:
+          type: boolean
+          readOnly: true
+      required:
+      - is_official
+      - is_school_admin
+      - user
+    RegisteredByEnum:
+      enum:
+      - auto
+      - manual
+      type: string
+      description: |-
+        * `auto` - auto
+        * `manual` - manual
+    Report:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        parent_article:
+          allOf:
+          - $ref: '#/components/schemas/ArticleListAction'
+          readOnly: true
+        parent_comment:
+          allOf:
+          - $ref: '#/components/schemas/CommentListAction'
+          readOnly: true
+        reported_by:
+          allOf:
+          - $ref: '#/components/schemas/PublicUser'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          default: 0001-01-01T08:27:52+08:27:52
+          title: 삭제 시간
+        type:
+          oneOf:
+          - $ref: '#/components/schemas/TypeC40Enum'
+          - $ref: '#/components/schemas/BlankEnum'
+        content:
+          type: string
+          title: 내용
+      required:
+      - created_at
+      - deleted_at
+      - id
+      - parent_article
+      - parent_comment
+      - reported_by
+      - updated_at
+    ReportCreateAction:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          default: 0001-01-01T08:27:52+08:27:52
+          title: 삭제 시간
+        type:
+          oneOf:
+          - $ref: '#/components/schemas/TypeC40Enum'
+          - $ref: '#/components/schemas/BlankEnum'
+        content:
+          type: string
+          title: 내용
+        parent_article:
+          type: integer
+          nullable: true
+          title: 신고된 게시물
+        parent_comment:
+          type: integer
+          nullable: true
+          title: 신고된 댓글
+        reported_by:
+          type: integer
+          readOnly: true
+          title: 신고자
+      required:
+      - created_at
+      - deleted_at
+      - id
+      - reported_by
+      - updated_at
+    Scrap:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        parent_article:
+          allOf:
+          - $ref: '#/components/schemas/ArticleListAction'
+          readOnly: true
+        scrapped_by:
+          allOf:
+          - $ref: '#/components/schemas/PublicUser'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          default: 0001-01-01T08:27:52+08:27:52
+          title: 삭제 시간
+      required:
+      - created_at
+      - deleted_at
+      - id
+      - parent_article
+      - scrapped_by
+      - updated_at
+    ScrapCreateAction:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          default: 0001-01-01T08:27:52+08:27:52
+          title: 삭제 시간
+        parent_article:
+          type: integer
+          title: 스크랩한 글
+        scrapped_by:
+          type: integer
+          readOnly: true
+          title: 스크랩한 사람
+      required:
+      - created_at
+      - deleted_at
+      - id
+      - parent_article
+      - scrapped_by
+      - updated_at
+    Topic:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          default: 0001-01-01T08:27:52+08:27:52
+          title: 삭제 시간
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        ko_name:
+          type: string
+          title: 말머리 국문 이름
+          maxLength: 32
+        en_name:
+          type: string
+          title: 말머리 영문 이름
+          maxLength: 32
+        ko_description:
+          type: string
+          title: 말머리 국문 소개
+        en_description:
+          type: string
+          title: 말머리 영문 소개
+        parent_board:
+          type: integer
+          title: 상위 게시판
+      required:
+      - created_at
+      - deleted_at
+      - en_description
+      - en_name
+      - id
+      - ko_description
+      - ko_name
+      - parent_board
+      - slug
+      - updated_at
+    TypeC40Enum:
+      enum:
+      - violation_of_code
+      - impersonation
+      - insult
+      - spam
+      - others
+      type: string
+      description: |-
+        * `violation_of_code` - violation_of_code
+        * `impersonation` - impersonation
+        * `insult` - insult
+        * `spam` - spam
+        * `others` - others
+    UserProfile:
+      type: object
+      properties:
+        user:
+          type: integer
+          title: 사용자
+        email:
+          type: string
+          nullable: true
+          readOnly: true
+        is_official:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          default: 0001-01-01T08:27:52+08:27:52
+          title: 삭제 시간
+        uid:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Sparcs SSO uid
+        sid:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Sparcs SSO sid
+        sso_user_info:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+          title: Sparcs SSO 정보
+        picture:
+          type: string
+          format: uri
+          nullable: true
+          title: 프로필
+        nickname:
+          type: string
+          default: ''
+          title: 닉네임
+          maxLength: 128
+        nickname_updated_at:
+          type: string
+          format: date-time
+          title: 최근 닉네임 변경일시
+        see_sexual:
+          type: boolean
+          title: 성인/음란성 보기
+        see_social:
+          type: boolean
+          title: 정치/사회성 보기
+        group:
+          allOf:
+          - $ref: '#/components/schemas/GroupEnum'
+          minimum: -2147483648
+          maximum: 2147483647
+        is_newara:
+          type: boolean
+          default: true
+          title: 뉴아라 사용자
+        ara_id:
+          type: string
+          title: 이전 아라 아이디
+          maxLength: 128
+        agree_terms_of_service_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 약관 동의 일시
+        inactive_due_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 활동정지 마감 일시
+      required:
+      - created_at
+      - deleted_at
+      - email
+      - is_official
+      - sid
+      - sso_user_info
+      - uid
+      - updated_at
+      - user
+    UserProfileUpdateAction:
+      type: object
+      properties:
+        user:
+          type: integer
+          readOnly: true
+          title: 사용자
+        email:
+          type: string
+          nullable: true
+          readOnly: true
+        is_official:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 생성 시간
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: 수정 시간
+        deleted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          default: 0001-01-01T08:27:52+08:27:52
+          title: 삭제 시간
+        uid:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Sparcs SSO uid
+        sid:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Sparcs SSO sid
+        sso_user_info:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+          title: Sparcs SSO 정보
+        picture:
+          type: string
+          format: uri
+          nullable: true
+          title: 프로필
+        nickname:
+          type: string
+          default: ''
+          title: 닉네임
+          maxLength: 128
+        nickname_updated_at:
+          type: string
+          format: date-time
+          title: 최근 닉네임 변경일시
+        see_sexual:
+          type: boolean
+          title: 성인/음란성 보기
+        see_social:
+          type: boolean
+          title: 정치/사회성 보기
+        group:
+          allOf:
+          - $ref: '#/components/schemas/GroupEnum'
+          minimum: -2147483648
+          maximum: 2147483647
+        is_newara:
+          type: boolean
+          default: true
+          title: 뉴아라 사용자
+        ara_id:
+          type: string
+          title: 이전 아라 아이디
+          maxLength: 128
+        agree_terms_of_service_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 약관 동의 일시
+        inactive_due_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: 활동정지 마감 일시
+      required:
+      - created_at
+      - deleted_at
+      - email
+      - is_official
+      - sid
+      - sso_user_info
+      - uid
+      - updated_at
+      - user
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
