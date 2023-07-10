@@ -56,6 +56,7 @@ class UserProfile(MetaDataModel):
         verbose_name="Sparcs SSO sid",
     )
     sso_user_info = models.JSONField(
+        default=dict,
         editable=False,
         verbose_name="Sparcs SSO 정보",
     )

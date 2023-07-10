@@ -35,12 +35,15 @@ django-debug-toolbar = "*"
 django-debug-toolbar-force = "*"
 pyyaml = "*"
 uritemplate = "*"
+tqdm = "*"
+lxml = "*"
 
 [dev-packages]
 black = "*"
 isort = "*"
 pre-commit = "*"
 ipython = "*"
+pytest-cov = "*"
 
 [requires]
 python_version = "3.11"
