@@ -127,14 +127,13 @@ class UserProfile(MetaDataModel):
 
     @cached_property
     def realname(self) -> str:
-        sso_info = self.sso_user_info
-        user_realname = (
-            json.loads(sso_info["kaist_info"])["ku_kname"]
-            if sso_info["kaist_info"]
-            else sso_info["last_name"] + sso_info["first_name"]
-        )
+        if not self.sso_user_info:
+            return self.nickname  # Portal crawled users
 
-        return user_realname
+        kaist_info = self.sso_user_info["kaist_info"]
+        if kaist_info:
+            return json.loads(kaist_info)["ku_kname"]
+        return self.sso_user_info["last_name"] + self.sso_user_info["first_name"]
 
     @cached_property
     def is_official(self) -> bool:
