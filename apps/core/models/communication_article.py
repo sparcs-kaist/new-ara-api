@@ -1,10 +1,10 @@
 import sys
 from enum import IntEnum
 
-from cached_property import cached_property
 from django.contrib import admin
 from django.db import models
 from django.utils import timezone
+from django.utils.functional import cached_property
 
 from ara.db.models import MetaDataModel
 from ara.settings import MIN_TIME

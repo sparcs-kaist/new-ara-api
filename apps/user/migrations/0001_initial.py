@@ -3,13 +3,11 @@
 import datetime
 
 import django.db.models.deletion
-import django_mysql.models
 from django.conf import settings
 from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -64,7 +62,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "sso_user_info",
-                    django_mysql.models.JSONField(
+                    models.JSONField(
                         default=dict, editable=False, verbose_name="Sparcs SSO 정보"
                     ),
                 ),
@@ -99,7 +97,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "extra_preferences",
-                    django_mysql.models.JSONField(
+                    models.JSONField(
                         default=dict, editable=False, verbose_name="기타 설정"
                     ),
                 ),

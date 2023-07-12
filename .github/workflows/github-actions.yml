@@ -24,7 +24,7 @@ env:
 jobs:
   deploy:
     name: Run Tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout
@@ -48,11 +48,11 @@ jobs:
           . .github/workflows/generate-docker-tag.sh
           echo "PUSH=$PUSH" >> $GITHUB_ENV
           echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
-          echo "CACHE_DOCKER_TAG=$CACHE_DOCKER_TAG" >> $GITHUB_ENV
-          docker pull $ECR/$PROJECT_NAME:$CACHE_DOCKER_TAG || true
+          echo "DJANGO_ENV=$DJANGO_ENV" >> $GITHUB_ENV
+          docker pull $ECR/$PROJECT_NAME:$DJANGO_ENV || true
       - name: Build
         run: |
-          docker build --build-arg AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --build-arg AWS_SECRET_ACCESS_KEY=$(echo $AWS_SECRET_ACCESS_KEY) --cache-from $ECR/$PROJECT_NAME:$CACHE_DOCKER_TAG  -t $PROJECT_NAME .
+          docker build --build-arg AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --build-arg AWS_SECRET_ACCESS_KEY=$(echo $AWS_SECRET_ACCESS_KEY) --cache-from $ECR/$PROJECT_NAME:$DJANGO_ENV  -t $PROJECT_NAME .
 
       - name: Run test
         run: |

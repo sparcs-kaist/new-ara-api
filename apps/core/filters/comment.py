@@ -1,9 +1,9 @@
-import rest_framework_filters as filters
+from django_filters.rest_framework import FilterSet
 
 from apps.core.models import Comment
 
 
-class CommentFilter(filters.FilterSet):
+class CommentFilter(FilterSet):
     class Meta:
         model = Comment
         fields = {

@@ -1,12 +1,11 @@
 import json
 
-from cached_property import cached_property
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
-from django.utils.translation import ugettext_lazy
-from django_mysql.models import JSONField
+from django.utils.functional import cached_property
+from django.utils.translation import gettext_lazy
 
 from ara.db.models import MetaDataModel
 from ara.settings import MIN_TIME
@@ -24,21 +23,21 @@ class UserProfile(MetaDataModel):
 
     class UserGroup(models.IntegerChoices):
         # 뉴아라 계정을 만들지 않은 사람들
-        UNAUTHORIZED = 0, ugettext_lazy("Unauthorized user")
+        UNAUTHORIZED = 0, gettext_lazy("Unauthorized user")
         # 카이스트 메일을 가진 사람 (학생, 교직원)
-        KAIST_MEMBER = 1, ugettext_lazy("KAIST member")
+        KAIST_MEMBER = 1, gettext_lazy("KAIST member")
         # 교내 입주 업체 직원
-        STORE_EMPLOYEE = 2, ugettext_lazy("Store employee")
+        STORE_EMPLOYEE = 2, gettext_lazy("Store employee")
         # 카이스트 메일이 없는 개인 (특수한 관련자 등)
-        OTHER_MEMBER = 3, ugettext_lazy("Other member")
+        OTHER_MEMBER = 3, gettext_lazy("Other member")
         # 교내 학생 단체들
-        KAIST_ORG = 4, ugettext_lazy("KAIST organization")
+        KAIST_ORG = 4, gettext_lazy("KAIST organization")
         # 외부인 (홍보 계정 등)
-        EXTERNAL_ORG = 5, ugettext_lazy("External organization")
+        EXTERNAL_ORG = 5, gettext_lazy("External organization")
         # 소통게시판 관리인
-        COMMUNICATION_BOARD_ADMIN = 6, ugettext_lazy("Communication board admin")
+        COMMUNICATION_BOARD_ADMIN = 6, gettext_lazy("Communication board admin")
         # 뉴스게시판 관리인
-        NEWS_BOARD_ADMIN = 7, ugettext_lazy("News board admin")
+        NEWS_BOARD_ADMIN = 7, gettext_lazy("News board admin")
 
     OFFICIAL_GROUPS = [UserGroup.STORE_EMPLOYEE, UserGroup.KAIST_ORG]
 
@@ -56,7 +55,8 @@ class UserProfile(MetaDataModel):
         max_length=30,
         verbose_name="Sparcs SSO sid",
     )
-    sso_user_info = JSONField(
+    sso_user_info = models.JSONField(
+        default=dict,
         editable=False,
         verbose_name="Sparcs SSO 정보",
     )
@@ -83,10 +83,6 @@ class UserProfile(MetaDataModel):
     see_social = models.BooleanField(
         default=False,
         verbose_name="정치/사회성 보기",
-    )
-    extra_preferences = JSONField(
-        editable=False,
-        verbose_name="기타 설정",
     )
     group = models.IntegerField(
         choices=UserGroup.choices, default=UserGroup.UNAUTHORIZED
@@ -132,14 +128,13 @@ class UserProfile(MetaDataModel):
 
     @cached_property
     def realname(self) -> str:
-        sso_info = self.sso_user_info
-        user_realname = (
-            json.loads(sso_info["kaist_info"])["ku_kname"]
-            if sso_info["kaist_info"]
-            else sso_info["last_name"] + sso_info["first_name"]
-        )
+        if not self.sso_user_info:
+            return self.nickname  # Portal crawled users
 
-        return user_realname
+        kaist_info = self.sso_user_info["kaist_info"]
+        if kaist_info:
+            return json.loads(kaist_info)["ku_kname"]
+        return self.sso_user_info["last_name"] + self.sso_user_info["first_name"]
 
     @cached_property
     def is_official(self) -> bool:

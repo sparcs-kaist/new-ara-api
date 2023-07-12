@@ -1,5 +1,5 @@
-from cached_property import cached_property
 from django.db import models
+from django.utils.functional import cached_property
 
 from ara.db.models import MetaDataModel
 from ara.firebase import fcm_notify_comment
