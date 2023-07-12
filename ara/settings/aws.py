@@ -24,3 +24,7 @@ STORAGES = {
     "default": {"BACKEND": "django_s3_storage.storage.S3Storage"},
     "staticfiles": {"BACKEND": "django_s3_storage.storage.StaticS3Storage"},
 }
+
+AWS_SES_REGION_NAME = "ap-northeast-2"
+
+AWS_SES_REGION_ENDPOINT = "email.ap-northeast-2.amazonaws.com"

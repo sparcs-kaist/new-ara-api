@@ -37,6 +37,7 @@ pyyaml = "*"
 uritemplate = "*"
 tqdm = "*"
 lxml = "*"
+django-ses = "*"
 
 [dev-packages]
 black = "*"
