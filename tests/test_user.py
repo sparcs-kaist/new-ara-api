@@ -17,16 +17,12 @@ def set_boards(request):
         slug="test board",
         ko_name="테스트 게시판",
         en_name="Test Board",
-        ko_description="테스트 게시판입니다",
-        en_description="This is a board for testing",
     )
 
     request.cls.realname_board = Board.objects.create(
         slug="realname",
         ko_name="실명 게시판",
         en_name="Realname Board",
-        ko_description="실명 게시판",
-        en_description="Realname Board",
         name_type=NameType.REALNAME,
     )
 

@@ -26,8 +26,6 @@ def set_communication_board(request):
         slug="with-school",
         ko_name="학교와의 게시판 (테스트)",
         en_name="With School (Test)",
-        ko_description="학교와의 게시판 (테스트)",
-        en_description="With School (Test)",
         is_school_communication=True,
         name_type=NameType.REALNAME,
         read_access_mask=0b11011110,
@@ -41,8 +39,6 @@ def set_non_communication_board(request):
         slug="not with-school",
         ko_name="학교 아닌 게시판 (테스트)",
         en_name="Not With School (Test)",
-        ko_description="학교 아닌 게시판 (테스트)",
-        en_description="Not With School (Test)",
         is_school_communication=False,
     )
 

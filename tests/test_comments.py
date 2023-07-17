@@ -19,8 +19,6 @@ def set_boards(request):
         ko_name="테스트 게시판",
         en_name="Test Board",
         name_type=NameType.REGULAR,
-        ko_description="테스트 게시판입니다",
-        en_description="This is a board for testing",
     )
 
     request.cls.realname_board = Board.objects.create(
@@ -28,8 +26,6 @@ def set_boards(request):
         ko_name="테스트 실명 게시판",
         en_name="Test realname Board",
         name_type=NameType.REALNAME,
-        ko_description="테스트 실명 게시판입니다",
-        en_description="This is a realname board for testing",
     )
 
 

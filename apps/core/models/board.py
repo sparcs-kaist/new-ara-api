@@ -32,12 +32,6 @@ class Board(MetaDataModel):
         verbose_name="게시판 영문 이름",
         max_length=32,
     )
-    ko_description = models.TextField(
-        verbose_name="게시판 국문 소개",
-    )
-    en_description = models.TextField(
-        verbose_name="게시판 영문 소개",
-    )
     # 사용자 그룹에 대해 접근 권한을 제어하는 bit mask 입니다.
     # access_mask & (1 << user.group) > 0 일 때 접근이 가능합니다.
     # 사용자 그룹의 값들은 `UserGroup`을 참고하세요.
