@@ -36,8 +36,6 @@ def set_topics(request):
         slug="test topic",
         ko_name="테스트 토픽",
         en_name="Test Topic",
-        ko_description="테스트용 토픽입니다",
-        en_description="This is topic for testing",
         parent_board=request.cls.board,
     )
 
@@ -45,8 +43,6 @@ def set_topics(request):
         slug="test realname topic",
         ko_name="테스트 실명 토픽",
         en_name="Test realname Topic",
-        ko_description="테스트용 실명 토픽입니다",
-        en_description="This is realname topic for testing",
         parent_board=request.cls.realname_board,
     )
 

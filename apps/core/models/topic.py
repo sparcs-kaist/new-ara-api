@@ -26,13 +26,6 @@ class Topic(MetaDataModel):
         max_length=32,
         verbose_name="말머리 영문 이름",
     )
-    ko_description = models.TextField(
-        verbose_name="말머리 국문 소개",
-    )
-    en_description = models.TextField(
-        verbose_name="말머리 영문 소개",
-    )
-
     parent_board = models.ForeignKey(
         on_delete=models.CASCADE,
         to="core.Board",
