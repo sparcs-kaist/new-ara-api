@@ -7,7 +7,19 @@ from ara.classes.serializers import MetaDataModelSerializer
 class BaseBoardSerializer(MetaDataModelSerializer):
     class Meta:
         model = Board
-        fields = "__all__"
+        fields = [
+            "id",
+            "slug",
+            "ko_name",
+            "en_name",
+            "is_readonly",
+            "name_type",
+            "group_id",
+            "banner_image",
+            "ko_banner_description",
+            "en_banner_description",
+            "top_threshold",
+        ]
 
 
 class BoardSerializer(BaseBoardSerializer):
@@ -24,6 +36,13 @@ class BoardDetailActionSerializer(BaseBoardSerializer):
     )
     user_readable = serializers.SerializerMethodField()
     user_writable = serializers.SerializerMethodField()
+
+    class Meta(BaseBoardSerializer.Meta):
+        fields = BaseBoardSerializer.Meta.fields + [
+            "topics",
+            "user_readable",
+            "user_writable",
+        ]
 
     def get_user_readable(self, obj):
         user = self.context["request"].user
