@@ -1,5 +1,3 @@
-import typing
-
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from django.utils.translation import gettext
@@ -18,7 +16,7 @@ class BaseUserProfileSerializer(MetaDataModelSerializer):
         fields = "__all__"
 
     @staticmethod
-    def get_email(obj) -> typing.Optional[str]:
+    def get_email(obj) -> str | None:
         if obj.email.endswith("@sso.sparcs.org"):
             return None
         return obj.email

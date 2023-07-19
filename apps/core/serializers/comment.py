@@ -1,5 +1,3 @@
-import typing
-
 from rest_framework import serializers
 
 from apps.core.models import Block, Comment, CommentHiddenReason
@@ -22,7 +20,7 @@ class BaseCommentSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
         exclude = ("attachment",)
 
     @staticmethod
-    def get_my_vote(obj) -> typing.Optional[bool]:
+    def get_my_vote(obj) -> bool | None:
         if not obj.vote_set.exists():
             return None
 
@@ -30,7 +28,7 @@ class BaseCommentSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
 
         return my_vote.is_positive
 
-    def get_content(self, obj) -> typing.Optional[str]:
+    def get_content(self, obj) -> str | None:
         if self.visible_verdict(obj):
             return obj.content
         return None
