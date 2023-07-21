@@ -5,6 +5,8 @@ from apps.core.models import Article
 
 
 class ArticleFilter(FilterSet):
+    board = CharFilter(field_name="parent_board__slug", lookup_expr="exact")
+
     class Meta:
         model = Article
         fields = {
@@ -45,7 +47,10 @@ class ArticleFilter(FilterSet):
                 "in",
                 "exact",
             ],
-            "communication_article__school_response_status": ["exact", "lt"],
+            "communication_article__school_response_status": [
+                "exact",
+                "lt",
+            ],
         }
 
     main_search__contains = CharFilter(
