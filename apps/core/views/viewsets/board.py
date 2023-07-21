@@ -14,3 +14,4 @@ class BoardViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
     action_serializer_class = {
         "list": BoardDetailActionSerializer,
     }
+    lookup_field = "slug"

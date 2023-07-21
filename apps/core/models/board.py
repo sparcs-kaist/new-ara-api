@@ -20,9 +20,8 @@ class BoardAccessPermissionType(IntEnum):
 
 class Board(MetaDataModel):
     slug = AutoSlugField(
-        populate_from=[
-            "en_name",
-        ],
+        populate_from=["en_name"],
+        unique=True,
     )
     ko_name = models.CharField(
         verbose_name="게시판 국문 이름",
