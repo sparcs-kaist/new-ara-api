@@ -11,8 +11,6 @@ def set_board(request):
         slug="free",
         ko_name="자유 게시판",
         en_name="Free Board",
-        ko_description="자유 게시판 입니다.",
-        en_description="This is a free board.",
     )
 
 

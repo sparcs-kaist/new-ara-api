@@ -1,5 +1,3 @@
-import typing
-
 from rest_framework import serializers
 
 from apps.core.models import Notification
@@ -11,7 +9,7 @@ class BaseNotificationSerializer(MetaDataModelSerializer):
         model = Notification
         fields = "__all__"
 
-    def get_is_read(self, obj) -> typing.Optional[bool]:
+    def get_is_read(self, obj) -> bool | None:
         if not obj.notification_read_log_set.exists():
             return None
 

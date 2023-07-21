@@ -1,9 +1,8 @@
-import typing
 from enum import Enum
-from typing import Dict, Union
 
 import bs4
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage
 from django.db import IntegrityError, models, transaction
 from django.utils import timezone
@@ -26,6 +25,8 @@ from .board import NameType, BoardAccessPermissionType
 from .comment import Comment
 from .communication_article import SchoolResponseStatus
 from .report import Report
+
+User = get_user_model()
 
 
 class ArticleHiddenReason(str, Enum):
@@ -261,7 +262,7 @@ class Article(MetaDataModel):
 
     # API 상에서 보이는 사용자 (익명일 경우 익명화된 글쓴이, 그 외는 그냥 글쓴이)
     @cached_property
-    def postprocessed_created_by(self) -> Union[settings.AUTH_USER_MODEL, Dict]:
+    def postprocessed_created_by(self) -> User | dict:
         if self.name_type == NameType.REGULAR:
             return self.created_by
 
@@ -295,7 +296,7 @@ class Article(MetaDataModel):
             }
 
     @cache_by_user
-    def hidden_reasons(self, user: settings.AUTH_USER_MODEL) -> typing.List:
+    def hidden_reasons(self, user: User) -> list:
         reasons = []
         if self.is_hidden_by_reported():
             reasons.append(ArticleHiddenReason.REPORTED_CONTENT)

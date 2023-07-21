@@ -2,8 +2,6 @@
  Python 3.5 이후로는 pytest-django를 쓸 때 module-scope fixture에서 DB접근이 안되기 때문에 class-scope fixture 사용
  https://github.com/pytest-dev/pytest-django/issues/53#issuecomment-407073682
 """
-from typing import List
-
 import pytest
 from django.contrib.auth import get_user_model
 from django.test import TestCase as DjangoTestCase
@@ -239,5 +237,5 @@ class Utils:
         cls,
         num: int,
         group: UserProfile.UserGroup = UserProfile.UserGroup.KAIST_MEMBER,
-    ) -> List[User]:
+    ) -> list[User]:
         return [cls.create_user_with_index(idx, group) for idx in range(num)]

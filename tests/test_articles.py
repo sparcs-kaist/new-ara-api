@@ -16,8 +16,6 @@ def set_boards(request):
         slug="test board",
         ko_name="테스트 게시판",
         en_name="Test Board",
-        ko_description="테스트 게시판입니다",
-        en_description="This is a board for testing",
         name_type=NameType.REGULAR,
     )
 
@@ -25,8 +23,6 @@ def set_boards(request):
         slug="anonymous",
         ko_name="익명 게시판",
         en_name="Anonymous",
-        ko_description="익명 게시판",
-        en_description="Anonymous",
         name_type=NameType.ANONYMOUS,
     )
 
@@ -34,8 +30,6 @@ def set_boards(request):
         slug="free",
         ko_name="자유 게시판",
         en_name="Free",
-        ko_description="자유 게시판",
-        en_description="Free",
         name_type=NameType.ANONYMOUS | NameType.REGULAR,
     )
 
@@ -43,8 +37,6 @@ def set_boards(request):
         slug="test realname board",
         ko_name="테스트 실명 게시판",
         en_name="Test realname Board",
-        ko_description="테스트 실명 게시판입니다",
-        en_description="This is a realname board for testing",
         name_type=NameType.REALNAME,
     )
 
@@ -52,8 +44,6 @@ def set_boards(request):
         slug="regular access",
         ko_name="일반 접근 권한 게시판",
         en_name="Regular Access Board",
-        ko_description="일반 접근 권한 게시판",
-        en_description="Regular Access Board",
         read_access_mask=0b11011110,
         write_access_mask=0b11011010,
     )
@@ -63,8 +53,6 @@ def set_boards(request):
         slug="advertiser accessible",
         ko_name="외부인(홍보 계정) 접근 가능 게시판",
         en_name="Advertiser Accessible Board",
-        ko_description="외부인(홍보 계정) 접근 가능 게시판",
-        en_description="Advertiser Accessible Board",
         read_access_mask=0b11111110,
         write_access_mask=0b11111110,
     )
@@ -73,8 +61,6 @@ def set_boards(request):
         slug="nonwritable",
         ko_name="글 작성 불가 게시판",
         en_name="Nonwritable Board",
-        ko_description="글 작성 불가 게시판",
-        en_description="Nonwritable Board",
         write_access_mask=0b00000000,
     )
 
@@ -82,8 +68,6 @@ def set_boards(request):
         slug="newsadmin writable",
         ko_name="뉴스게시판 관리인 글 작성 가능 게시판",
         en_name="Newsadmin Writable Board",
-        ko_description="뉴스게시판 관리인 글 작성 가능 게시판",
-        en_description="Newsadmin Writable Board",
         write_access_mask=0b10000000,
     )
 
@@ -91,8 +75,6 @@ def set_boards(request):
         slug="enterprise writable",
         ko_name="입주업체 글 작성 가능 게시판",
         en_name="Enterprise Writable Board",
-        ko_description="입주업체 글 작성 가능 게시판",
-        en_description="Enterprise Writable Board",
         write_access_mask=0b11011110,
     )
 
@@ -104,8 +86,6 @@ def set_topics(request):
         slug="test topic",
         ko_name="테스트 토픽",
         en_name="Test Topic",
-        ko_description="테스트용 토픽입니다",
-        en_description="This is topic for testing",
         parent_board=request.cls.board,
     )
 
@@ -113,8 +93,6 @@ def set_topics(request):
         slug="test realname topic",
         ko_name="테스트 실명 토픽",
         en_name="Test realname Topic",
-        ko_description="테스트용 실명 토픽입니다",
-        en_description="This is realname topic for testing",
         parent_board=request.cls.realname_board,
     )
 
@@ -203,8 +181,6 @@ def set_kaist_articles(request):
         slug="kaist-only",
         ko_name="KAIST Board",
         en_name="KAIST Board",
-        ko_description="KAIST Board",
-        en_description="KAIST Board",
         read_access_mask=0b00000010,
         write_access_mask=0b00000010,
     )
@@ -233,8 +209,6 @@ def set_readonly_board(request):
         slug="readonly",
         ko_name="읽기전용 게시판",
         en_name="Read Only Board",
-        ko_description="테스트 게시판입니다",
-        en_description="This is a board for testing",
         is_readonly=True,
     )
     yield None

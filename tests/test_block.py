@@ -15,8 +15,6 @@ def set_board(request):
         slug="test board",
         ko_name="테스트 게시판",
         en_name="Test Board",
-        ko_description="테스트 게시판입니다",
-        en_description="This is a board for testing",
     )
 
 
@@ -26,8 +24,6 @@ def set_anon_board(request):
         slug="anonymous",
         ko_name="익명 게시판",
         en_name="Anonymous",
-        ko_description="익명 게시판",
-        en_description="Anonymous",
         name_type=NameType.ANONYMOUS,
     )
 
@@ -39,8 +35,6 @@ def set_topic(request):
         slug="test topic",
         ko_name="테스트 토픽",
         en_name="Test Topic",
-        ko_description="테스트용 토픽입니다",
-        en_description="This is topic for testing",
         parent_board=request.cls.board,
     )
 

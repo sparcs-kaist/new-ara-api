@@ -1,4 +1,3 @@
-import typing
 from enum import Enum
 
 from django.utils.translation import gettext
@@ -37,7 +36,7 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
             "migrated_negative_vote_count",
         )
 
-    def get_my_vote(self, obj) -> typing.Optional[bool]:
+    def get_my_vote(self, obj) -> bool | None:
         request = self.context["request"]
         if not obj.vote_set.filter(voted_by=request.user).exists():
             return None
@@ -47,7 +46,7 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
         return my_vote.is_positive
 
     @staticmethod
-    def get_my_scrap(obj) -> typing.Optional[dict]:
+    def get_my_scrap(obj) -> dict | None:
         from apps.core.serializers.scrap import BaseScrapSerializer
 
         if not obj.scrap_set.exists():
@@ -57,12 +56,12 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
 
         return BaseScrapSerializer(my_scrap).data
 
-    def get_title(self, obj) -> typing.Optional[str]:
+    def get_title(self, obj) -> str | None:
         if self.visible_verdict(obj):
             return obj.title
         return None
 
-    def get_content(self, obj) -> typing.Optional[str]:
+    def get_content(self, obj) -> str | None:
         if self.visible_verdict(obj):
             return obj.content
         return None
@@ -99,7 +98,7 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
         return "-"
 
     # TODO: article_current_page property must be cached
-    def get_article_current_page(self, obj) -> typing.Optional[int]:
+    def get_article_current_page(self, obj) -> int | None:
         view = self.context.get("view")
 
         if view:
@@ -316,7 +315,7 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
         after = None if len(after) == 0 else after[0]
         return after, before
 
-    def get_attachments(self, obj):  # -> typing.Optional[list]:
+    def get_attachments(self, obj) -> list | None:
         if self.visible_verdict(obj):
             return obj.attachments.all().values_list("id")
         return None

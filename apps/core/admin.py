@@ -48,8 +48,6 @@ class BoardAdmin(MetaDataModelAdmin):
     search_fields = (
         "ko_name",
         "en_name",
-        "ko_description",
-        "en_description",
     )
 
 
@@ -63,8 +61,6 @@ class TopicAdmin(MetaDataModelAdmin):
     search_fields = (
         "ko_name",
         "en_name",
-        "ko_description",
-        "en_description",
     )
     list_filter = ("parent_board",)
 

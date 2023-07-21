@@ -1,9 +1,8 @@
 import hashlib
-import typing
 from enum import Enum
-from typing import Dict, Union
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage
 from django.db import IntegrityError, models, transaction
 from django.utils import timezone
@@ -19,6 +18,8 @@ from ara.settings import HASH_SECRET_VALUE, MIN_TIME
 from .block import Block
 from .board import NameType
 from .report import Report
+
+User = get_user_model()
 
 
 class CommentHiddenReason(Enum):
@@ -166,7 +167,7 @@ class Comment(MetaDataModel):
 
     # API 상에서 보이는 사용자 (익명일 경우 익명화된 글쓴이, 그 외는 그냥 글쓴이)
     @cached_property
-    def postprocessed_created_by(self) -> Union[settings.AUTH_USER_MODEL, Dict]:
+    def postprocessed_created_by(self) -> User | dict:
         if self.name_type == NameType.REGULAR:
             return self.created_by
 
@@ -221,8 +222,8 @@ class Comment(MetaDataModel):
             }
 
     @cache_by_user
-    def hidden_reasons(self, user: settings.AUTH_USER_MODEL) -> typing.List:
-        reasons: typing.List[CommentHiddenReason] = []
+    def hidden_reasons(self, user: User) -> list[CommentHiddenReason]:
+        reasons: list[CommentHiddenReason] = []
 
         if self.is_deleted():
             reasons.append(CommentHiddenReason.DELETED_CONTENT)
