@@ -85,20 +85,12 @@ class Board(MetaDataModel):
     ko_banner_description = models.TextField(
         verbose_name="게시판 배너에 삽입되는 국문 소개",
         blank=True,
-        null=True,
-        default=None,
+        default="",
     )
     en_banner_description = models.TextField(
         verbose_name="게시판 배너에 삽입되는 영문 소개",
         blank=True,
-        null=True,
-        default=None,
-    )
-    banner_url = models.TextField(
-        verbose_name="게시판 배너를 클릭 시에 이동하는 링크",
-        blank=True,
-        null=True,
-        default=None,
+        default="",
     )
     top_threshold = models.SmallIntegerField(
         verbose_name="인기글 달성 기준 좋아요 개수",
