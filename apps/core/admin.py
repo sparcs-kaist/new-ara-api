@@ -42,6 +42,7 @@ class BoardAdmin(MetaDataModelAdmin):
     list_display = (
         "ko_name",
         "en_name",
+        "group",
         "is_readonly",
         "is_hidden",
     )

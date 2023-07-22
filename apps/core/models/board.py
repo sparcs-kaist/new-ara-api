@@ -4,6 +4,7 @@ from django.db import models
 from django_extensions.db.fields import AutoSlugField
 
 from ara.db.models import MetaDataModel
+from .board_group import BoardGroup
 
 
 class NameType(IntFlag):
@@ -73,9 +74,13 @@ class Board(MetaDataModel):
         default=False,
         help_text="학교 소통 게시판 글임을 표시",
     )
-    group_id = models.IntegerField(
-        verbose_name="그룹 ID",
-        default=1,
+    group: BoardGroup = models.ForeignKey(
+        to="core.BoardGroup",
+        on_delete=models.SET_NULL,
+        related_name="boards",
+        verbose_name="게시판 그룹",
+        null=True,
+        default=None,
     )
     banner_image = models.ImageField(
         verbose_name="게시판 배너 이미지",
