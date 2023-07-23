@@ -42,15 +42,14 @@
 ### Create & Activate Virtual Environment
 
 ```bash
-python3 -m venv env  # should be python 3.8
-source env/bin/activate
+python3 -m pip install pipenv  # It must be Python 3.11
+pipenv shell
 ```
 
 ### Install Requirements
 
 ```bash
-pip install poetry
-poetry install  # in production - $ poetry install --no-dev
+pipenv install --dev  # `--dev` flag for development
 pre-commit install
 ```
 
@@ -175,22 +174,21 @@ For managing docker images, we are using AWS ECR, `newara` repository.
 
 ### Interpreter
 
-- `Python 3.7`
-- `poetry` is used as package manager
+- `Python 3.11`
+- `Pipenv` is used as package manager
   - When adding libraries to the virtual environment, you should not use `pip`.
-    Rather, use `poetry add` command. Refer to [this link](https://python-poetry.org/docs/cli/)
-    for poetry commands.
+    Rather, use `pipenv` command. Refer to [this link](https://pipenv.pypa.io/en/latest/commands/)
+    for pipenv commands.
 
 ### Framework
 
-- `Django 3.2`
+- `Django 4.2`
 - `djangorestframework 3.14`
 
 ### Database
 
-- MySQL (default)
-- `mysqlclient 2.1`
-- `django-mysql 3.12`
+- MySQL 8.0
+- `mysqlclient 2.2`
 
 Works with MySQL for Linux & macOS, not tested in Windows. Timezone is
 automatically adjusted. It is strongly recommended to set default charset of
@@ -199,7 +197,7 @@ database or MySQL server to `utf8mb4`.
 ### Storage
 
 - AWS S3
-- `django-s3-storage 0.13`
+- `django-s3-storage 0.14`
 
 Two buckets are used - one for storing static files, one for media files that
 users upload. Go to django-s3-storage documentation for required permissions.
@@ -211,7 +209,7 @@ users upload. Go to django-s3-storage documentation for required permissions.
 
 ### API Documentation
 
-- `drf-yasg 1.21`
+- `drf-spectacular 0.26`
 
 ---
 
