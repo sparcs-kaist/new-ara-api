@@ -3,6 +3,7 @@ from .attachment import *
 from .best_search import *
 from .block import *
 from .board import *
+from .board_group import *
 from .comment import *
 from .faq import *
 from .notification import *
