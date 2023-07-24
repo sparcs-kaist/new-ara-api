@@ -10,6 +10,7 @@ from apps.core.models import (
     BestComment,
     BestSearch,
     Board,
+    BoardGroup,
     Comment,
     CommentDeleteLog,
     CommunicationArticle,
@@ -17,7 +18,6 @@ from apps.core.models import (
     Topic,
 )
 from ara.classes.admin import MetaDataModelAdmin
-from ara.settings import MIN_TIME
 
 
 class HiddenContentListFilter(admin.SimpleListFilter):
@@ -42,10 +42,20 @@ class BoardAdmin(MetaDataModelAdmin):
     list_display = (
         "ko_name",
         "en_name",
+        "group",
         "is_readonly",
         "is_hidden",
     )
     search_fields = (
+        "ko_name",
+        "en_name",
+    )
+
+
+@admin.register(BoardGroup)
+class BoardGroupAdmin(admin.ModelAdmin):
+    list_display = (
+        "slug",
         "ko_name",
         "en_name",
     )

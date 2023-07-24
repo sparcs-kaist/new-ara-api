@@ -10,6 +10,11 @@ router.register(
     viewset=viewsets.BoardViewSet,
 )
 
+router.register(
+    prefix=r"board_groups",
+    viewset=viewsets.BoardGroupViewSet,
+)
+
 # ArticleViewSet
 router.register(
     prefix=r"articles",

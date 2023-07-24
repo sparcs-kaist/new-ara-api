@@ -14,12 +14,19 @@ class BaseBoardSerializer(MetaDataModelSerializer):
             "en_name",
             "is_readonly",
             "name_type",
-            "group_id",
+            "group",
             "banner_image",
             "ko_banner_description",
             "en_banner_description",
             "top_threshold",
         ]
+        depth = 1
+
+
+class SimpleBoardSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Board
+        fields = ["id", "slug", "ko_name", "en_name"]
 
 
 class BoardSerializer(BaseBoardSerializer):
