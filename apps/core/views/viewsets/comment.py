@@ -74,10 +74,20 @@ class CommentViewSet(
         )
 
     def perform_create(self, serializer):
-        parent_article_id = self.request.data.get("parent_article")
-        parent_article = parent_article_id and Article.objects.get(id=parent_article_id)
-        parent_comment_id = self.request.data.get("parent_comment")
-        parent_comment = parent_comment_id and Comment.objects.get(id=parent_comment_id)
+        parent_article_id: int | None = self.request.data.get("parent_article")
+
+        if parent_article_id is not None:
+            parent_article: Article = parent_article_id and Article.objects.get(
+                id=parent_article_id
+            )
+        else:
+            parent_comment_id: int = self.request.data.get("parent_comment")
+            parent_comment: Comment = parent_comment_id and Comment.objects.get(
+                id=parent_comment_id
+            )
+            parent_article = parent_comment.parent_article
+
+        print(parent_article)
 
         created_by = self.request.user
         is_school_admin = (
@@ -85,12 +95,10 @@ class CommentViewSet(
             == UserProfile.UserGroup.COMMUNICATION_BOARD_ADMIN
         )
 
-        if is_school_admin:
+        if is_school_admin and parent_article.name_type != NameType.ANONYMOUS:
             name_type = NameType.REGULAR
-        elif parent_article:
-            name_type = parent_article.name_type
         else:
-            name_type = parent_comment.parent_article.name_type
+            name_type = parent_article.name_type
 
         serializer.save(
             created_by=created_by,
