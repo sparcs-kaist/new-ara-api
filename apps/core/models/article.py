@@ -49,7 +49,7 @@ class Article(MetaDataModel):
         verbose_name="text 형식 본문",
         editable=False,
     )
-    name_type = models.SmallIntegerField(
+    name_type = models.PositiveSmallIntegerField(
         verbose_name="익명 혹은 실명 여부",
         default=NameType.REGULAR,
     )
@@ -61,35 +61,35 @@ class Article(MetaDataModel):
         verbose_name="정치/사회성 내용",
         default=False,
     )
-    hit_count = models.IntegerField(
+    hit_count = models.PositiveIntegerField(
         verbose_name="조회수",
         default=0,
     )
-    comment_count = models.IntegerField(
+    comment_count = models.PositiveIntegerField(
         verbose_name="댓글 수",
         default=0,
     )
-    report_count = models.IntegerField(
+    report_count = models.PositiveIntegerField(
         verbose_name="신고 수",
         default=0,
     )
-    positive_vote_count = models.IntegerField(
+    positive_vote_count = models.PositiveIntegerField(
         verbose_name="좋아요 수",
         default=0,
     )
-    negative_vote_count = models.IntegerField(
+    negative_vote_count = models.PositiveIntegerField(
         verbose_name="싫어요 수",
         default=0,
     )
-    migrated_hit_count = models.IntegerField(
+    migrated_hit_count = models.PositiveIntegerField(
         verbose_name="이전된 조회수",
         default=0,
     )
-    migrated_positive_vote_count = models.IntegerField(
+    migrated_positive_vote_count = models.PositiveIntegerField(
         verbose_name="이전된 좋아요 수",
         default=0,
     )
-    migrated_negative_vote_count = models.IntegerField(
+    migrated_negative_vote_count = models.PositiveIntegerField(
         verbose_name="이전된 싫어요 수",
         default=0,
     )
