@@ -2,6 +2,7 @@ from enum import Enum
 
 from django.utils.translation import gettext
 from rest_framework import exceptions, serializers
+from rest_framework.utils.serializer_helpers import ReturnDict
 
 from apps.core.documents import ArticleDocument
 from apps.core.models import Article, ArticleHiddenReason, Block, Board, Comment, Scrap
@@ -11,6 +12,7 @@ from apps.core.serializers.mixins.hidden import (
     HiddenSerializerFieldMixin,
     HiddenSerializerMixin,
 )
+from apps.core.serializers.attachment import AttachmentSerializer
 from apps.core.serializers.topic import TopicSerializer
 from apps.user.serializers.user import PublicUserSerializer
 from ara.classes.serializers import MetaDataModelSerializer
@@ -315,9 +317,11 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
         after = None if len(after) == 0 else after[0]
         return after, before
 
-    def get_attachments(self, obj) -> list | None:
+    def get_attachments(self, obj: Article) -> ReturnDict | None:
         if self.visible_verdict(obj):
-            return obj.attachments.all().values_list("id")
+            attachments = obj.attachments.all()
+            serializer = AttachmentSerializer(attachments, many=True)
+            return serializer.data
         return None
 
     def get_my_comment_profile(self, obj):
