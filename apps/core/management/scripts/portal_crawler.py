@@ -2,9 +2,9 @@ import hashlib
 import re
 import uuid
 from datetime import datetime
+from pytz import timezone as pytz_timezone
 
 import boto3
-import pyotp
 import requests
 from bs4 import BeautifulSoup as bs
 from django.contrib.auth import get_user_model
@@ -17,7 +17,6 @@ from apps.core.models import Article
 from apps.user.models import UserProfile
 from ara.settings import (
     AWS_S3_BUCKET_NAME,
-    PORTAL_2FA_KEY,
     PORTAL_ID,
     PORTAL_JSESSIONID,
     PORTAL_PASSWORD,
@@ -40,10 +39,7 @@ COOKIES = {"JSESSIONID": PORTAL_JSESSIONID}
 
 BASE_URL = "https://portal.kaist.ac.kr"
 
-
-def _make_2fa_token():
-    totp = pyotp.TOTP(PORTAL_2FA_KEY)
-    return totp.now()
+KST = pytz_timezone("Asia/Seoul")
 
 
 def _login_kaist_portal():
@@ -139,8 +135,10 @@ def _get_article(url, session):
         .strip()
         .split("(")[0]
     )
-    created_at = timezone.get_current_timezone().localize(
+    created_at = (
         datetime.strptime(created_at_str, "%Y.%m.%d %H:%M:%S")
+        .astimezone(KST)
+        .astimezone(timezone.utc)
     )
     title = soup.select("table > tbody > tr > td.req_first")[0].contents[0]
 
@@ -356,7 +354,7 @@ def crawl_all():
                         user = get_user_model().objects.create(
                             username=str(uuid.uuid1()), is_active=False
                         )
-                        user_profile = UserProfile.objects.create(
+                        UserProfile.objects.create(
                             is_newara=False,
                             user=user,
                             nickname=info["writer"],

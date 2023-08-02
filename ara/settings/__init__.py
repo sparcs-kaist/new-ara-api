@@ -9,6 +9,7 @@ from .log import *
 from .redis import *
 from .scheduler import *
 from .sentry import *
+from .spectacular import *
 from .sso import *
 
 if env("DJANGO_ENV") == "development":

@@ -5,7 +5,7 @@ from ara.classes.serializers import MetaDataModelSerializer
 class BaseTopicSerializer(MetaDataModelSerializer):
     class Meta:
         model = Topic
-        fields = "__all__"
+        fields = ["id", "slug", "ko_name", "en_name"]
 
 
 class TopicSerializer(BaseTopicSerializer):

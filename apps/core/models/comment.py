@@ -1,9 +1,8 @@
 import hashlib
-import typing
 from enum import Enum
-from typing import Dict, Union
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage
 from django.db import IntegrityError, models, transaction
 from django.utils import timezone
@@ -17,8 +16,10 @@ from ara.sanitizer import sanitize
 from ara.settings import HASH_SECRET_VALUE, MIN_TIME
 
 from .block import Block
-from .board import BoardNameType
+from .board import NameType
 from .report import Report
+
+User = get_user_model()
 
 
 class CommentHiddenReason(Enum):
@@ -40,7 +41,7 @@ class Comment(MetaDataModel):
     )
 
     name_type = models.SmallIntegerField(
-        default=BoardNameType.REGULAR,
+        default=NameType.REGULAR,
         verbose_name="익명 혹은 실명",
     )
 
@@ -166,8 +167,8 @@ class Comment(MetaDataModel):
 
     # API 상에서 보이는 사용자 (익명일 경우 익명화된 글쓴이, 그 외는 그냥 글쓴이)
     @cached_property
-    def postprocessed_created_by(self) -> Union[settings.AUTH_USER_MODEL, Dict]:
-        if self.name_type == BoardNameType.REGULAR:
+    def postprocessed_created_by(self) -> User | dict:
+        if self.name_type == NameType.REGULAR:
             return self.created_by
 
         parent_article = self.get_parent_article()
@@ -182,7 +183,7 @@ class Comment(MetaDataModel):
         user_hash_int = int(user_hash[-4:], 16)
         user_profile_picture = get_profile_picture(user_hash_int)
 
-        if self.name_type == BoardNameType.ANONYMOUS:
+        if self.name_type == NameType.ANONYMOUS:
             if parent_article_created_by_id == comment_created_by_id:
                 user_name = gettext("author")
             else:
@@ -200,7 +201,7 @@ class Comment(MetaDataModel):
                 },
             }
 
-        if self.name_type == BoardNameType.REALNAME:
+        if self.name_type == NameType.REALNAME:
             if parent_article_created_by_id == comment_created_by_id:
                 user_realname = gettext("author")
             else:
@@ -221,8 +222,8 @@ class Comment(MetaDataModel):
             }
 
     @cache_by_user
-    def hidden_reasons(self, user: settings.AUTH_USER_MODEL) -> typing.List:
-        reasons: typing.List[CommentHiddenReason] = []
+    def hidden_reasons(self, user: User) -> list[CommentHiddenReason]:
+        reasons: list[CommentHiddenReason] = []
 
         if self.is_deleted():
             reasons.append(CommentHiddenReason.DELETED_CONTENT)

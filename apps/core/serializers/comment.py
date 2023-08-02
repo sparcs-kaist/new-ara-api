@@ -1,9 +1,7 @@
-import typing
-
 from rest_framework import serializers
 
 from apps.core.models import Block, Comment, CommentHiddenReason
-from apps.core.models.board import BoardNameType
+from apps.core.models.board import NameType
 from apps.core.serializers.mixins.hidden import (
     HiddenSerializerFieldMixin,
     HiddenSerializerMixin,
@@ -22,7 +20,7 @@ class BaseCommentSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
         exclude = ("attachment",)
 
     @staticmethod
-    def get_my_vote(obj) -> typing.Optional[bool]:
+    def get_my_vote(obj) -> bool | None:
         if not obj.vote_set.exists():
             return None
 
@@ -30,13 +28,13 @@ class BaseCommentSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
 
         return my_vote.is_positive
 
-    def get_content(self, obj) -> typing.Optional[str]:
+    def get_content(self, obj) -> str | None:
         if self.visible_verdict(obj):
             return obj.content
         return None
 
     def get_created_by(self, obj) -> dict:
-        if obj.name_type in (BoardNameType.ANONYMOUS, BoardNameType.REALNAME):
+        if obj.name_type in (NameType.ANONYMOUS, NameType.REALNAME):
             return obj.postprocessed_created_by
         else:
             data = PublicUserSerializer(obj.postprocessed_created_by).data

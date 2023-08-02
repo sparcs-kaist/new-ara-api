@@ -3,13 +3,12 @@ from datetime import datetime, timedelta
 from unittest.mock import patch
 
 import pytest
-from django.contrib.auth.models import User
 from django.utils import timezone
-from rest_framework.status import HTTP_200_OK
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from rest_framework.test import APIClient
 
 from apps.core.models import Article, Board
-from apps.core.models.board import BoardNameType
+from apps.core.models.board import NameType
 from apps.core.models.communication_article import (
     CommunicationArticle,
     SchoolResponseStatus,
@@ -17,7 +16,8 @@ from apps.core.models.communication_article import (
 from apps.user.models import UserProfile
 from ara.settings import ANSWER_PERIOD, MIN_TIME
 from ara.settings.dev import SCHOOL_RESPONSE_VOTE_THRESHOLD
-from tests.conftest import RequestSetting, TestCase
+
+from .conftest import RequestSetting, TestCase, Utils
 
 
 @pytest.fixture(scope="class")
@@ -26,10 +26,8 @@ def set_communication_board(request):
         slug="with-school",
         ko_name="학교와의 게시판 (테스트)",
         en_name="With School (Test)",
-        ko_description="학교와의 게시판 (테스트)",
-        en_description="With School (Test)",
         is_school_communication=True,
-        name_type=BoardNameType.REALNAME,
+        name_type=NameType.REALNAME,
         read_access_mask=0b11011110,
         write_access_mask=0b11011010,
     )
@@ -41,8 +39,6 @@ def set_non_communication_board(request):
         slug="not with-school",
         ko_name="학교 아닌 게시판 (테스트)",
         en_name="Not With School (Test)",
-        ko_description="학교 아닌 게시판 (테스트)",
-        en_description="Not With School (Test)",
         is_school_communication=False,
     )
 
@@ -56,7 +52,7 @@ def set_article(request):
         content_text="Communication Article Content Text",
         created_by=request.cls.user,
         parent_board=request.cls.communication_board,
-        name_type=BoardNameType.REALNAME,
+        name_type=NameType.REALNAME,
     )
 
 
@@ -80,7 +76,6 @@ def set_communication_article(request):
     "set_communication_article",
 )
 class TestCommunicationArticle(TestCase, RequestSetting):
-
     # ======================================================================= #
     #                            Helper Functions                             #
     # ======================================================================= #
@@ -89,29 +84,8 @@ class TestCommunicationArticle(TestCase, RequestSetting):
         res = self.http_request(self.user, "get", f"articles/{article.id}")
         return res.data.get("communication_article_status")
 
-    def _create_dummy_users(self, num):
-        dummy_users = []
-        for i in range(num):
-            user, created = User.objects.get_or_create(
-                username=f"DummyUser{i}", email=f"dummy_user{i}@sparcs.org"
-            )
-            if created:
-                UserProfile.objects.create(
-                    user=user,
-                    nickname=f"User{i} created at {timezone.now()}",
-                    group=UserProfile.UserGroup.KAIST_MEMBER,
-                    agree_terms_of_service_at=timezone.now(),
-                    sso_user_info={
-                        "kaist_info": '{"ku_kname": "\\ud669"}',
-                        "first_name": f"DummyUser{i}_FirstName",
-                        "last_name": f"DummyUser{i}_LastName",
-                    },
-                )
-            dummy_users.append(user)
-        return dummy_users
-
     def _add_positive_votes(self, article, num):
-        dummy_users = self._create_dummy_users(num)
+        dummy_users = Utils.create_users(num)
         for user in dummy_users:
             self.http_request(user, "post", f"articles/{article.id}/vote_positive")
 
@@ -135,7 +109,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             "content_text": "Content Text made in factory",
             "created_by": self.user.id,
             "parent_board": self.communication_board.id,
-            "name_type": BoardNameType.REALNAME,
+            "name_type": NameType.REALNAME.name,
         }
         res = self.http_request(self.user, "post", "articles", article_data)
 
@@ -164,6 +138,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             "content_text": "test_create_communication_article",
             "creted_by": self.user.id,
             "parent_board": self.communication_board.id,
+            "name_type": NameType.REALNAME.name,
         }
         self.http_request(self.user, "post", "articles", user_data)
 
@@ -195,6 +170,7 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             "content_text": "test_non_communication_article",
             "creted_by": self.user.id,
             "parent_board": self.non_communication_board.id,
+            "name_type": NameType.REGULAR.name,
         }
         self.http_request(self.user, "post", "articles", user_data)
 
@@ -401,10 +377,10 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             "content_text": "Content text of anonymous article",
             "created_by": self.user.id,
             "parent_board": self.communication_board.id,
-            "name_type": BoardNameType.ANONYMOUS,
+            "name_type": NameType.ANONYMOUS.name,
         }
-        res = self.http_request(self.user, "post", "articles", article_data).data
-        assert res.get("name_type") == BoardNameType.REALNAME
+        result = self.http_request(self.user, "post", "articles", article_data)
+        assert result.status_code == HTTP_400_BAD_REQUEST
 
     # 익명 댓글 작성 불가 확인
     def test_anonymous_comment(self):
@@ -412,10 +388,10 @@ class TestCommunicationArticle(TestCase, RequestSetting):
             "content": "Anonymous comment",
             "created_by": self.user.id,
             "parent_article": self.article.id,
-            "name_type": BoardNameType.ANONYMOUS,
+            "name_type": NameType.ANONYMOUS,
         }
         res = self.http_request(self.user, "post", "comments", comment_data).data
-        assert res.get("name_type") == BoardNameType.REALNAME
+        assert res.get("name_type") == NameType.REALNAME
 
     # ======================================================================= #
     #                               School Admin                              #

@@ -12,5 +12,7 @@ class BoardViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
     serializer_class = BoardSerializer
     permission_classes = (permissions.IsAuthenticated,)
     action_serializer_class = {
+        "retrieve": BoardDetailActionSerializer,
         "list": BoardDetailActionSerializer,
     }
+    lookup_field = "slug"

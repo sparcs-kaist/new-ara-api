@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 set -ex
 
@@ -19,12 +19,20 @@ done
 
 
 if [ "$1" = "test" ]; then
-    venv/bin/python manage.py compilemessages -l en -l ko
-    venv/bin/pytest tests --verbose
+    python3 manage.py compilemessages -l en -l ko
+    pytest tests --verbose
+elif [ "$1" = "dx" ]; then
+    if [ ! -f .init.lock.log ]; then
+        python manage.py collectstatic --noinput
+        python manage.py migrate --no-input
+        python manage.py compilemessages -l en -l ko
+        touch .init.lock.log
+    fi
+    sleep infinity
 else
-    venv/bin/python manage.py collectstatic --noinput
-    venv/bin/python manage.py migrate --no-input
-    venv/bin/python manage.py compilemessages -l en -l ko
+    python3 manage.py collectstatic --noinput
+    python3 manage.py migrate --no-input
+    python3 manage.py compilemessages -l en -l ko
     ln -s /newara/www/.docker/supervisor-app.conf /etc/supervisor/conf.d/ || true
     exec supervisord -n
 fi

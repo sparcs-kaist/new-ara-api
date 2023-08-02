@@ -1,5 +1,3 @@
-import typing
-
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from django.utils.translation import gettext
@@ -18,7 +16,7 @@ class BaseUserProfileSerializer(MetaDataModelSerializer):
         fields = "__all__"
 
     @staticmethod
-    def get_email(obj) -> typing.Optional[str]:
+    def get_email(obj) -> str | None:
         if obj.email.endswith("@sso.sparcs.org"):
             return None
         return obj.email
@@ -29,9 +27,7 @@ class BaseUserProfileSerializer(MetaDataModelSerializer):
 
 
 class UserProfileSerializer(BaseUserProfileSerializer):
-    extra_preferences = serializers.JSONField(
-        read_only=True,
-    )
+    ...
 
 
 class UserProfileUpdateActionSerializer(BaseUserProfileSerializer):
@@ -61,8 +57,6 @@ class UserProfileUpdateActionSerializer(BaseUserProfileSerializer):
         if instance and new_nickname and old_nickname != new_nickname:
             validated_data["nickname_updated_at"] = timezone.now()
         return super(BaseUserProfileSerializer, self).update(instance, validated_data)
-
-    extra_preferences = serializers.JSONField()
 
 
 class PublicUserProfileSerializer(BaseUserProfileSerializer):

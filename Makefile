@@ -17,7 +17,7 @@ run:
 	python manage.py runserver 0.0.0.0:9000
 
 shell:
-	python manage.py shell -i bpython
+	python manage.py shell -i ipython
 
 migrate:
 	python manage.py makemigrations --merge
@@ -64,3 +64,6 @@ elasticsearch_index:
 
 show_sql:
 	python manage.py shell_plus --print-sql
+
+schema:
+	python3 manage.py spectacular --color --file schema.yml

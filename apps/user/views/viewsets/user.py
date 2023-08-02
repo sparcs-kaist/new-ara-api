@@ -5,12 +5,12 @@ import uuid
 from urllib.parse import urlparse
 
 import requests
-from cached_property import cached_property
 from django.conf import settings
 from django.contrib.auth import get_user_model, login, logout
 from django.db import transaction
 from django.shortcuts import redirect, reverse
 from django.utils import timezone
+from django.utils.functional import cached_property
 from rest_framework import decorators, permissions, response, status
 
 from apps.user.models import UserProfile

@@ -1,11 +1,12 @@
-import rest_framework_filters as filters
-from django.db import models
+from django_filters.rest_framework import CharFilter, FilterSet
 
 from apps.core.documents import ArticleDocument
 from apps.core.models import Article
 
 
-class ArticleFilter(filters.FilterSet):
+class ArticleFilter(FilterSet):
+    board = CharFilter(field_name="parent_board__slug", lookup_expr="exact")
+
     class Meta:
         model = Article
         fields = {
@@ -46,10 +47,13 @@ class ArticleFilter(filters.FilterSet):
                 "in",
                 "exact",
             ],
-            "communication_article__school_response_status": ["exact", "lt"],
+            "communication_article__school_response_status": [
+                "exact",
+                "lt",
+            ],
         }
 
-    main_search__contains = filters.CharFilter(
+    main_search__contains = CharFilter(
         field_name="main_search",
         label="메인 검색 (제목포함, 본문포함, 닉네임일치)",
         method="get_main_search__contains",

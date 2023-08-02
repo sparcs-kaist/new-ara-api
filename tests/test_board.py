@@ -11,8 +11,6 @@ class TestBoard(TestCase, RequestSetting):
         Board.objects.create(
             ko_name="자유 게시판",
             en_name="Free Board",
-            ko_description="자유 게시판 입니다.",
-            en_description="This is a free board.",
         )
 
         boards = self.http_request(self.user, "get", "boards")

@@ -3,7 +3,7 @@ from django.db.utils import IntegrityError
 from django.utils import timezone
 
 from apps.core.models import Article, Board, Comment, Report, Topic
-from apps.core.models.board import BoardNameType
+from apps.core.models.board import NameType
 from tests.conftest import RequestSetting, TestCase
 
 
@@ -13,8 +13,6 @@ def set_board(request):
         slug="test board",
         ko_name="테스트 게시판",
         en_name="Test Board",
-        ko_description="테스트 게시판입니다",
-        en_description="This is a board for testing",
     )
 
 
@@ -25,8 +23,6 @@ def set_topic(request):
         slug="test topic",
         ko_name="테스트 토픽",
         en_name="Test Topic",
-        ko_description="테스트용 토픽입니다",
-        en_description="This is topic for testing",
         parent_board=request.cls.board,
     )
 
@@ -38,7 +34,7 @@ def set_article(request):
         title="Test Article",
         content="Content of test article",
         content_text="Content of test article in text",
-        name_type=BoardNameType.REGULAR,
+        name_type=NameType.REGULAR,
         is_content_sexual=False,
         is_content_social=False,
         hit_count=0,
@@ -56,7 +52,7 @@ def set_comment(request):
     """set_article 먼저 적용"""
     request.cls.comment = Comment.objects.create(
         content="this is a test comment",
-        name_type=BoardNameType.REGULAR,
+        name_type=NameType.REGULAR,
         created_by=request.cls.user,
         parent_article=request.cls.article,
     )

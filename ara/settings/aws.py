@@ -20,9 +20,10 @@ AWS_S3_BUCKET_NAME_STATIC = env("AWS_BUCKET_NAME_STATIC")
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
-DEFAULT_FILE_STORAGE = "django_s3_storage.storage.S3Storage"
-
-STATICFILES_STORAGE = "django_s3_storage.storage.StaticS3Storage"
+STORAGES = {
+    "default": {"BACKEND": "django_s3_storage.storage.S3Storage"},
+    "staticfiles": {"BACKEND": "django_s3_storage.storage.StaticS3Storage"},
+}
 
 AWS_SES_REGION_NAME = "ap-northeast-2"
 

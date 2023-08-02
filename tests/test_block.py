@@ -5,7 +5,7 @@ from django.db.utils import IntegrityError
 from django.utils import timezone
 
 from apps.core.models import Article, Block, Board, Comment, Topic
-from apps.core.models.board import BoardNameType
+from apps.core.models.board import NameType
 from tests.conftest import RequestSetting, TestCase
 
 
@@ -15,8 +15,6 @@ def set_board(request):
         slug="test board",
         ko_name="테스트 게시판",
         en_name="Test Board",
-        ko_description="테스트 게시판입니다",
-        en_description="This is a board for testing",
     )
 
 
@@ -26,9 +24,7 @@ def set_anon_board(request):
         slug="anonymous",
         ko_name="익명 게시판",
         en_name="Anonymous",
-        ko_description="익명 게시판",
-        en_description="Anonymous",
-        name_type=BoardNameType.ANONYMOUS,
+        name_type=NameType.ANONYMOUS,
     )
 
 
@@ -39,8 +35,6 @@ def set_topic(request):
         slug="test topic",
         ko_name="테스트 토픽",
         en_name="Test Topic",
-        ko_description="테스트용 토픽입니다",
-        en_description="This is topic for testing",
         parent_board=request.cls.board,
     )
 
@@ -52,7 +46,7 @@ def set_articles(request):
         title="Test Article",
         content="Content of test article",
         content_text="Content of test article in text",
-        name_type=BoardNameType.REGULAR,
+        name_type=NameType.REGULAR,
         is_content_sexual=False,
         is_content_social=False,
         hit_count=0,
@@ -68,7 +62,7 @@ def set_articles(request):
         title="Test Article 2",
         content="Content of test article 2",
         content_text="Content of test article in text 2",
-        name_type=BoardNameType.REGULAR,
+        name_type=NameType.REGULAR,
         is_content_sexual=False,
         is_content_social=False,
         hit_count=0,
@@ -84,7 +78,7 @@ def set_articles(request):
         title="Test Article 3",
         content="Content of test article 3",
         content_text="Content of test article in text 3",
-        name_type=BoardNameType.REGULAR,
+        name_type=NameType.REGULAR,
         is_content_sexual=False,
         is_content_social=False,
         hit_count=0,
@@ -228,7 +222,7 @@ class TestBlock(TestCase, RequestSetting):
             title="Test Article",
             content="Content of test article",
             content_text="Content of test article in text",
-            name_type=BoardNameType.ANONYMOUS,
+            name_type=NameType.ANONYMOUS,
             is_content_sexual=False,
             is_content_social=False,
             hit_count=0,
@@ -260,14 +254,14 @@ class TestBlock(TestCase, RequestSetting):
         # user2가 댓글을 씀
         blocked_comment = Comment.objects.create(
             content="this is a test comment",
-            name_type=BoardNameType.REGULAR,
+            name_type=NameType.REGULAR,
             created_by=self.user2,
             parent_article=self.article,
         )
 
         not_blocked_comment = Comment.objects.create(
             content="this is a test comment",
-            name_type=BoardNameType.REGULAR,
+            name_type=NameType.REGULAR,
             created_by=self.user3,
             parent_article=self.article,
         )

@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.core.management import call_command
 
 from apps.core.models import Article, Board
-from apps.core.models.board import BoardNameType
+from apps.core.models.board import NameType
 from apps.user.models import UserProfile
 from tests.conftest import RequestSetting, TestCase
 
@@ -16,8 +16,6 @@ def set_board(request):
         slug="test board",
         ko_name="테스트 게시판",
         en_name="Test Board",
-        ko_description="테스트 게시판입니다",
-        en_description="This is a board for testing",
     )
 
 
@@ -30,7 +28,11 @@ def set_authors(request):
             username=f"User{i+1}", email=f"user{i+1}@sparcs.org"
         )
         if not hasattr(new_user, "profile"):
-            UserProfile.objects.get_or_create(user=new_user, nickname=f"User{i+1}")
+            UserProfile.objects.get_or_create(
+                user=new_user,
+                nickname=f"User{i + 1}",
+                sso_user_info={},
+            )
         request.cls.authors.append(new_user)
 
 
@@ -53,7 +55,7 @@ def set_posts(request):
             title=f"게시물 {i+1}",
             content=article_content,
             content_text=article_content,
-            name_type=BoardNameType.REGULAR,
+            name_type=NameType.REGULAR,
             is_content_sexual=False,
             is_content_social=False,
             created_by=request.cls.authors[i % 4],

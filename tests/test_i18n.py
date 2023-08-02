@@ -10,7 +10,6 @@ class TestInternationalization(TestCase, RequestSetting):
         update_data = {
             "see_sexual": False,
             "see_social": False,
-            "extra_preferences": '{"test": 1}',
             "nickname": "foo",
         }
         r = self.http_request(

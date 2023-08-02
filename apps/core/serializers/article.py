@@ -1,17 +1,18 @@
-import typing
 from enum import Enum
 
 from django.utils.translation import gettext
 from rest_framework import exceptions, serializers
+from rest_framework.utils.serializer_helpers import ReturnDict
 
 from apps.core.documents import ArticleDocument
 from apps.core.models import Article, ArticleHiddenReason, Block, Board, Comment, Scrap
-from apps.core.models.board import BoardAccessPermissionType, BoardNameType
+from apps.core.models.board import BoardAccessPermissionType, NameType
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.mixins.hidden import (
     HiddenSerializerFieldMixin,
     HiddenSerializerMixin,
 )
+from apps.core.serializers.attachment import AttachmentSerializer
 from apps.core.serializers.topic import TopicSerializer
 from apps.user.serializers.user import PublicUserSerializer
 from ara.classes.serializers import MetaDataModelSerializer
@@ -37,7 +38,7 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
             "migrated_negative_vote_count",
         )
 
-    def get_my_vote(self, obj) -> typing.Optional[bool]:
+    def get_my_vote(self, obj) -> bool | None:
         request = self.context["request"]
         if not obj.vote_set.filter(voted_by=request.user).exists():
             return None
@@ -47,7 +48,7 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
         return my_vote.is_positive
 
     @staticmethod
-    def get_my_scrap(obj) -> typing.Optional[dict]:
+    def get_my_scrap(obj) -> dict | None:
         from apps.core.serializers.scrap import BaseScrapSerializer
 
         if not obj.scrap_set.exists():
@@ -57,18 +58,18 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
 
         return BaseScrapSerializer(my_scrap).data
 
-    def get_title(self, obj) -> typing.Optional[str]:
+    def get_title(self, obj) -> str | None:
         if self.visible_verdict(obj):
             return obj.title
         return None
 
-    def get_content(self, obj) -> typing.Optional[str]:
+    def get_content(self, obj) -> str | None:
         if self.visible_verdict(obj):
             return obj.content
         return None
 
     def get_created_by(self, obj) -> dict:
-        if obj.name_type in (BoardNameType.ANONYMOUS, BoardNameType.REALNAME):
+        if obj.name_type in (NameType.ANONYMOUS, NameType.REALNAME):
             return obj.postprocessed_created_by
         else:
             data = PublicUserSerializer(obj.postprocessed_created_by).data
@@ -99,7 +100,7 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
         return "-"
 
     # TODO: article_current_page property must be cached
-    def get_article_current_page(self, obj) -> typing.Optional[int]:
+    def get_article_current_page(self, obj) -> int | None:
         view = self.context.get("view")
 
         if view:
@@ -316,9 +317,11 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
         after = None if len(after) == 0 else after[0]
         return after, before
 
-    def get_attachments(self, obj):  # -> typing.Optional[list]:
+    def get_attachments(self, obj: Article) -> ReturnDict | None:
         if self.visible_verdict(obj):
-            return obj.attachments.all().values_list("id")
+            attachments = obj.attachments.all()
+            serializer = AttachmentSerializer(attachments, many=True)
+            return serializer.data
         return None
 
     def get_my_comment_profile(self, obj):
@@ -329,14 +332,17 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
             obj.parent_board.is_school_communication
             and created_by.profile.is_school_admin
         ):
-            name_type = BoardNameType.REGULAR
+            name_type = NameType.REGULAR
 
         fake_comment = Comment(
             created_by=created_by,
             name_type=name_type,
             parent_article=obj,
         )
-        if fake_comment.name_type in (BoardNameType.ANONYMOUS, BoardNameType.REALNAME):
+        if fake_comment.name_type in (
+            NameType.ANONYMOUS,
+            NameType.REALNAME,
+        ):
             return fake_comment.postprocessed_created_by
         else:
             data = PublicUserSerializer(fake_comment.postprocessed_created_by).data
