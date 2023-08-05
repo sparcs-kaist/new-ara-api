@@ -40,8 +40,3 @@ REPORT_THRESHOLD = 4
 SCHOOL_RESPONSE_VOTE_THRESHOLD = 3
 ANSWER_PERIOD = 14
 MIN_TIME = datetime.min.replace(tzinfo=timezone.utc)
-
-try:
-    from .local_settings import *
-except ImportError:
-    pass
