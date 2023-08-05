@@ -863,8 +863,8 @@ class TestRealnameArticle(TestCase, RequestSetting):
         assert Article.objects.get(title=new_title).name_type == NameType.REALNAME
 
     def test_ban_vote_cancellation_after_30(self):
-        # SCHOOL_RESPONSE_VOTE_THRESHOLD is 3 in test
-        users = [self.user, self.user2]
+        users = Utils.create_users(num=SCHOOL_RESPONSE_VOTE_THRESHOLD - 1)
+
         for user in users:
             self.http_request(
                 user, "post", f"articles/{self.realname_article.id}/vote_positive"

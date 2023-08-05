@@ -5,7 +5,6 @@ from unittest.mock import patch
 import pytest
 from django.utils import timezone
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
-from rest_framework.test import APIClient
 
 from apps.core.models import Article, Board
 from apps.core.models.board import NameType
@@ -14,8 +13,7 @@ from apps.core.models.communication_article import (
     SchoolResponseStatus,
 )
 from apps.user.models import UserProfile
-from ara.settings import ANSWER_PERIOD, MIN_TIME
-from ara.settings.dev import SCHOOL_RESPONSE_VOTE_THRESHOLD
+from ara.settings import ANSWER_PERIOD, MIN_TIME, SCHOOL_RESPONSE_VOTE_THRESHOLD
 
 from .conftest import RequestSetting, TestCase, Utils
 
