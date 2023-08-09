@@ -1,3 +1,4 @@
+import socket
 from datetime import datetime, timezone
 
 from ara.settings import INSTALLED_APPS, LOGGING, MIDDLEWARE
@@ -12,7 +13,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost",
 ]
 
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_ALL_ORIGINS = True
 
 SSO_IS_BETA = False
 
@@ -28,6 +29,18 @@ MIDDLEWARE += [
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "debug_toolbar_force.middleware.ForceDebugToolbarMiddleware",
 ]
+
+# https://django-debug-toolbar.readthedocs.io/
+
+_, _, ips = socket.gethostbyname_ex(socket.gethostname())
+INTERNAL_IPS = [ip[: ip.rfind(".")] + ".1" for ip in ips] + [
+    "127.0.0.1",
+    "10.0.2.2",
+]
+
+DEBUG_TOOLBAR_CONFIG = {
+    "SHOW_TOOLBAR_CALLBACK": lambda _: True,
+}
 
 REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = (
     "rest_framework.authentication.BasicAuthentication",
