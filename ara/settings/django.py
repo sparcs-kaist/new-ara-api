@@ -118,14 +118,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 STATIC_URL = "/static/"
 
-
-# https://django-debug-toolbar.readthedocs.io/
-
 INTERNAL_IPS = ("127.0.0.1",)
-
-if env("DJANGO_ENV") == "development":
-    INTERNAL_IPS = type(str("c"), (), {"__contains__": lambda *a: True})()
-
 
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_HTTPONLY = True
