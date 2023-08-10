@@ -108,6 +108,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 "created_by__profile",
                 "parent_topic",
                 "parent_board",
+                "parent_board__group",
             ).prefetch_related(
                 ArticleReadLog.prefetch_my_article_read_log(self.request.user),
             )
@@ -119,6 +120,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 "created_by__profile",
                 "parent_topic",
                 "parent_board",
+                "parent_board__group",
             ).prefetch_related(
                 "attachments",
                 models.Prefetch(
