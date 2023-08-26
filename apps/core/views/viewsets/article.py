@@ -450,6 +450,12 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         top_articles = Article.objects.exclude(topped_at__isnull=True).order_by(
             "-topped_at", "-pk"
         )
+
+        search_keyword = request.query_params.get("main_search__contains")
+        if search_keyword:
+            id_set = ArticleDocument.get_main_search_id_set(search_keyword)
+            top_articles = top_articles.filter(id__in=id_set)
+
         page = self.paginate_queryset(top_articles)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
