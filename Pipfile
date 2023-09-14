@@ -45,6 +45,7 @@ isort = "*"
 pre-commit = "*"
 ipython = "*"
 pytest-cov = "*"
+mypy = "*"
 
 [requires]
 python_version = "3.11"
