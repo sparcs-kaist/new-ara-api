@@ -1,6 +1,11 @@
+from typing import TYPE_CHECKING
+
 from django_filters.rest_framework import BooleanFilter, FilterSet
 
 from apps.core.models import Notification
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
 
 
 class NotificationFilter(FilterSet):
@@ -34,7 +39,7 @@ class NotificationFilter(FilterSet):
     )
 
     @staticmethod
-    def get_is_read(queryset, field_name, value):
+    def get_is_read(queryset: QuerySet, field_name: str, value: str) -> QuerySet:
         return queryset.filter(
             notification_read_log_set__is_read=value,
         )

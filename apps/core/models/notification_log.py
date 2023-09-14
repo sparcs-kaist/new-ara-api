@@ -1,7 +1,12 @@
+from typing import TYPE_CHECKING
+
 from django.conf import settings
 from django.db import models
 
 from ara.db.models import MetaDataModel
+
+if TYPE_CHECKING:
+    from apps.user.models import user
 
 
 class NotificationReadLog(MetaDataModel):
@@ -31,7 +36,9 @@ class NotificationReadLog(MetaDataModel):
     )
 
     @classmethod
-    def prefetch_my_notification_read_log(cls, user, prefix="") -> models.Prefetch:
+    def prefetch_my_notification_read_log(
+        cls, user: user, prefix=""
+    ) -> models.Prefetch:
         return models.Prefetch(
             "{}notification_read_log_set".format(prefix),
             queryset=NotificationReadLog.objects.filter(

@@ -1,8 +1,14 @@
+from typing import TYPE_CHECKING
+
 from django.db import models
 from django.utils.functional import cached_property
 
 from ara.db.models import MetaDataModel
 from ara.firebase import fcm_notify_comment
+
+if TYPE_CHECKING:
+    from apps.core.models.article import Article
+    from apps.core.models.comment import Comment
 
 TYPE_CHOICES = (
     ("default", "default"),
@@ -57,10 +63,12 @@ class Notification(MetaDataModel):
         }
 
     @classmethod
-    def notify_commented(cls, comment):
+    def notify_commented(cls, comment: Comment):
         from apps.core.models import NotificationReadLog
 
-        def notify_article_commented(_parent_article, _comment):
+        def notify_article_commented(
+            _parent_article: Article, _comment: Comment
+        ) -> None:
             title = f"{_comment.created_by.profile.nickname} 님이 새로운 댓글을 작성했습니다."
             NotificationReadLog.objects.create(
                 read_by=_parent_article.created_by,
@@ -79,7 +87,9 @@ class Notification(MetaDataModel):
                 f"post/{_parent_article.id}",
             )
 
-        def notify_comment_commented(_parent_article, _comment):
+        def notify_comment_commented(
+            _parent_article: Article, _comment: Comment
+        ) -> None:
             title = f"{_comment.created_by.profile.nickname} 님이 새로운 대댓글을 작성했습니다."
             NotificationReadLog.objects.create(
                 read_by=_comment.parent_comment.created_by,

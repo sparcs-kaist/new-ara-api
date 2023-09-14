@@ -1,9 +1,15 @@
+from typing import TYPE_CHECKING
+
 from rest_framework import decorators, response, serializers, status, viewsets
 
 from apps.core.filters.notification import NotificationFilter
 from apps.core.models import Notification, NotificationReadLog
 from apps.core.serializers.notification import NotificationSerializer
 from ara.classes.viewset import ActionAPIViewSet
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
+    from rest_framework.request import HttpRequest
 
 
 class NotificationViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
@@ -15,7 +21,7 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
         "read_all": serializers.Serializer,
     }
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         if not self.request.user.is_authenticated:
             return Notification.objects.none()
 
@@ -40,7 +46,7 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
         return queryset
 
     @decorators.action(detail=False, methods=["post"])
-    def read_all(self, request, *args, **kwargs):
+    def read_all(self, request: HttpRequest, *args, **kwargs) -> response.Response:
         notification_read_logs = NotificationReadLog.objects.filter(
             read_by=request.user,
             notification__in=[notification.id for notification in self.get_queryset()],
@@ -53,7 +59,7 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
         )
 
     @decorators.action(detail=True, methods=["post"])
-    def read(self, request, *args, **kwargs):
+    def read(self, request: HttpRequest, *args, **kwargs) -> response.Response:
         try:
             notification_read_log = self.get_object().notification_read_log_set.get(
                 read_by=request.user,
