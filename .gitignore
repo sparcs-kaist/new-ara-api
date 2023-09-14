@@ -251,8 +251,6 @@ config.cnf
 # Created by https://www.gitignore.io/api/visualstudiocode
 # Edit at https://www.gitignore.io/?templates=visualstudiocode
 
-### VisualStudioCode ###
-.vscode/*
 
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
