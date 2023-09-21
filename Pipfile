@@ -38,7 +38,6 @@ uritemplate = "*"
 tqdm = "*"
 lxml = "*"
 django-ses = "*"
-typing-extensions = "*"
 
 [dev-packages]
 black = "*"
