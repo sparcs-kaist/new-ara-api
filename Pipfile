@@ -49,6 +49,9 @@ mypy = "*"
 django-stubs = "~=4.2"
 djangorestframework-stubs = "~=3.14"
 typing-extensions = "*"
+types-bleach = "*"
+types-python-dateutil = "*"
+types-tqdm = "*"
 
 [requires]
 python_version = "3.11"

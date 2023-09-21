@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "8e5f28d3b52576f3b229decaad40a38784ceacc528917fbdadab4f41c04f6715"
+            "sha256": "4194ae2ea54da14e48281c85b7299c9538f729e680be292b58c852cbf483e9b2"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -1431,7 +1431,7 @@
                 "sha256:8d36afa7616d8ab714608411b4a3b13e58f463aee519024578e062e141dce20f",
                 "sha256:8f135f6502756bde6b2a9b28989df5fbe87c9970cecaa69041edcce7f0589b14"
             ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4, 3.5'",
+            "markers": "python_version >= '3.6'",
             "version": "==1.26.16"
         },
         "vine": {
@@ -2026,6 +2026,22 @@
             "markers": "python_version >= '3.8'",
             "version": "==5.10.0"
         },
+        "types-bleach": {
+            "hashes": [
+                "sha256:2b8767eb407c286b7f02803678732e522e04db8d56cbc9f1270bee49627eae92",
+                "sha256:357b0226f65c4f20ab3b13ca8d78a6b91c78aad256d8ec168d4e90fc3303ebd4"
+            ],
+            "index": "pypi",
+            "version": "==6.0.0.4"
+        },
+        "types-python-dateutil": {
+            "hashes": [
+                "sha256:1f4f10ac98bb8b16ade9dbee3518d9ace017821d94b057a425b069f834737f4b",
+                "sha256:f977b8de27787639986b4e28963263fd0e5158942b3ecef91b9335c130cb1ce9"
+            ],
+            "index": "pypi",
+            "version": "==2.8.19.14"
+        },
         "types-pytz": {
             "hashes": [
                 "sha256:1999a123a3dc0e39a2ef6d19f3f8584211de9e6a77fe7a0259f04a524e90a5cf",
@@ -2046,6 +2062,14 @@
                 "sha256:d5d7a08965fca12bedf716eaf5430c6e3d0da9f3164a1dba2a7f3885f9ebe3c0"
             ],
             "version": "==2.31.0.3"
+        },
+        "types-tqdm": {
+            "hashes": [
+                "sha256:13dddd38908834abdf0acdc2b70cab7ac4bcc5ad7356ced450471662e58a0ffc",
+                "sha256:9553a5e44c1d485fce19f505b8bd65c0c3e87e870678d1f2ed764ae59a55d45f"
+            ],
+            "index": "pypi",
+            "version": "==4.66.0.2"
         },
         "types-urllib3": {
             "hashes": [
@@ -2068,7 +2092,7 @@
                 "sha256:8d36afa7616d8ab714608411b4a3b13e58f463aee519024578e062e141dce20f",
                 "sha256:8f135f6502756bde6b2a9b28989df5fbe87c9970cecaa69041edcce7f0589b14"
             ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4, 3.5'",
+            "markers": "python_version >= '3.6'",
             "version": "==1.26.16"
         },
         "virtualenv": {
