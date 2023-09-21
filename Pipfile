@@ -46,6 +46,8 @@ pre-commit = "*"
 ipython = "*"
 pytest-cov = "*"
 mypy = "*"
+django-stubs = "~=4.2"
+djangorestframework-stubs = "~=3.14"
 
 [requires]
 python_version = "3.11"
