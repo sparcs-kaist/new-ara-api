@@ -38,6 +38,7 @@ uritemplate = "*"
 tqdm = "*"
 lxml = "*"
 django-ses = "*"
+typing-extensions = "*"
 
 [dev-packages]
 black = "*"
@@ -48,6 +49,7 @@ pytest-cov = "*"
 mypy = "*"
 django-stubs = "~=4.2"
 djangorestframework-stubs = "~=3.14"
+typing-extensions = "*"
 
 [requires]
 python_version = "3.11"
