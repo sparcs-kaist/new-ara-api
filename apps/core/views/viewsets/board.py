@@ -7,7 +7,12 @@ from ara.classes.viewset import ActionAPIViewSet
 
 class BoardViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
     pagination_class = None
-    queryset = Board.objects.all().reverse()
+    queryset = (
+        Board.objects.all()
+        .reverse()
+        .select_related("group")
+        .prefetch_related("topic_set")
+    )
     filterset_fields = ["is_readonly", "is_hidden"]
     serializer_class = BoardSerializer
     permission_classes = (permissions.IsAuthenticated,)
