@@ -1,3 +1,5 @@
 {
-    "python.analysis.typeCheckingMode": "strict",
+    "mypy.enabled": true,
+    "mypy.configFile": "mypy.ini",
+    "mypy.dmypyExecutable": "/root/.local/share/virtualenvs/www-ZVUe9YDU/bin/dmypy",
 }
