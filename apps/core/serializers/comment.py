@@ -13,7 +13,7 @@ from ara.classes.serializers import MetaDataModelSerializer
 class BaseCommentSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.CAN_OVERRIDE_REASONS = [CommentHiddenReason.BLOCKED_USER_CONTENT]
+        self.CAN_OVERRIDE_REASONS = [CommentHiddenReason.BLOCKED_USER_CONTENT.value]
 
     class Meta:
         model = Comment

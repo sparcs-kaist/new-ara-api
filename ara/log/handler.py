@@ -52,6 +52,11 @@ class SizedTimedRotatingFileHandler(
     timed intervals
     """
 
+    from io import TextIOWrapper
+    from typing import Optional
+
+    stream: Optional[TextIOWrapper]  # type: ignore
+
     def __init__(
         self,
         filename,
@@ -96,8 +101,11 @@ class SizedTimedRotatingFileHandler(
         then we have to get a list of matching filenames, sort them and remove
         the one with the oldest suffix.
         """
+
         if self.stream:
-            self.stream.close()
+            if self.stream is not None:
+                self.stream.close()
+                self.stream = None
             self.stream = None
         # get the time that this sequence started at and make it a TimeTuple
         currentTime = int(time.time())
@@ -146,6 +154,6 @@ class SizedTimedRotatingFileHandler(
 
     def exitRollover(self):
         self.delay = True
-        if self.stream:
+        if self.stream is not None:
             if self.stream.tell() > 0:
                 self.doRollover()

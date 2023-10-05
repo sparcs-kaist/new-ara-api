@@ -4,6 +4,7 @@ from django.db import models
 from django_extensions.db.fields import AutoSlugField
 
 from ara.db.models import MetaDataModel
+
 from .board_group import BoardGroup
 
 
@@ -74,7 +75,7 @@ class Board(MetaDataModel):
         default=False,
         help_text="학교 소통 게시판 글임을 표시",
     )
-    group: BoardGroup = models.ForeignKey(
+    group: models.ForeignKey[BoardGroup | None] = models.ForeignKey(
         to="core.BoardGroup",
         on_delete=models.SET_NULL,
         related_name="boards",

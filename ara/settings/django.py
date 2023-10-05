@@ -118,7 +118,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 STATIC_URL = "/static/"
 
-INTERNAL_IPS = ("127.0.0.1",)
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_HTTPONLY = True

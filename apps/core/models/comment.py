@@ -1,5 +1,6 @@
 import hashlib
 from enum import Enum
+from typing import List, Optional, Union
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -28,7 +29,11 @@ class CommentHiddenReason(Enum):
     DELETED_CONTENT = "DELETED_CONTENT"
 
 
+from apps.core.models.comment_log import CommentUpdateLog
+
+
 class Comment(MetaDataModel):
+    comment_update_log_set: List["CommentUpdateLog"]
     objects = MetaDataQuerySet.as_manager()
 
     class Meta(MetaDataModel.Meta):
@@ -146,8 +151,9 @@ class Comment(MetaDataModel):
     def get_parent_article(self):
         if self.parent_article:
             return self.parent_article
-
-        return self.parent_comment.parent_article
+        if self.parent_comment and self.parent_comment.parent_article:
+            return self.parent_comment.parent_article
+        return None
 
     def is_hidden_by_reported(self) -> bool:
         return self.hidden_at is not None
@@ -183,11 +189,15 @@ class Comment(MetaDataModel):
         user_hash_int = int(user_hash[-4:], 16)
         user_profile_picture = get_profile_picture(user_hash_int)
 
+        from django.core.files.storage import DefaultStorage
+
         if self.name_type == NameType.ANONYMOUS:
             if parent_article_created_by_id == comment_created_by_id:
                 user_name = gettext("author")
             else:
                 user_name = make_anonymous_name(user_hash_int, user_hash[-3:])
+            default_storage_instance: DefaultStorage = DefaultStorage()
+            url = default_storage.url(user_profile_picture)
 
             return {
                 "id": user_hash,
@@ -220,6 +230,7 @@ class Comment(MetaDataModel):
                     else None,
                 },
             }
+        return {}
 
     @cache_by_user
     def hidden_reasons(self, user: User) -> list[CommentHiddenReason]:
