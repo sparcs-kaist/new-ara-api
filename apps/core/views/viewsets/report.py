@@ -1,3 +1,5 @@
+from typing import Union
+
 from django.core.mail import send_mail
 from django.utils.translation import gettext
 from rest_framework import mixins, status
@@ -66,30 +68,42 @@ class ReportViewSet(
 
         if parent_article_id:
             parent_id = parent_article_id
-            parent = Article.objects.get(id=parent_article_id)
+            parent_article: Article = Article.objects.get(id=parent_article_id)
             report_type = "Article"
-            parent_title = parent.title
-            parent_content = parent.content_text
+            parent_title = parent_article.title
+            parent_content = parent_article.content_text
+            message = (
+                f"{report_type} {parent_id}에 대하여 다음과 같은 신고가 접수되었습니다:\n"
+                f"게시글 바로가기: {article_link}/post/{parent_article_id}\n"
+                f"신고자: {request.user.id}:: {request.user.profile}\n"
+                f"신고 유형: {request.data.get('type')}\n"
+                f"신고 사유: {request.data.get('content')}\n"
+                f"글 종류: {report_type}\n"
+                f"작성자: {parent_article.created_by.id}:: {parent_article.created_by.profile}\n"
+                f"제목: {parent_title}\n"
+                f"내용: {parent_content}\n"
+            )
+
         else:
             parent_id = parent_comment_id
-            parent = Comment.objects.get(id=parent_comment_id)
-            parent_article_id = parent.get_parent_article()
+            parent_comment: Comment = Comment.objects.get(id=parent_comment_id)
+            parent_article_id = parent_comment.get_parent_article()
             report_type = "Comment"
             parent_title = "None"
-            parent_content = parent.content
+            parent_content = parent_comment.content
+            message = (
+                f"{report_type} {parent_id}에 대하여 다음과 같은 신고가 접수되었습니다:\n"
+                f"게시글 바로가기: {article_link}/post/{parent_article_id}\n"
+                f"신고자: {request.user.id}:: {request.user.profile}\n"
+                f"신고 유형: {request.data.get('type')}\n"
+                f"신고 사유: {request.data.get('content')}\n"
+                f"글 종류: {report_type}\n"
+                f"작성자: {parent_comment.created_by.id}:: {parent_comment.created_by.profile}\n"
+                f"제목: {parent_title}\n"
+                f"내용: {parent_content}\n"
+            )
 
         title = f"[{django_env} 신고 ({report_type})] '{request.user.id}:: {request.user.profile}'님께서 {report_type} {parent_id}을 신고하였습니다."
-        message = (
-            f"{report_type} {parent_id}에 대하여 다음과 같은 신고가 접수되었습니다:\n"
-            f"게시글 바로가기: {article_link}/post/{parent_article_id}\n"
-            f"신고자: {request.user.id}:: {request.user.profile}\n"
-            f"신고 유형: {request.data.get('type')}\n"
-            f"신고 사유: {request.data.get('content')}\n"
-            f"글 종류: {report_type}\n"
-            f"작성자: {parent.created_by.id}:: {parent.created_by.profile}\n"
-            f"제목: {parent_title}\n"
-            f"내용: {parent_content}\n"
-        )
 
         send_mail(title, message, "new-ara@sparcs.org", ["new-ara@sparcs.org"])
 

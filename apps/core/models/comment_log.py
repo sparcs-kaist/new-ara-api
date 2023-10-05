@@ -26,9 +26,9 @@ class CommentUpdateLog(MetaDataModel):
         verbose_name = "댓글 변경 기록"
         verbose_name_plural = "댓글 변경 기록 목록"
 
-    objects = CommentUpdateLogManager.from_queryset(
+    objectss = CommentUpdateLogManager.from_queryset(  # 이렇게 수정해도 되는 거 맞나요 ..?
         queryset_class=CommentUpdateLogQuerySet
-    )()
+    )
 
     data = models.JSONField(default=dict)
 

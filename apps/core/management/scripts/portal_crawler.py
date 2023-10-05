@@ -2,7 +2,6 @@ import hashlib
 import re
 import uuid
 from datetime import datetime
-from pytz import timezone as pytz_timezone
 
 import boto3
 import requests
@@ -11,6 +10,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext
+from pytz import timezone as pytz_timezone
 from tqdm import tqdm
 
 from apps.core.models import Article
@@ -59,9 +59,11 @@ def _get_article(url, session):
         for child in soup.descendants:
             name = getattr(child, "name", None)
             if name:
-                linked = child.attrs.get("src") or child.attrs.get("href")
-                if linked:
-                    tagged_links.append(linked)
+                attrs = getattr(child, "attrs", None)
+                if attrs:
+                    linked = attrs.get("src") or attrs.get("href")
+                    if linked:
+                        tagged_links.append(linked)
 
         return tagged_links
 
@@ -115,21 +117,30 @@ def _get_article(url, session):
 
     article_req = session.get(url, cookies=COOKIES)
     soup = bs(article_req.text, "lxml")
+    writer_element = soup.find("th", text="작성자(소속)")
+    if writer_element:
+        writer = (
+            soup.find("th", text="작성자(소속)")  # ??
+            .findNext("td")
+            .select("label")[0]
+            .contents[0]
+            .strip()
+        )
+    else:
+        writer = None
 
-    writer = (
-        soup.find("th", text="작성자(소속)")
-        .findNext("td")
-        .select("label")[0]
-        .contents[0]
-        .strip()
-    )
-    created_at_str = (
-        soup.find("th", text="작성일(조회수)")
-        .findNext("td")
-        .contents[0]
-        .strip()
-        .split("(")[0]
-    )
+    created_at_element = soup.find("th", text="작성일(조회수)")
+    if created_at_element:
+        created_at_str = (
+            soup.find("th", text="작성일(조회수)")  # ??
+            .findNext("td")
+            .contents[0]
+            .strip()
+            .split("(")[0]
+        )
+    else:
+        created_at_str = None
+
     created_at = (
         datetime.strptime(created_at_str, "%Y.%m.%d %H:%M:%S")
         .astimezone(KST)
@@ -140,16 +151,22 @@ def _get_article(url, session):
     trs = soup.select("table > tbody > tr")
     html = None
 
+    from bs4.element import Tag
+
     for tr in trs:
         if len(list(tr.children)) == 3:
-            html = tr.find("td").prettify()
-            break
+            td = tr.find("td")
+            if isinstance(td, Tag):  # td가 Tag 타입인지 확인
+                html = td.prettify()
+                break
 
     if html is None:
         for tr in trs:
             if len(list(tr.children)) == 2:
-                html = tr.find("td").prettify()
-                break
+                td = tr.find("td")
+                if isinstance(td, Tag):  # td가 Tag 타입인지 확인
+                    html = td.prettify()
+                    break
 
     html = _save_portal_image(html, session)
     html = _enable_hyperlink(html)
@@ -170,8 +187,10 @@ def _get_article(url, session):
 
 def crawl_hour(day=None):
     # parameter에서 default로 바로 today()하면, 캐싱되어서 업데이트가 안됨
+    from django.utils import timezone
+
     if day is None:
-        day = timezone.datetime.today().date()
+        day = timezone.now().date()
 
     session = _login_kaist_portal()
 
@@ -239,7 +258,7 @@ def crawl_hour(day=None):
 
         created_at_utc = info["created_at"].astimezone(timezone.utc)
 
-        if (
+        if last_portal_article_in_db is not None and (
             created_at_utc < last_portal_article_in_db.created_at
             or info["title"] == prev_title
         ):
@@ -250,7 +269,7 @@ def crawl_hour(day=None):
         )
 
         if user_exist:
-            user = user_exist.first().user
+            user = user_exist.first()
         else:
             user = get_user_model().objects.create(
                 username=str(uuid.uuid1()), is_active=False
@@ -280,17 +299,18 @@ def crawl_hour(day=None):
     if not new_articles:
         return
     earliest_new_article = new_articles[-1]
-    is_same_day = (
-        last_portal_article_in_db.created_at.date()
-        == earliest_new_article.created_at.date()
-    )
-    is_same_title = last_portal_article_in_db.title == earliest_new_article.title
+    if last_portal_article_in_db:
+        is_same_day = (
+            last_portal_article_in_db.created_at.date()
+            == earliest_new_article.created_at.date()
+        )
+        is_same_title = last_portal_article_in_db.title == earliest_new_article.title
 
-    if is_same_day and is_same_title:
-        last_portal_article_in_db.created_at = earliest_new_article.created_at
-        last_portal_article_in_db.content = earliest_new_article.content
-        last_portal_article_in_db.save()
-        new_articles.pop()
+        if is_same_day and is_same_title:
+            last_portal_article_in_db.created_at = earliest_new_article.created_at
+            last_portal_article_in_db.content = earliest_new_article.content
+            last_portal_article_in_db.save()
+            new_articles.pop()
 
     created_articles = Article.objects.bulk_create(new_articles)
 
@@ -343,8 +363,11 @@ def crawl_all():
                     user_exist = UserProfile.objects.filter(
                         nickname=info["writer"], is_newara=False
                     )
+
+                    from typing import Optional
+
                     if user_exist:
-                        user = user_exist.first().user
+                        user: Optional[UserProfile] = user_exist.first().user
                     else:
                         user = get_user_model().objects.create(
                             username=str(uuid.uuid1()), is_active=False

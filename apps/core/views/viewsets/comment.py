@@ -1,3 +1,5 @@
+from typing import Union
+
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext
 from rest_framework import (
@@ -74,31 +76,36 @@ class CommentViewSet(
         )
 
     def perform_create(self, serializer):
-        parent_article_id: int | None = self.request.data.get("parent_article")
+        parent_article_id = self.request.data.get("parent_article")
 
         if parent_article_id is not None:
-            parent_article: Article = parent_article_id and Article.objects.get(
-                id=parent_article_id
-            )
+            parent_article: Union[
+                Article, None
+            ] = parent_article_id and Article.objects.get(id=parent_article_id)
         else:
-            parent_comment_id: int = self.request.data.get("parent_comment")
-            parent_comment: Comment = parent_comment_id and Comment.objects.get(
-                id=parent_comment_id
-            )
-            parent_article = parent_comment.parent_article
-
-        print(parent_article)
+            parent_comment_id = self.request.data.get("parent_comment")
+            if parent_comment_id is not None:
+                parent_comment: Union[
+                    Comment, None
+                ] = parent_comment_id and Comment.objects.get(id=parent_comment_id)
+                parent_article = (
+                    parent_comment.parent_article if parent_comment else None
+                )
+            else:
+                parent_article = None
 
         created_by = self.request.user
+
         is_school_admin = (
             UserProfile.objects.get(user_id=created_by).group
             == UserProfile.UserGroup.COMMUNICATION_BOARD_ADMIN
         )
 
-        if is_school_admin and parent_article.name_type != NameType.ANONYMOUS:
-            name_type = NameType.REGULAR
-        else:
-            name_type = parent_article.name_type
+        if parent_article is not None:
+            if is_school_admin and parent_article.name_type != NameType.ANONYMOUS:
+                name_type = NameType.REGULAR
+            else:
+                name_type = parent_article.name_type
 
         serializer.save(
             created_by=created_by,
@@ -126,11 +133,12 @@ class CommentViewSet(
         return super().update(request, *args, **kwargs)
 
     def perform_update(self, serializer):
+        from django.contrib.auth.models import AnonymousUser, User
+
         from apps.core.models import CommentUpdateLog
 
         instance = serializer.instance
-
-        CommentUpdateLog.objects.create(
+        CommentUpdateLog.objects.create(  # Combinable ?? 이 무슨 type 인지 잘 모르겠다.
             updated_by=self.request.user,
             comment=instance,
         )
@@ -149,7 +157,7 @@ class CommentViewSet(
         return super().destroy(request, *args, **kwargs)
 
     def perform_destroy(self, instance):
-        CommentDeleteLog.objects.create(
+        CommentDeleteLog.objects.create(  # ;;;
             deleted_by=self.request.user,
             comment=instance,
         )

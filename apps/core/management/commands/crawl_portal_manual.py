@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from dateutil.parser import parse as date_parse
 from django.core.management import BaseCommand
@@ -21,8 +21,8 @@ class Command(BaseCommand):
             return None
 
     def handle(self, *args, **options):
-        start = self.parse_date(options, "start") or timezone.datetime.today().date()
-        end = self.parse_date(options, "end") or timezone.datetime.today().date()
+        start = self.parse_date(options, "start") or datetime.today().date()
+        end = self.parse_date(options, "end") or datetime.today().date()
 
         print("start:", start, "end:", end)
         dates = []

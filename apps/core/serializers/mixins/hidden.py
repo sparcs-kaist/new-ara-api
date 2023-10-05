@@ -2,7 +2,13 @@ from rest_framework import serializers
 
 
 class HiddenSerializerMixin(metaclass=serializers.SerializerMetaclass):
-    CAN_OVERRIDE_REASONS = []
+    from typing import List
+
+    CAN_OVERRIDE_REASONS: List[str] = []
+
+    def __init__(self, *args, **kwargs):
+        self.context = kwargs.pop("context", {})  # context를 받아서 self.context에 저장
+        super().__init__(*args, **kwargs)
 
     def get_is_mine(self, obj) -> bool:
         return self.context["request"].user == obj.created_by
@@ -17,7 +23,7 @@ class HiddenSerializerMixin(metaclass=serializers.SerializerMetaclass):
     def get_can_override_hidden(self, obj) -> bool | None:
         hidden, can_override, _ = self.hidden_info(obj)
         if not hidden:
-            return
+            return None
         return can_override
 
     def visible_verdict(self, obj):

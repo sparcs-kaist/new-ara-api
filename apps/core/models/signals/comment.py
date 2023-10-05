@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db import models
 from django.dispatch import receiver
 from django.utils import timezone
@@ -52,5 +54,5 @@ def comment_post_save_signal(created, instance, **kwargs):
 
     else:
         # in case of MetaDataModel's instance deleted
-        if instance.deleted_at != timezone.datetime.min:
+        if instance.deleted_at != datetime.min:
             update_article_comment_count(instance)

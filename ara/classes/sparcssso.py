@@ -3,6 +3,7 @@ import hashlib
 import hmac
 import os
 import time
+from typing import Union
 from urllib.parse import urlencode
 
 import requests
@@ -16,7 +17,7 @@ from sentry_sdk import capture_exception
 class Client:
     SERVER_DOMAIN = "https://sparcssso.kaist.ac.kr/"
     BETA_DOMAIN = "https://ssobeta.sparcs.org/"
-    DOMAIN = None
+    DOMAIN: Union[str, None] = None
 
     API_PREFIX = "api/"
     VERSION_PREFIX = "v2/"
@@ -200,7 +201,6 @@ class Client:
         return sid
 
     def unregister(self, sid):
-
         sign, timestamp = self._sign_payload([sid])
 
         params = {

@@ -93,16 +93,19 @@ class ErrorLogObject(BaseLogObject):
     @staticmethod
     def format_exception(exception) -> dict:
         # Supported for Python version >= 3.5
-        tb = [
-            {"file": item[0], "line": item[1], "method": item[2]}
-            for item in traceback.extract_tb(
-                traceback.TracebackException.from_exception(exception).exc_traceback
-            )
+        tb = traceback.extract_tb(exception.__traceback__)
+        traceback_list = [
+            {
+                "file": frame.filename,
+                "line": frame.lineno,
+                "method": frame.name,
+            }
+            for frame in tb
         ]
         return {
             "message": str(exception),
             "type": ErrorLogObject.exception_type(exception),
-            "traceback": tb,
+            "traceback": traceback_list,
         }
 
     def __repr__(self):
