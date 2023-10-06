@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from django.utils.translation import gettext
 from rest_framework import exceptions, serializers
@@ -16,6 +19,12 @@ from apps.core.serializers.mixins.hidden import (
 from apps.core.serializers.topic import TopicSerializer
 from apps.user.serializers.user import PublicUserSerializer
 from ara.classes.serializers import MetaDataModelSerializer
+
+if TYPE_CHECKING:
+    from rest_framework.request import Request
+
+    import apps.core.models as core_models
+    import apps.core.views as core_views
 
 
 class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
@@ -38,12 +47,12 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
             "migrated_negative_vote_count",
         )
 
-    def get_my_vote(self, obj) -> bool | None:
-        request = self.context["request"]
+    def get_my_vote(self, obj: Article) -> bool | None:
+        request: Request = self.context["request"]
         if not obj.vote_set.filter(voted_by=request.user).exists():
             return None
 
-        my_vote = obj.vote_set.filter(voted_by=request.user)[0]
+        my_vote: core_models.vote.Vote = obj.vote_set.filter(voted_by=request.user)[0]
 
         return my_vote.is_positive
 
@@ -54,21 +63,21 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
         if not obj.scrap_set.exists():
             return None
 
-        my_scrap = obj.scrap_set.all()[0]
+        my_scrap: core_models.scrap.Scrap = obj.scrap_set.all()[0]
 
         return BaseScrapSerializer(my_scrap).data
 
-    def get_title(self, obj) -> str | None:
+    def get_title(self, obj: Article) -> str | None:
         if self.visible_verdict(obj):
             return obj.title
         return None
 
-    def get_content(self, obj) -> str | None:
+    def get_content(self, obj: Article) -> str | None:
         if self.visible_verdict(obj):
             return obj.content
         return None
 
-    def get_created_by(self, obj) -> dict:
+    def get_created_by(self, obj: core_models.article.Article) -> dict:
         if obj.name_type in (NameType.ANONYMOUS, NameType.REALNAME):
             return obj.postprocessed_created_by
         else:
@@ -79,11 +88,13 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
             return data
 
     @staticmethod
-    def get_read_status(obj) -> str:
+    def get_read_status(obj: core_models.article.Article) -> str:
         if not obj.article_read_log_set.exists():
             return "N"
 
-        my_article_read_log = obj.article_read_log_set.all()[0]
+        my_article_read_log: core_models.article_log.ArticleReadLog = (
+            obj.article_read_log_set.all()[0]
+        )
 
         # compare with article's last commented datetime
         if obj.commented_at:
@@ -100,7 +111,7 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
         return "-"
 
     # TODO: article_current_page property must be cached
-    def get_article_current_page(self, obj) -> int | None:
+    def get_article_current_page(self, obj: core_models.article.Article) -> int | None:
         view = self.context.get("view")
 
         if view:
@@ -148,7 +159,7 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
         return ArticleDocument.get_main_search_id_set(search)
 
     @staticmethod
-    def filter_articles(obj, request):
+    def filter_articles(obj: Article, request):
         from_view = request.query_params.get("from_view")
 
         if from_view == "-portal":
@@ -188,7 +199,7 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
 
         return Article.objects.all()
 
-    def get_side_articles(self, obj) -> dict:
+    def get_side_articles(self, obj: Article) -> dict:
         request = self.context["request"]
 
         from_view = request.query_params.get("from_view")
@@ -333,9 +344,9 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
             return serializer.data
         return None
 
-    def get_my_comment_profile(self, obj):
+    def get_my_comment_profile(self, obj: Article) -> dict:
         created_by = self.context["request"].user
-        name_type = obj.name_type
+        name_type: int = obj.name_type
 
         if (
             obj.parent_board.is_school_communication
@@ -411,13 +422,13 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
     )
 
     @staticmethod
-    def get_days_left(obj):
+    def get_days_left(obj: Article) -> int | None:
         if hasattr(obj, "communication_article"):
             return obj.communication_article.days_left
         return None
 
     @staticmethod
-    def get_communication_article_status(obj):
+    def get_communication_article_status(obj: Article) -> int | None:
         if hasattr(obj, "communication_article"):
             return obj.communication_article.school_response_status
         return None
@@ -459,7 +470,7 @@ class ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSeriali
         read_only=True,
     )
 
-    def get_attachment_type(self, obj) -> str:
+    def get_attachment_type(self, obj: Article) -> str:
         if not self.visible_verdict(obj):
             return ArticleAttachmentType.NONE.value
 
@@ -479,13 +490,13 @@ class ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSeriali
         return ArticleAttachmentType.NONE.value
 
     @staticmethod
-    def get_communication_article_status(obj):
+    def get_communication_article_status(obj: Article):
         if hasattr(obj, "communication_article"):
             return obj.communication_article.school_response_status
         return None
 
     @staticmethod
-    def get_days_left(obj):
+    def get_days_left(obj: Article):
         if hasattr(obj, "communication_article"):
             return obj.communication_article.days_left
         return None

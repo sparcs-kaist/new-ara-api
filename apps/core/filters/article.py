@@ -1,7 +1,14 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from django_filters.rest_framework import CharFilter, FilterSet
 
 from apps.core.documents import ArticleDocument
 from apps.core.models import Article
+
+if TYPE_CHECKING:
+    from ara.db.models import MetaDataQuerySet
 
 
 class ArticleFilter(FilterSet):
@@ -60,5 +67,7 @@ class ArticleFilter(FilterSet):
     )
 
     @staticmethod
-    def get_main_search__contains(queryset, name, value):
+    def get_main_search__contains(
+        queryset: MetaDataQuerySet, name: str, value: str
+    ) -> MetaDataQuerySet:
         return queryset.filter(id__in=ArticleDocument.get_main_search_id_set(value))

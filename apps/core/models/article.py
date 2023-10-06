@@ -1,3 +1,4 @@
+from __future__ import annotations
 from enum import Enum
 
 import bs4
@@ -19,14 +20,22 @@ from ara.settings import (
     MIN_TIME,
     SCHOOL_RESPONSE_VOTE_THRESHOLD,
 )
-
 from .block import Block
 from .board import NameType, BoardAccessPermissionType
 from .comment import Comment
 from .communication_article import SchoolResponseStatus
 from .report import Report
+from typing import TYPE_CHECKING
 
-User = get_user_model()
+if TYPE_CHECKING:
+    from .topic import Topic
+    from .board import Board
+    from .attachment import Attachment
+    from .communication_article import CommunicationArticle
+    import django.contrib.auth.models
+    import datetime
+
+User: models.base.ModelBase = get_user_model()
 
 
 class ArticleHiddenReason(str, Enum):
@@ -38,69 +47,70 @@ class ArticleHiddenReason(str, Enum):
 
 
 class Article(MetaDataModel):
-    title = models.CharField(
+    id: int
+    title: str = models.CharField(
         verbose_name="제목",
         max_length=256,
     )
-    content = models.TextField(
+    content: str = models.TextField(
         verbose_name="본문",
     )
-    content_text = models.TextField(
+    content_text: int = models.TextField(
         verbose_name="text 형식 본문",
         editable=False,
     )
-    name_type = models.SmallIntegerField(
+    name_type: int = models.SmallIntegerField(
         verbose_name="익명 혹은 실명 여부",
         default=NameType.REGULAR,
     )
-    is_content_sexual = models.BooleanField(
+    is_content_sexual: bool = models.BooleanField(
         verbose_name="성인/음란성 내용",
         default=False,
     )
-    is_content_social = models.BooleanField(
+    is_content_social: bool = models.BooleanField(
         verbose_name="정치/사회성 내용",
         default=False,
     )
-    hit_count = models.IntegerField(
+    hit_count: int = models.IntegerField(
         verbose_name="조회수",
         default=0,
     )
-    comment_count = models.IntegerField(
+    comment_count: int = models.IntegerField(
         verbose_name="댓글 수",
         default=0,
     )
-    report_count = models.IntegerField(
+    report_count: int = models.IntegerField(
         verbose_name="신고 수",
         default=0,
     )
-    positive_vote_count = models.IntegerField(
+    positive_vote_count: int = models.IntegerField(
         verbose_name="좋아요 수",
         default=0,
     )
-    negative_vote_count = models.IntegerField(
+    negative_vote_count: int = models.IntegerField(
         verbose_name="싫어요 수",
         default=0,
     )
-    migrated_hit_count = models.IntegerField(
+    migrated_hit_count: int = models.IntegerField(
         verbose_name="이전된 조회수",
         default=0,
     )
-    migrated_positive_vote_count = models.IntegerField(
+    migrated_positive_vote_count: int = models.IntegerField(
         verbose_name="이전된 좋아요 수",
         default=0,
     )
-    migrated_negative_vote_count = models.IntegerField(
+    migrated_negative_vote_count: int  = models.IntegerField(
         verbose_name="이전된 싫어요 수",
         default=0,
     )
-    created_by = models.ForeignKey(
+    created_by: django.contrib.auth.models.User = models.ForeignKey(
         verbose_name="작성자",
         to=settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="article_set",
         db_index=True,
     )
-    parent_topic = models.ForeignKey(
+    parent_topic: Topic = models.ForeignKey(
         verbose_name="말머리",
         to="core.Topic",
         on_delete=models.CASCADE,
@@ -110,48 +120,49 @@ class Article(MetaDataModel):
         db_index=True,
         default=None,
     )
-    parent_board = models.ForeignKey(
+    parent_board: Board = models.ForeignKey(
         verbose_name="게시판",
         to="core.Board",
         on_delete=models.CASCADE,
         related_name="article_set",
         db_index=True,
     )
-    attachments = models.ManyToManyField(
+    attachments: None | Attachment = models.ManyToManyField(
         verbose_name="첨부 파일(들)",
         to="core.Attachment",
         blank=True,
         db_index=True,
     )
-    commented_at = models.DateTimeField(
+    commented_at: None | datetime.datetime = models.DateTimeField(
         verbose_name="마지막 댓글 시간",
         null=True,
         default=None,
     )
-    url = models.URLField(
+    url: str = models.URLField(
         verbose_name="포탈 링크",
         max_length=200,
         blank=True,
         null=True,
         default=None,
     )
-    content_updated_at = models.DateTimeField(
+    content_updated_at: None | datetime.datetime = models.DateTimeField(
         verbose_name="제목/본문/첨부파일 수정 시간",
         null=True,
         default=None,
     )
-    hidden_at = models.DateTimeField(
+    hidden_at: None | datetime.datetime = models.DateTimeField(
         verbose_name="숨김 시간",
         blank=True,
         null=True,
         default=None,
     )
-    topped_at = models.DateTimeField(
+    topped_at: None | datetime.datetime = models.DateTimeField(
         verbose_name="인기글 달성 시각",
         blank=True,
         null=True,
         default=None,
     )
+    communication_article: None | CommunicationArticle
 
     class Meta(MetaDataModel.Meta):
         verbose_name = "게시물"
@@ -186,7 +197,7 @@ class Article(MetaDataModel):
             update_fields=update_fields,
         )
 
-    def update_hit_count(self):
+    def update_hit_count(self) -> None:
         self.hit_count = (
             self.article_read_log_set.values("read_by")
             .annotate(models.Count("read_by"))
@@ -199,7 +210,7 @@ class Article(MetaDataModel):
 
         self.save()
 
-    def update_comment_count(self):
+    def update_comment_count(self) -> None:
         self.comment_count = (
             Comment.objects.filter(deleted_at=MIN_TIME)
             .filter(
@@ -212,7 +223,7 @@ class Article(MetaDataModel):
         self.save()
 
     @transaction.atomic
-    def update_report_count(self):
+    def update_report_count(self) -> None:
         count = Report.objects.filter(parent_article=self).count()
         self.report_count = count
 
@@ -222,7 +233,7 @@ class Article(MetaDataModel):
         self.save()
 
     def update_vote_status(self) -> None:
-        self.positive_vote_count = (
+        self.positive_vote_count: int = (
             self.vote_set.filter(is_positive=True).count()
             + self.migrated_positive_vote_count
         )
@@ -257,7 +268,7 @@ class Article(MetaDataModel):
         return self.hidden_at is not None
 
     @property
-    def created_by_nickname(self):
+    def created_by_nickname(self) -> str:
         return self.created_by.profile.nickname
 
     # API 상에서 보이는 사용자 (익명일 경우 익명화된 글쓴이, 그 외는 그냥 글쓴이)
@@ -266,7 +277,7 @@ class Article(MetaDataModel):
         if self.name_type == NameType.REGULAR:
             return self.created_by
 
-        user_unique_num = self.created_by.id + self.id + HASH_SECRET_VALUE
+        user_unique_num: int = self.created_by.id + self.id + HASH_SECRET_VALUE
         user_unique_encoding = str(hex(user_unique_num)).encode("utf-8")
         user_hash = hashlib.sha224(user_unique_encoding).hexdigest()
         user_hash_int = int(user_hash[-4:], 16)
