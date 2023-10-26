@@ -98,7 +98,7 @@ class Board(MetaDataModel):
         blank=True,
         default="",
     )
-    top_threshold = models.SmallIntegerField(
+    top_threshold = models.PositiveSmallIntegerField(
         verbose_name="인기글 달성 기준 좋아요 개수",
         default=10,
     )

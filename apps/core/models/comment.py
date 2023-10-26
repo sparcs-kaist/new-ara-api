@@ -50,15 +50,15 @@ class Comment(MetaDataModel):
         verbose_name="익명 혹은 실명",
     )
 
-    report_count = models.IntegerField(
+    report_count = models.PositiveIntegerField(
         default=0,
         verbose_name="신고 수",
     )
-    positive_vote_count = models.IntegerField(
+    positive_vote_count = models.PositiveIntegerField(
         default=0,
         verbose_name="좋아요 수",
     )
-    negative_vote_count = models.IntegerField(
+    negative_vote_count = models.PositiveIntegerField(
         default=0,
         verbose_name="싫어요 수",
     )
