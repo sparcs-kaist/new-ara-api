@@ -2,13 +2,7 @@ from rest_framework import serializers
 
 
 class HiddenSerializerMixin(metaclass=serializers.SerializerMetaclass):
-    from typing import List
-
-    CAN_OVERRIDE_REASONS: List[str] = []
-
-    def __init__(self, *args, **kwargs):
-        self.context = kwargs.pop("context", {})  # context를 받아서 self.context에 저장
-        super().__init__(*args, **kwargs)
+    CAN_OVERRIDE_REASONS: list[str] = []
 
     def get_is_mine(self, obj) -> bool:
         return self.context["request"].user == obj.created_by
