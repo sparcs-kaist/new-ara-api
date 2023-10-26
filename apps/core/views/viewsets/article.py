@@ -1,7 +1,9 @@
 import time
 
+from django.core.paginator import Paginator as DjangoPaginator
 from django.db import models
 from django.http import Http404
+from django.utils.functional import cached_property
 from django.utils.translation import gettext
 from rest_framework import (
     decorators,
@@ -78,6 +80,62 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         ),
     }
 
+    # Override list action for further optimization
+    def list(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        created_by = self.request.query_params.get("created_by")
+        if created_by and int(created_by) != self.request.user.id:
+            # exclude someone's anonymous or realname article in one's profile
+            exclude_list = [NameType.ANONYMOUS, NameType.REALNAME]
+            queryset = queryset.exclude(name_type__in=exclude_list)
+
+        count = (
+            queryset.count()
+            - queryset.filter(
+                created_by__id__in=self.request.user.block_set.values("user"),
+                name_type=NameType.ANONYMOUS,
+            ).count()
+        )
+
+        # exclude article written by blocked users in anonymous board
+        queryset = queryset.exclude(
+            created_by__id__in=self.request.user.block_set.values("user"),
+            name_type=NameType.ANONYMOUS,
+        )
+
+        queryset = queryset.prefetch_related(
+            "attachments",
+            "communication_article",
+        )
+
+        # optimizing queryset for list action
+        queryset = queryset.select_related(
+            "created_by",
+            "created_by__profile",
+            "parent_topic",
+            "parent_board",
+            "parent_board__group",
+        ).prefetch_related(
+            ArticleReadLog.prefetch_my_article_read_log(self.request.user),
+        )
+
+        class Paginator(DjangoPaginator):
+            @cached_property
+            def count(self):
+                return count
+
+        # Originated from list function of rest_framework.mixins.ListModelMixin
+        page = self.paginator.paginate_queryset(
+            queryset, request, paginator_class=Paginator
+        )
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
 
@@ -85,33 +143,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             pass
 
         elif self.action == "list":
-            created_by = self.request.query_params.get("created_by")
-            if created_by and int(created_by) != self.request.user.id:
-                # exclude someone's anonymous or realname article in one's profile
-                exclude_list = [NameType.ANONYMOUS, NameType.REALNAME]
-                queryset = queryset.exclude(name_type__in=exclude_list)
-
-            # exclude article written by blocked users in anonymous board
-            queryset = queryset.exclude(
-                created_by__id__in=self.request.user.block_set.values("user"),
-                name_type=NameType.ANONYMOUS,
-            )
-
-            queryset = queryset.prefetch_related(
-                "attachments",
-                "communication_article",
-            )
-
-            # optimizing queryset for list action
-            queryset = queryset.select_related(
-                "created_by",
-                "created_by__profile",
-                "parent_topic",
-                "parent_board",
-                "parent_board__group",
-            ).prefetch_related(
-                ArticleReadLog.prefetch_my_article_read_log(self.request.user),
-            )
+            pass
 
         # optimizing queryset for create, update, retrieve actions
         else:
