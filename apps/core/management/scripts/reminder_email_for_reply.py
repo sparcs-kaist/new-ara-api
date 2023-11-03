@@ -106,11 +106,11 @@ def send_email():
 
 
 def smtp_send(
-    title: str, message: str, send_mail: str, mailing_list: list, each: bool = False
+    title: str, message: str, sender_mail: str, mailing_list: list, each: bool = False
 ):
     allowed_mail_domain = ["@sparcs.org"]
 
-    if not send_mail.endswith(tuple(allowed_mail_domain)):
+    if not sender_mail.endswith(tuple(allowed_mail_domain)):
         raise ValueError("Invalid email domain")
 
     smtp = smtplib.SMTP("smtp-relay.gmail.com", 587)
@@ -121,18 +121,22 @@ def smtp_send(
     if each:
         for receiver in mailing_list:
             # print(f"[{mailing_list.index(receiver) + 1}/{len(mailing_list)}] Sending email to [{receiver}]")  # FOR DEBUG
-            msg = MIMEMultipart("")
-            msg["Subject"] = title
-            msg["From"] = send_mail
-            msg.attach(MIMEText(message, "plain"))
-            msg["To"] = receiver
-            smtp.sendmail(send_mail, receiver, msg.as_string())
+            msg = create_msg(title, sender_mail, message, receiver)
+            smtp.sendmail(sender_mail, receiver, msg.as_string())
     else:
-        msg = MIMEMultipart("")
-        msg["Subject"] = title
-        msg["From"] = send_mail
-        msg.attach(MIMEText(message, "plain"))
-        msg["To"] = ", ".join(mailing_list)
-        smtp.sendmail(send_mail, mailing_list, msg.as_string())
+        receivers = ", ".join(mailing_list)
+        msg = create_msg(title, sender_mail, message, receivers)
+        smtp.sendmail(sender_mail, mailing_list, msg.as_string())
 
     smtp.quit()
+
+
+def create_msg(
+    title: str, sender_mail: str, message: str, receiver_mail: str
+) -> MIMEMultipart:
+    msg = MIMEMultipart()
+    msg["Subject"] = title
+    msg["From"] = sender_mail
+    msg.attach(MIMEText(message, "plain"))  # TODO: Use HTML instead of plain text
+    msg["To"] = receiver_mail
+    return msg
