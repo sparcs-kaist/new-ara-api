@@ -1,4 +1,7 @@
-from django.core.mail import send_mail
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
 from django.utils import dateformat, timezone
 
 from apps.core.models import CommunicationArticle, UserProfile
@@ -99,4 +102,37 @@ def send_email():
 
     mailing_list = _get_mailing_list()
 
-    send_mail(title, message, "new-ara@sparcs.org", mailing_list)
+    smtp_send(title, message, "new-ara@sparcs.org", mailing_list)
+
+
+def smtp_send(
+    title: str, message: str, send_mail: str, mailing_list: list, each: bool = False
+):
+    allowed_mail_domain = ["@sparcs.org"]
+
+    if not send_mail.endswith(tuple(allowed_mail_domain)):
+        raise ValueError("Invalid email domain")
+
+    smtp = smtplib.SMTP("smtp-relay.gmail.com", 587)
+    smtp.starttls()
+    # smtp.login("", "") # TODO: Use ID, PW instead of IP Address Authentication
+    smtp.ehlo()
+
+    if each:
+        for receiver in mailing_list:
+            # print(f"[{mailing_list.index(receiver) + 1}/{len(mailing_list)}] Sending email to [{receiver}]")  # FOR DEBUG
+            msg = MIMEMultipart("")
+            msg["Subject"] = title
+            msg["From"] = send_mail
+            msg.attach(MIMEText(message, "plain"))
+            msg["To"] = receiver
+            smtp.sendmail(send_mail, receiver, msg.as_string())
+    else:
+        msg = MIMEMultipart("")
+        msg["Subject"] = title
+        msg["From"] = send_mail
+        msg.attach(MIMEText(message, "plain"))
+        msg["To"] = ", ".join(mailing_list)
+        smtp.sendmail(send_mail, mailing_list, msg.as_string())
+
+    smtp.quit()
