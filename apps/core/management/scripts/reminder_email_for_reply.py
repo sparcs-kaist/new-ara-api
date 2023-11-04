@@ -106,8 +106,18 @@ def send_email():
 
 
 def smtp_send(
-    title: str, message: str, sender_mail: str, mailing_list: list, each: bool = False
+    title: str,
+    message: str,
+    sender_mail: str,
+    mailing_list: list[str],
+    each: bool = False,
 ):
+    """
+    Send email using SMTP relay gmail server.
+
+    each True: Send email to each receiver. Receivers cannot see other receivers.
+    each False: Send email to all receivers. Receivers can see other receivers.
+    """
     allowed_mail_domain = ["@sparcs.org"]
 
     if not sender_mail.endswith(tuple(allowed_mail_domain)):
