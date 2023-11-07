@@ -102,7 +102,7 @@ def send_email():
 
     mailing_list = _get_mailing_list()
 
-    smtp_send(title, message, "new-ara@sparcs.org", mailing_list)
+    smtp_send(title, message, "new-ara@sparcs.org", mailing_list, False)
 
 
 def smtp_send(
@@ -110,7 +110,7 @@ def smtp_send(
     message: str,
     sender_mail: str,
     mailing_list: list[str],
-    each: bool = False,
+    each: bool = True,
 ):
     """
     Send email using SMTP relay gmail server.
