@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "django_filters",
     "apps.core",
     "apps.user",
+    "apps.global_notice",
 ]
 
 MIDDLEWARE = [

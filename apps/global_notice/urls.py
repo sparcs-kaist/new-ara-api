@@ -1,3 +1,5 @@
 from django.urls import include, path
 
-urlpatterns = []
+from apps.global_notice.views import GlobalNoticeViewSet
+
+urlpatterns = [path("api/global_notice", GlobalNoticeViewSet.as_view())]
