@@ -1,16 +1,11 @@
 from django.db import models
+from django.utils.translation import gettext_lazy
 
 from ara.db.models import MetaDataModel
 
 
 class Calendar(MetaDataModel):
-    tag = models.ForeignKey(
-        verbose_name="태그",
-        to="core.Tag",
-        on_delete=models.CASCADE,
-        related_name="event_set",
-        db_index=True,
-    )
+    tag = models.IntegerField()
     is_allday = models.BooleanField(
         verbose_name="하루종일",
         default=False,
@@ -27,7 +22,11 @@ class Calendar(MetaDataModel):
         null=True,
         default=None,
     )
-    title = models.CharField(
-        verbose_name="제목",
+    ko_title = models.CharField(
+        verbose_name="한글 제목",
+        max_length=512,
+    )
+    en_title = models.CharField(
+        verbose_name="영어 제목",
         max_length=512,
     )

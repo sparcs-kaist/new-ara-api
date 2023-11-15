@@ -1,11 +1,8 @@
-from django.utils import timezone
-from rest_framework import decorators, mixins, response, status
-
-from apps.user.models import UserProfile
+from apps.calendar.models import Calendar
+from apps.calendar.serializers.calendar import CalendarSerializer
 from apps.user.permissions.user_profile import UserProfilePermission
 from apps.user.serializers.user_profile import (
     PublicUserProfileSerializer,
-    UserProfileSerializer,
     UserProfileUpdateActionSerializer,
 )
 from ara.classes.viewset import ActionAPIViewSet
@@ -14,8 +11,8 @@ from ara.classes.viewset import ActionAPIViewSet
 class CalendarViewSet(
     mixins.RetrieveModelMixin, mixins.UpdateModelMixin, ActionAPIViewSet
 ):
-    queryset = UserProfile.objects.all()
-    serializer_class = UserProfileSerializer
+    queryset = Calendar.objects.all()
+    serializer_class = CalendarSerializer
     action_serializer_class = {
         "update": UserProfileUpdateActionSerializer,
         "partial_update": UserProfileUpdateActionSerializer,
@@ -29,17 +26,13 @@ class CalendarViewSet(
         else:
             return response.Response(PublicUserProfileSerializer(profile).data)
 
-    @decorators.action(detail=True, methods=["patch"])
-    def agree_terms_of_service(self, request, *args, **kwargs):
-        # BAD_REQUEST if user already agree with the terms of service
-        if request.user.profile.agree_terms_of_service_at is not None:
-            return response.Response(
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+    def list(self, request):
+        queryset = User.objects.all()
+        serializer = UserSerializer(queryset, many=True)
+        return Response(serializer.data)
 
-        request.user.profile.agree_terms_of_service_at = timezone.now()
-        request.user.profile.save()
-
-        return response.Response(
-            status=status.HTTP_200_OK,
-        )
+    def retrieve(self, request, pk=None):
+        queryset = User.objects.all()
+        user = get_object_or_404(queryset, pk=pk)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
