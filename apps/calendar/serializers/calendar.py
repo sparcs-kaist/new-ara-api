@@ -1,93 +1,15 @@
-from Calendar.models import Calendar
+from calendar.models import Calendar, Tag
+
 from rest_framework import serializers
+
+
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ["id", "name", "calendar"]
 
 
 class CalendarSerializer(serializers.ModelSerializer):
     class Meta:
         model = Calendar
         fields = "__all__"
-
-
-from dateutil.relativedelta import relativedelta
-from django.utils import timezone
-from django.utils.translation import gettext
-from rest_framework import serializers
-
-from apps.user.models import UserProfile
-from ara.classes.serializers import MetaDataModelSerializer
-
-
-class UserProfileSerializer(MetaDataModelSerializer):
-    ...
-
-
-class UserProfileUpdateActionSerializer(MetaDataModelSerializer):
-    class Meta(MetaDataModelSerializer.Meta):
-        read_only_fields = (
-            "sid",
-            "user",
-        )
-
-    def validate_nickname(self, value) -> str:
-        nickname_changed = self.instance and value != self.instance.nickname
-        if nickname_changed and not self.instance.can_change_nickname():
-            next_change_date = self.instance.nickname_updated_at + relativedelta(
-                months=3
-            )
-            raise serializers.ValidationError(
-                gettext(
-                    "Nicknames can only be changed every 3 months. (can't change until %(date)s)"
-                )
-                % {"date": next_change_date.strftime("%Y/%m/%d")}
-            )
-        return value
-
-    def update(self, instance, validated_data):
-        new_nickname = validated_data.get("nickname")
-        old_nickname = instance.nickname if instance else None
-        if instance and new_nickname and old_nickname != new_nickname:
-            validated_data["nickname_updated_at"] = timezone.now()
-        return super(BaseUserProfileSerializer, self).update(instance, validated_data)
-
-
-class PublicUserProfileSerializer(BaseUserProfileSerializer):
-    class Meta(BaseUserProfileSerializer.Meta):
-        fields = (
-            "picture",
-            "nickname",
-            "user",
-            "is_official",
-            "is_school_admin",
-        )
-
-
-class MyPageUserProfileSerializer(BaseUserProfileSerializer):
-    num_articles = serializers.SerializerMethodField()
-    num_comments = serializers.SerializerMethodField()
-    num_positive_votes = serializers.SerializerMethodField()
-
-    @staticmethod
-    def get_num_articles(obj):
-        from apps.core.models import Article
-
-        num_articles = Article.objects.filter(created_by=obj.user).count()
-        return num_articles
-
-    @staticmethod
-    def get_num_comments(obj):
-        from apps.core.models import Comment
-
-        num_comments = Comment.objects.filter(created_by=obj.user).count()
-        return num_comments
-
-    @staticmethod
-    def get_num_positive_votes(obj):
-        from apps.core.models import Vote
-
-        num_article_votes = Vote.objects.filter(
-            parent_article__created_by=obj.user, is_positive=True
-        ).count()
-        num_comment_votes = Vote.objects.filter(
-            parent_comment__created_by=obj.user, is_positive=True
-        ).count()
-        return num_article_votes + num_comment_votes
