@@ -26,8 +26,6 @@ urlpatterns = [
     path("api/admin/", admin.site.urls),
     path("", include(("apps.core.urls", "core"))),
     path("", include(("apps.user.urls", "user"))),
-    path("", include(("apps.calendar.urls", "calendar"))),
-    path("", include(("apps.tag.urls", "tag"))),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
         "api/schema/swagger/",
@@ -39,6 +37,8 @@ urlpatterns = [
         SpectacularRedocView.as_view(url_name="schema"),
         name="redoc",
     ),
+    path("admin/", admin.site.urls),
+    path("calendar/", include("apps.calendar.urls")),
 ]
 
 if settings.DEBUG:

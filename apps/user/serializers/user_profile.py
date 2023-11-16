@@ -26,7 +26,11 @@ class BaseUserProfileSerializer(MetaDataModelSerializer):
         return obj.is_official
 
 
-class CalendarUpdateActionSerializer(BaseUserProfileSerializer):
+class UserProfileSerializer(BaseUserProfileSerializer):
+    ...
+
+
+class UserProfileUpdateActionSerializer(BaseUserProfileSerializer):
     class Meta(BaseUserProfileSerializer.Meta):
         read_only_fields = (
             "sid",
