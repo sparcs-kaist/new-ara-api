@@ -90,6 +90,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             exclude_list = [NameType.ANONYMOUS, NameType.REALNAME]
             queryset = queryset.exclude(name_type__in=exclude_list)
 
+        # Compute `count` here to optimize query
         count = (
             queryset.count()
             - queryset.filter(
