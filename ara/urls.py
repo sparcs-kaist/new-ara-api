@@ -21,18 +21,13 @@ from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
-from rest_framework.routers import DefaultRouter
-
-from apps.calendar.views import CalendarViewSet, TagViewSet
-
-router = DefaultRouter()
-router.register(r"tags", TagViewSet, basename="tag")
-router.register(r"calendars", CalendarViewSet, basename="calendar")
 
 urlpatterns = [
     path("api/admin/", admin.site.urls),
     path("", include(("apps.core.urls", "core"))),
     path("", include(("apps.user.urls", "user"))),
+    path("", include(("apps.calendar.urls", "calendar"))),
+    path("", include(("apps.tag.urls", "tag"))),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
         "api/schema/swagger/",
@@ -44,7 +39,6 @@ urlpatterns = [
         SpectacularRedocView.as_view(url_name="schema"),
         name="redoc",
     ),
-    path("api/", include(router.urls)),
 ]
 
 if settings.DEBUG:
