@@ -28,6 +28,25 @@ class Calendar(MetaDataModel):
         verbose_name="영어 제목",
         max_length=512,
     )
+    ko_description = models.CharField(
+        verbose_name="한글 설명",
+        max_length=512,
+    )
+    en_description = models.CharField(
+        verbose_name="영어 설명",
+        max_length=512,
+    )
+    location = models.CharField(
+        verbose_name="위치",
+        max_length=512,
+    )
+    url = models.URLField(
+        verbose_name="포탈 링크",
+        max_length=200,
+        blank=True,
+        null=True,
+        default=None,
+    )
     tags = models.ManyToManyField("Tag", related_name="calendars")
 
     def __str__(self):
@@ -36,6 +55,7 @@ class Calendar(MetaDataModel):
 
 class Tag(models.Model):
     name = models.CharField(max_length=255, unique=True)
+    color = models.CharField(max_length=7, default="#000000")
     calendar = models.ForeignKey(
-        Calendar, on_delete=models.SET_NULL, null=True, blank=True
+        "Calendar", on_delete=models.SET_NULL, null=True, blank=True
     )
