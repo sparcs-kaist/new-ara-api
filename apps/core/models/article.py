@@ -21,7 +21,7 @@ from ara.settings import (
 )
 
 from .block import Block
-from .board import NameType, BoardAccessPermissionType
+from .board import BoardAccessPermissionType, NameType
 from .comment import Comment
 from .communication_article import SchoolResponseStatus
 from .report import Report
@@ -52,6 +52,7 @@ class Article(MetaDataModel):
     name_type = models.PositiveSmallIntegerField(
         verbose_name="익명 혹은 실명 여부",
         default=NameType.REGULAR,
+        db_index=True,
     )
     is_content_sexual = models.BooleanField(
         verbose_name="성인/음란성 내용",
@@ -156,6 +157,13 @@ class Article(MetaDataModel):
     class Meta(MetaDataModel.Meta):
         verbose_name = "게시물"
         verbose_name_plural = "게시물 목록"
+
+        indexes = [
+            models.Index(
+                fields=["created_at", "parent_board_id"],
+                name="created_at_parent_board_id_idx",
+            )
+        ]
 
     def __str__(self):
         return self.title
