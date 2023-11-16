@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Calendar, Tag
+from apps.calendar.models import Calendar, Tag
 
 
 class TagSerializer(serializers.ModelSerializer):
