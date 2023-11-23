@@ -6,6 +6,7 @@ from datetime import datetime
 import boto3
 import requests
 from bs4 import BeautifulSoup as bs
+from bs4.element import Tag
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
@@ -151,8 +152,6 @@ def _get_article(url, session):
     trs = soup.select("table > tbody > tr")
     html = None
 
-    from bs4.element import Tag
-
     for tr in trs:
         if len(list(tr.children)) == 3:
             td = tr.find("td")
@@ -187,7 +186,6 @@ def _get_article(url, session):
 
 def crawl_hour(day=None):
     # parameter에서 default로 바로 today()하면, 캐싱되어서 업데이트가 안됨
-    from django.utils import timezone
 
     if day is None:
         day = timezone.now().date()
@@ -264,12 +262,12 @@ def crawl_hour(day=None):
         ):
             continue
 
-        user_exist = UserProfile.objects.filter(
+        user_profile = UserProfile.objects.filter(
             nickname=info["writer"], is_newara=False
-        )
+        ).first()
 
-        if user_exist:
-            user = user_exist.first()
+        if user_profile is not None:
+            user = user_profile.user
         else:
             user = get_user_model().objects.create(
                 username=str(uuid.uuid1()), is_active=False
@@ -364,10 +362,8 @@ def crawl_all():
                         nickname=info["writer"], is_newara=False
                     )
 
-                    from typing import Optional
-
                     if user_exist:
-                        user: Optional[UserProfile] = user_exist.first().user
+                        user = user_exist.first().user
                     else:
                         user = get_user_model().objects.create(
                             username=str(uuid.uuid1()), is_active=False

@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import json
+from typing import TYPE_CHECKING
 
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
@@ -10,17 +13,11 @@ from django.utils.translation import gettext_lazy
 from ara.db.models import MetaDataModel
 from ara.settings import MIN_TIME
 
+if TYPE_CHECKING:
+    from django.contrib.auth.models import AbstractBaseUser
+
 
 class UserProfile(MetaDataModel):
-    class Meta(MetaDataModel.Meta):
-        verbose_name = "유저 프로필"
-        verbose_name_plural = "유저 프로필 목록"
-        unique_together = (
-            ("uid", "deleted_at"),
-            ("sid", "deleted_at"),
-            ("nickname", "is_newara", "deleted_at"),
-        )
-
     class UserGroup(models.IntegerChoices):
         # 뉴아라 계정을 만들지 않은 사람들
         UNAUTHORIZED = 0, gettext_lazy("Unauthorized user")
@@ -41,14 +38,14 @@ class UserProfile(MetaDataModel):
 
     OFFICIAL_GROUPS = [UserGroup.STORE_EMPLOYEE, UserGroup.KAIST_ORG]
 
-    uid = models.CharField(
+    uid: str | None = models.CharField(
         null=True,
         default=None,
         editable=False,
         max_length=30,
         verbose_name="Sparcs SSO uid",
     )
-    sid = models.CharField(
+    sid: str | None = models.CharField(
         null=True,
         default=None,
         editable=False,
@@ -67,7 +64,7 @@ class UserProfile(MetaDataModel):
         upload_to="user_profiles/pictures",
         verbose_name="프로필",
     )
-    nickname = models.CharField(
+    nickname: str = models.CharField(
         blank=True,
         default="",
         max_length=128,
@@ -77,19 +74,19 @@ class UserProfile(MetaDataModel):
         default=MIN_TIME,
         verbose_name="최근 닉네임 변경일시",
     )
-    see_sexual = models.BooleanField(
+    see_sexual: bool = models.BooleanField(
         default=False,
         verbose_name="성인/음란성 보기",
     )
-    see_social = models.BooleanField(
+    see_social: bool = models.BooleanField(
         default=False,
         verbose_name="정치/사회성 보기",
     )
-    group = models.IntegerField(
+    group: int = models.IntegerField(
         choices=UserGroup.choices,
         default=UserGroup.UNAUTHORIZED,
     )
-    user = models.OneToOneField(
+    user: models.OneToOneField[AbstractBaseUser] = models.OneToOneField(
         on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
         related_name="profile",
@@ -97,11 +94,11 @@ class UserProfile(MetaDataModel):
         primary_key=True,
     )
     # 포탈 공지에서 긁어온 작성자 or 이전한 아라 사용자는 is_newara=False
-    is_newara = models.BooleanField(
+    is_newara: bool = models.BooleanField(
         default=True,
         verbose_name="뉴아라 사용자",
     )
-    ara_id = models.CharField(
+    ara_id: str = models.CharField(
         blank=True,
         default="",
         max_length=128,
@@ -117,6 +114,15 @@ class UserProfile(MetaDataModel):
         default=None,
         verbose_name="활동정지 마감 일시",
     )
+
+    class Meta(MetaDataModel.Meta):
+        verbose_name = "유저 프로필"
+        verbose_name_plural = "유저 프로필 목록"
+        unique_together = (
+            ("uid", "deleted_at"),
+            ("sid", "deleted_at"),
+            ("nickname", "is_newara", "deleted_at"),
+        )
 
     def __str__(self) -> str:
         return self.nickname

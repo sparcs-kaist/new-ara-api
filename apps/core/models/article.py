@@ -1,9 +1,10 @@
 from __future__ import annotations
+
 from enum import Enum
+from typing import TYPE_CHECKING
 
 import bs4
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage
 from django.db import IntegrityError, models, transaction
 from django.utils import timezone
@@ -20,22 +21,23 @@ from ara.settings import (
     MIN_TIME,
     SCHOOL_RESPONSE_VOTE_THRESHOLD,
 )
+
 from .block import Block
-from .board import NameType, BoardAccessPermissionType
+from .board import BoardAccessPermissionType, NameType
 from .comment import Comment
 from .communication_article import SchoolResponseStatus
 from .report import Report
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .topic import Topic
-    from .board import Board
-    from .attachment import Attachment
-    from .communication_article import CommunicationArticle
-    import django.contrib.auth.models
-    import datetime
+    from datetime import datetime
 
-User: models.base.ModelBase = get_user_model()
+    # TODO: Use get_user_model() to get the right User model
+    from django.contrib.auth.models import User
+
+    from .attachment import Attachment
+    from .board import Board
+    from .communication_article import CommunicationArticle
+    from .topic import Topic
 
 
 class ArticleHiddenReason(str, Enum):
@@ -99,11 +101,11 @@ class Article(MetaDataModel):
         verbose_name="이전된 좋아요 수",
         default=0,
     )
-    migrated_negative_vote_count: int  = models.PositiveIntegerField(
+    migrated_negative_vote_count: int = models.PositiveIntegerField(
         verbose_name="이전된 싫어요 수",
         default=0,
     )
-    created_by: django.contrib.auth.models.User = models.ForeignKey(
+    created_by: User = models.ForeignKey(
         verbose_name="작성자",
         to=settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -127,13 +129,13 @@ class Article(MetaDataModel):
         related_name="article_set",
         db_index=True,
     )
-    attachments: None | Attachment = models.ManyToManyField(
+    attachments: Attachment | None = models.ManyToManyField(
         verbose_name="첨부 파일(들)",
         to="core.Attachment",
         blank=True,
         db_index=True,
     )
-    commented_at: None | datetime.datetime = models.DateTimeField(
+    commented_at: datetime | None = models.DateTimeField(
         verbose_name="마지막 댓글 시간",
         null=True,
         default=None,
@@ -145,24 +147,24 @@ class Article(MetaDataModel):
         null=True,
         default=None,
     )
-    content_updated_at: None | datetime.datetime = models.DateTimeField(
+    content_updated_at: datetime | None = models.DateTimeField(
         verbose_name="제목/본문/첨부파일 수정 시간",
         null=True,
         default=None,
     )
-    hidden_at: None | datetime.datetime = models.DateTimeField(
+    hidden_at: datetime | None = models.DateTimeField(
         verbose_name="숨김 시간",
         blank=True,
         null=True,
         default=None,
     )
-    topped_at: None | datetime.datetime = models.DateTimeField(
+    topped_at: datetime | None = models.DateTimeField(
         verbose_name="인기글 달성 시각",
         blank=True,
         null=True,
         default=None,
     )
-    communication_article: None | CommunicationArticle
+    communication_article: CommunicationArticle | None
 
     class Meta(MetaDataModel.Meta):
         verbose_name = "게시물"
@@ -237,7 +239,7 @@ class Article(MetaDataModel):
             self.vote_set.filter(is_positive=True).count()
             + self.migrated_positive_vote_count
         )
-        self.negative_vote_count = (
+        self.negative_vote_count: int = (
             self.vote_set.filter(is_positive=False).count()
             + self.migrated_negative_vote_count
         )

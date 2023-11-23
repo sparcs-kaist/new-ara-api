@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import hashlib
 from enum import Enum
-from typing import List, Optional, Union
+from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -20,6 +22,9 @@ from .block import Block
 from .board import NameType
 from .report import Report
 
+if TYPE_CHECKING:
+    from apps.core.models import CommentUpdateLog
+
 User = get_user_model()
 
 
@@ -29,16 +34,9 @@ class CommentHiddenReason(Enum):
     DELETED_CONTENT = "DELETED_CONTENT"
 
 
-from apps.core.models.comment_log import CommentUpdateLog
-
-
 class Comment(MetaDataModel):
-    comment_update_log_set: List["CommentUpdateLog"]
+    comment_update_log_set: list[CommentUpdateLog]
     objects = MetaDataQuerySet.as_manager()
-
-    class Meta(MetaDataModel.Meta):
-        verbose_name = "댓글"
-        verbose_name_plural = "댓글 목록"
 
     content = models.TextField(
         default=None,
@@ -105,6 +103,10 @@ class Comment(MetaDataModel):
         default=None,
         verbose_name="숨김 시간",
     )
+
+    class Meta(MetaDataModel.Meta):
+        verbose_name = "댓글"
+        verbose_name_plural = "댓글 목록"
 
     def __str__(self) -> str:
         return self.content
