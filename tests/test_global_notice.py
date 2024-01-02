@@ -2,7 +2,6 @@ import pytest
 from django.utils import timezone
 from rest_framework import status
 
-from apps.core.views import status
 from apps.global_notice.models import GlobalNotice
 from tests.conftest import RequestSetting, TestCase
 
