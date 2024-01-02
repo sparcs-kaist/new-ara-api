@@ -5,6 +5,10 @@ from ara.classes.admin import MetaDataModelAdmin
 
 
 @admin.register(GlobalNotice)
-class FAQAdmin(MetaDataModelAdmin):
-    list_display = ("title", "content", "started_at", "expired_at")
-    search_fields = ("title", "content")
+class GlobalNoticeAdmin(MetaDataModelAdmin):
+    list_display = ("ko_title", "en_title", "started_at", "expired_at")
+    fields = (
+        ("ko_title", "ko_content"),
+        ("en_title", "en_content"),
+        ("started_at", "expired_at"),
+    )

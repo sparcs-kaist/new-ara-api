@@ -16,8 +16,10 @@ class TestGlobalNotice(TestCase, RequestSetting):
         """
         for i in range(self.N):
             GlobalNotice.objects.create(
-                title=f"global_notice title {i}",
-                content=f"global_notice content {i}",
+                ko_title=f"글로벌 공지 제목 {i}",
+                en_title=f"global_notice title {i}",
+                ko_content=f"글로벌 공지 본문 {i}",
+                en_content=f"global_notice content {i}",
                 started_at=timezone.now() - timezone.timedelta(days=1),
                 expired_at=timezone.now() + timezone.timedelta(days=1),
             )
@@ -32,30 +34,38 @@ class TestGlobalNotice(TestCase, RequestSetting):
         비로그인도 허용
         """
         global_notice = GlobalNotice.objects.create(
-            title=f"global_notice title",
-            content=f"global_notice content",
+            ko_title="글로벌 공지 제목",
+            en_title="global_notice title",
+            ko_content="글로벌 공지 본문",
+            en_content="global_notice content",
             started_at=timezone.now() - timezone.timedelta(days=1),
             expired_at=timezone.now() + timezone.timedelta(days=1),
         )
         res = self.http_request(self.user, "get", f"global_notices/{global_notice.id}")
-        assert res.data["title"] == global_notice.title
+        assert res.data["ko_title"] == global_notice.ko_title
+        assert res.data["en_title"] == global_notice.en_title
 
         res = self.http_request(None, "get", f"global_notices/{global_notice.id}")
-        assert res.data["title"] == global_notice.title
+        assert res.data["ko_title"] == global_notice.ko_title
+        assert res.data["en_title"] == global_notice.en_title
 
     def test_filter(self):
         """
         expired, not started 필터링 테스트
         """
         global_notice_expired = GlobalNotice.objects.create(
-            title="global_notice title",
-            content="global_notice content",
+            ko_title="글로벌 공지 제목",
+            en_title="global_notice title",
+            ko_content="글로벌 공지 본문",
+            en_content="global_notice content",
             started_at=timezone.now() - timezone.timedelta(days=2),
             expired_at=timezone.now() - timezone.timedelta(days=1),
         )
         global_notice_not_started = GlobalNotice.objects.create(
-            title="global_notice title",
-            content="global_notice content",
+            ko_title="글로벌 공지 제목",
+            en_title="global_notice title",
+            ko_content="글로벌 공지 본문",
+            en_content="global_notice content",
             started_at=timezone.now() + timezone.timedelta(days=1),
             expired_at=timezone.now() + timezone.timedelta(days=2),
         )
@@ -72,8 +82,10 @@ class TestGlobalNotice(TestCase, RequestSetting):
 
     def test_create(self):
         notice_data = {
-            "title": "global_notice title",
-            "content": "global_notice content",
+            "ko_title": "글로벌 공지 제목",
+            "en_title": "global_notice title",
+            "ko_content": "글로벌 공지 본문",
+            "en_content": "global_notice content",
             "started_at": timezone.now() - timezone.timedelta(days=1),
             "expired_at": timezone.now() + timezone.timedelta(days=1),
         }
@@ -90,19 +102,21 @@ class TestGlobalNotice(TestCase, RequestSetting):
 
     def test_update(self):
         global_notice = GlobalNotice.objects.create(
-            title="global_notice title",
-            content="global_notice content",
+            ko_title="글로벌 공지 제목",
+            en_title="global_notice title",
+            ko_content="글로벌 공지 본문",
+            en_content="global_notice content",
             started_at=timezone.now() - timezone.timedelta(days=1),
             expired_at=timezone.now() + timezone.timedelta(days=1),
         )
-        new_title = "new title"
-        new_content = "new content"
+        new_ko_title = "새로운 제목"
+        new_ko_content = "새로운 본문"
 
         res_user = self.http_request(
             self.user,
             "patch",
             f"global_notices/{global_notice.id}",
-            {"title": new_title, "content": new_content},
+            {"ko_title": new_ko_title, "ko_content": new_ko_content},
         )
         assert res_user.status_code == status.HTTP_403_FORBIDDEN
 
@@ -110,16 +124,18 @@ class TestGlobalNotice(TestCase, RequestSetting):
             self.admin,
             "patch",
             f"global_notices/{global_notice.id}",
-            {"title": new_title, "content": new_content},
+            {"ko_title": new_ko_title, "ko_content": new_ko_content},
         )
         assert res_admin.status_code == status.HTTP_200_OK
-        assert res_admin.data["title"] == new_title
-        assert res_admin.data["content"] == new_content
+        assert res_admin.data["ko_title"] == new_ko_title
+        assert res_admin.data["ko_content"] == new_ko_content
 
     def test_destroy(self):
         global_notice = GlobalNotice.objects.create(
-            title="global_notice title",
-            content="global_notice content",
+            ko_title="글로벌 공지 제목",
+            en_title="global_notice title",
+            ko_content="글로벌 공지 본문",
+            en_content="global_notice content",
             started_at=timezone.now() - timezone.timedelta(days=1),
             expired_at=timezone.now() + timezone.timedelta(days=1),
         )
