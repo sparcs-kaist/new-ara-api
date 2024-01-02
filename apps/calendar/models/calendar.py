@@ -51,11 +51,3 @@ class Calendar(MetaDataModel):
 
     def __str__(self):
         return self.ko_title
-
-
-class Tag(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-    color = models.CharField(max_length=7, default="#000000")
-    calendar = models.ForeignKey(
-        "Calendar", on_delete=models.SET_NULL, null=True, blank=True
-    )
