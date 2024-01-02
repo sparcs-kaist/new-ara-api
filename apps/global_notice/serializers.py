@@ -5,4 +5,4 @@ from ara.classes.serializers.meta_data import MetaDataModelSerializer
 class GlobalNoticeSerializer(MetaDataModelSerializer):
     class Meta:
         model = GlobalNotice
-        fields = ["title", "content"]
+        fields = ["title", "content", "started_at", "expired_at"]
