@@ -1,13 +1,6 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
 from django.db import models
 
 from ara.db.models import MetaDataModel
-
-if TYPE_CHECKING:
-    from .tag import Tag
 
 
 class Event(MetaDataModel):
@@ -55,7 +48,7 @@ class Event(MetaDataModel):
         blank=True,
         null=True,
     )
-    tags: list[Tag] = models.ManyToManyField(
+    tags = models.ManyToManyField(
         verbose_name="태그",
         to="calendar.Tag",
         blank=True,
