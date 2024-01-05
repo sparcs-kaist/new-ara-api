@@ -7,6 +7,7 @@ class GlobalNoticeSerializer(MetaDataModelSerializer):
     class Meta:
         model = GlobalNotice
         fields = [
+            "id",
             "ko_title",
             "en_title",
             "ko_content",
