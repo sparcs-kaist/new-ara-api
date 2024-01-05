@@ -4,6 +4,9 @@ from rest_framework.routers import DefaultRouter
 from .views import GlobalNoticeViewSet
 
 router = DefaultRouter()
-router.register(r"api/global_notices", GlobalNoticeViewSet, basename="global_notices")
+router.register("", GlobalNoticeViewSet, basename="global_notices")
 
-urlpatterns = router.urls
+
+urlpatterns = [
+    path("api/global_notices/", include(router.urls)),
+]
