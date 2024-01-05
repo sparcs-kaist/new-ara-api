@@ -1,5 +1,6 @@
-from apps.global_notice.models import GlobalNotice
 from ara.classes.serializers.meta_data import MetaDataModelSerializer
+
+from .models import GlobalNotice
 
 
 class GlobalNoticeSerializer(MetaDataModelSerializer):

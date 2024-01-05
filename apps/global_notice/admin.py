@@ -1,7 +1,8 @@
 from django.contrib import admin
 
-from apps.global_notice.models import GlobalNotice
 from ara.classes.admin import MetaDataModelAdmin
+
+from .models import GlobalNotice
 
 
 @admin.register(GlobalNotice)

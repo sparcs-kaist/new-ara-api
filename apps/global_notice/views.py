@@ -1,12 +1,9 @@
 from django.utils import timezone
 from rest_framework import permissions, viewsets
 
-from apps.global_notice.models import GlobalNotice
-from apps.global_notice.permissions import (
-    GlobalNoticePermission,
-    IsGlobalNoticeAthenticated,
-)
-from apps.global_notice.serializers import GlobalNoticeSerializer
+from .models import GlobalNotice
+from .permissions import GlobalNoticePermission, IsGlobalNoticeAthenticated
+from .serializers import GlobalNoticeSerializer
 
 
 class GlobalNoticeViewSet(viewsets.ModelViewSet):
