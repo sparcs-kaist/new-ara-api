@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.user",
     "apps.global_notice",
+    "apps.calendar",
 ]
 
 MIDDLEWARE = [

@@ -1,4 +1,7 @@
-from django.core.mail import send_mail
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
 from django.utils import dateformat, timezone
 
 from apps.core.models import CommunicationArticle, UserProfile
@@ -99,4 +102,51 @@ def send_email():
 
     mailing_list = _get_mailing_list()
 
-    send_mail(title, message, "new-ara@sparcs.org", mailing_list)
+    smtp_send(title, message, "new-ara@sparcs.org", mailing_list, False)
+
+
+def smtp_send(
+    title: str,
+    message: str,
+    sender_mail: str,
+    mailing_list: list[str],
+    each: bool = True,
+):
+    """
+    Send email using SMTP relay gmail server.
+
+    each True: Send email to each receiver. Receivers cannot see other receivers.
+    each False: Send email to all receivers. Receivers can see other receivers.
+    """
+    allowed_mail_domain = ["@sparcs.org"]
+
+    if not sender_mail.endswith(tuple(allowed_mail_domain)):
+        raise ValueError("Invalid email domain")
+
+    smtp = smtplib.SMTP("smtp-relay.gmail.com", 587)
+    smtp.starttls()
+    # smtp.login("", "") # TODO: Use ID, PW instead of IP Address Authentication
+    smtp.ehlo()
+
+    if each:
+        for receiver in mailing_list:
+            # print(f"[{mailing_list.index(receiver) + 1}/{len(mailing_list)}] Sending email to [{receiver}]")  # FOR DEBUG
+            msg = create_msg(title, sender_mail, message, receiver)
+            smtp.sendmail(sender_mail, receiver, msg.as_string())
+    else:
+        receivers = ", ".join(mailing_list)
+        msg = create_msg(title, sender_mail, message, receivers)
+        smtp.sendmail(sender_mail, mailing_list, msg.as_string())
+
+    smtp.quit()
+
+
+def create_msg(
+    title: str, sender_mail: str, message: str, receiver_mail: str
+) -> MIMEMultipart:
+    msg = MIMEMultipart()
+    msg["Subject"] = title
+    msg["From"] = sender_mail
+    msg.attach(MIMEText(message, "plain"))  # TODO: Use HTML instead of plain text
+    msg["To"] = receiver_mail
+    return msg
