@@ -26,7 +26,7 @@ def set_admin_client(request):
             agree_terms_of_service_at=timezone.now(),
         )
     client = APIClient()
-    client.force_authenticate(user=request.cls.user)
+    client.force_authenticate(user=request.cls.admin)
     request.cls.api_client = client
 
 

@@ -7,12 +7,12 @@ from rest_framework.utils.serializer_helpers import ReturnDict
 from apps.core.documents import ArticleDocument
 from apps.core.models import Article, ArticleHiddenReason, Block, Board, Comment, Scrap
 from apps.core.models.board import BoardAccessPermissionType, NameType
+from apps.core.serializers.attachment import AttachmentSerializer
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.mixins.hidden import (
     HiddenSerializerFieldMixin,
     HiddenSerializerMixin,
 )
-from apps.core.serializers.attachment import AttachmentSerializer
 from apps.core.serializers.topic import TopicSerializer
 from apps.user.serializers.user import PublicUserSerializer
 from ara.classes.serializers import MetaDataModelSerializer
@@ -170,13 +170,21 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
             articles = Article.objects.filter(
                 scrap_set__scrapped_by=request.user
             ).order_by("-scrap_set__created_at")
-
             if not articles.filter(id=obj.id).exists():
                 raise serializers.ValidationError(
                     gettext("This article is not in user's scrap list.")
                 )
-
             return articles
+
+        elif from_view == "top":
+            top_articles = Article.objects.exclude(topped_at__isnull=True).order_by(
+                "-topped_at", "-pk"
+            )
+            if not top_articles.filter(id=obj.id).exists():
+                raise serializers.ValidationError(
+                    gettext("This article is not in top articles.")
+                )
+            return top_articles
 
         return Article.objects.all()
 
@@ -195,6 +203,7 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
             "user",
             "scrap",
             "recent",
+            "top",
         ]:
             raise serializers.ValidationError(
                 gettext("Wrong value for parameter 'from_view'.")
@@ -205,12 +214,10 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
 
         else:
             articles = self.filter_articles(obj, request)
-
             if request.query_params.get("search_query"):
                 articles = self.search_articles(
                     articles, request.query_params.get("search_query")
                 )
-
             articles = articles.exclude(id=obj.id)
 
             if from_view == "scrap":
@@ -237,7 +244,9 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
                     after = after_scrap.parent_article
                 else:
                     after = None
-
+            elif from_view == "top":
+                before = articles.filter(topped_at__lte=obj.topped_at).first()
+                after = articles.filter(topped_at__gte=obj.topped_at).last()
             else:
                 before = articles.filter(created_at__lte=obj.created_at).first()
                 after = articles.filter(created_at__gte=obj.created_at).last()

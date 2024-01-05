@@ -74,7 +74,8 @@ class UserProfile(MetaDataModel):
         verbose_name="닉네임",
     )
     nickname_updated_at = models.DateTimeField(
-        default=MIN_TIME, verbose_name="최근 닉네임 변경일시"
+        default=MIN_TIME,
+        verbose_name="최근 닉네임 변경일시",
     )
     see_sexual = models.BooleanField(
         default=False,
@@ -85,7 +86,8 @@ class UserProfile(MetaDataModel):
         verbose_name="정치/사회성 보기",
     )
     group = models.IntegerField(
-        choices=UserGroup.choices, default=UserGroup.UNAUTHORIZED
+        choices=UserGroup.choices,
+        default=UserGroup.UNAUTHORIZED,
     )
     user = models.OneToOneField(
         on_delete=models.CASCADE,
