@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.core.models.board import Board, BoardAccessPermissionType
+from apps.core.models.board import Board
 from ara.classes.serializers import MetaDataModelSerializer
 
 

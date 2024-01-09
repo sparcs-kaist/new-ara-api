@@ -11,7 +11,7 @@ from rest_framework import (
 
 from apps.core.filters.comment import CommentFilter
 from apps.core.models import Article, Comment, CommentDeleteLog, UserProfile, Vote
-from apps.core.models.board import BoardAccessPermissionType, NameType
+from apps.core.models.board import NameType
 from apps.core.permissions.comment import CommentPermission
 from apps.core.serializers.comment import (
     CommentCreateActionSerializer,

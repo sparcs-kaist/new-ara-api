@@ -7,9 +7,10 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
 
-from apps.user.models import UserGroup
 from ara.db.models import MetaDataModel
 from ara.settings import MIN_TIME
+
+from .usergroup import UserGroup
 
 
 class UserProfile(MetaDataModel):

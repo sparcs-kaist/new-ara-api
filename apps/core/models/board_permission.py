@@ -1,12 +1,16 @@
+from __future__ import annotations
+
 from enum import IntEnum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from django.conf import settings
 from django.db import models
 
+import apps.core.models.board as board
 from apps.user.models import Group, UserProfile
 
-from .board import Board
+if TYPE_CHECKING:
+    from .board import Board
 
 
 class BoardAccessPermissionType(IntEnum):
@@ -53,21 +57,19 @@ class BoardPermission(models.Model):
     class Meta:
         verbose_name = "BoardPermission"
         verbose_name_plural = "BoardPermissions"
-        unique_together = (("groupid", "boardid", "permission"),)
+        unique_together = (("group_id", "board_slug", "permission"),)
 
     group_id = models.ForeignKey(
         on_delete=models.CASCADE,
-        to="core.Groups",
+        to="user.Group",
         db_index=True,
-        related_name="group_id",
         verbose_name="group",
     )
     board_slug = models.ForeignKey(
         on_delete=models.CASCADE,
         to="core.Board",
         db_index=True,
-        related_name="slug",
-        verbose_name="board",
+        verbose_name="board slug",
     )
     permission: int = models.SmallIntegerField(
         verbose_name="permission",

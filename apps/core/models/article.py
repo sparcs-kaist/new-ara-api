@@ -9,7 +9,6 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
 
-from apps.core.models import Board
 from apps.user.views.viewsets import get_profile_picture, hashlib
 from ara.classes.decorator import cache_by_user
 from ara.db.models import MetaDataModel
@@ -22,7 +21,7 @@ from ara.settings import (
 )
 
 from .block import Block
-from .board import NameType
+from .board import Board, NameType
 from .comment import Comment
 from .communication_article import SchoolResponseStatus
 from .report import Report

@@ -6,7 +6,7 @@ from rest_framework.utils.serializer_helpers import ReturnDict
 
 from apps.core.documents import ArticleDocument
 from apps.core.models import Article, ArticleHiddenReason, Block, Board, Comment, Scrap
-from apps.core.models.board import BoardAccessPermissionType, NameType
+from apps.core.models.board import NameType
 from apps.core.serializers.attachment import AttachmentSerializer
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.mixins.hidden import (

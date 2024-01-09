@@ -1,7 +1,6 @@
 from rest_framework import permissions
 
 from apps.core.models import Article
-from apps.core.models.board import BoardAccessPermissionType
 
 
 class ArticlePermission(permissions.IsAuthenticated):
