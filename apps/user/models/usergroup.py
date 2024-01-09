@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 
+from apps.user.models import Group, UserProfile
+
 
 class UserGroup(models.Model):
     class Meta:
@@ -8,7 +10,7 @@ class UserGroup(models.Model):
         verbose_name_plural = "사용자가 속한 그룹 목록"
         unique_together = (("user_id", "group_id"),)
 
-    user_id = models.ForeignKey(
+    user = models.ForeignKey(
         verbose_name="사용자",
         on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
@@ -16,7 +18,7 @@ class UserGroup(models.Model):
         db_index=True,
     )
 
-    group_id = models.ForeignKey(
+    group = models.ForeignKey(
         verbose_name="그룹",
         on_delete=models.CASCADE,
         to="user.Group",
@@ -24,9 +26,9 @@ class UserGroup(models.Model):
     )
 
     @staticmethod
-    def search_by_user(self, user: int) -> list:
-        return UserGroup.objects.filter(user_id=user)
+    def search_by_user(self, user: UserProfile):
+        return UserGroup.objects.filter(user=user)
 
     @staticmethod
-    def search_by_group(self, group: int) -> list:  # WARNING: Too many results
-        return UserGroup.objects.filter(group_id=group)
+    def search_by_group(self, group: Group):  # WARNING: Too many results
+        return UserGroup.objects.filter(group=group)

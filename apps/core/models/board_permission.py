@@ -57,15 +57,15 @@ class BoardPermission(models.Model):
     class Meta:
         verbose_name = "BoardPermission"
         verbose_name_plural = "BoardPermissions"
-        unique_together = (("group_id", "board_slug", "permission"),)
+        unique_together = (("group", "board", "permission"),)
 
-    group_id = models.ForeignKey(
+    group = models.ForeignKey(
         on_delete=models.CASCADE,
         to="user.Group",
         db_index=True,
         verbose_name="group",
     )
-    board_slug = models.ForeignKey(
+    board = models.ForeignKey(
         on_delete=models.CASCADE,
         to="core.Board",
         db_index=True,
@@ -77,9 +77,9 @@ class BoardPermission(models.Model):
     )
 
     @staticmethod
-    def permission_list_by_group(group: Group, board: Board) -> bool:
+    def permission_list_by_group(group: Group, board: Board) -> BoardAccessPermission:
         permissions = BoardAccessPermission(group, board)
-        groupPerms = BoardPermission.objects.filter(groupid=group, boardid=board)
+        groupPerms = BoardPermission.objects.filter(group=group, board=board)
         for perm in groupPerms:
             permissions.setPermission(perm.permission)
 
@@ -92,7 +92,7 @@ class BoardPermission(models.Model):
         groups = user.groups
         permissions = BoardAccessPermission(user, board)
         for group in groups:
-            groupPerms = BoardPermission.objects.filter(groupid=group, boardid=board)
+            groupPerms = BoardPermission.objects.filter(group=group, board=board)
             for perm in groupPerms:
                 permissions.setPermission(perm.permission)
 
