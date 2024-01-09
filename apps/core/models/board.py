@@ -35,24 +35,6 @@ class Board(MetaDataModel):
         verbose_name="게시판 영문 이름",
         max_length=32,
     )
-    # 사용자 그룹에 대해 접근 권한을 제어하는 bit mask 입니다.
-    # access_mask & (1 << user.group) > 0 일 때 접근이 가능합니다.
-    # 사용자 그룹의 값들은 `UserGroup`을 참고하세요.
-    read_access_mask = models.SmallIntegerField(
-        # UNAUTHORIZED, EXTERNAL_ORG 제외 모든 사용자 읽기 권한 부여
-        verbose_name="읽기 권한",
-        default=0b011011110,
-    )
-    write_access_mask = models.SmallIntegerField(
-        # UNAUTHORIZED, STORE_EMPLOYEE, EXTERNAL_ORG 제외 모든 사용자 쓰기 권한 부여
-        verbose_name="쓰기 권한",
-        default=0b011011010,
-    )
-    comment_access_mask = models.SmallIntegerField(
-        # UNAUTHORIZED 제외 모든 사용자 댓글 권한 부여
-        verbose_name="댓글 권한",
-        default=0b011111110,
-    )
     is_readonly = models.BooleanField(
         verbose_name="읽기 전용 게시판",
         default=False,
@@ -122,18 +104,18 @@ class Board(MetaDataModel):
     def permission_list_by_user(self, user: UserProfile) -> BoardAccessPermission:
         return BoardPermission.permission_list_by_user(self, user)
 
-    def old_group_has_access_permission(
-        self, access_type: OldBoardAccessPermissionType, group: int
-    ) -> bool:
-        mask = None
-        if access_type == OldBoardAccessPermissionType.READ:
-            mask = self.read_access_mask
-        elif access_type == OldBoardAccessPermissionType.WRITE:
-            mask = self.write_access_mask
-        elif access_type == OldBoardAccessPermissionType.COMMENT:
-            mask = self.comment_access_mask
-        else:
-            # TODO: Handle error
-            return False
-
-        return (mask & (1 << group)) > 0
+    # def old_group_has_access_permission(
+    #    self, access_type: OldBoardAccessPermissionType, group: int
+    # ) -> bool:
+    #    mask = None
+    #    if access_type == OldBoardAccessPermissionType.READ:
+    #        mask = self.read_access_mask
+    #    elif access_type == OldBoardAccessPermissionType.WRITE:
+    #        mask = self.write_access_mask
+    #    elif access_type == OldBoardAccessPermissionType.COMMENT:
+    #        mask = self.comment_access_mask
+    #    else:
+    #        # TODO: Handle error
+    #        return False
+    #
+    #    return (mask & (1 << group)) > 0
