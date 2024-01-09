@@ -1,7 +1,12 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from django.conf import settings
 from django.db import models
 
-from apps.user.models import Group, UserProfile
+if TYPE_CHECKING:
+    from apps.user.models import Group, UserProfile
 
 
 class UserGroup(models.Model):
