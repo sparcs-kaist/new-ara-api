@@ -1,8 +1,7 @@
 import hashlib
 import re
 import uuid
-from pytz import timezone as pytz_timezone
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 
 import boto3
 import requests
@@ -11,19 +10,19 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext
+from pytz import timezone as pytz_timezone
 from tqdm import tqdm
 
 from apps.core.models import Article
 from apps.core.models.portal_view_count import PortalViewCount
 from apps.user.models import UserProfile
+from ara.log import log
 from ara.settings import (
     AWS_S3_BUCKET_NAME,
     PORTAL_ID,
     PORTAL_JSESSIONID,
     PORTAL_PASSWORD,
 )
-from ara.log import log
-
 
 LOGIN_INFO_SSO2 = {
     "userid": PORTAL_ID,
@@ -44,6 +43,7 @@ BASE_URL = "https://portal.kaist.ac.kr"
 
 KST = pytz_timezone("Asia/Seoul")
 PORTAL_NOTICE_BOARD_ID = 1
+
 
 def _login_kaist_portal():
     session = requests.Session()
@@ -425,8 +425,8 @@ def crawl_view():
     now = timezone.datetime.today().date()
     log.info(f"crawl_view running on {now}")
 
-    week_ago = timezone.get_current_timezone().localize(
-        datetime.today() - timedelta(days=7)
+    week_ago = (
+        (datetime.today() - timedelta(days=7)).astimezone(KST).astimezone(timezone.utc)
     )
 
     session = _login_kaist_portal()
@@ -443,8 +443,10 @@ def crawl_view():
         for row in table.find("tbody").find_all("tr"):
             cells = row.find_all("td")
             created_at_str = cells[4].text.strip()
-            created_at = timezone.get_current_timezone().localize(
+            created_at = (
                 datetime.strptime(created_at_str, "%Y.%m.%d")
+                .astimezone(KST)
+                .astimezone(timezone.utc)
             )
 
             if week_ago > created_at:
