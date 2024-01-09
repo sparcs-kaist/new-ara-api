@@ -15,6 +15,4 @@ class ArticleReadPermission(permissions.BasePermission):
     message = "해당 게시물에 대한 읽기 권한이 없습니다."
 
     def has_object_permission(self, request, view, obj: Article):
-        return obj.parent_board.group_has_access_permission(
-            BoardAccessPermissionType.READ, request.user.profile.group
-        )
+        return obj.parent_board.permission_list_by_user(request.user).READ

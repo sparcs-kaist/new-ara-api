@@ -339,9 +339,7 @@ class TestArticle(TestCase, RequestSetting):
             for article in articles:
                 res = self.http_request(user, "get", f"articles/{article.id}")
 
-                if article.parent_board.group_has_access_permission(
-                    BoardAccessPermissionType.READ, user.profile.group
-                ):
+                if article.parent_board.permission_list_by_user(user).READ:
                     assert res.status_code == status.HTTP_200_OK
                     assert res.data["id"] == article.id
                 else:
@@ -378,9 +376,7 @@ class TestArticle(TestCase, RequestSetting):
                     },
                 )
 
-                if board.group_has_access_permission(
-                    BoardAccessPermissionType.WRITE, user.profile.group
-                ):
+                if board.permission_list_by_user(user).WRITE:
                     assert res.status_code == status.HTTP_201_CREATED
                 else:
                     assert res.status_code == status.HTTP_403_FORBIDDEN

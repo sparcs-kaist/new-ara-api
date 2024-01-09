@@ -3,8 +3,11 @@ from enum import IntEnum, IntFlag, auto
 from django.db import models
 from django_extensions.db.fields import AutoSlugField
 
+from apps.user.models import Group, UserProfile
 from ara.db.models import MetaDataModel
+
 from .board_group import BoardGroup
+from .board_permission import BoardAccessPermission, BoardPermission
 
 
 class NameType(IntFlag):
@@ -13,7 +16,7 @@ class NameType(IntFlag):
     REALNAME = auto()
 
 
-class BoardAccessPermissionType(IntEnum):
+class OldBoardAccessPermissionType(IntEnum):
     READ = 0
     WRITE = 1
     COMMENT = 2
@@ -113,15 +116,21 @@ class Board(MetaDataModel):
     def __str__(self) -> str:
         return self.ko_name
 
-    def group_has_access_permission(
-        self, access_type: BoardAccessPermissionType, group: int
+    def permission_list_by_group(self, group: Group) -> BoardAccessPermission:
+        return BoardPermission.permission_list_by_group(self, group)
+
+    def permission_list_by_user(self, user: UserProfile) -> BoardAccessPermission:
+        return BoardPermission.permission_list_by_user(self, user)
+
+    def old_group_has_access_permission(
+        self, access_type: OldBoardAccessPermissionType, group: int
     ) -> bool:
         mask = None
-        if access_type == BoardAccessPermissionType.READ:
+        if access_type == OldBoardAccessPermissionType.READ:
             mask = self.read_access_mask
-        elif access_type == BoardAccessPermissionType.WRITE:
+        elif access_type == OldBoardAccessPermissionType.WRITE:
             mask = self.write_access_mask
-        elif access_type == BoardAccessPermissionType.COMMENT:
+        elif access_type == OldBoardAccessPermissionType.COMMENT:
             mask = self.comment_access_mask
         else:
             # TODO: Handle error

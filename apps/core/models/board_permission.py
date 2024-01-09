@@ -19,9 +19,9 @@ class BoardAccessPermissionType(IntEnum):
 
 class BoardAccessPermission:
     def __init__(
-        self, user: UserProfile, board: Board
+        self, target: UserProfile | Group, board: Board
     ) -> None:  # permission: [BoardAccessPermissionType]
-        self.user = user
+        self.target = target
         self.board = board
         self.READ = False
         self.WRITE = False
@@ -75,18 +75,17 @@ class BoardPermission(models.Model):
     )
 
     @staticmethod
-    def permission_list_by_group(self, group: Group, board: int) -> bool:
-        return BoardPermission.objects.filter(groupid=group, boardid=board)
+    def permission_list_by_group(group: Group, board: Board) -> bool:
+        permissions = BoardAccessPermission(group, board)
+        groupPerms = BoardPermission.objects.filter(groupid=group, boardid=board)
+        for perm in groupPerms:
+            permissions.setPermission(perm.permission)
 
-    # @staticmethod
-    # def permission_list_by_user(self, user: UserProfile, board: int) -> bool:
-    #    groups = user.groups
-    #    permissions = {} # board_slug: [permission]
-    #    for group in groups:
-    #        groupPerms = BoardPermission.objects.filter(groupid=group, boardid=board)
+        return permissions
 
-    def permission_list_by_user_board(
-        self, user: UserProfile, board: Board
+    @staticmethod
+    def permission_list_by_user(
+        user: UserProfile, board: Board
     ) -> BoardAccessPermission:
         groups = user.groups
         permissions = BoardAccessPermission(user, board)

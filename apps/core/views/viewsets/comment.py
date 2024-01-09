@@ -64,10 +64,7 @@ class CommentViewSet(
         # self.check_object_permissions(request, parent_article)
 
         # Check permission
-        user_group = request.user.profile.group
-        if parent_article.parent_board.group_has_access_permission(
-            BoardAccessPermissionType.COMMENT, user_group
-        ):
+        if parent_article.parent_board.permission_list_by_user(request.user).COMMENT:
             return super().create(request, *args, **kwargs)
         return response.Response(
             {"message": gettext("Permission denied")}, status=status.HTTP_403_FORBIDDEN

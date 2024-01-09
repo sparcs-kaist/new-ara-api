@@ -523,9 +523,9 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
         user_is_superuser = self.context["request"].user.is_superuser
         if not user_is_superuser and board.is_readonly:
             raise serializers.ValidationError(gettext("This board is read only."))
-        user_has_write_permission = board.group_has_access_permission(
-            BoardAccessPermissionType.WRITE, self.context["request"].user.profile.group
-        )
+        user_has_write_permission = board.permission_list_by_user(
+            self.context["request"].user
+        ).WRITE
         if not user_has_write_permission:
             raise exceptions.PermissionDenied()
         return board

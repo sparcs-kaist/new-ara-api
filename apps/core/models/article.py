@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
 
+from apps.core.models import Board
 from apps.user.views.viewsets import get_profile_picture, hashlib
 from ara.classes.decorator import cache_by_user
 from ara.db.models import MetaDataModel
@@ -21,7 +22,7 @@ from ara.settings import (
 )
 
 from .block import Block
-from .board import BoardAccessPermissionType, NameType
+from .board import NameType
 from .comment import Comment
 from .communication_article import SchoolResponseStatus
 from .report import Report
@@ -111,7 +112,7 @@ class Article(MetaDataModel):
         db_index=True,
         default=None,
     )
-    parent_board = models.ForeignKey(
+    parent_board: Board = models.ForeignKey(
         verbose_name="게시판",
         to="core.Board",
         on_delete=models.CASCADE,
@@ -315,9 +316,7 @@ class Article(MetaDataModel):
         if self.is_content_social and not user.profile.see_social:
             reasons.append(ArticleHiddenReason.SOCIAL_CONTENT)
         # 혹시 몰라 여기 두기는 하는데 여기 오기전에 Permission에서 막혀야 함
-        if not self.parent_board.group_has_access_permission(
-            BoardAccessPermissionType.READ, user.profile.group
-        ):
+        if not self.parent_board.permission_list_by_user(user).READ:
             reasons.append(ArticleHiddenReason.ACCESS_DENIED_CONTENT)
 
         return reasons

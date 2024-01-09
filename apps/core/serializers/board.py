@@ -51,14 +51,8 @@ class BoardDetailActionSerializer(BaseBoardSerializer):
             "user_writable",
         ]
 
-    def get_user_readable(self, obj):
-        user = self.context["request"].user
-        return obj.group_has_access_permission(
-            BoardAccessPermissionType.READ, user.profile.group
-        )
+    def get_user_readable(self, obj: Board):
+        return obj.permission_list_by_user(self.context["request"].user).READ
 
-    def get_user_writable(self, obj):
-        user = self.context["request"].user
-        return obj.group_has_access_permission(
-            BoardAccessPermissionType.WRITE, user.profile.group
-        )
+    def get_user_writable(self, obj: Board):
+        return obj.permission_list_by_user(self.context["request"].user).WRITE
