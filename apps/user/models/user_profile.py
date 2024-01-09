@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
 
+from apps.user.models import UserGroup
 from ara.db.models import MetaDataModel
 from ara.settings import MIN_TIME
 
@@ -21,7 +22,7 @@ class UserProfile(MetaDataModel):
             ("nickname", "is_newara", "deleted_at"),
         )
 
-    class UserGroup(models.IntegerChoices):
+    class OldUserGroup(models.IntegerChoices):
         # 뉴아라 계정을 만들지 않은 사람들
         UNAUTHORIZED = 0, gettext_lazy("Unauthorized user")
         # 카이스트 메일을 가진 사람 (학생, 교직원)
@@ -39,7 +40,7 @@ class UserProfile(MetaDataModel):
         # 뉴스게시판 관리인
         NEWS_BOARD_ADMIN = 7, gettext_lazy("News board admin")
 
-    OFFICIAL_GROUPS = [UserGroup.STORE_EMPLOYEE, UserGroup.KAIST_ORG]
+    OLD_OFFICIAL_GROUPS = [OldUserGroup.STORE_EMPLOYEE, OldUserGroup.KAIST_ORG]
 
     uid = models.CharField(
         null=True,
@@ -84,10 +85,6 @@ class UserProfile(MetaDataModel):
     see_social = models.BooleanField(
         default=False,
         verbose_name="정치/사회성 보기",
-    )
-    group = models.IntegerField(
-        choices=UserGroup.choices,
-        default=UserGroup.UNAUTHORIZED,
     )
     user = models.OneToOneField(
         on_delete=models.CASCADE,
@@ -148,3 +145,7 @@ class UserProfile(MetaDataModel):
     @cached_property
     def is_school_admin(self) -> bool:
         return self.group == UserProfile.UserGroup.COMMUNICATION_BOARD_ADMIN
+
+    @cached_property
+    def groups(self) -> list:
+        return UserGroup.search_by_user(self.user)
