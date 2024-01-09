@@ -14,8 +14,6 @@ class UserGroup(models.Model):
         to=settings.AUTH_USER_MODEL,
         primary_key=True,
         db_index=True,
-        related_name="user_id",
-        verbose_name="user",
     )
 
     group_id = models.ForeignKey(
@@ -23,7 +21,6 @@ class UserGroup(models.Model):
         on_delete=models.CASCADE,
         to="user.Group",
         db_index=True,
-        related_name="group_id",
     )
 
     @staticmethod
