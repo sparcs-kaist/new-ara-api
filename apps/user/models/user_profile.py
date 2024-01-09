@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
 
+from apps.user.models import Group
 from ara.db.models import MetaDataModel
 from ara.settings import MIN_TIME
 
@@ -148,5 +149,5 @@ class UserProfile(MetaDataModel):
         return self.group == UserProfile.UserGroup.COMMUNICATION_BOARD_ADMIN
 
     @cached_property
-    def groups(self) -> list:
+    def groups(self) -> list[Group]:
         return UserGroup.search_by_user(self.user)

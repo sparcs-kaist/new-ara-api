@@ -32,7 +32,7 @@ class Group(models.Model):
         return self.name
 
     @staticmethod
-    def search_by_name(name: str) -> list:
+    def search_by_name(name: str) -> list["Group"]:
         return Group.objects.filter(name=name)
 
     @staticmethod

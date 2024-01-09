@@ -26,9 +26,17 @@ class UserGroup(models.Model):
     )
 
     @staticmethod
-    def search_by_user(self, user: UserProfile):
-        return UserGroup.objects.filter(user=user)
+    def search_by_user(self, user: UserProfile) -> list[Group]:
+        groups = []
+        for usergroup in UserGroup.objects.filter(user=user):
+            groups.append(usergroup.group)
+        return groups
 
     @staticmethod
-    def search_by_group(self, group: Group):  # WARNING: Too many results
-        return UserGroup.objects.filter(group=group)
+    def search_by_group(
+        self, group: Group
+    ) -> list[UserProfile]:  # WARNING: Too many results
+        users = []
+        for usergroup in UserGroup.objects.filter(group=group):
+            users.append(usergroup.user)
+        return users
