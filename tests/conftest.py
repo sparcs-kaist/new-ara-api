@@ -260,3 +260,24 @@ class Utils:
         group: Group = Group.search_by_id(2),  # 2 = KAIST_MEMBER
     ) -> list[User]:
         return [cls.create_user_with_index(idx, group) for idx in range(num)]
+
+    @classmethod
+    def add_default_groups(cls):
+        default_groups = {
+            1: ("Unauthorized user", "뉴아라 계정을 만들지 않은 사람들", False),
+            2: ("KAIST member", "카이스트 메일을 가진 사람 (학생, 교직원)", False),
+            3: ("Store employee", "교내 입주 업체 직원", False),
+            4: ("Other member", "카이스트 메일이 없는 개인 (특수한 관련자 등)", False),
+            5: ("KAIST organization", "교내 학생 단체들", True),
+            6: ("External organization", "외부인 (홍보 계정 등)", True),
+            7: ("Communication board admin", "소통게시판 관리인", False),
+            8: ("News board admin", "뉴스게시판 관리인", False),
+        }
+
+        for group_id, (name, description, is_official) in default_groups.items():
+            Group.objects.create(
+                group_id=group_id,
+                name=name,
+                description=description,
+                is_official=is_official,
+            )
