@@ -25,6 +25,14 @@ class ManualUser(MetaDataModel):
         verbose_name="업체/단체 이름",
     )
 
+    org_type: Group = models.ForeignKey(
+        on_delete=models.CASCADE,
+        to="user.Group",
+        verbose_name="업체/단체 그룹",
+        null=True,
+        blank=True,
+    )
+
     applicant_name = models.CharField(
         max_length=160,
         verbose_name="신청자 이름",
