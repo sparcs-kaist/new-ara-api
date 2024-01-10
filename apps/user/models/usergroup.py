@@ -13,13 +13,12 @@ class UserGroup(models.Model):
     class Meta:
         verbose_name = "사용자 그룹"
         verbose_name_plural = "사용자가 속한 그룹 목록"
-        unique_together = (("user_id", "group_id"),)
+        unique_together = (("user", "group"),)
 
     user = models.ForeignKey(
         verbose_name="사용자",
         on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
-        primary_key=True,
         db_index=True,
     )
 
