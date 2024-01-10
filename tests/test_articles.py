@@ -4,8 +4,8 @@ from django.utils import timezone
 from rest_framework import status
 
 from apps.core.models import Article, Block, Board, Comment, Topic, Vote
-from apps.core.models.board import BoardAccessPermissionType, NameType
-from apps.user.models import UserProfile
+from apps.core.models.board import NameType
+from apps.user.models import Group, UserGroup, UserProfile
 from ara.settings import MIN_TIME, SCHOOL_RESPONSE_VOTE_THRESHOLD
 from tests.conftest import RequestSetting, TestCase, Utils
 
@@ -173,8 +173,11 @@ def set_kaist_articles(request):
             user=request.cls.kaist_user,
             nickname="KAIST User",
             agree_terms_of_service_at=timezone.now(),
-            group=UserProfile.UserGroup.KAIST_MEMBER,
             sso_user_info={},
+        )
+        UserGroup.objects.get_or_create(
+            user=request.cls.kaist_user,
+            group=Group.search_by_id(2),  # 2 = KAIST member
         )
 
     request.cls.kaist_board, _ = Board.objects.get_or_create(
@@ -328,10 +331,11 @@ class TestArticle(TestCase, RequestSetting):
     # get request 시 user의 read 권한 확인 테스트
     def test_check_read_permission_when_get(self):
         group_users = []
-        for idx, group in enumerate(UserProfile.UserGroup):
-            user = Utils.create_user_with_index(idx, group)
+        for group in Group.objects.all():
+            user = Utils.create_user_with_index(group.group_id, group)
             group_users.append(user)
-        assert len(group_users) == len(UserProfile.UserGroup)
+
+        assert len(group_users) == len(Group.objects.all())
 
         articles = [self.regular_access_article, self.advertiser_accessible_article]
 
@@ -348,10 +352,10 @@ class TestArticle(TestCase, RequestSetting):
     # create 단계에서 user의 write 권한 확인 테스트
     def test_check_write_permission_when_create(self):
         group_users = []
-        for idx, group in enumerate(UserProfile.UserGroup):
-            user = Utils.create_user_with_index(idx, group)
+        for group in Group.objects.all():
+            user = Utils.create_user_with_index(group.group_id, group)
             group_users.append(user)
-        assert len(group_users) == len(UserProfile.UserGroup)
+        assert len(group_users) == len(Group.objects.all())
 
         boards = [
             self.regular_access_board,
@@ -904,9 +908,12 @@ class TestHiddenArticles(TestCase, RequestSetting):
                     **profile_kwargs,
                     "user": user_instance,
                     "agree_terms_of_service_at": timezone.now(),
-                    "group": UserProfile.UserGroup.KAIST_MEMBER,
                     "sso_user_info": {},
                 }
+            )
+            UserGroup.objects.get_or_create(
+                user=user_instance,
+                group=Group.search_by_id(2),  # 2 = KAIST member
             )
         return user_instance
 

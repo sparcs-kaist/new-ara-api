@@ -139,15 +139,50 @@ class UserProfile(MetaDataModel):
 
     @cached_property
     def is_official(self) -> bool:
-        return (
-            self.group in UserProfile.OFFICIAL_GROUPS
-            or self.user.email == "new-ara@sparcs.org"
-        )
+        if self.user.email == "new-ara@sparcs.org":
+            return True
+        for group in self.groups:
+            if group.is_official:
+                return True
+        return False
 
     @cached_property
     def is_school_admin(self) -> bool:
-        return self.group == UserProfile.UserGroup.COMMUNICATION_BOARD_ADMIN
+        return self.has_group_by_id(7)  # 7 = Communication board admin
 
     @cached_property
     def groups(self) -> list[Group]:
         return UserGroup.search_by_user(self.user)
+
+    def has_group(self, group: Group) -> bool:
+        return group in self.groups
+
+    def has_group_by_name(self, name: str) -> bool:
+        return any([group.name == name for group in self.groups])
+
+    def has_group_by_id(self, group_id: int) -> bool:
+        return any([group.group_id == group_id for group in self.groups])
+
+    def add_group(self, group: Group) -> None:
+        if not self.has_group(group):
+            UserGroup.objects.create(user=self.user, group=group)
+
+    def add_group_by_name(self, name: str) -> None:
+        group = Group.search_by_name(name)
+        self.add_group(group)
+
+    def add_group_by_id(self, group_id: int) -> None:
+        group = Group.search_by_id(group_id)
+        self.add_group(group)
+
+    def remove_group(self, group: Group) -> None:
+        if self.has_group(group):
+            UserGroup.objects.get(user=self.user, group=group).delete()
+
+    def remove_group_by_name(self, name: str) -> None:
+        group = Group.search_by_name(name)
+        self.remove_group(group)
+
+    def remove_group_by_id(self, group_id: int) -> None:
+        group = Group.search_by_id(group_id)
+        self.remove_group(group)

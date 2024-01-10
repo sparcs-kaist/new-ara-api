@@ -8,7 +8,7 @@ from django.test import TestCase as DjangoTestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from apps.user.models import UserProfile
+from apps.user.models import Group, UserGroup, UserProfile
 from ara import redis
 
 User = get_user_model()
@@ -40,13 +40,16 @@ def set_user_client(request):
         UserProfile.objects.get_or_create(
             user=request.cls.user,
             nickname="User",
-            group=UserProfile.UserGroup.KAIST_MEMBER,
             agree_terms_of_service_at=timezone.now(),
             sso_user_info={
                 "kaist_info": '{"ku_kname": "\\ud669"}',
                 "first_name": "FirstName",
                 "last_name": "LastName",
             },
+        )
+        UserGroup.objects.create(
+            user=request.cls.user,
+            group=Group.search_by_id(2),  # 2 = KAIST_MEMBER
         )
     client = APIClient()
     request.cls.api_client = client
@@ -61,13 +64,16 @@ def set_user_client2(request):
         UserProfile.objects.get_or_create(
             user=request.cls.user2,
             nickname="User2",
-            group=UserProfile.UserGroup.KAIST_MEMBER,
             agree_terms_of_service_at=timezone.now(),
             sso_user_info={
                 "kaist_info": '{"ku_kname": "\\ud669"}',
                 "first_name": "FirstName",
                 "last_name": "LastName",
             },
+        )
+        UserGroup.objects.create(
+            user=request.cls.user2,
+            group=Group.search_by_id(2),  # 2 = KAIST_MEMBER
         )
     request.cls.api_client = APIClient()
 
@@ -81,13 +87,16 @@ def set_user_client3(request):
         UserProfile.objects.get_or_create(
             user=request.cls.user3,
             nickname="User3",
-            group=UserProfile.UserGroup.KAIST_MEMBER,
             agree_terms_of_service_at=timezone.now(),
             sso_user_info={
                 "kaist_info": '{"ku_kname": "\\ud669"}',
                 "first_name": "FirstName",
                 "last_name": "LastName",
             },
+        )
+        UserGroup.objects.create(
+            user=request.cls.user3,
+            group=Group.search_by_id(2),  # 2 = KAIST_MEMBER
         )
 
     request.cls.api_client = APIClient()
@@ -102,13 +111,16 @@ def set_user_client4(request):
         UserProfile.objects.get_or_create(
             user=request.cls.user4,
             nickname="User4",
-            group=UserProfile.UserGroup.KAIST_MEMBER,
             agree_terms_of_service_at=timezone.now(),
             sso_user_info={
                 "kaist_info": '{"ku_kname": "\\ud669"}',
                 "first_name": "FirstName",
                 "last_name": "LastName",
             },
+        )
+        UserGroup.objects.create(
+            user=request.cls.user4,
+            group=Group.search_by_id(2),  # 2 = KAIST_MEMBER
         )
 
     request.cls.api_client = APIClient()
@@ -124,8 +136,11 @@ def set_user_with_kaist_info(request):
             user=request.cls.user_with_kaist_info,
             nickname="user_with_kinfo",
             sso_user_info={"kaist_info": '{"ku_kname": "user_with_kaist_info"}'},
-            group=UserProfile.UserGroup.KAIST_MEMBER,
             agree_terms_of_service_at=timezone.now(),
+        )
+        UserGroup.objects.create(
+            user=request.cls.user_with_kaist_info,
+            group=Group.search_by_id(2),  # 2 = KAIST_MEMBER
         )
 
     request.cls.api_client = APIClient()
@@ -145,8 +160,11 @@ def set_user_without_kaist_info(request):
                 "last_name": "user_",
                 "first_name": "without_kaist_info",
             },
-            group=UserProfile.UserGroup.KAIST_MEMBER,
             agree_terms_of_service_at=timezone.now(),
+        )
+        UserGroup.objects.create(
+            user=request.cls.user_without_kaist_info,
+            group=Group.search_by_id(2),  # 2 = KAIST_MEMBER
         )
 
     request.cls.api_client = APIClient()
@@ -162,12 +180,15 @@ def set_school_admin(request):
             user=request.cls.school_admin,
             nickname="School Admin",
             agree_terms_of_service_at=timezone.now(),
-            group=UserProfile.UserGroup.COMMUNICATION_BOARD_ADMIN,
             sso_user_info={
                 "kaist_info": '{"ku_kname": "\\ud669"}',
                 "first_name": "FirstName",
                 "last_name": "LastName",
             },
+        )
+        UserGroup.objects.create(
+            user=request.cls.school_admin,
+            group=Group.search_by_id(7),  # 7 = Communication board admin
         )
 
     request.cls.api_client = APIClient()
@@ -205,14 +226,13 @@ class Utils:
         username: str = "User",
         email: str = "user@sparcs.org",
         nickname: str = "Nickname",
-        group: UserProfile.UserGroup = UserProfile.UserGroup.KAIST_MEMBER,
+        group: Group = Group.search_by_id(2),  # 2 = KAIST_MEMBER
     ) -> User:
         user, created = User.objects.get_or_create(username=username, email=email)
         if created:
             UserProfile.objects.create(
                 user=user,
                 nickname=nickname,
-                group=group,
                 agree_terms_of_service_at=timezone.now(),
                 sso_user_info={
                     "kaist_info": '{"ku_kname": "\\ud669"}',
@@ -220,22 +240,23 @@ class Utils:
                     "last_name": f"Lastname",
                 },
             )
+            UserGroup.objects.create(user=user, group=group)
         return user
 
     @classmethod
-    def create_user_with_index(cls, idx: int, group: UserProfile.UserGroup) -> User:
+    def create_user_with_index(cls, idx: int, group: Group) -> User:
         user = cls.create_user(
             username=f"User{idx}",
             email=f"user{idx}@sparcs.org",
             nickname=f"Nickname{idx}",
-            group=group,
         )
+        UserGroup.objects.create(user=user, group=group)
         return user
 
     @classmethod
     def create_users(
         cls,
         num: int,
-        group: UserProfile.UserGroup = UserProfile.UserGroup.KAIST_MEMBER,
+        group: Group = Group.search_by_id(2),  # 2 = KAIST_MEMBER
     ) -> list[User]:
         return [cls.create_user_with_index(idx, group) for idx in range(num)]

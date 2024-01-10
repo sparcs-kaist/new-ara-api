@@ -22,9 +22,7 @@ class BoardAccessPermissionType(IntEnum):
 
 
 class BoardAccessPermission:
-    def __init__(
-        self, target: UserProfile | Group, board: Board
-    ) -> None:  # permission: [BoardAccessPermissionType]
+    def __init__(self, target: UserProfile | Group, board: Board) -> None:
         self.target = target
         self.board = board
         self.READ = False

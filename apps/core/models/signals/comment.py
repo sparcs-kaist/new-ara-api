@@ -33,8 +33,9 @@ def comment_post_save_signal(created, instance, **kwargs):
         )
         if (
             article.parent_board.is_school_communication
-            and comment.created_by.profile.group
-            == UserProfile.UserGroup.COMMUNICATION_BOARD_ADMIN
+            and comment.created_by.profile.has_group_by_id(
+                7
+            )  # 7 = Communication board admin
             and article.communication_article.school_response_status
             != SchoolResponseStatus.ANSWER_DONE
         ):
