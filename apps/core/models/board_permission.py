@@ -21,9 +21,36 @@ class BoardAccessPermissionType(IntEnum):
     DELETE = 4
 
 
+DEFAULT_READ_PERMISSION: list[tuple[int, BoardAccessPermissionType]] = [
+    (2, BoardAccessPermissionType.READ),
+    (3, BoardAccessPermissionType.READ),
+    (4, BoardAccessPermissionType.READ),
+    (5, BoardAccessPermissionType.READ),
+    (7, BoardAccessPermissionType.READ),
+    (8, BoardAccessPermissionType.READ),
+]
+DEFAULT_WRITE_PERMISSION: list[tuple[int, BoardAccessPermissionType]] = [
+    (2, BoardAccessPermissionType.WRITE),
+    (4, BoardAccessPermissionType.WRITE),
+    (5, BoardAccessPermissionType.WRITE),
+    (7, BoardAccessPermissionType.WRITE),
+    (8, BoardAccessPermissionType.WRITE),
+]
+DEFAULT_COMMENT_PERMISSION: list[tuple[int, BoardAccessPermissionType]] = [
+    (2, BoardAccessPermissionType.COMMENT),
+    (3, BoardAccessPermissionType.COMMENT),
+    (4, BoardAccessPermissionType.COMMENT),
+    (5, BoardAccessPermissionType.COMMENT),
+    (6, BoardAccessPermissionType.COMMENT),
+    (7, BoardAccessPermissionType.COMMENT),
+    (8, BoardAccessPermissionType.COMMENT),
+]
+
+
 class BoardAccessPermission:
     def __init__(self, target: UserProfile | Group, board: Board) -> None:
-        self.target = target
+        self.user = target if isinstance(target, UserProfile) else None
+        self.group = target if isinstance(target, Group) else None
         self.board = board
         self.READ = False
         self.WRITE = False
@@ -95,3 +122,79 @@ class BoardPermission(models.Model):
                 permissions.setPermission(perm.permission)
 
         return permissions
+
+    @staticmethod
+    def add_permission(
+        group: Group,
+        board: Board,
+        permission: BoardAccessPermissionType,
+    ):
+        BoardPermission.objects.create(
+            group=group,
+            board=board,
+            permission=permission,
+        )
+
+    @staticmethod
+    def remove_permission(
+        group: Group,
+        board: Board,
+        permission: BoardAccessPermissionType,
+    ):
+        BoardPermission.objects.filter(
+            group=group,
+            board=board,
+            permission=permission,
+        ).delete()
+
+    @staticmethod
+    def add_permission_bulk_by_board(
+        board: Board,
+        perms: list[tuple[int, BoardAccessPermissionType]],
+    ):
+        for group_id, perm in perms:
+            BoardPermission.objects.create(
+                group=Group.search_by_id(group_id),
+                board=board,
+                permission=perm,
+            )
+
+    @staticmethod
+    def set_group_permission(permission: BoardAccessPermission):
+        if permission.group is None:
+            # raise ValueError("permission.group is None")
+            return
+        BoardPermission.objects.filter(
+            group=permission.group, board=permission.board
+        ).delete()
+        if permission.DENY:
+            BoardPermission.objects.create(
+                group=permission.group,
+                board=permission.board,
+                permission=BoardAccessPermissionType.DENY,
+            )
+            return
+        if permission.READ:
+            BoardPermission.objects.create(
+                group=permission.group,
+                board=permission.board,
+                permission=BoardAccessPermissionType.READ,
+            )
+        if permission.WRITE:
+            BoardPermission.objects.create(
+                group=permission.group,
+                board=permission.board,
+                permission=BoardAccessPermissionType.WRITE,
+            )
+        if permission.COMMENT:
+            BoardPermission.objects.create(
+                group=permission.group,
+                board=permission.board,
+                permission=BoardAccessPermissionType.COMMENT,
+            )
+        if permission.DELETE:
+            BoardPermission.objects.create(
+                group=permission.group,
+                board=permission.board,
+                permission=BoardAccessPermissionType.DELETE,
+            )

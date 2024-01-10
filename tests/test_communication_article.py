@@ -6,8 +6,15 @@ import pytest
 from django.utils import timezone
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 
-from apps.core.models import Article, Board
+from apps.core.models import Article, Board, BoardAccessPermissionType, BoardPermission
 from apps.core.models.board import NameType
+from apps.core.models.board_permission import (
+    DEFAULT_COMMENT_PERMISSION,
+    DEFAULT_READ_PERMISSION,
+    DEFAULT_WRITE_PERMISSION,
+    BoardAccessPermissionType,
+    BoardPermission,
+)
 from apps.core.models.communication_article import (
     CommunicationArticle,
     SchoolResponseStatus,
@@ -26,8 +33,25 @@ def set_communication_board(request):
         en_name="With School (Test)",
         is_school_communication=True,
         name_type=NameType.REALNAME,
-        read_access_mask=0b11011110,
-        write_access_mask=0b11011010,
+        # read_access_mask=0b11011110,
+        # write_access_mask=0b11011010,
+    )
+    permission_bulk: list[tuple[int, BoardAccessPermissionType]] = [
+        (2, BoardAccessPermissionType.READ),
+        (3, BoardAccessPermissionType.READ),
+        (4, BoardAccessPermissionType.READ),
+        (5, BoardAccessPermissionType.READ),
+        (7, BoardAccessPermissionType.READ),
+        (8, BoardAccessPermissionType.READ),
+        (2, BoardAccessPermissionType.WRITE),
+        (4, BoardAccessPermissionType.WRITE),
+        (5, BoardAccessPermissionType.WRITE),
+        (7, BoardAccessPermissionType.WRITE),
+        (8, BoardAccessPermissionType.WRITE),
+    ]
+    permission_bulk.extend(DEFAULT_COMMENT_PERMISSION)
+    BoardPermission.add_permission_bulk_by_board(
+        request.cls.communication_board, permission_bulk
     )
 
 

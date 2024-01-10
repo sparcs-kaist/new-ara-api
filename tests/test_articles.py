@@ -5,6 +5,13 @@ from rest_framework import status
 
 from apps.core.models import Article, Block, Board, Comment, Topic, Vote
 from apps.core.models.board import NameType
+from apps.core.models.board_permission import (
+    DEFAULT_COMMENT_PERMISSION,
+    DEFAULT_READ_PERMISSION,
+    DEFAULT_WRITE_PERMISSION,
+    BoardAccessPermissionType,
+    BoardPermission,
+)
 from apps.user.models import Group, UserGroup, UserProfile
 from ara.settings import MIN_TIME, SCHOOL_RESPONSE_VOTE_THRESHOLD
 from tests.conftest import RequestSetting, TestCase, Utils
@@ -44,8 +51,25 @@ def set_boards(request):
         slug="regular access",
         ko_name="일반 접근 권한 게시판",
         en_name="Regular Access Board",
-        read_access_mask=0b11011110,
-        write_access_mask=0b11011010,
+        # read_access_mask=0b11011110,
+        # write_access_mask=0b11011010,
+    )
+    permission_bulk: list[tuple[int, BoardAccessPermissionType]] = [
+        (2, BoardAccessPermissionType.READ),
+        (3, BoardAccessPermissionType.READ),
+        (4, BoardAccessPermissionType.READ),
+        (5, BoardAccessPermissionType.READ),
+        (7, BoardAccessPermissionType.READ),
+        (8, BoardAccessPermissionType.READ),
+        (2, BoardAccessPermissionType.WRITE),
+        (4, BoardAccessPermissionType.WRITE),
+        (5, BoardAccessPermissionType.WRITE),
+        (7, BoardAccessPermissionType.WRITE),
+        (8, BoardAccessPermissionType.WRITE),
+    ]
+    permission_bulk.extend(DEFAULT_COMMENT_PERMISSION)
+    BoardPermission.add_permission_bulk_by_board(
+        request.cls.regular_access_board, permission_bulk
     )
 
     # Though its name is 'advertiser accessible', enterprise is also accessible
@@ -53,29 +77,74 @@ def set_boards(request):
         slug="advertiser accessible",
         ko_name="외부인(홍보 계정) 접근 가능 게시판",
         en_name="Advertiser Accessible Board",
-        read_access_mask=0b11111110,
-        write_access_mask=0b11111110,
+        # read_access_mask=0b11111110,
+        # write_access_mask=0b11111110,
+    )
+    permission_bulk: list[tuple[int, BoardAccessPermissionType]] = [
+        (2, BoardAccessPermissionType.READ),
+        (3, BoardAccessPermissionType.READ),
+        (4, BoardAccessPermissionType.READ),
+        (5, BoardAccessPermissionType.READ),
+        (7, BoardAccessPermissionType.READ),
+        (8, BoardAccessPermissionType.READ),
+        (2, BoardAccessPermissionType.WRITE),
+        (4, BoardAccessPermissionType.WRITE),
+        (5, BoardAccessPermissionType.WRITE),
+        (6, BoardAccessPermissionType.WRITE),
+        (7, BoardAccessPermissionType.WRITE),
+        (8, BoardAccessPermissionType.WRITE),
+    ]
+    permission_bulk.extend(DEFAULT_COMMENT_PERMISSION)
+    BoardPermission.add_permission_bulk_by_board(
+        request.cls.advertiser_accessible_board, permission_bulk
     )
 
     request.cls.nonwritable_board = Board.objects.create(
         slug="nonwritable",
         ko_name="글 작성 불가 게시판",
         en_name="Nonwritable Board",
-        write_access_mask=0b00000000,
+        # write_access_mask=0b00000000,
+    )
+    permission_bulk: list[tuple[int, BoardAccessPermissionType]] = []
+    permission_bulk.extend(DEFAULT_READ_PERMISSION)
+    permission_bulk.extend(DEFAULT_COMMENT_PERMISSION)
+    BoardPermission.add_permission_bulk_by_board(
+        request.cls.nonwritable_board, permission_bulk
     )
 
     request.cls.newsadmin_writable_board = Board.objects.create(
         slug="newsadmin writable",
         ko_name="뉴스게시판 관리인 글 작성 가능 게시판",
         en_name="Newsadmin Writable Board",
-        write_access_mask=0b10000000,
+        # write_access_mask=0b10000000,
+    )
+    permission_bulk: list[tuple[int, BoardAccessPermissionType]] = [
+        (8, BoardAccessPermissionType.WRITE),
+    ]
+    permission_bulk.extend(DEFAULT_READ_PERMISSION)
+    permission_bulk.extend(DEFAULT_COMMENT_PERMISSION)
+    BoardPermission.add_permission_bulk_by_board(
+        request.cls.newsadmin_writable_board, permission_bulk
     )
 
     request.cls.enterprise_writable_board = Board.objects.create(
         slug="enterprise writable",
         ko_name="입주업체 글 작성 가능 게시판",
         en_name="Enterprise Writable Board",
-        write_access_mask=0b11011110,
+        # write_access_mask=0b11011110,
+    )
+    permission_bulk: list[tuple[int, BoardAccessPermissionType]] = [
+        (2, BoardAccessPermissionType.WRITE),
+        (3, BoardAccessPermissionType.WRITE),
+        (4, BoardAccessPermissionType.WRITE),
+        (5, BoardAccessPermissionType.WRITE),
+        (7, BoardAccessPermissionType.WRITE),
+        (8, BoardAccessPermissionType.WRITE),
+    ]
+    permission_bulk.extend(DEFAULT_READ_PERMISSION)
+    permission_bulk.extend(DEFAULT_COMMENT_PERMISSION)
+    BoardPermission.add_permission_bulk_by_board(
+        request.cls.enterprise_writable_board, permission_bulk
     )
 
 
@@ -184,9 +253,18 @@ def set_kaist_articles(request):
         slug="kaist-only",
         ko_name="KAIST Board",
         en_name="KAIST Board",
-        read_access_mask=0b00000010,
-        write_access_mask=0b00000010,
+        # read_access_mask=0b00000010,
+        # write_access_mask=0b00000010,
     )
+    permission_bulk: list[tuple[int, BoardAccessPermissionType]] = [
+        (2, BoardAccessPermissionType.READ),
+        (2, BoardAccessPermissionType.WRITE),
+    ]
+    permission_bulk.extend(DEFAULT_COMMENT_PERMISSION)
+    BoardPermission.add_permission_bulk_by_board(
+        request.cls.kaist_board, permission_bulk
+    )
+
     request.cls.kaist_article, _ = Article.objects.get_or_create(
         title="example article",
         content="example content",
