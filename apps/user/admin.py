@@ -31,6 +31,7 @@ class ManualUserAdmin(MetaDataModelAdmin):
     list_display = (
         "user",
         "org_name",
+        "org_type",
         "applicant_name",
         "sso_email",
     )
