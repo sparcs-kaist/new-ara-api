@@ -7,7 +7,15 @@ from apps.user.models import Group, UserProfile
 from ara.db.models import MetaDataModel
 
 from .board_group import BoardGroup
-from .board_permission import BoardAccessPermission, BoardPermission
+from .board_permission import (
+    DEFAULT_COMMENT_PERMISSION,
+    DEFAULT_PERMISSIONS,
+    DEFAULT_READ_PERMISSION,
+    DEFAULT_WRITE_PERMISSION,
+    BoardAccessPermission,
+    BoardAccessPermissionType,
+    BoardPermission,
+)
 
 
 class NameType(IntFlag):
@@ -99,10 +107,13 @@ class Board(MetaDataModel):
         return self.ko_name
 
     def permission_list_by_group(self, group: Group) -> BoardAccessPermission:
-        return BoardPermission.permission_list_by_group(self, group)
+        return BoardPermission.permission_list_by_group(group, self)
 
     def permission_list_by_user(self, user: UserProfile) -> BoardAccessPermission:
-        return BoardPermission.permission_list_by_user(self, user)
+        return BoardPermission.permission_list_by_user(user, self)
+
+    def set_default_permission(self):
+        BoardPermission.add_permission_bulk_by_board(self, DEFAULT_PERMISSIONS)
 
     # def old_group_has_access_permission(
     #    self, access_type: OldBoardAccessPermissionType, group: int

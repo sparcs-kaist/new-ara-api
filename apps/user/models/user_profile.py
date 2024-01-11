@@ -123,6 +123,10 @@ class UserProfile(MetaDataModel):
     def can_change_nickname(self) -> bool:
         return (timezone.now() - relativedelta(months=3)) >= self.nickname_updated_at
 
+    @staticmethod
+    def get_by_auth_user(user: settings.AUTH_USER_MODEL) -> "UserProfile":
+        return UserProfile.objects.get(user=user)
+
     @cached_property
     def email(self) -> str:
         return self.user.email
@@ -141,7 +145,7 @@ class UserProfile(MetaDataModel):
     def is_official(self) -> bool:
         if self.user.email == "new-ara@sparcs.org":
             return True
-        for group in self.groups:
+        for group in self.groups():
             if group.is_official:
                 return True
         return False
@@ -150,18 +154,17 @@ class UserProfile(MetaDataModel):
     def is_school_admin(self) -> bool:
         return self.has_group_by_id(7)  # 7 = Communication board admin
 
-    @cached_property
     def groups(self) -> list[Group]:
         return UserGroup.search_by_user(self.user)
 
     def has_group(self, group: Group) -> bool:
-        return group in self.groups
+        return group in self.groups()
 
     def has_group_by_name(self, name: str) -> bool:
-        return any([group.name == name for group in self.groups])
+        return any([group.name == name for group in self.groups()])
 
     def has_group_by_id(self, group_id: int) -> bool:
-        return any([group.group_id == group_id for group in self.groups])
+        return any([group.group_id == group_id for group in self.groups()])
 
     def add_group(self, group: Group) -> None:
         if not self.has_group(group):

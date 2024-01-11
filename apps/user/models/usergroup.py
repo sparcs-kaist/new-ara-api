@@ -30,17 +30,15 @@ class UserGroup(models.Model):
     )
 
     @staticmethod
-    def search_by_user(self, user: UserProfile) -> list[Group]:
+    def search_by_user(user: settings.AUTH_USER_MODEL) -> list[Group]:
         groups = []
-        for usergroup in UserGroup.objects.filter(user=user):
+        for usergroup in UserGroup.objects.filter(user=user).all():
             groups.append(usergroup.group)
         return groups
 
     @staticmethod
-    def search_by_group(
-        self, group: Group
-    ) -> list[UserProfile]:  # WARNING: Too many results
+    def search_by_group(group: Group) -> list[UserProfile]:  # WARNING: Too many results
         users = []
-        for usergroup in UserGroup.objects.filter(group=group):
+        for usergroup in UserGroup.objects.filter(group=group).all():
             users.append(usergroup.user)
         return users

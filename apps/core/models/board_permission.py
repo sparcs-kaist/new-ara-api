@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db import models
 
 import apps.core.models.board as board
-from apps.user.models import Group, UserProfile
+from apps.user.models import Group, UserGroup, UserProfile
 
 if TYPE_CHECKING:
     from .board import Board
@@ -45,6 +45,10 @@ DEFAULT_COMMENT_PERMISSION: list[tuple[int, BoardAccessPermissionType]] = [
     (7, BoardAccessPermissionType.COMMENT),
     (8, BoardAccessPermissionType.COMMENT),
 ]
+DEFAULT_PERMISSIONS = []
+DEFAULT_PERMISSIONS.extend(DEFAULT_READ_PERMISSION)
+DEFAULT_PERMISSIONS.extend(DEFAULT_WRITE_PERMISSION)
+DEFAULT_PERMISSIONS.extend(DEFAULT_COMMENT_PERMISSION)
 
 
 class BoardAccessPermission:
@@ -112,9 +116,9 @@ class BoardPermission(models.Model):
 
     @staticmethod
     def permission_list_by_user(
-        user: UserProfile, board: Board
+        user: settings.AUTH_USER_MODEL, board: Board
     ) -> BoardAccessPermission:
-        groups = user.groups
+        groups = UserGroup.search_by_user(user)
         permissions = BoardAccessPermission(user, board)
         for group in groups:
             groupPerms = BoardPermission.objects.filter(group=group, board=board)
@@ -153,7 +157,7 @@ class BoardPermission(models.Model):
         perms: list[tuple[int, BoardAccessPermissionType]],
     ):
         for group_id, perm in perms:
-            BoardPermission.objects.create(
+            BoardPermission.objects.get_or_create(
                 group=Group.search_by_id(group_id),
                 board=board,
                 permission=perm,
