@@ -24,12 +24,6 @@ class NameType(IntFlag):
     REALNAME = auto()
 
 
-class OldBoardAccessPermissionType(IntEnum):
-    READ = 0
-    WRITE = 1
-    COMMENT = 2
-
-
 class Board(MetaDataModel):
     slug = AutoSlugField(
         populate_from=["en_name"],
