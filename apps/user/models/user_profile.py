@@ -24,26 +24,6 @@ class UserProfile(MetaDataModel):
             ("nickname", "is_newara", "deleted_at"),
         )
 
-    class OldUserGroup(models.IntegerChoices):
-        # 뉴아라 계정을 만들지 않은 사람들
-        UNAUTHORIZED = 0, gettext_lazy("Unauthorized user")
-        # 카이스트 메일을 가진 사람 (학생, 교직원)
-        KAIST_MEMBER = 1, gettext_lazy("KAIST member")
-        # 교내 입주 업체 직원
-        STORE_EMPLOYEE = 2, gettext_lazy("Store employee")
-        # 카이스트 메일이 없는 개인 (특수한 관련자 등)
-        OTHER_MEMBER = 3, gettext_lazy("Other member")
-        # 교내 학생 단체들
-        KAIST_ORG = 4, gettext_lazy("KAIST organization")
-        # 외부인 (홍보 계정 등)
-        EXTERNAL_ORG = 5, gettext_lazy("External organization")
-        # 소통게시판 관리인
-        COMMUNICATION_BOARD_ADMIN = 6, gettext_lazy("Communication board admin")
-        # 뉴스게시판 관리인
-        NEWS_BOARD_ADMIN = 7, gettext_lazy("News board admin")
-
-    OLD_OFFICIAL_GROUPS = [OldUserGroup.STORE_EMPLOYEE, OldUserGroup.KAIST_ORG]
-
     uid = models.CharField(
         null=True,
         default=None,

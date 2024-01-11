@@ -114,19 +114,3 @@ class Board(MetaDataModel):
 
     def set_default_permission(self):
         BoardPermission.add_permission_bulk_by_board(self, DEFAULT_PERMISSIONS)
-
-    # def old_group_has_access_permission(
-    #    self, access_type: OldBoardAccessPermissionType, group: int
-    # ) -> bool:
-    #    mask = None
-    #    if access_type == OldBoardAccessPermissionType.READ:
-    #        mask = self.read_access_mask
-    #    elif access_type == OldBoardAccessPermissionType.WRITE:
-    #        mask = self.write_access_mask
-    #    elif access_type == OldBoardAccessPermissionType.COMMENT:
-    #        mask = self.comment_access_mask
-    #    else:
-    #        # TODO: Handle error
-    #        return False
-    #
-    #    return (mask & (1 << group)) > 0
