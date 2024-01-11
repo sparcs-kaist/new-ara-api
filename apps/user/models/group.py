@@ -3,10 +3,6 @@ from django.db import models
 
 
 class Group(models.Model):
-    class Meta:
-        verbose_name = "Group"
-        verbose_name_plural = "Groups"
-
     group_id = models.AutoField(
         verbose_name="Group ID",
         primary_key=True,
@@ -27,6 +23,10 @@ class Group(models.Model):
         verbose_name="공식 단체 또는 학생단체",
         default=False,
     )
+
+    class Meta:
+        verbose_name = "Group"
+        verbose_name_plural = "Groups"
 
     def __str__(self) -> str:
         return self.name

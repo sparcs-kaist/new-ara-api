@@ -83,11 +83,6 @@ class BoardAccessPermission:
 
 
 class BoardPermission(models.Model):
-    class Meta:
-        verbose_name = "BoardPermission"
-        verbose_name_plural = "BoardPermissions"
-        unique_together = (("group", "board", "permission"),)
-
     group = models.ForeignKey(
         on_delete=models.CASCADE,
         to="user.Group",
@@ -104,6 +99,11 @@ class BoardPermission(models.Model):
         verbose_name="permission",
         null=False,
     )
+
+    class Meta:
+        verbose_name = "BoardPermission"
+        verbose_name_plural = "BoardPermissions"
+        unique_together = (("group", "board", "permission"),)
 
     @staticmethod
     def permission_list_by_group(group: Group, board: Board) -> BoardAccessPermission:

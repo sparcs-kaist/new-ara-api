@@ -10,11 +10,6 @@ if TYPE_CHECKING:
 
 
 class UserGroup(models.Model):
-    class Meta:
-        verbose_name = "사용자 그룹"
-        verbose_name_plural = "사용자가 속한 그룹 목록"
-        unique_together = (("user", "group"),)
-
     user = models.ForeignKey(
         verbose_name="사용자",
         on_delete=models.CASCADE,
@@ -28,6 +23,11 @@ class UserGroup(models.Model):
         to="user.Group",
         db_index=True,
     )
+
+    class Meta:
+        verbose_name = "사용자 그룹"
+        verbose_name_plural = "사용자가 속한 그룹 목록"
+        unique_together = (("user", "group"),)
 
     @staticmethod
     def search_by_user(user: settings.AUTH_USER_MODEL) -> list[Group]:
