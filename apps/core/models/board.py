@@ -109,7 +109,7 @@ class Board(MetaDataModel):
     def permission_list_by_group(self, group: Group) -> BoardAccessPermission:
         return BoardPermission.permission_list_by_group(group, self)
 
-    def permission_list_by_user(self, user: UserProfile) -> BoardAccessPermission:
+    def permission_list_by_user(self, user) -> BoardAccessPermission:
         return BoardPermission.permission_list_by_user(user, self)
 
     def set_default_permission(self):

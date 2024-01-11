@@ -793,7 +793,6 @@ class TestArticle(TestCase, RequestSetting):
         *users_ex_one, last_user = users
 
         for user in users_ex_one:
-            print(BoardPermission.permission_list_by_user(user, board).READ)
             self.http_request(user, "post", f"articles/{pk}/vote_positive")
 
         article = Article.objects.get(pk=pk)
