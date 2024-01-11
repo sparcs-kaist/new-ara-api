@@ -47,7 +47,7 @@ def set_user_client(request):
                 "last_name": "LastName",
             },
         )
-        UserGroup.objects.create(
+        UserGroup.objects.get_or_create(
             user=request.cls.user,
             group=Group.search_by_id(2),  # 2 = KAIST_MEMBER
         )
@@ -71,7 +71,7 @@ def set_user_client2(request):
                 "last_name": "LastName",
             },
         )
-        UserGroup.objects.create(
+        UserGroup.objects.get_or_create(
             user=request.cls.user2,
             group=Group.search_by_id(2),  # 2 = KAIST_MEMBER
         )
@@ -94,7 +94,7 @@ def set_user_client3(request):
                 "last_name": "LastName",
             },
         )
-        UserGroup.objects.create(
+        UserGroup.objects.get_or_create(
             user=request.cls.user3,
             group=Group.search_by_id(2),  # 2 = KAIST_MEMBER
         )
@@ -118,7 +118,7 @@ def set_user_client4(request):
                 "last_name": "LastName",
             },
         )
-        UserGroup.objects.create(
+        UserGroup.objects.get_or_create(
             user=request.cls.user4,
             group=Group.search_by_id(2),  # 2 = KAIST_MEMBER
         )
@@ -138,7 +138,7 @@ def set_user_with_kaist_info(request):
             sso_user_info={"kaist_info": '{"ku_kname": "user_with_kaist_info"}'},
             agree_terms_of_service_at=timezone.now(),
         )
-        UserGroup.objects.create(
+        UserGroup.objects.get_or_create(
             user=request.cls.user_with_kaist_info,
             group=Group.search_by_id(2),  # 2 = KAIST_MEMBER
         )
@@ -162,7 +162,7 @@ def set_user_without_kaist_info(request):
             },
             agree_terms_of_service_at=timezone.now(),
         )
-        UserGroup.objects.create(
+        UserGroup.objects.get_or_create(
             user=request.cls.user_without_kaist_info,
             group=Group.search_by_id(2),  # 2 = KAIST_MEMBER
         )
@@ -186,7 +186,7 @@ def set_school_admin(request):
                 "last_name": "LastName",
             },
         )
-        UserGroup.objects.create(
+        UserGroup.objects.get_or_create(
             user=request.cls.school_admin,
             group=Group.search_by_id(7),  # 7 = Communication board admin
         )
@@ -226,8 +226,10 @@ class Utils:
         username: str = "User",
         email: str = "user@sparcs.org",
         nickname: str = "Nickname",
-        group: Group = Group.search_by_id(2),  # 2 = KAIST_MEMBER
+        group: int = 2
+        # group: Group = Group.search_by_id(2),  # 2 = KAIST_MEMBER
     ) -> User:
+        group = Group.search_by_id(2)
         user, created = User.objects.get_or_create(username=username, email=email)
         if created:
             UserProfile.objects.create(
@@ -240,7 +242,7 @@ class Utils:
                     "last_name": f"Lastname",
                 },
             )
-            UserGroup.objects.create(user=user, group=group)
+            UserGroup.objects.get_or_create(user=user, group=group)
         return user
 
     @classmethod
@@ -250,34 +252,14 @@ class Utils:
             email=f"user{idx}@sparcs.org",
             nickname=f"Nickname{idx}",
         )
-        UserGroup.objects.create(user=user, group=group)
+        UserGroup.objects.get_or_create(user=user, group=group)
         return user
 
     @classmethod
     def create_users(
         cls,
         num: int,
-        group: Group = Group.search_by_id(2),  # 2 = KAIST_MEMBER
+        group: int = 2,  # 2 = KAIST_MEMBER
     ) -> list[User]:
+        group = Group.search_by_id(2)
         return [cls.create_user_with_index(idx, group) for idx in range(num)]
-
-    @classmethod
-    def add_default_groups(cls):
-        default_groups = {
-            1: ("Unauthorized user", "뉴아라 계정을 만들지 않은 사람들", False),
-            2: ("KAIST member", "카이스트 메일을 가진 사람 (학생, 교직원)", False),
-            3: ("Store employee", "교내 입주 업체 직원", False),
-            4: ("Other member", "카이스트 메일이 없는 개인 (특수한 관련자 등)", False),
-            5: ("KAIST organization", "교내 학생 단체들", True),
-            6: ("External organization", "외부인 (홍보 계정 등)", True),
-            7: ("Communication board admin", "소통게시판 관리인", False),
-            8: ("News board admin", "뉴스게시판 관리인", False),
-        }
-
-        for group_id, (name, description, is_official) in default_groups.items():
-            Group.objects.create(
-                group_id=group_id,
-                name=name,
-                description=description,
-                is_official=is_official,
-            )

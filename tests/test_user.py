@@ -18,6 +18,7 @@ def set_boards(request):
         ko_name="테스트 게시판",
         en_name="Test Board",
     )
+    request.cls.board.set_default_permission()
 
     request.cls.realname_board = Board.objects.create(
         slug="realname",
@@ -25,6 +26,7 @@ def set_boards(request):
         en_name="Realname Board",
         name_type=NameType.REALNAME,
     )
+    request.cls.realname_board.set_default_permission()
 
 
 @pytest.fixture(scope="class")

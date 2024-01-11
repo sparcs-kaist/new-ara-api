@@ -10,6 +10,7 @@ from apps.core.models import Article, Board, BoardAccessPermissionType, BoardPer
 from apps.core.models.board import NameType
 from apps.core.models.board_permission import (
     DEFAULT_COMMENT_PERMISSION,
+    DEFAULT_PERMISSIONS,
     DEFAULT_READ_PERMISSION,
     DEFAULT_WRITE_PERMISSION,
     BoardAccessPermissionType,
@@ -63,6 +64,7 @@ def set_non_communication_board(request):
         en_name="Not With School (Test)",
         is_school_communication=False,
     )
+    request.cls.non_communication_board.set_default_permission()
 
 
 @pytest.fixture(scope="class")

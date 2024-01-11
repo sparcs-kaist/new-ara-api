@@ -7,6 +7,7 @@ from apps.core.models import Article, Block, Board, Comment, Topic, Vote
 from apps.core.models.board import NameType
 from apps.core.models.board_permission import (
     DEFAULT_COMMENT_PERMISSION,
+    DEFAULT_PERMISSIONS,
     DEFAULT_READ_PERMISSION,
     DEFAULT_WRITE_PERMISSION,
     BoardAccessPermissionType,
@@ -25,6 +26,7 @@ def set_boards(request):
         en_name="Test Board",
         name_type=NameType.REGULAR,
     )
+    request.cls.board.set_default_permission()
 
     request.cls.anon_board = Board.objects.create(
         slug="anonymous",
@@ -32,6 +34,7 @@ def set_boards(request):
         en_name="Anonymous",
         name_type=NameType.ANONYMOUS,
     )
+    request.cls.anon_board.set_default_permission()
 
     request.cls.free_board = Board.objects.create(
         slug="free",
@@ -39,6 +42,7 @@ def set_boards(request):
         en_name="Free",
         name_type=NameType.ANONYMOUS | NameType.REGULAR,
     )
+    request.cls.free_board.set_default_permission()
 
     request.cls.realname_board = Board.objects.create(
         slug="test realname board",
@@ -46,6 +50,7 @@ def set_boards(request):
         en_name="Test realname Board",
         name_type=NameType.REALNAME,
     )
+    request.cls.realname_board.set_default_permission()
 
     request.cls.regular_access_board = Board.objects.create(
         slug="regular access",
@@ -775,6 +780,12 @@ class TestArticle(TestCase, RequestSetting):
         """
         THRESHOLD = 5
         board = Board.objects.create(top_threshold=THRESHOLD)
+        permission_bulk: list[tuple[int, BoardAccessPermissionType]] = []
+        permission_bulk.extend(DEFAULT_READ_PERMISSION)
+        permission_bulk.extend(DEFAULT_WRITE_PERMISSION)
+        permission_bulk.extend(DEFAULT_COMMENT_PERMISSION)
+        BoardPermission.add_permission_bulk_by_board(board, permission_bulk)
+
         article = Article.objects.create(created_by=self.user, parent_board=board)
         pk = article.pk
 
@@ -782,6 +793,7 @@ class TestArticle(TestCase, RequestSetting):
         *users_ex_one, last_user = users
 
         for user in users_ex_one:
+            print(BoardPermission.permission_list_by_user(user, board).READ)
             self.http_request(user, "post", f"articles/{pk}/vote_positive")
 
         article = Article.objects.get(pk=pk)
