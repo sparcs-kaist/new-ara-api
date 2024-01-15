@@ -27,7 +27,7 @@ spec:
           service:
             name: ara-svc
             port: 
-              number: 58000
+              number: 9000
         pathType: Prefix
   tls:
   - hosts:
