@@ -18,5 +18,5 @@ spec:
       - name: ara-elasticsearch
         image: elasticsearch:7.9.2
         ports:
-        - containerPort: 9000
+        - containerPort: 9200
           name: ara-elasticsearch-port

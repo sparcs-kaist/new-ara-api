@@ -29,6 +29,71 @@ spec:
               configMapKeyRef:
                 name: ara-env
                 key: SSO_CLIENT_ID
+          - name: PORTAL_ID
+            valueFrom:
+              configMapKeyRef:
+                name: ara-env
+                key: PORTAL_ID
+          - name: SENTRY_DSN
+            valueFrom:
+              configMapKeyRef:
+                name: ara-env
+                key: SENTRY_DSN
+          - name: DJANGO_ENV
+            valueFrom:
+              configMapKeyRef:
+                name: ara-env
+                key: DJANGO_ENV
+          - name: AWS_BUCKET_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: ara-env
+                key: AWS_BUCKET_NAME
+          - name: AWS_BUCKET_NAME_STATIC
+            valueFrom:
+              configMapKeyRef:
+                name: ara-env
+                key: AWS_BUCKET_NAME_STATIC
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              configMapKeyRef:
+                name: ara-env
+                key: AWS_ACCESS_KEY_ID
+          - name: NEWARA_DB_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: ara-env
+                key: NEWARA_DB_HOST
+          - name: NEWARA_DB_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: ara-env
+                key: NEWARA_DB_PORT
+          - name: NEWARA_DB_USER
+            valueFrom:
+              configMapKeyRef:
+                name: ara-env
+                key: NEWARA_DB_USER
+          - name: NEWARA_DB_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: ara-env
+                key: NEWARA_DB_NAME
+          - name: NEWARA_ELASTICSEARCH_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: ara-env
+                key: NEWARA_ELASTICSEARCH_HOST
+          - name: NEWARA_ELASTICSEARCH_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: ara-env
+                key: NEWARA_ELASTICSEARCH_PORT
+          - name: HASH_SECRET_VALUE
+            valueFrom:
+              configMapKeyRef:
+                name: ara-env
+                key: HASH_SECRET_VALUE
           - name: REDIS_HOST
             value: "ara-redis-service"
           volumeMounts:
