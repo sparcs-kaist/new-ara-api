@@ -35,7 +35,7 @@ spec:
           - mountPath: "/newara/www"
             name: firebase
             readOnly: true
-          volumes:
-            - name: firebase
-              secret:
-                secretName: firebase-credentials
+      volumes:
+        - name: firebase
+          secret:
+            secretName: firebase-credentials
