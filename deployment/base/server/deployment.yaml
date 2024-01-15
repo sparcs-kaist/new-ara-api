@@ -32,10 +32,10 @@ spec:
           - name: REDIS_HOST
             value: "ara-redis-service"
           volumeMounts:
-          - mountPath: "/newara/www/firebaseServiceAccountKey.json"
-            name: firebase-credentials
+          - mountPath: "/newara/www"
+            name: firebase
             readOnly: true
           volumes:
-            - name: firebase-credentials
+            - name: firebase
               secret:
                 secretName: firebase-credentials
