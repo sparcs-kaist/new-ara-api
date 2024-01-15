@@ -35,7 +35,7 @@ spec:
           - mountPath: "/newara/www/firebaseServiceAccountKey.json"
             name: firebase-credentials
             readOnly: true
-        volumes:
-          - name: firebase-credentials
-            secret:
-              secretName: firebase-credentials
+          volumes:
+            - name: firebase-credentials
+              secret:
+                secretName: firebase-credentials
