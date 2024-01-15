@@ -17,7 +17,7 @@ spec:
       containers:
         - name: ara-server
           image: 666583083672.dkr.ecr.ap-northeast-2.amazonaws.com/newara:latest
-          command: /newara/www/.docker/run.sh
+          command: ["/newara/www/.docker/run.sh"]
           ports:
           - containerPort: 9000
           envFrom:
