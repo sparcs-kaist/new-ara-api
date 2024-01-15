@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ara-elasticsearch-service
+spec:
+  selector:
+    app: ara-elasticsearch 
+  ports:
+  - name: ara-elasticsearch-service-port
+    protocol: TCP
+    port: 9200
+    targetPort: ara-elasticsearch-port

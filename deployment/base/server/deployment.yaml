@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ara-server
+  labels:
+    app: ara-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ara-server
+  template:
+    metadata:
+      labels:
+        app: ara-server
+    spec:
+      containers:
+        - name: ara-server
+          image: 666583083672.dkr.ecr.ap-northeast-2.amazonaws.com/newara:latest
+          command: /newara/www/.docker/run.sh
+          ports:
+          - containerPort: 9000
+          envFrom:
+          - secretRef:
+              name: ara-secret
+          env:
+          - name: SSO_CLIENT_ID
+            valueFrom:
+              configMapKeyRef:
+                name: ara-env
+                key: SSO_CLIENT_ID
+          - name: REDIS_HOST
+            value: "ara-redis-service"
+          volumeMounts:
+          - mountPath: "/newara/www/firebaseServiceAccountKey.json"
+            name: firebase-credentials
+            readOnly: true
+        volumes:
+          - name: firebase-credentials
+            secret:
+              secretName: firebase-credentials

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ara-env
+data:
+  SSO_CLIENT_ID: "abc"
+  PORTAL_ID: "abc"
+  SENTRY_DSN: "aaaa"
+  DJANGO_ENV: "production"
+  AWS_BUCKET_NAME: "sparcs"
+  AWS_BUCKET_NAME_STATIC: "bucket-static"
+  AWS_ACCESS_KEY_ID: "abbccccc"
+  NEWARA_DB_HOST: ""
+  NEWARA_DB_PORT: "3306"
+  NEWARA_DB_USER: "root"
+  NEWARA_DB_NAME: "new_ara"
+  NEWARA_ELASTICSEARCH_HOST: "elasticsearch"
+  NEWARA_ELASTICSEARCH_PORT: "9200"
+  HASH_SECRET_VALUE: "1"

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ara-redis
+  labels:
+    app: ara-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ara-redis
+  template:
+    metadata:
+      labels:
+        app: ara-redis
+    spec:
+      containers:
+      - name: ara-redis
+        image: redis:6-alpine
+        ports:
+        - containerPort: 6379
+          name: ara-redis-port
