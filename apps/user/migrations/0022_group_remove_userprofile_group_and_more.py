@@ -36,7 +36,6 @@ def add_user_groups(apps, schema_editor):
         WHERE (a.group+1) = b.group_id;
     """
     )
-    # schema_editor.connection.commit()
     cursor.close()
 
 
