@@ -29,8 +29,6 @@ class ManualUser(MetaDataModel):
         on_delete=models.CASCADE,
         to="user.Group",
         verbose_name="업체/단체 그룹",
-        null=True,
-        blank=True,
     )
 
     applicant_name = models.CharField(

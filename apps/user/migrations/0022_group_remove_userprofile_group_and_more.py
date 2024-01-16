@@ -132,8 +132,6 @@ class Migration(migrations.Migration):
             model_name="manualuser",
             name="org_type",
             field=models.ForeignKey(
-                blank=True,
-                null=True,
                 on_delete=django.db.models.deletion.CASCADE,
                 to="user.group",
                 verbose_name="업체/단체 그룹",
