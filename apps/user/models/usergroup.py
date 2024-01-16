@@ -5,8 +5,10 @@ from typing import TYPE_CHECKING
 from django.conf import settings
 from django.db import models
 
+from .group import Group
+
 if TYPE_CHECKING:
-    from apps.user.models import Group, UserProfile
+    from apps.user.models import UserProfile
 
 
 class UserGroup(models.Model):
@@ -31,14 +33,8 @@ class UserGroup(models.Model):
 
     @staticmethod
     def search_by_user(user: settings.AUTH_USER_MODEL) -> list[Group]:
-        groups = []
-        for usergroup in UserGroup.objects.filter(user=user).all():
-            groups.append(usergroup.group)
-        return groups
+        return Group.objects.filter(usergroup__user=user).all()
 
     @staticmethod
     def search_by_group(group: Group) -> list[UserProfile]:  # WARNING: Too many results
-        users = []
-        for usergroup in UserGroup.objects.filter(group=group).all():
-            users.append(usergroup.user)
-        return users
+        return UserProfile.objects.filter(usergroup__group=group).all()
