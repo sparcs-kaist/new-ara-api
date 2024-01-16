@@ -84,12 +84,10 @@ class CommentViewSet(
             )
             parent_article = parent_comment.parent_article
 
-        print(parent_article)
+        # print(parent_article)
 
         created_by = self.request.user
-        is_school_admin = UserProfile.objects.get(user_id=created_by).has_group_by_id(
-            7
-        )  # 7 = Communication board admin
+        is_school_admin = UserProfile.objects.get(user_id=created_by).is_school_admin
 
         if is_school_admin and parent_article.name_type != NameType.ANONYMOUS:
             name_type = NameType.REGULAR
