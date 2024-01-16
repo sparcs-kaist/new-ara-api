@@ -147,10 +147,6 @@ class UserProfile(MetaDataModel):
     def add_group(self, group: Group) -> None:
         UserGroup.objects.get_or_create(user=self.user, group=group)
 
-    def add_group_by_name(self, group_name: str) -> None:
-        group = Group.search_by_name(group_name)
-        self.add_group(group)
-
     def add_group_by_id(self, group_id: int) -> None:
         group = Group.search_by_id(group_id)
         self.add_group(group)
@@ -158,10 +154,6 @@ class UserProfile(MetaDataModel):
     def remove_group(self, group: Group) -> None:
         if self.has_group(group):
             UserGroup.objects.get(user=self.user, group=group).delete()
-
-    def remove_group_by_name(self, group_name: str) -> None:
-        group = Group.search_by_name(group_name)
-        self.remove_group(group)
 
     def remove_group_by_id(self, group_id: int) -> None:
         group = Group.search_by_id(group_id)
