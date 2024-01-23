@@ -38,25 +38,34 @@ class ManualUserAdmin(MetaDataModelAdmin):
 
 
 @admin.register(UserGroup)
-class UserGroupAdmin(MetaDataModelAdmin):
+class UserGroupAdmin(admin.ModelAdmin):
     list_display = (
-        "user_id",
-        "group_id",
+        "user",
+        "nickname",
+        "email",
+        "group",
     )
+    list_filter = ("group",)
     search_fields = (
-        "user_id",
-        "group_id",
+        "user__id",
+        "user__profile__nickname",
+        "user__email",
     )
+
+    @admin.display(description="닉네임")
+    def nickname(self, obj: UserGroup):
+        return obj.user.profile.nickname
+
+    @admin.display(description="이메일")
+    def email(self, obj: UserGroup):
+        return obj.user.email
 
 
 @admin.register(Group)
-class GroupAdmin(MetaDataModelAdmin):
+class GroupAdmin(admin.ModelAdmin):
     list_display = (
-        "group_id",
         "name",
+        "description",
         "is_official",
     )
-    search_fields = (
-        "id",
-        "name",
-    )
+    search_fields = ("name",)
