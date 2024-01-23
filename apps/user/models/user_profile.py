@@ -5,7 +5,6 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.utils.functional import cached_property
-from django.utils.translation import gettext_lazy
 
 from apps.user.models import Group
 from ara.db.models import MetaDataModel

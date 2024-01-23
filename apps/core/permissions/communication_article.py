@@ -1,7 +1,5 @@
 from rest_framework import permissions
 
-from apps.user.models import UserProfile
-
 
 class CommunicationArticleAdminPermission(permissions.IsAuthenticated):
     message = "You are not authorized to access this feature"

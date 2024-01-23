@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from enum import IntEnum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.db import models
 
-import apps.core.models.board as board
 from apps.user.models import Group, UserGroup, UserProfile
 
 if TYPE_CHECKING:
@@ -84,16 +83,16 @@ class BoardAccessPermission:
 
 class BoardPermission(models.Model):
     group = models.ForeignKey(
-        on_delete=models.CASCADE,
-        to="user.Group",
-        db_index=True,
         verbose_name="group",
+        to="user.Group",
+        on_delete=models.CASCADE,
+        db_index=True,
     )
     board = models.ForeignKey(
-        on_delete=models.CASCADE,
-        to="core.Board",
-        db_index=True,
         verbose_name="board slug",
+        to="core.Board",
+        on_delete=models.CASCADE,
+        db_index=True,
     )
     permission: int = models.SmallIntegerField(
         verbose_name="permission",

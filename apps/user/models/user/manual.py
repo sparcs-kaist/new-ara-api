@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 
-from apps.user.models import Group, UserProfile
+from apps.user.models import Group
 from ara.db.models import MetaDataModel
 
 

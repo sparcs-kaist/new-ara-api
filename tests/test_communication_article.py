@@ -10,9 +10,6 @@ from apps.core.models import Article, Board, BoardAccessPermissionType, BoardPer
 from apps.core.models.board import NameType
 from apps.core.models.board_permission import (
     DEFAULT_COMMENT_PERMISSION,
-    DEFAULT_PERMISSIONS,
-    DEFAULT_READ_PERMISSION,
-    DEFAULT_WRITE_PERMISSION,
     BoardAccessPermissionType,
     BoardPermission,
 )

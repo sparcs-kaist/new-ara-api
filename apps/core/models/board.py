@@ -1,19 +1,15 @@
-from enum import IntEnum, IntFlag, auto
+from enum import IntFlag, auto
 
 from django.db import models
 from django_extensions.db.fields import AutoSlugField
 
-from apps.user.models import Group, UserProfile
+from apps.user.models import Group
 from ara.db.models import MetaDataModel
 
 from .board_group import BoardGroup
 from .board_permission import (
-    DEFAULT_COMMENT_PERMISSION,
     DEFAULT_PERMISSIONS,
-    DEFAULT_READ_PERMISSION,
-    DEFAULT_WRITE_PERMISSION,
     BoardAccessPermission,
-    BoardAccessPermissionType,
     BoardPermission,
 )
 

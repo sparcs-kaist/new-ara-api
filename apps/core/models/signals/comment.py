@@ -4,7 +4,6 @@ from django.utils import timezone
 
 from apps.core.models import Comment, Notification
 from apps.core.models.communication_article import SchoolResponseStatus
-from apps.user.models import UserProfile
 
 
 @receiver(models.signals.post_save, sender=Comment)
