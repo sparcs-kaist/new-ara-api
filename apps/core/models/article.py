@@ -158,13 +158,6 @@ class Article(MetaDataModel):
         verbose_name = "게시물"
         verbose_name_plural = "게시물 목록"
 
-        indexes = [
-            models.Index(
-                fields=["created_at", "parent_board_id"],
-                name="created_at_parent_board_id_idx",
-            )
-        ]
-
     def __str__(self):
         return self.title
 
