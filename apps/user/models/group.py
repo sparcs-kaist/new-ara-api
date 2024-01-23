@@ -1,4 +1,5 @@
-from django.conf import settings
+from __future__ import annotations
+
 from django.db import models
 
 
@@ -32,9 +33,9 @@ class Group(models.Model):
         return self.name
 
     @staticmethod
-    def search_by_name(name: str) -> list["Group"]:
+    def search_by_name(name: str) -> list[Group]:
         return Group.objects.filter(name=name)
 
     @staticmethod
-    def search_by_id(group_id: int) -> "Group":
+    def search_by_id(group_id: int) -> Group:
         return Group.objects.get(group_id=group_id)
