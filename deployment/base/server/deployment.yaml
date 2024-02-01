@@ -49,5 +49,5 @@ spec:
               configMapKeyRef:
                 name: ara-env
                 key: AWS_ACCESS_KEY_ID
-          - name: REDIS_HOST
+          - name: NEWARA_REDIS_ADDRESS
             value: "ara-redis-service"
