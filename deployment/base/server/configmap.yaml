@@ -9,8 +9,3 @@ data:
   AWS_BUCKET_NAME: "sparcs-newara-dev"
   AWS_BUCKET_NAME_STATIC: "sparcs-kaist-ara-beta-static"
   AWS_ACCESS_KEY_ID: "AKIAZWM3SVKMGCVAUUA3"
-  NEWARA_DB_HOST: "channeltalk.sparcs.org"
-  NEWARA_DB_PORT: "15086"
-  NEWARA_DB_NAME: "new_ara"
-  NEWARA_ELASTICSEARCH_HOST: "channeltalk.sparcs.org"
-  NEWARA_ELASTICSEARCH_PORT: "15084"
