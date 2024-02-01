@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: ara-env
 data:
-  SSO_CLIENT_ID: "test18d2f5a7f0b0956c5ae7"
+  SSO_CLIENT_ID: "test00256eed00703a1485de"
   DJANGO_ENV: "development"
   C_FORCE_ROOT: "true"
   AWS_BUCKET_NAME: "sparcs-newara-dev"
