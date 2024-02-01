@@ -19,16 +19,16 @@ metadata:
 spec:
   ingressClassName: alb
   rules:
-  - host: ara-staging.sparcs.org
+  - host: ara-staging.api.sparcs.org
     http:
       paths:
       - path: /
         backend:
           service:
             name: ara-svc
-            port: 
+            port:
               number: 9000
         pathType: Prefix
   tls:
   - hosts:
-    - ara-staging.sparcs.org
+    - ara-staging.api.sparcs.org

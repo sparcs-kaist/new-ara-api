@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: ara-server
-          image: 666583083672.dkr.ecr.ap-northeast-2.amazonaws.com/newara:prod
+          image: 666583083672.dkr.ecr.ap-northeast-2.amazonaws.com/newara:v3.0.1
           command: ["/newara/www/.docker/run.sh"]
           ports:
           - containerPort: 9000
@@ -29,16 +29,6 @@ spec:
               configMapKeyRef:
                 name: ara-env
                 key: SSO_CLIENT_ID
-          - name: PORTAL_ID
-            valueFrom:
-              configMapKeyRef:
-                name: ara-env
-                key: PORTAL_ID
-          - name: SENTRY_DSN
-            valueFrom:
-              configMapKeyRef:
-                name: ara-env
-                key: SENTRY_DSN
           - name: DJANGO_ENV
             valueFrom:
               configMapKeyRef:
@@ -59,48 +49,5 @@ spec:
               configMapKeyRef:
                 name: ara-env
                 key: AWS_ACCESS_KEY_ID
-          - name: NEWARA_DB_HOST
-            valueFrom:
-              configMapKeyRef:
-                name: ara-env
-                key: NEWARA_DB_HOST
-          - name: NEWARA_DB_PORT
-            valueFrom:
-              configMapKeyRef:
-                name: ara-env
-                key: NEWARA_DB_PORT
-          - name: NEWARA_DB_USER
-            valueFrom:
-              configMapKeyRef:
-                name: ara-env
-                key: NEWARA_DB_USER
-          - name: NEWARA_DB_NAME
-            valueFrom:
-              configMapKeyRef:
-                name: ara-env
-                key: NEWARA_DB_NAME
-          - name: NEWARA_ELASTICSEARCH_HOST
-            valueFrom:
-              configMapKeyRef:
-                name: ara-env
-                key: NEWARA_ELASTICSEARCH_HOST
-          - name: NEWARA_ELASTICSEARCH_PORT
-            valueFrom:
-              configMapKeyRef:
-                name: ara-env
-                key: NEWARA_ELASTICSEARCH_PORT
-          - name: HASH_SECRET_VALUE
-            valueFrom:
-              configMapKeyRef:
-                name: ara-env
-                key: HASH_SECRET_VALUE
           - name: REDIS_HOST
             value: "ara-redis-service"
-          volumeMounts:
-          - mountPath: "/newara/www"
-            name: firebase
-            readOnly: true
-      volumes:
-        - name: firebase
-          secret:
-            secretName: firebase-credentials
