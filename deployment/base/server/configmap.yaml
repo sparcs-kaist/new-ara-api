@@ -4,7 +4,7 @@ metadata:
   name: ara-env
 data:
   SSO_CLIENT_ID: "test18d2f5a7f0b0956c5ae7"
-  DJANGO_ENV: "production"
+  DJANGO_ENV: "development"
   C_FORCE_ROOT: "true"
   AWS_BUCKET_NAME: "sparcs-newara-dev"
   AWS_BUCKET_NAME_STATIC: "sparcs-kaist-ara-beta-static"
