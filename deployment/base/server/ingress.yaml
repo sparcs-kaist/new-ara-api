@@ -19,7 +19,7 @@ metadata:
 spec:
   ingressClassName: alb
   rules:
-  - host: ara-staging.api.sparcs.org
+  - host: ara-staging-api.sparcs.org
     http:
       paths:
       - path: /
@@ -31,4 +31,4 @@ spec:
         pathType: Prefix
   tls:
   - hosts:
-    - ara-staging.api.sparcs.org
+    - ara-staging-api.sparcs.org
