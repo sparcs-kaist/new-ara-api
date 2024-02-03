@@ -9,7 +9,7 @@ from ara.settings import env
 
 if env("DJANGO_ENV") == "production":
     django_env = ""
-    BASE_URL = "https://newara.sparcs.org/post"
+    BASE_URL = "https://newara-api.sparcs.org/post"
 else:
     django_env = "[DEV]"
     BASE_URL = "https://newara.dev.sparcs.org/post"
