@@ -22,8 +22,8 @@ repos:
         args: [--fix=lf]
       - id: trailing-whitespace
 
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.11.5
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v2.4.0
     hooks:
       - id: conventional-pre-commit
         stages: [commit-msg]

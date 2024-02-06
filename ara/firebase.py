@@ -1,20 +1,18 @@
-from firebase_admin import messaging
-
 from apps.user.models import FCMToken
+from ara.fcm import fcm
 
-def fcm_subscrible(FCM_tokens, subs):
+
+def fcm_subscrible(FCM_tokens, subs):  # TODO: fix typo
     for sub in subs:
-        response = messaging.subscribe_to_topic(FCM_tokens, sub)
+        response = fcm.subscribe_to_topic(FCM_tokens, sub)
 
 
-def fcm_unsubscrible(FCM_tokens, subs):
+def fcm_unsubscrible(FCM_tokens, subs):  # TODO: fix typo
     for sub in subs:
-        response = messaging.unsubscribe_from_topic(FCM_tokens, sub)
+        response = fcm.unsubscribe_from_topic(FCM_tokens, sub)
 
 
 def fcm_notify_topic(topic, title, body, open_url):
-    return
-
     try:
         fcm_simple(title, body, open_url, topic=topic)
     except Exception as e:
@@ -22,9 +20,6 @@ def fcm_notify_topic(topic, title, body, open_url):
 
 
 def fcm_notify_user(user, title, body, open_url):
-    ################## Disable FCM ####################
-    return
-
     targets = FCMToken.objects.filter(user=user)
     for i in targets:
         try:
@@ -37,23 +32,21 @@ def fcm_simple(title="Title", body="Body", open_url="/", **kwargs):
     # This registration token comes from the client FCM SDKs.
     # See documentation on defining a message payload.
 
-    ################## Disable FCM ####################
-    return
-    message = messaging.Message(
-        notification=messaging.Notification(
+    message = fcm.Message(
+        notification=fcm.Notification(
             title=title,
             body=body,
         ),
-        webpush=messaging.WebpushConfig(
-            notification=messaging.WebpushNotification(
+        webpush=fcm.WebpushConfig(
+            notification=fcm.WebpushNotification(
                 title=title,
                 body=body,
                 tag=open_url,
                 renotify=True,
                 icon="/img/icons/ara-pwa-192.png",
                 actions=[
-                    messaging.WebpushNotificationAction("action_open", "Open"),
-                    messaging.WebpushNotificationAction("action_close", "Close"),
+                    fcm.WebpushNotificationAction("action_open", "Open"),
+                    fcm.WebpushNotificationAction("action_close", "Close"),
                 ],
             ),
             # Maybe bug: fcm_options.link is not working
@@ -62,5 +55,5 @@ def fcm_simple(title="Title", body="Body", open_url="/", **kwargs):
         **kwargs,
     )
 
-    response = messaging.send(message)
+    response = fcm.send(message)
     # Response is a message ID string.

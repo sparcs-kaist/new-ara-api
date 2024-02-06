@@ -1,9 +1,12 @@
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils.functional import cached_property
 
 from apps.user.models import FCMTopic
 from ara.db.models import MetaDataModel
 from ara.firebase import fcm_notify_topic, fcm_notify_user
+
+User = get_user_model()
 
 TYPE_CHOICES = (
     ("default", "default"),
@@ -101,7 +104,7 @@ class Notification(MetaDataModel):
 
         def notify_article_commented(_parent_article, _comment):
             title = f"{_comment.created_by.profile.nickname} 님이 새로운 댓글을 작성했습니다."
-            topic = f"article_comment_{_parent_article.id}"
+            topic = f"article_commented_{_parent_article.id}"
 
             subs_id = list(
                 FCMTopic.objects.filter(topic=topic).values_list("user", flat=True)
@@ -140,7 +143,7 @@ class Notification(MetaDataModel):
 
         def notify_comment_commented(_parent_article, _comment):
             title = f"{_comment.created_by.profile.nickname} 님이 새로운 대댓글을 작성했습니다."
-            topic = f"article_comment_{_parent_article.id}"
+            topic = f"comment_commented_{_comment.id}"
 
             subs_id = list(
                 FCMTopic.objects.filter(topic=topic).values_list("user", flat=True)
