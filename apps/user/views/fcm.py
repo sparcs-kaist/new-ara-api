@@ -1,12 +1,14 @@
+import typing
+
 from django.utils import timezone
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.user.models import FCMToken, FCMTopic
 from ara.firebase import fcm_subscrible, fcm_unsubscrible
-from rest_framework.permissions import IsAuthenticated
-import typing
+
 
 class FCMTokenView(APIView):
     def patch(self, request, mode):
@@ -16,7 +18,9 @@ class FCMTokenView(APIView):
         elif mode == "update":
             if not request.user.is_authenticated:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
-            token = FCMToken(token=token, user=request.user, last_activated_at=timezone.now())
+            token = FCMToken(
+                token=token, user=request.user, last_activated_at=timezone.now()
+            )
             token.save()
         return Response(status=status.HTTP_200_OK)
 
@@ -35,7 +39,7 @@ class FCMTopicView(APIView):
     def patch(self, request):
         topic_put_list: typing.List[str] = request.data.get("put")
         topic_delete_list: typing.List[str] = request.data.get("delete")
-        # TODO: santize user topic list to available topics
+        # TODO: sanitize user topic list to available topics
         user_id = str(request.user.id)
 
         user_tokens = list(
