@@ -51,7 +51,7 @@ def _login_kaist_portal():
         f"{BASE_URL}/board/list.brd?boardId=today_notice&lang_knd=ko&userAgent=Chrome&isMobile=false&page=1&userAgent=Chrome&isMobile=False&sortColumn=REG_DATIM&sortMethod=DESC",
         cookies=COOKIES,
     )
-    log.info("_login_kaist_portal status code: %s", response.status_code)
+    log.info(f"_login_kaist_portal status code: {response.status_code}")
     return session
 
 
@@ -194,7 +194,7 @@ def crawl_hour(day=None):
     # parameter에서 default로 바로 today()하면, 캐싱되어서 업데이트가 안됨
     if day is None:
         day = timezone.datetime.today().date()
-    logging.log(f"crawl_hour running for day {day}")
+    log.info(f"crawl_hour running for day {day}")
 
     session = _login_kaist_portal()
 
