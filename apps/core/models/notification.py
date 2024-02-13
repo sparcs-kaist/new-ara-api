@@ -143,7 +143,7 @@ class Notification(MetaDataModel):
 
         def notify_comment_commented(_parent_article, _comment):
             title = f"{_comment.created_by.profile.nickname} 님이 새로운 대댓글을 작성했습니다."
-            topic = f"comment_commented_{_comment.id}"
+            topic = f"comment_commented_{_comment.parent_comment.id}"
 
             subs_id = list(
                 FCMTopic.objects.filter(topic=topic).values_list("user", flat=True)
