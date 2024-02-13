@@ -33,9 +33,13 @@ LOGGING = {
         },
     },
     "loggers": {
-        "default": {"handlers": ["default"], "level": "DEBUG", "propagate": True},
+        "default": {
+            "handlers": ["default"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
         "ara_logger": {
-            "handlers": ["rotating_file"],
+            "handlers": ["rotating_file", "console"],
             "level": "DEBUG",
             "propagate": False,
         },

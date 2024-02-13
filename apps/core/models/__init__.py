@@ -18,3 +18,4 @@ from .scrap import *
 from .signals import *
 from .topic import *
 from .vote import *
+from .portal_view_count import *
