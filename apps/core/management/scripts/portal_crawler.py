@@ -326,7 +326,14 @@ def crawl_hour(day=None):
         last_portal_article_in_db.save()
         new_articles.pop()
 
-    created_articles = Article.objects.bulk_create(new_articles)
+    # @NOTE
+    # MySQL's bulk_create method does not return IDs. However, PortalViewCount requires the IDs of the created articles.
+    # Therefore, insert one article at a time and retrieve their IDs.
+    # Reference: https://docs.djangoproject.com/en/5.0/ref/models/querysets/#bulk-create
+    created_articles = []
+    for new_article in new_articles:
+        new_article.save()
+        created_articles.append(new_article)
 
     new_portal_view_counts = []
 
