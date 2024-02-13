@@ -1,13 +1,18 @@
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils.functional import cached_property
 
+from apps.user.models import FCMTopic
 from ara.db.models import MetaDataModel
-from ara.firebase import fcm_notify_comment
+from ara.firebase import fcm_notify_topic, fcm_notify_user
+
+User = get_user_model()
 
 TYPE_CHOICES = (
     ("default", "default"),
     ("article_commented", "article_commented"),
     ("comment_commented", "comment_commented"),
+    ("article_new", "article_new"),
 )
 
 
@@ -56,24 +61,81 @@ class Notification(MetaDataModel):
             "click_action": "",
         }
 
+    # TODO: Support English
+    # TODO: add test code
+    @classmethod
+    def notify_article(cls, article):
+        from apps.core.models import NotificationReadLog
+
+        board_topic_str = (
+            f" - {article.parent_topic.ko_name}" if article.parent_topic else ""
+        )
+        title = f"[{article.parent_board.ko_name}{board_topic_str}] 새로운 글이 달렸습니다: {article.title[:32]}"
+        topic = f"board_{article.parent_board_id}"
+
+        subs_id = FCMTopic.objects.filter(topic=topic).values_list("user", flat=True)
+        subs = User.objects.filter(id__in=subs_id)
+
+        NotificationReadLog.objects.bulk_create(
+            [
+                NotificationReadLog(
+                    read_by=sub,
+                    notification=cls.objects.create(
+                        type="article_new",
+                        title=title,
+                        content=article.content_text[:32],
+                        related_article=article,
+                        related_comment=None,
+                    ),
+                )
+                for sub in subs
+            ]
+        )
+        fcm_notify_topic(
+            topic,
+            title,
+            article.content_text[:32],
+            f"post/{article.id}",
+        )
+
     @classmethod
     def notify_commented(cls, comment):
         from apps.core.models import NotificationReadLog
 
         def notify_article_commented(_parent_article, _comment):
             title = f"{_comment.created_by.profile.nickname} 님이 새로운 댓글을 작성했습니다."
-            NotificationReadLog.objects.create(
-                read_by=_parent_article.created_by,
-                notification=cls.objects.create(
-                    type="article_commented",
-                    title=title,
-                    content=_comment.content[:32],
-                    related_article=_parent_article,
-                    related_comment=None,
-                ),
+            topic = f"article_commented_{_parent_article.id}"
+
+            subs_id = list(
+                FCMTopic.objects.filter(topic=topic).values_list("user", flat=True)
             )
-            fcm_notify_comment(
+            subs_id.append(_parent_article.created_by.id)
+            subs = User.objects.filter(id__in=subs_id)
+
+            NotificationReadLog.objects.bulk_create(
+                [
+                    NotificationReadLog(
+                        read_by=sub,
+                        notification=cls.objects.create(
+                            type="article_commented",
+                            title=title,
+                            content=_comment.content[:32],
+                            related_article=_parent_article,
+                            related_comment=None,
+                        ),
+                    )
+                    for sub in subs
+                ]
+            )
+
+            fcm_notify_user(
                 _parent_article.created_by,
+                title,
+                _comment.content[:32],
+                f"post/{_parent_article.id}",
+            )
+            fcm_notify_topic(
+                topic,
                 title,
                 _comment.content[:32],
                 f"post/{_parent_article.id}",
@@ -81,18 +143,38 @@ class Notification(MetaDataModel):
 
         def notify_comment_commented(_parent_article, _comment):
             title = f"{_comment.created_by.profile.nickname} 님이 새로운 대댓글을 작성했습니다."
-            NotificationReadLog.objects.create(
-                read_by=_comment.parent_comment.created_by,
-                notification=cls.objects.create(
-                    type="comment_commented",
-                    title=title,
-                    content=_comment.content[:32],
-                    related_article=_parent_article,
-                    related_comment=_comment.parent_comment,
-                ),
+            topic = f"comment_commented_{_comment.parent_comment.id}"
+
+            subs_id = list(
+                FCMTopic.objects.filter(topic=topic).values_list("user", flat=True)
             )
-            fcm_notify_comment(
+            subs_id.append(_comment.parent_comment.created_by.id)
+            subs = User.objects.filter(id__in=subs_id)
+
+            NotificationReadLog.objects.bulk_create(
+                [
+                    NotificationReadLog(
+                        read_by=sub,
+                        notification=cls.objects.create(
+                            type="comment_commented",
+                            title=title,
+                            content=_comment.content[:32],
+                            related_article=_parent_article,
+                            related_comment=_comment.parent_comment,
+                        ),
+                    )
+                    for sub in subs
+                ]
+            )
+
+            fcm_notify_user(
                 _comment.parent_comment.created_by,
+                title,
+                _comment.content[:32],
+                f"post/{_parent_article.id}",
+            )
+            fcm_notify_topic(
+                topic,
                 title,
                 _comment.content[:32],
                 f"post/{_parent_article.id}",

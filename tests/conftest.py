@@ -8,7 +8,8 @@ from django.test import TestCase as DjangoTestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from apps.user.models import UserProfile
+from apps.core.models import Article, Board, Topic, UserProfile
+from apps.core.models.board import NameType
 from ara import redis
 
 User = get_user_model()
@@ -171,6 +172,129 @@ def set_school_admin(request):
         )
 
     request.cls.api_client = APIClient()
+
+
+@pytest.fixture(scope="class")
+def set_boards(request):
+    request.cls.board = Board.objects.create(
+        slug="test board",
+        ko_name="테스트 게시판",
+        en_name="Test Board",
+        name_type=NameType.REGULAR,
+    )
+
+    request.cls.anon_board = Board.objects.create(
+        slug="anonymous",
+        ko_name="익명 게시판",
+        en_name="Anonymous",
+        name_type=NameType.ANONYMOUS,
+    )
+
+    request.cls.free_board = Board.objects.create(
+        slug="free",
+        ko_name="자유 게시판",
+        en_name="Free",
+        name_type=NameType.ANONYMOUS | NameType.REGULAR,
+    )
+
+    request.cls.realname_board = Board.objects.create(
+        slug="test realname board",
+        ko_name="테스트 실명 게시판",
+        en_name="Test realname Board",
+        name_type=NameType.REALNAME,
+    )
+
+    request.cls.regular_access_board = Board.objects.create(
+        slug="regular access",
+        ko_name="일반 접근 권한 게시판",
+        en_name="Regular Access Board",
+        read_access_mask=0b11011110,
+        write_access_mask=0b11011010,
+    )
+
+    # Though its name is 'advertiser accessible', enterprise is also accessible
+    request.cls.advertiser_accessible_board = Board.objects.create(
+        slug="advertiser accessible",
+        ko_name="외부인(홍보 계정) 접근 가능 게시판",
+        en_name="Advertiser Accessible Board",
+        read_access_mask=0b11111110,
+        write_access_mask=0b11111110,
+    )
+
+    request.cls.nonwritable_board = Board.objects.create(
+        slug="nonwritable",
+        ko_name="글 작성 불가 게시판",
+        en_name="Nonwritable Board",
+        write_access_mask=0b00000000,
+    )
+
+    request.cls.newsadmin_writable_board = Board.objects.create(
+        slug="newsadmin writable",
+        ko_name="뉴스게시판 관리인 글 작성 가능 게시판",
+        en_name="Newsadmin Writable Board",
+        write_access_mask=0b10000000,
+    )
+
+    request.cls.enterprise_writable_board = Board.objects.create(
+        slug="enterprise writable",
+        ko_name="입주업체 글 작성 가능 게시판",
+        en_name="Enterprise Writable Board",
+        write_access_mask=0b11011110,
+    )
+
+
+@pytest.fixture(scope="class")
+def set_topics(request):
+    """set_board 먼저 적용"""
+    request.cls.topic = Topic.objects.create(
+        slug="test topic",
+        ko_name="테스트 토픽",
+        en_name="Test Topic",
+        parent_board=request.cls.board,
+    )
+
+    request.cls.realname_topic = Topic.objects.create(
+        slug="test realname topic",
+        ko_name="테스트 실명 토픽",
+        en_name="Test realname Topic",
+        parent_board=request.cls.realname_board,
+    )
+
+
+@pytest.fixture(scope="class")
+def set_articles(request):
+    """set_board 먼저 적용"""
+    request.cls.article = Article.objects.create(
+        title="example article",
+        content="example content",
+        content_text="example content text",
+        name_type=NameType.REGULAR,
+        is_content_sexual=False,
+        is_content_social=False,
+        hit_count=0,
+        positive_vote_count=0,
+        negative_vote_count=0,
+        created_by=request.cls.user,
+        parent_topic=request.cls.topic,
+        parent_board=request.cls.board,
+        commented_at=timezone.now(),
+    )
+
+    request.cls.regular_access_article = Article.objects.create(
+        title="regular access article",
+        content="regular access article content",
+        content_text="regular access article content",
+        created_by=request.cls.user,
+        parent_board=request.cls.regular_access_board,
+    )
+
+    request.cls.advertiser_accessible_article = Article.objects.create(
+        title="advertiser readable article",
+        content="advertiser readable article content",
+        content_text="advertiser readable article content",
+        created_by=request.cls.user,
+        parent_board=request.cls.advertiser_accessible_board,
+    )
 
 
 class RequestSetting:

@@ -4,9 +4,6 @@ from django.utils import timezone
 
 
 class FCMToken(models.Model):
-    class Meta:
-        ordering = ("-created_at",)
-
     created_at = models.DateTimeField(
         default=timezone.now,
         db_index=True,
@@ -35,3 +32,6 @@ class FCMToken(models.Model):
     is_web = models.BooleanField(
         default=True, db_index=True, verbose_name="토큰 부여 플랫폼이 웹인지 여부"
     )
+
+    class Meta:
+        ordering = ("-created_at",)
