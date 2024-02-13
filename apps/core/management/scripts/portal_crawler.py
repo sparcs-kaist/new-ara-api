@@ -163,13 +163,13 @@ def _get_portal_article(url, session):
 
     for tr in trs:
         if len(list(tr.children)) == 3:
-            html = tr.find("td").prettify()
+            html = str(tr.find("td"))
             break
 
     if html is None:
         for tr in trs:
             if len(list(tr.children)) == 2:
-                html = tr.find("td").prettify()
+                html = str(tr.find("td"))
                 break
 
     html = _save_portal_image(html, session)
