@@ -208,11 +208,21 @@ def crawl_hour(day=None):
         linklist = []
         links = soup.select("table > tbody > tr > td > a")
         dates = soup.select("table > tbody > tr > td:nth-child(5)")
+        total = soup.select("div > ul > li > em")[0].get_text()
 
-        if links:
-            log.info("------- portal login success!")
-        else:
-            log.info("------- portal login failed!")
+        if not links:
+            log.error("------- portal login failed!")
+            raise RuntimeError("portal login failed!")
+
+        if int(total) < 10_000:
+            """
+            If the total number of response articles is small,
+            all responses are public. (LOGIN FAILED)
+            """
+            log.error("------- portal login cookie failed!")
+            raise RuntimeError(f"portal login cookie {COOKIES} failed!")
+
+        log.info("------- portal login success!")
 
         today_date = str(day).replace("-", ".")
         for link, date in zip(links, dates):
