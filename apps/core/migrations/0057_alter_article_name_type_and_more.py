@@ -20,11 +20,4 @@ class Migration(migrations.Migration):
                 verbose_name="익명 혹은 실명 여부",
             ),
         ),
-        migrations.AddIndex(
-            model_name="article",
-            index=models.Index(
-                fields=["created_at", "parent_board_id"],
-                name="created_at_parent_board_id_idx",
-            ),
-        ),
     ]
