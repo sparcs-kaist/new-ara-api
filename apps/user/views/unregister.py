@@ -33,9 +33,9 @@ def smtp_send(
     each True: Send email to each receiver. Receivers cannot see other receivers.
     each False: Send email to all receivers. Receivers can see other receivers.
     """
-    allowed_mail_domain = ["@sparcs.org"]
+    allowed_mail_domains = ("@sparcs.org",)
 
-    if not sender_mail.endswith(tuple(allowed_mail_domain)):
+    if not sender_mail.endswith(allowed_mail_domains):
         raise ValueError("Invalid email domain")
 
     smtp = smtplib.SMTP("smtp-relay.gmail.com", 587)
