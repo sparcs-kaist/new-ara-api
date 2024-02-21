@@ -111,6 +111,9 @@ def _get_portal_article(url, session):
         hash = enc.hexdigest()[:20]
         filename = f'files/portal_image_{hash}.{url.split("_")[-1]}'
 
+        if url.startswith("/board"):
+            url = str(BASE_URL) + url
+
         r = session.get(url, stream=True, cookies=COOKIES)
         if r.status_code == 200:
             s3 = boto3.client("s3")
