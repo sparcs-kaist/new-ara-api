@@ -111,6 +111,9 @@ def _get_portal_article(url, session):
         hash = enc.hexdigest()[:20]
         filename = f'files/portal_image_{hash}.{url.split("_")[-1]}'
 
+        if url.startswith("/board"):
+            url = str(BASE_URL) + url
+
         r = session.get(url, stream=True, cookies=COOKIES)
         if r.status_code == 200:
             s3 = boto3.client("s3")
@@ -122,12 +125,10 @@ def _get_portal_article(url, session):
         soup = bs(html, "lxml")
         for child in soup.find_all("img", {}):
             old_url = child.attrs.get("src")
-            try:
-                new_url = _get_new_url_and_save_to_s3(old_url, session)
-                child["src"] = new_url
-            except Exception as exc:
-                log.info(child)
-                raise exec
+            if old_url is None:
+                continue
+            new_url = _get_new_url_and_save_to_s3(old_url, session)
+            child["src"] = new_url
 
         return str(soup)
 
