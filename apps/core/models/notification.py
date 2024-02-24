@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils.functional import cached_property
 
+from apps.core.models import Article, Comment
+from apps.core.models.board import NameType
 from ara.db.models import MetaDataModel
 from ara.firebase import fcm_notify_comment
 
@@ -57,11 +59,25 @@ class Notification(MetaDataModel):
         }
 
     @classmethod
+    def check_username(article: Article, comment: Comment, title: str) -> str:
+        if article.name_type == NameType.REALNAME:
+            title.format(user=comment.created_by.profile.realname)
+        elif article.name_type == NameType.REGULAR:
+            title.format(user=comment.created_by.profile.nickname)
+        else:
+            title.format(user="익명")
+
+        return title
+
+    @classmethod
     def notify_commented(cls, comment):
         from apps.core.models import NotificationReadLog
 
-        def notify_article_commented(_parent_article, _comment):
-            title = f"{_comment.created_by.profile.nickname} 님이 새로운 댓글을 작성했습니다."
+        def notify_article_commented(_parent_article: Article, _comment: Comment):
+            title = cls.check_username(
+                _parent_article, _comment, "{user} 님이 새로운 댓글을 작성했습니다."
+            )
+
             NotificationReadLog.objects.create(
                 read_by=_parent_article.created_by,
                 notification=cls.objects.create(
@@ -79,8 +95,10 @@ class Notification(MetaDataModel):
                 f"post/{_parent_article.id}",
             )
 
-        def notify_comment_commented(_parent_article, _comment):
-            title = f"{_comment.created_by.profile.nickname} 님이 새로운 대댓글을 작성했습니다."
+        def notify_comment_commented(_parent_article: Article, _comment: Comment):
+            title = cls.check_username(
+                _parent_article, _comment, "{user} 님이 새로운 대댓글을 작성했습니다."
+            )
             NotificationReadLog.objects.create(
                 read_by=_comment.parent_comment.created_by,
                 notification=cls.objects.create(
