@@ -1,22 +1,17 @@
 from django.db import models
+
 from ara.db.models import MetaDataModel
-from django.utils import timezone
 
 
 class PortalViewCount(MetaDataModel):
     article = models.ForeignKey(
-        on_delete=models.CASCADE,
         to="core.Article",
-        null=False,
+        on_delete=models.CASCADE,
         related_name="게시물",
+        null=False,
     )
 
-    view_count = models.IntegerField(
+    view_count = models.PositiveIntegerField(
+        verbose_name="조회수",
         default=0,
-        verbose_name="조회수 값",
-    )
-
-    created_at = models.DateTimeField(
-        default=timezone.now,
-        verbose_name="생성 시간",
     )
