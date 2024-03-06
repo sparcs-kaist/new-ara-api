@@ -6,11 +6,13 @@ DEBUG = False
 
 ALLOWED_HOSTS = [
     "newara.sparcs.org",
+    "newara-api.sparcs.org",
     "ara.sparcs.org",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://newara.sparcs.org",
+    "https://newara-api.sparcs.org",
     "https://ara.sparcs.org",
 ]
 

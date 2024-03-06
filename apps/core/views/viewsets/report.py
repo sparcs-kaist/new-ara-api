@@ -56,7 +56,7 @@ class ReportViewSet(
     def send_email_for_article_report(request):
         django_env = "PROD" if env("DJANGO_ENV") == "production" else "DEV"
         article_link = (
-            "newara.sparcs.org"
+            "newara-api.sparcs.org"
             if env("DJANGO_ENV") == "production"
             else "newara.dev.sparcs.org"
         )
