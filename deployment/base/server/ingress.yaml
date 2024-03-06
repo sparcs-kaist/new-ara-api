@@ -20,7 +20,7 @@ metadata:
 spec:
   ingressClassName: alb
   rules:
-  - host: ara-api.sparcs.org
+  - host: newara-api.sparcs.org
     http:
       paths:
       - path: /
@@ -32,4 +32,4 @@ spec:
         pathType: Prefix
   tls:
   - hosts:
-    - ara-api.sparcs.org
+    - newara-api.sparcs.org
