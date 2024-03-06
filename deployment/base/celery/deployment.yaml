@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ara-celery
+  labels:
+    app: ara-celery
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ara-celery
+  template:
+    metadata:
+      labels:
+        app: ara-celery
+    spec:
+      containers:
+      - name: ara-celery
+        image: 666583083672.dkr.ecr.ap-northeast-2.amazonaws.com/newara:v3.4.1
+        command: ["/newara/www/.docker/run-celery.sh"]
