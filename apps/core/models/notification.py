@@ -14,40 +14,40 @@ TYPE_CHOICES = (
 
 
 class Notification(MetaDataModel):
-    class Meta(MetaDataModel.Meta):
-        verbose_name = "알림"
-        verbose_name_plural = "알림 목록"
-
     type = models.CharField(
+        verbose_name="알림 종류",
         choices=TYPE_CHOICES,
         default="default",
         max_length=32,
-        verbose_name="알림 종류",
     )
     title = models.CharField(
-        max_length=256,
         verbose_name="제목",
+        max_length=256,
     )
     content = models.TextField(
         verbose_name="내용",
     )
 
     related_article = models.ForeignKey(
-        on_delete=models.CASCADE,
+        verbose_name="알림 관련 제보",
         to="core.Article",
+        on_delete=models.CASCADE,
+        related_name="notification_set",
         null=True,
         db_index=True,
-        related_name="notification_set",
-        verbose_name="알림 관련 제보",
     )
     related_comment = models.ForeignKey(
-        on_delete=models.CASCADE,
+        verbose_name="알림 관련 댓글",
         to="core.Comment",
+        on_delete=models.CASCADE,
+        related_name="notification_set",
         null=True,
         db_index=True,
-        related_name="notification_set",
-        verbose_name="알림 관련 댓글",
     )
+
+    class Meta(MetaDataModel.Meta):
+        verbose_name = "알림"
+        verbose_name_plural = "알림 목록"
 
     @cached_property
     def data(self) -> dict:
