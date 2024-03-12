@@ -15,6 +15,6 @@ spec:
         app: ara-celery
     spec:
       containers:
-      - name: ara-celery
-        image: 666583083672.dkr.ecr.ap-northeast-2.amazonaws.com/newara:v3.4.1
-        command: ["/newara/www/.docker/run-celery.sh"]
+        - name: ara-celery
+          image: 666583083672.dkr.ecr.ap-northeast-2.amazonaws.com/newara:v3.4.3
+          command: ["/newara/www/.docker/run-celery.sh"]
