@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from django.db import models
 from django.utils.functional import cached_property
 
@@ -5,6 +9,9 @@ from apps.core.models import Article, Comment
 from apps.core.models.board import NameType
 from ara.db.models import MetaDataModel
 from ara.firebase import fcm_notify_comment
+
+if TYPE_CHECKING:
+    from apps.user.models import UserProfile
 
 TYPE_CHOICES = (
     ("default", "default"),
@@ -58,25 +65,22 @@ class Notification(MetaDataModel):
             "click_action": "",
         }
 
-    @classmethod
-    def check_username(article: Article, comment: Comment, title: str) -> str:
+    @staticmethod
+    def get_display_name(article: Article, profile: UserProfile):
         if article.name_type == NameType.REALNAME:
-            title.format(user=comment.created_by.profile.realname)
+            return profile.realname
         elif article.name_type == NameType.REGULAR:
-            title.format(user=comment.created_by.profile.nickname)
+            return profile.nickname
         else:
-            title.format(user="익명")
-
-        return title
+            return "익명"
 
     @classmethod
     def notify_commented(cls, comment):
         from apps.core.models import NotificationReadLog
 
         def notify_article_commented(_parent_article: Article, _comment: Comment):
-            title = cls.check_username(
-                _parent_article, _comment, "{user} 님이 새로운 댓글을 작성했습니다."
-            )
+            name = cls.get_display_name(_parent_article, _comment.created_by.profile)
+            title = f"{name} 님이 새로운 댓글을 작성했습니다."
 
             NotificationReadLog.objects.create(
                 read_by=_parent_article.created_by,
@@ -96,9 +100,9 @@ class Notification(MetaDataModel):
             )
 
         def notify_comment_commented(_parent_article: Article, _comment: Comment):
-            title = cls.check_username(
-                _parent_article, _comment, "{user} 님이 새로운 대댓글을 작성했습니다."
-            )
+            name = cls.get_display_name(_parent_article, _comment.created_by.profile)
+            title = f"{name} 님이 새로운 대댓글을 작성했습니다."
+
             NotificationReadLog.objects.create(
                 read_by=_comment.parent_comment.created_by,
                 notification=cls.objects.create(
