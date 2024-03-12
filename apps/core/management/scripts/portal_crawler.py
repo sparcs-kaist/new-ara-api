@@ -125,12 +125,10 @@ def _get_portal_article(url, session):
         soup = bs(html, "lxml")
         for child in soup.find_all("img", {}):
             old_url = child.attrs.get("src")
-            try:
-                new_url = _get_new_url_and_save_to_s3(old_url, session)
-                child["src"] = new_url
-            except Exception as exc:
-                log.info(child)
-                raise exec
+            if old_url is None:
+                continue
+            new_url = _get_new_url_and_save_to_s3(old_url, session)
+            child["src"] = new_url
 
         return str(soup)
 
