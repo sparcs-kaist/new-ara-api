@@ -49,3 +49,5 @@ spec:
                   key: AWS_ACCESS_KEY_ID
             - name: NEWARA_REDIS_ADDRESS
               value: "ara-redis-service"
+            - name: C_FORCE_ROOT
+              value: "true"
