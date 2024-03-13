@@ -18,3 +18,34 @@ spec:
         - name: ara-celery
           image: 666583083672.dkr.ecr.ap-northeast-2.amazonaws.com/newara:v3.4.3
           command: ["/newara/www/.docker/run-celery.sh"]
+          envFrom:
+            - secretRef:
+                name: ara-secret
+          env:
+            - name: SSO_CLIENT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: ara-env
+                  key: SSO_CLIENT_ID
+            - name: DJANGO_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: ara-env
+                  key: DJANGO_ENV
+            - name: AWS_BUCKET_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: ara-env
+                  key: AWS_BUCKET_NAME
+            - name: AWS_BUCKET_NAME_STATIC
+              valueFrom:
+                configMapKeyRef:
+                  name: ara-env
+                  key: AWS_BUCKET_NAME_STATIC
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: ara-env
+                  key: AWS_ACCESS_KEY_ID
+            - name: NEWARA_REDIS_ADDRESS
+              value: "ara-redis-service"
