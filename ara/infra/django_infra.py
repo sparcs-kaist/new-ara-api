@@ -1,15 +1,14 @@
 from typing import Any, Generic, Optional, Type, TypeVar, Union
 
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.models import Model
 
-from ara.db.models import MetaDataModel
 from ara.domain.ara_entity import NewAraEntity, NewAraEntityCreateInput
 
-T = TypeVar("T", bound=MetaDataModel)
+T = TypeVar("T", bound=Model)
 
 
 class NewAraDjangoInfra(Generic[T]):
-
     def __init__(self, model: Type[T]) -> None:
         self.model = model
 
@@ -106,14 +105,14 @@ class NewAraDjangoInfra(Generic[T]):
         except ObjectDoesNotExist:
             return None
 
-    def _to_model(self, entity: NewAraEntity) -> MetaDataModel:
+    def _to_model(self, entity: NewAraEntity) -> Model:
         raise NotImplementedError()
 
     @staticmethod
     def convert_model_to_entity(model: T) -> NewAraEntity:
         raise NotImplementedError()
 
-    def _convert_entity_to_model(self, entity: NewAraEntity) -> MetaDataModel:
+    def _convert_entity_to_model(self, entity: NewAraEntity) -> Model:
         raise NotImplementedError()
 
     def _convert_create_input_to_model(
