@@ -16,7 +16,7 @@ class BoardInfra(NewAraDjangoInfra[Board]):
         super().__init__(Board)
         self.board_group_infra = BoardGroupInfra()
 
-    def get_all(self) -> list[BoardInfo]:
+    def get_all_boards(self) -> list[BoardInfo]:
         queryset = Board.objects.select_related("group").extra(
             select={
                 "topic_id": "topic.id",
