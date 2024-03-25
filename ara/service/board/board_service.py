@@ -2,7 +2,7 @@ from ara.domain.board.board_domain import BoardDomain
 from ara.domain.board.type import BoardInfo
 
 
-class BadgeApplication:
+class BoardService:
     def __init__(self) -> None:
         self.board_domain = BoardDomain()
 
