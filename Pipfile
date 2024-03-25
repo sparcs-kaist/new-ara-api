@@ -38,6 +38,7 @@ uritemplate = "*"
 tqdm = "*"
 lxml = "*"
 django-ses = "*"
+pydantic = "*"
 
 [dev-packages]
 black = "*"
