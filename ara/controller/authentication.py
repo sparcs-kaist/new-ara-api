@@ -1,0 +1,3 @@
+class AuthLoggedInUser:
+    # TODO
+    pass
