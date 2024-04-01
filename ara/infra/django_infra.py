@@ -1,4 +1,4 @@
-from typing import Any, Generic, Optional, Type, TypeVar, Union
+from typing import Any, Generic, Type, TypeVar, Union
 
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Model
@@ -31,7 +31,7 @@ class NewAraDjangoInfra(Generic[T]):
     def get_filtered_objects(
         self,
         *,
-        columns: Optional[list[str]] = None,
+        columns: list[str] | None = None,
         conditions: dict[str, Any],
         is_select_for_update: bool = False,
     ) -> list[Union[T, dict[str, Any]]]:
@@ -40,7 +40,7 @@ class NewAraDjangoInfra(Generic[T]):
         Should not be used for complex & specific purpose queries.
 
         Args:
-            columns (Optional[List[str]]):
+            columns (List[str] | None):
                 List of column names to fetch. Get all columns if None. Default None.
             conditions (Dict[str, Any]):
                 Dictionary of field names and their corresponding values to filter by.
@@ -93,7 +93,7 @@ class NewAraDjangoInfra(Generic[T]):
     def update_or_create(self, **kwargs) -> tuple[T, bool]:
         return self.model.objects.update_or_create(**kwargs)
 
-    def get_by(self, **kwargs) -> Optional[T]:
+    def get_by(self, **kwargs) -> T | None:
         """Returns repository model instance if exists.
 
         :param kwargs: keyword arguments of fields

@@ -1,12 +1,12 @@
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
 
 class PaginatedData(BaseModel):
     count: int
-    next: Optional[str]
-    previous: Optional[str]
+    next: str | None
+    previous: str | None
     results: list[Any]
 
 

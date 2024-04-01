@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, NamedTuple, Optional
+from typing import Any, NamedTuple
 
 from pydantic import BaseModel
 
@@ -11,7 +11,7 @@ class NewAraResponse(NamedTuple):
 
 class NewAraErrorResponseBody(BaseModel):
     # necessary
-    error_code: Optional[int]
+    error_code: int | None
     error_reason: str = ""
 
     def __init__(self, exception: Exception):
