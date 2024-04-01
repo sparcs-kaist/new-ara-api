@@ -3,12 +3,12 @@ from typing import Any, Generic, Type, TypeVar, Union
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Model
 
-from ara.domain.ara_entity import NewAraEntity, NewAraEntityCreateInput
+from ara.domain.ara_entity import AraEntity, AraEntityCreateInput
 
 T = TypeVar("T", bound=Model)
 
 
-class NewAraDjangoInfra(Generic[T]):
+class AraDjangoInfra(Generic[T]):
     def __init__(self, model: Type[T]) -> None:
         self.model = model
 
@@ -105,22 +105,20 @@ class NewAraDjangoInfra(Generic[T]):
         except ObjectDoesNotExist:
             return None
 
-    def _to_model(self, entity: NewAraEntity) -> Model:
+    def _to_model(self, entity: AraEntity) -> Model:
         raise NotImplementedError()
 
     @staticmethod
-    def convert_model_to_entity(model: T) -> NewAraEntity:
+    def convert_model_to_entity(model: T) -> AraEntity:
         raise NotImplementedError()
 
-    def _convert_entity_to_model(self, entity: NewAraEntity) -> Model:
+    def _convert_entity_to_model(self, entity: AraEntity) -> Model:
         raise NotImplementedError()
 
-    def _convert_create_input_to_model(
-        self, create_input: NewAraEntityCreateInput
-    ) -> T:
+    def _convert_create_input_to_model(self, create_input: AraEntityCreateInput) -> T:
         raise NotImplementedError()
 
-    def bulk_update_entity(self, entities: list[NewAraEntity]):
+    def bulk_update_entity(self, entities: list[AraEntity]):
         if len(entities) == 0:
             return
 
@@ -137,7 +135,7 @@ class NewAraDjangoInfra(Generic[T]):
     def bulk_update(self, instances: list[T], fields: list[str]):
         return self.model.objects.bulk_update(instances, fields)
 
-    def bulk_create(self, inputs: list[NewAraEntityCreateInput]) -> list[NewAraEntity]:
+    def bulk_create(self, inputs: list[AraEntityCreateInput]) -> list[AraEntity]:
         instances = [self._convert_create_input_to_model(input) for input in inputs]
         created_instances = self.model.objects.bulk_create(instances)
         entities = [
@@ -146,7 +144,7 @@ class NewAraDjangoInfra(Generic[T]):
         ]
         return entities
 
-    def save_entity(self, entity: NewAraEntity):
+    def save_entity(self, entity: AraEntity):
         model = self._convert_entity_to_model(entity)
         model.save()
         return entity

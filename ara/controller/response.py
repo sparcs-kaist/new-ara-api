@@ -4,18 +4,18 @@ from typing import Any, NamedTuple
 from pydantic import BaseModel
 
 
-class NewAraResponse(NamedTuple):
+class AraResponse(NamedTuple):
     status_code: HTTPStatus
     data: Any
 
 
-class NewAraErrorResponseBody(BaseModel):
+class AraErrorResponseBody(BaseModel):
     # necessary
     error_code: int | None
     error_reason: str = ""
 
     def __init__(self, exception: Exception):
         message = str(exception)
-        # TODO: Create NewAraException and use error_code & error_reason
+        # TODO: Create AraException and use error_code & error_reason
         data = {"message": message}
         super().__init__(**data)

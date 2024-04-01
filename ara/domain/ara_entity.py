@@ -3,7 +3,7 @@ from typing import Any
 from pydantic import BaseModel, PrivateAttr
 
 
-class NewAraEntity(BaseModel):
+class AraEntity(BaseModel):
     _updated_fields: set[str] = PrivateAttr(set())
 
     @property
@@ -30,6 +30,6 @@ class NewAraEntity(BaseModel):
         arbitrary_types_allowed = True
 
 
-class NewAraEntityCreateInput(BaseModel):
+class AraEntityCreateInput(BaseModel):
     class Config:
         arbitrary_types_allowed = True
