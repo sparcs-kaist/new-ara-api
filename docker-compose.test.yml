@@ -1,13 +1,13 @@
-# 테스트 환경에서만 사용
 version: "3"
+
 services:
   api:
     image: newara
     depends_on:
+      - celery
       - db
       - redis
-      - celery_worker
-      - elasticsearch
+      - elastic
     environment:
       - DJANGO_SETTINGS_MODULE=ara.settings.test
       - DJANGO_ENV=${DJANGO_ENV}
@@ -24,19 +24,17 @@ services:
       - NEWARA_DB_PASSWORD=root-password
       - NEWARA_DB_NAME=new_ara
       - NEWARA_REDIS_ADDRESS=redis
-      - NEWARA_ELASTICSEARCH_HOST=elasticsearch
+      - NEWARA_REDIS_PORT=6379
+      - NEWARA_ELASTICSEARCH_HOST=elastic
       - NEWARA_ELASTICSEARCH_PORT=9200
-      - PORTAL_2FA_KEY=${PORTAL_2FA_KEY}
     entrypoint: /newara/www/.docker/run.sh
-    volumes:
-      - nori:/newara/www/ara/db/elasticsearch
 
-  celery_worker:
+  celery:
     image: newara
     depends_on:
       - db
       - redis
-      - elasticsearch
+      - elastic
     environment:
       - DJANGO_SETTINGS_MODULE=main.settings.test
       - DJANGO_ENV=${DJANGO_ENV}
@@ -53,42 +51,32 @@ services:
       - NEWARA_DB_PASSWORD=root-password
       - NEWARA_DB_NAME=new_ara
       - NEWARA_REDIS_ADDRESS=redis
-      - NEWARA_ELASTICSEARCH_HOST=elasticsearch
+      - NEWARA_REDIS_PORT=6379
+      - NEWARA_ELASTICSEARCH_HOST=elastic
       - NEWARA_ELASTICSEARCH_PORT=9200
       - C_FORCE_ROOT=true
-      - PORTAL_2FA_KEY=${PORTAL_2FA_KEY}
     entrypoint: /newara/www/.docker/run-celery.sh
 
   db:
-    container_name: db
-    image: mysql:8.0
+    image: mysql:8
     expose:
       - 3306
     environment:
       - MYSQL_ROOT_PASSWORD=root-password
       - MYSQL_DATABASE=new_ara
-    command:
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 
   redis:
     image: redis:6
     expose:
       - 6379
 
-  elasticsearch:
+  elastic:
     image: elasticsearch:7.9.2
     expose:
       - 9200
-      - 9300
     environment:
       - discovery.type=single-node
-    command: bash -c "
-      bin/elasticsearch-plugin list | grep -q analysis-nori || bin/elasticsearch-plugin install --batch analysis-nori
-      && /usr/local/bin/docker-entrypoint.sh
-      "
-    volumes:
-      - nori:/usr/share/elasticsearch/config/analysis
-
-volumes:
-  nori:
+    command: >
+      bash -c "bin/elasticsearch-plugin list | grep -q analysis-nori || bin/elasticsearch-plugin install --batch analysis-nori
+      && /usr/local/bin/docker-entrypoint.sh"
