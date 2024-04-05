@@ -28,6 +28,8 @@ services:
       - NEWARA_ELASTICSEARCH_HOST=elastic
       - NEWARA_ELASTICSEARCH_PORT=9200
     entrypoint: /newara/www/.docker/run.sh
+    volumes:
+      - synonym:/newara/www/ara/db/elasticsearch
 
   celery:
     image: newara
@@ -80,3 +82,8 @@ services:
     command: >
       bash -c "bin/elasticsearch-plugin list | grep -q analysis-nori || bin/elasticsearch-plugin install --batch analysis-nori
       && /usr/local/bin/docker-entrypoint.sh"
+    volumes:
+      - synonym:/usr/share/elasticsearch/config/analysis
+
+volumes:
+  synonym:
