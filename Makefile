@@ -67,3 +67,9 @@ show_sql:
 
 schema:
 	python3 manage.py spectacular --color --file schema.yml
+
+local_env:
+	docker compose -f docker-compose.local.yml up -d
+
+local_env_down:
+	docker compose -f docker-compose.local.yml down

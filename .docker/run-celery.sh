@@ -9,7 +9,7 @@ done
 
 sleep 5
 
-while ! nc -vz $NEWARA_REDIS_ADDRESS 6379; do
+while ! nc -vz $NEWARA_REDIS_ADDRESS $NEWARA_REDIS_PORT; do
   >&2 echo "Redis is unavailable - sleeping"
   sleep 1
 done

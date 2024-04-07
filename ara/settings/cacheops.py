@@ -1,8 +1,8 @@
-from .redis import REDIS_HOST
+from .redis import REDIS_HOST, REDIS_PORT
 
 CACHEOPS_REDIS = {
     "host": REDIS_HOST,
-    "port": 6379,
+    "port": REDIS_PORT,
     "db": 1,
 }
 
