@@ -1,17 +1,17 @@
 from apps.core.models.board import Board
 from apps.core.models.board_group import BoardGroup
 from ara.domain.board.type import BoardGroupInfo, BoardInfo, TopicInfo
-from ara.infra.django_infra import NewAraDjangoInfra
+from ara.infra.django_infra import AraDjangoInfra
 
 
-class BoardGroupInfra(NewAraDjangoInfra[BoardGroup]):
+class BoardGroupInfra(AraDjangoInfra[BoardGroup]):
     def __init__(self) -> None:
         super().__init__(Board)
 
     pass
 
 
-class BoardInfra(NewAraDjangoInfra[Board]):
+class BoardInfra(AraDjangoInfra[Board]):
     def __init__(self) -> None:
         super().__init__(Board)
         self.board_group_infra = BoardGroupInfra()
