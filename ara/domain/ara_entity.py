@@ -21,7 +21,7 @@ class AraEntity(BaseModel):
             self._updated_fields.add(field_name)
 
     def __setattr__(self, name: str, value: Any) -> None:
-        is_private_field = name.startswith("_") or name.startswith("_")
+        is_private_field = name.startswith("_") or name.startswith("__")
         if is_private_field is False:
             self._updated_fields.add(name)
         return super().__setattr__(name, value)

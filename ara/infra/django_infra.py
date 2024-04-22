@@ -34,7 +34,7 @@ class AraDjangoInfra(Generic[T]):
         columns: list[str] | None = None,
         conditions: dict[str, Any],
         is_select_for_update: bool = False,
-    ) -> list[Union[T, dict[str, Any]]]:
+    ) -> list[T | dict[str, Any]]:
         """
         Generic function for simple queries.
         Should not be used for complex & specific purpose queries.
@@ -48,7 +48,7 @@ class AraDjangoInfra(Generic[T]):
                 Set True if get queryset for update purpose. Defaults to False.
 
         Returns:
-            List[Union[T, Dict[str, Any]]]:
+            List[T | Dict[str, Any]]:
                 A list containing the matching object,
                 with only the specified columns if `columns` is not None.
 
