@@ -1,4 +1,4 @@
-from typing import Any, Generic, Type, TypeVar, Union
+from typing import Any, Generic, Type, TypeVar
 
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Model
