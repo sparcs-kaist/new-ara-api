@@ -39,6 +39,8 @@ tqdm = "*"
 lxml = "*"
 django-ses = "*"
 pydantic = "*"
+django-ninja = "*"
+ratelimit = "*"
 
 [dev-packages]
 black = "*"
