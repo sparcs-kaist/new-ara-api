@@ -39,6 +39,7 @@ tqdm = "*"
 lxml = "*"
 django-ses = "*"
 pydantic = "*"
+fastapi = {extras = ["all"], version = "*"}
 
 [dev-packages]
 black = "*"
