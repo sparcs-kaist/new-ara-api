@@ -24,19 +24,19 @@ from drf_spectacular.views import (
 )
 
 urlpatterns = [
-    path("api/admin/", admin.site.urls),
+    path("admin/", admin.site.urls),
     path("", include(("apps.core.urls", "core"))),
     path("", include(("apps.user.urls", "user"))),
     path("", include(("apps.global_notice.urls", "global_notice"))),
     path("", include(("apps.calendar.urls", "calendar"))),
-    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
-        "api/schema/swagger/",
+        "schema/swagger/",
         SpectacularSwaggerView.as_view(url_name="schema"),
         name="swagger",
     ),
     path(
-        "api/schema/redoc/",
+        "schema/redoc/",
         SpectacularRedocView.as_view(url_name="schema"),
         name="redoc",
     ),
@@ -44,5 +44,5 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += [
-        path("api/__debug__/", include("debug_toolbar.urls")),
+        path("__debug__/", include("debug_toolbar.urls")),
     ]

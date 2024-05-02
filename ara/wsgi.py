@@ -15,7 +15,7 @@ from fastapi import FastAPI
 from fastapi.middleware.wsgi import WSGIMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
-from ara.controller.api import api_router
+from ara.controller.api import fastapi_router as api_router
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ara.settings")
 
@@ -39,8 +39,8 @@ def get_fastapi() -> FastAPI:
     # then it might be better to try with Gunicorn as the process manager.
     # ##################################################################################
 
-    api.include_router(api_router, prefix="/v2")
-    api.mount("/django", WSGIMiddleware(application))
+    api.include_router(api_router, prefix="")
+    api.mount("/api", WSGIMiddleware(application))
 
     return api
 

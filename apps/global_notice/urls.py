@@ -8,5 +8,5 @@ router.register("", GlobalNoticeViewSet, basename="global_notices")
 
 
 urlpatterns = [
-    path("api/global_notices/", include(router.urls)),
+    path("global_notices/", include(router.urls)),
 ]

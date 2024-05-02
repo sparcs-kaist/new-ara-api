@@ -1,7 +1,9 @@
 from fastapi import APIRouter
 
 from ara.controller.sample import router as sample_router
+from ara.controller.sample.sample_controller import test_router
 
-api_router = APIRouter()
+fastapi_router = APIRouter()
 
-api_router.include_router(sample_router, prefix="/sample")
+fastapi_router.include_router(sample_router, prefix="/api")
+fastapi_router.include_router(test_router, prefix="/api")
