@@ -14,6 +14,8 @@ CSRF_TRUSTED_ORIGINS = [
     "https://newara.sparcs.org",
     "https://newara-api.sparcs.org",
     "https://ara.sparcs.org",
+    "http://localhost",
+    "http://127.0.0.1:8000",
 ]
 
 SSO_IS_BETA = False

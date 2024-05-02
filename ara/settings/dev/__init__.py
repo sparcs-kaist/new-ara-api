@@ -11,6 +11,7 @@ ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = [
     "https://*.sparcs.org",
     "http://localhost",
+    "http://127.0.0.1:8000",
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
@@ -32,11 +33,12 @@ MIDDLEWARE += [
 
 # https://django-debug-toolbar.readthedocs.io/
 
-_, _, ips = socket.gethostbyname_ex(socket.gethostname())
-INTERNAL_IPS = [ip[: ip.rfind(".")] + ".1" for ip in ips] + [
-    "127.0.0.1",
-    "10.0.2.2",
-]
+# _, _, ips = socket.gethostbyname_ex(socket.gethostname())
+# INTERNAL_IPS = [ip[: ip.rfind(".")] + ".1" for ip in ips] + [
+#     "127.0.0.1",
+#     "10.0.2.2",
+# ]
+INTERNAL_IPS = ["127.0.0.1"]
 
 DEBUG_TOOLBAR_CONFIG = {
     "SHOW_TOOLBAR_CALLBACK": lambda _: True,
