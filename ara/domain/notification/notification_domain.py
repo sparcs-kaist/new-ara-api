@@ -1,4 +1,4 @@
-from apps.core.models import Notification, NotificationReadLog
+from apps.core.models import Comment
 from ara.domain.notification.type import NotificationInfo
 from ara.infra.notification.notification_infra import NotificationInfra
 
@@ -11,14 +11,7 @@ class NotificationDomain:
         return self.notification_infra.get_all_notifications(user_id)
 
     def get_unread_notifications(self, user_id: int) -> list[NotificationInfo]:
-        notifications = self.notification_infra.get_all_notifications(user_id)
-        return [
-            notification
-            for notification in notifications
-            if NotificationReadLog.objects.filter(
-                notification=notification, read_by=user_id, is_read=False
-            ).exists()
-        ]
+        return self.notification_infra.get_unread_notifications(user_id)
 
     def read_all_notifications(self, user_id: int) -> None:
         return self.notification_infra.read_all_notifications(user_id)
@@ -26,5 +19,5 @@ class NotificationDomain:
     def read_notification(self, user_id: int, notification_id: int) -> None:
         return self.notification_infra.read_notification(user_id, notification_id)
 
-    def create_notification(self, notification_info: NotificationInfo):
-        return self.notification_infra.create_notification(notification_info)
+    def create_notification(self, comment: Comment):
+        return self.notification_infra.create_notification(comment)

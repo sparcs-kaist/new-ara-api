@@ -1,16 +1,13 @@
 from typing import Optional
 
-from django.contrib.auth import get_user_model
 from pydantic import BaseModel
 
 from apps.core.models import Article, Comment, Notification
 
-User = get_user_model()
 
-
-class NotificationReadLogInfo(BaseModel):  # 사용 안하는데 ?? 그래도 적어두는게 낫겠죠 ??
+class NotificationReadLogInfo(BaseModel):
     is_read: bool
-    read_by: int  # ??? 모르겠다 int ?? user ?? Foreign Key 인데 ??
+    read_by: int
     notification: Notification
 
     class Config:

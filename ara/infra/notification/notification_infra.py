@@ -1,12 +1,13 @@
 from apps.core.models import Article, Comment, Notification, NotificationReadLog
+from apps.core.models.board import NameType
 from ara.domain.notification.type import NotificationInfo
+from ara.firebase import fcm_notify_comment
 from ara.infra.django_infra import AraDjangoInfra
 
 
 class NotificationInfra(AraDjangoInfra[Notification]):
-    def __init__(self, user_id: int) -> None:
+    def __init__(self) -> None:
         super().__init__(Notification)
-        self.user_id = user_id
 
     def get_all_notifications(self, user_id: int) -> list[NotificationInfo]:
         queryset = Notification.objects.select_related(
@@ -18,9 +19,19 @@ class NotificationInfra(AraDjangoInfra[Notification]):
         )
         return [self._to_notification_info(notification) for notification in queryset]
 
+    def get_unread_notifications(self, user_id: int) -> list[NotificationInfo]:
+        notifications = self.notification_infra.get_all_notifications(user_id)
+        return [
+            notification
+            for notification in notifications
+            if NotificationReadLog.objects.filter(
+                notification=notification, read_by=user_id, is_read=False
+            ).exists()
+        ]
+
     def _to_notification_info(self, notification: Notification) -> NotificationInfo:
         return NotificationInfo(
-            id=notification.id,  # 이렇게 써도 되나요?
+            id=notification.id,
             type=notification.type,
             title=notification.title,
             content=notification.content,
@@ -43,26 +54,76 @@ class NotificationInfra(AraDjangoInfra[Notification]):
         notification_read_log.is_read = True
         notification_read_log.save()
 
-    """
-    ##수정해야함##
-
-    def create_notification(self, article: Article, comment: Comment) -> None:
-        if comment.parent_comment:
-            parent_comment = comment.parent_comment
-            related_comment = parent_comment
+    def get_display_name(self, article: Article, profile: int):
+        if article.name_type == NameType.REALNAME:
+            return "실명"
+        elif article.name_type == NameType.REGULAR:
+            return "nickname"
         else:
-            related_comment = None
+            return "익명"
 
-        related_article = comment.parent_article if comment.parent_article else parent_comment.parent_article
+    def create_notification(self, comment: Comment) -> None:
+        def notify_article_commented(_parent_article: Article, _comment: Comment):
+            name = self.get_display_name(_parent_article, _comment.created_by_id)
+            title = f"{name} 님이 새로운 댓글을 작성했습니다."
 
-        title = f"{article.title}에 새로운 {'대댓글' if parent_comment else '댓글'}이 작성되었습니다."
-        content = comment.content[:32]
+            notification = Notification(
+                type="article_commented",
+                title=title,
+                content=_comment.content[:32],
+                related_article=_parent_article,
+                related_comment=None,
+            )
+            notification.save()
 
-        Notification.objects.create(
-            type="comment_commented" if parent_comment else "article_commented",
-            title=title,
-            content=content,
-            related_article=related_article,
-            related_comment=related_comment,
+            NotificationReadLog.objects.create(
+                read_by=_parent_article.created_by,
+                notification=notification,
+            )
+
+            fcm_notify_comment(
+                _parent_article.created_by,
+                title,
+                _comment.content[:32],
+                f"post/{_parent_article.id}",
+            )
+
+        def notify_comment_commented(_parent_article: Article, _comment: Comment):
+            name = self.get_display_name(_parent_article, _comment.created_by_id)
+            title = f"{name} 님이 새로운 대댓글을 작성했습니다."
+
+            notification = Notification(
+                type="comment_commented",
+                title=title,
+                content=_comment.content[:32],
+                related_article=_parent_article,
+                related_comment=_comment.parent_comment,
+            )
+            notification.save()
+
+            NotificationReadLog.objects.create(
+                read_by=_comment.parent_comment.created_by,
+                notification=notification,
+            )
+
+            fcm_notify_comment(
+                _comment.parent_comment.created_by,
+                title,
+                _comment.content[:32],
+                f"post/{_parent_article.id}",
+            )
+
+        article = (
+            comment.parent_article
+            if comment.parent_article
+            else comment.parent_comment.parent_article
         )
-    """
+
+        if comment.created_by != article.created_by:
+            notify_article_commented(article, comment)
+
+        if (
+            comment.parent_comment
+            and comment.created_by != comment.parent_comment.created_by
+        ):
+            notify_comment_commented(article, comment)
