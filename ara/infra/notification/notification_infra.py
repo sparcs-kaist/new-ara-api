@@ -1,3 +1,5 @@
+from django.db.models import Prefetch
+
 from apps.core.models import Article, Comment, Notification, NotificationReadLog
 from apps.core.models.board import NameType
 from ara.domain.notification.type import NotificationInfo
@@ -20,14 +22,20 @@ class NotificationInfra(AraDjangoInfra[Notification]):
         return [self._to_notification_info(notification) for notification in queryset]
 
     def get_unread_notifications(self, user_id: int) -> list[NotificationInfo]:
-        notifications = self.notification_infra.get_all_notifications(user_id)
-        return [
-            notification
-            for notification in notifications
+        queryset = Notification.objects.select_related(
+            "related_article",
+            "related_comment",
+        ).prefetch_related("related_article__attachments")
+
+        unread_notifications = [
+            self._to_notification_info(notification)
+            for notification in queryset
             if NotificationReadLog.objects.filter(
-                notification=notification, read_by=user_id, is_read=False
+                notification=notification, read_by_id=user_id, is_read=False
             ).exists()
         ]
+
+        return unread_notifications
 
     def _to_notification_info(self, notification: Notification) -> NotificationInfo:
         return NotificationInfo(
@@ -40,21 +48,13 @@ class NotificationInfra(AraDjangoInfra[Notification]):
         )
 
     def read_all_notifications(self, user_id: int) -> None:
-        notifications = self.get_all_notifications(user_id)
-        notification_ids = [notification.id for notification in notifications]
+        unread_notifications = self.get_unread_notifications(user_id)
+        notification_ids = [notification.id for notification in unread_notifications]
         NotificationReadLog.objects.filter(
             notification__in=notification_ids, read_by=user_id
         ).update(is_read=True)
 
-    def read_notification(self, user_id: int, notification_id: int) -> None:
-        notification = self.get_by_id(notification_id)
-        notification_read_log = NotificationReadLog.objects.get(
-            notification=notification, read_by=user_id
-        )
-        notification_read_log.is_read = True
-        notification_read_log.save()
-
-    def get_display_name(self, article: Article, profile: int):
+    def _get_display_name(self, article: Article, profile: int):
         if article.name_type == NameType.REALNAME:
             return "실명"
         elif article.name_type == NameType.REGULAR:
@@ -64,7 +64,7 @@ class NotificationInfra(AraDjangoInfra[Notification]):
 
     def create_notification(self, comment: Comment) -> None:
         def notify_article_commented(_parent_article: Article, _comment: Comment):
-            name = self.get_display_name(_parent_article, _comment.created_by_id)
+            name = self._get_display_name(_parent_article, _comment.created_by_id)
             title = f"{name} 님이 새로운 댓글을 작성했습니다."
 
             notification = Notification(
@@ -89,7 +89,7 @@ class NotificationInfra(AraDjangoInfra[Notification]):
             )
 
         def notify_comment_commented(_parent_article: Article, _comment: Comment):
-            name = self.get_display_name(_parent_article, _comment.created_by_id)
+            name = self._get_display_name(_parent_article, _comment.created_by_id)
             title = f"{name} 님이 새로운 대댓글을 작성했습니다."
 
             notification = Notification(
