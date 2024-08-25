@@ -63,8 +63,6 @@ class NotificationInfra(AraDjangoInfra[Notification]):
             return "익명"
 
     def create_notification(self, comment: Comment) -> None:
-        print("______________dddd________")
-
         def notify_article_commented(_parent_article: Article, _comment: Comment):
             name = self._get_display_name(_parent_article, _comment.created_by_id)
             title = f"{name} 님이 새로운 댓글을 작성했습니다."
@@ -83,8 +81,6 @@ class NotificationInfra(AraDjangoInfra[Notification]):
                 read_by=_parent_article.created_by,
                 notification=notification,
             )
-
-            print("하이\n")
 
             fcm_notify_comment(
                 _parent_article.created_by,
