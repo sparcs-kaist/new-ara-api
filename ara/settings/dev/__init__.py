@@ -1,9 +1,13 @@
 import socket
 from datetime import datetime, timezone
 
+import pymysql
+
 from ara.settings import INSTALLED_APPS, LOGGING, MIDDLEWARE
 
 from ..djangorestframework import REST_FRAMEWORK
+
+pymysql.install_as_MySQLdb()
 
 DEBUG = True
 

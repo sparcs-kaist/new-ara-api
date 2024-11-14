@@ -166,6 +166,7 @@ class Article(MetaDataModel):
         blank=True,
         null=True,
         default=None,
+        db_index=True,
     )
 
     class Meta(MetaDataModel.Meta):
