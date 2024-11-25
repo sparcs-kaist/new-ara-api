@@ -480,11 +480,10 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
     @decorators.action(detail=False, methods=["get"])
     def top(self, request):
-        # The most recent article at the top
-
         current_date = datetime.datetime.combine(
             timezone.now().date(), datetime.time.min, datetime.timezone.utc
         )
+        # get the articles that are created_at within a week and order by hit_count
         top_articles = Article.objects.filter(
             created_at__gte=current_date - datetime.timedelta(days=7)
         ).order_by("-hit_count", "-pk")
