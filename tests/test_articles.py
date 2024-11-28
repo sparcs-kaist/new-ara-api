@@ -717,8 +717,8 @@ class TestArticle(TestCase, RequestSetting):
 
     def test_top_ordered(self):
         """
-        The most recently topped article must come first. If the same, then
-        the most recent article must come first.
+        Article created in a week has to be in top query result
+        The order is determined by hit_count
         """
 
         current_article_count = Article.objects.count()
