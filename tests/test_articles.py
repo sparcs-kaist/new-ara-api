@@ -720,6 +720,9 @@ class TestArticle(TestCase, RequestSetting):
         The most recently topped article must come first. If the same, then
         the most recent article must come first.
         """
+
+        current_article_count = Article.objects.count()
+
         board = Board.objects.create()
         articles = [
             Article.objects.create(created_by=self.user, parent_board=board)
@@ -731,20 +734,23 @@ class TestArticle(TestCase, RequestSetting):
 
         time_now = timezone.now()
 
-        articles[0].topped_at = time_early
-        articles[1].topped_at = time_early
-        articles[2].topped_at = time_late
-        articles[3].topped_at = time_now
-        articles[4].topped_at = time_now
+        articles[0].created_at = time_early
+        articles[1].created_at = time_early
+        articles[2].created_at = time_late
+        articles[3].created_at = time_now
+        articles[4].created_at = time_now
+
+        articles[3].hit_count = 15
+        articles[4].hit_count = 10
 
         for article in articles:
             article.save()
 
         response = self.http_request(self.user, "get", "articles/top")
         assert response.status_code == status.HTTP_200_OK
-        assert response.data["num_items"] == 2
+        assert response.data["num_items"] == current_article_count + 2
 
-        oracle_indices = [5, 4]
+        oracle_indices = [3, 4]
         for idx, res in zip(oracle_indices, response.data["results"]):
             assert articles[idx].pk == res["id"]
 
