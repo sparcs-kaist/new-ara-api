@@ -723,23 +723,28 @@ class TestArticle(TestCase, RequestSetting):
         board = Board.objects.create()
         articles = [
             Article.objects.create(created_by=self.user, parent_board=board)
-            for _ in range(3)
+            for _ in range(5)
         ]
 
         time_early = timezone.datetime(2001, 10, 18)  # retro's birthday
         time_late = timezone.datetime(2003, 6, 17)  # yuwol's birthday
 
+        time_now = timezone.now()
+
         articles[0].topped_at = time_early
         articles[1].topped_at = time_early
         articles[2].topped_at = time_late
+        articles[3].topped_at = time_now
+        articles[4].topped_at = time_now
+
         for article in articles:
             article.save()
 
         response = self.http_request(self.user, "get", "articles/top")
         assert response.status_code == status.HTTP_200_OK
-        assert response.data["num_items"] == 3
+        assert response.data["num_items"] == 2
 
-        oracle_indices = [2, 1, 0]
+        oracle_indices = [5, 4]
         for idx, res in zip(oracle_indices, response.data["results"]):
             assert articles[idx].pk == res["id"]
 
