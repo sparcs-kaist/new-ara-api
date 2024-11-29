@@ -25,6 +25,7 @@ pre-commit install --hook-type commit-msg
 ## How to Run
 
 ```bash
+docker compose -f docker-compose.local.yml up -d
 pipenv shell
 make run
 ```

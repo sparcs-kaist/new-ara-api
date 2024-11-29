@@ -1,0 +1,41 @@
+version: "3"
+
+services:
+  db:
+    container_name: ara-db
+    image: mysql:8
+    ports:
+      - "${NEWARA_DB_PORT:?err}:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${NEWARA_DB_PASSWORD:?err}
+      - MYSQL_DATABASE=${NEWARA_DB_NAME:?err}
+    volumes:
+      - vol-db:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  redis:
+    container_name: ara-redis
+    image: redis:6
+    ports:
+      - "${NEWARA_REDIS_PORT:?err}:6379"
+    volumes:
+      - vol-redis:/data
+
+  elastic:
+    container_name: ara-elastic
+    image: elasticsearch:7.9.2
+    ports:
+      - "${NEWARA_ELASTICSEARCH_PORT:?err}:9200"
+    environment:
+      - discovery.type=single-node
+    command: >
+      bash -c "bin/elasticsearch-plugin list | grep -q analysis-nori || bin/elasticsearch-plugin install -b analysis-nori
+      && /usr/local/bin/docker-entrypoint.sh"
+    volumes:
+      - ./ara/db/elasticsearch/synonym.txt:/usr/share/elasticsearch/config/analysis/synonym.txt
+      - vol-elastic:/usr/share/elasticsearch
+
+volumes:
+  vol-db:
+  vol-redis:
+  vol-elastic:

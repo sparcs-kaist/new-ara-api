@@ -717,29 +717,40 @@ class TestArticle(TestCase, RequestSetting):
 
     def test_top_ordered(self):
         """
-        The most recently topped article must come first. If the same, then
-        the most recent article must come first.
+        Article created in a week has to be in top query result
+        The order is determined by hit_count
         """
+
+        current_article_count = Article.objects.count()
+
         board = Board.objects.create()
         articles = [
             Article.objects.create(created_by=self.user, parent_board=board)
-            for _ in range(3)
+            for _ in range(5)
         ]
 
         time_early = timezone.datetime(2001, 10, 18)  # retro's birthday
         time_late = timezone.datetime(2003, 6, 17)  # yuwol's birthday
 
-        articles[0].topped_at = time_early
-        articles[1].topped_at = time_early
-        articles[2].topped_at = time_late
+        time_now = timezone.now()
+
+        articles[0].created_at = time_early
+        articles[1].created_at = time_early
+        articles[2].created_at = time_late
+        articles[3].created_at = time_now
+        articles[4].created_at = time_now
+
+        articles[3].hit_count = 15
+        articles[4].hit_count = 10
+
         for article in articles:
             article.save()
 
         response = self.http_request(self.user, "get", "articles/top")
         assert response.status_code == status.HTTP_200_OK
-        assert response.data["num_items"] == 3
+        assert response.data["num_items"] == current_article_count + 2
 
-        oracle_indices = [2, 1, 0]
+        oracle_indices = [3, 4]
         for idx, res in zip(oracle_indices, response.data["results"]):
             assert articles[idx].pk == res["id"]
 

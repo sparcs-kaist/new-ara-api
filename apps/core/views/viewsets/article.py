@@ -1,8 +1,10 @@
+import datetime
 import time
 
 from django.core.paginator import Paginator as DjangoPaginator
 from django.db import models
 from django.http import Http404
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
 from rest_framework import (
@@ -479,10 +481,13 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
     @decorators.action(detail=False, methods=["get"])
     def top(self, request):
-        # The most recent article at the top
-        top_articles = Article.objects.exclude(topped_at__isnull=True).order_by(
-            "-topped_at", "-pk"
+        current_date = datetime.datetime.combine(
+            timezone.now().date(), datetime.time.min, datetime.timezone.utc
         )
+        # get the articles that are created_at within a week and order by hit_count
+        top_articles = Article.objects.filter(
+            created_at__gte=current_date - datetime.timedelta(days=7)
+        ).order_by("-hit_count", "-pk")
 
         search_keyword = request.query_params.get("main_search__contains")
         if search_keyword:
