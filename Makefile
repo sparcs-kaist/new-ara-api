@@ -14,7 +14,7 @@ flush_test:
 reset: flush init
 
 run:
-	python manage.py runserver 0.0.0.0:9000
+	python3 manage.py runserver 0.0.0.0:9000
 
 shell:
 	python manage.py shell -i ipython
