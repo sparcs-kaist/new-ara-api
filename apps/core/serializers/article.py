@@ -253,7 +253,7 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
                     after = None
             elif from_view == "top":
                 before = articles.filter(created_at__lte=obj.created_at).first()
-                after = articles.filter(created__gte=obj.created_at).last()
+                after = articles.filter(created_at__gte=obj.created_at).last()
             else:
                 before = articles.filter(created_at__lte=obj.created_at).first()
                 after = articles.filter(created_at__gte=obj.created_at).last()
