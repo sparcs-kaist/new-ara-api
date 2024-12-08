@@ -8,5 +8,5 @@ router.register(r"events", EventViewSet, basename="event")
 router.register(r"tags", TagViewSet, basename="tag")
 
 urlpatterns = [
-    path("api/calendar/", include(router.urls)),
+    path("calendar/", include(router.urls)),
 ]

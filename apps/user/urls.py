@@ -6,8 +6,8 @@ from apps.user.views.router import router
 from apps.user.views.unregister import Unregister
 
 urlpatterns = [
-    path("api/", include(router.urls)),
-    path("api/me", MeView.as_view(), name="me"),
-    path("api/unregister", Unregister.as_view(), name="unregister"),
-    path("api/fcm_token/<mode>", FCMTokenView.as_view(), name="fcm"),
+    path("", include(router.urls)),
+    path("me", MeView.as_view(), name="me"),
+    path("unregister", Unregister.as_view(), name="unregister"),
+    path("fcm_token/<mode>", FCMTokenView.as_view(), name="fcm"),
 ]
