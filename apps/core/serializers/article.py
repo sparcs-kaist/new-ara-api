@@ -1,5 +1,7 @@
+import datetime
 from enum import Enum
 
+from django.utils import timezone
 from django.utils.translation import gettext
 from rest_framework import exceptions, serializers
 from rest_framework.utils.serializer_helpers import ReturnDict
@@ -177,9 +179,14 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
             return articles
 
         elif from_view == "top":
-            top_articles = Article.objects.exclude(topped_at__isnull=True).order_by(
-                "-topped_at", "-pk"
+            current_date = datetime.datetime.combine(
+                timezone.now().date(), datetime.time.min, datetime.timezone.utc
             )
+            # get the articles that are created_at within a week and order by hit_count
+            top_articles = Article.objects.filter(
+                created_at__gte=current_date - datetime.timedelta(days=7)
+            ).order_by("-hit_count", "-pk")
+
             if not top_articles.filter(id=obj.id).exists():
                 raise serializers.ValidationError(
                     gettext("This article is not in top articles.")
@@ -245,19 +252,23 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
                 else:
                     after = None
             elif from_view == "top":
-                before = articles.filter(topped_at__lte=obj.topped_at).first()
-                after = articles.filter(topped_at__gte=obj.topped_at).last()
+                before = articles.filter(created_at__lte=obj.created_at).first()
+                after = articles.filter(created_at__gte=obj.created_at).last()
             else:
                 before = articles.filter(created_at__lte=obj.created_at).first()
                 after = articles.filter(created_at__gte=obj.created_at).last()
 
         return {
-            "before": SideArticleSerializer(before, context=self.context).data
-            if before
-            else None,
-            "after": SideArticleSerializer(after, context=self.context).data
-            if after
-            else None,
+            "before": (
+                SideArticleSerializer(before, context=self.context).data
+                if before
+                else None
+            ),
+            "after": (
+                SideArticleSerializer(after, context=self.context).data
+                if after
+                else None
+            ),
         }
 
     def get_side_articles_of_recent_article(self, obj, request):
