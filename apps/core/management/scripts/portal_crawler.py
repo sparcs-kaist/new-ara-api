@@ -17,25 +17,7 @@ from apps.core.models import Article
 from apps.core.models.portal_view_count import PortalViewCount
 from apps.user.models import UserProfile
 from ara.log import log
-from ara.settings import (
-    AWS_S3_BUCKET_NAME,
-    PORTAL_ID,
-    PORTAL_JSESSIONID,
-    PORTAL_PASSWORD,
-)
-
-LOGIN_INFO_SSO2 = {
-    "userid": PORTAL_ID,
-    "password": PORTAL_PASSWORD,
-    "saveid": "on",
-    "phase": "pass1",
-}
-
-LOGIN_INFO_SSO = {
-    "user_id": PORTAL_ID,
-    "pw": PORTAL_PASSWORD,
-    "login_page": "L_P_COMMON",
-}
+from ara.settings import AWS_S3_BUCKET_NAME, PORTAL_JSESSIONID
 
 COOKIES = {"JSESSIONID": PORTAL_JSESSIONID}
 
