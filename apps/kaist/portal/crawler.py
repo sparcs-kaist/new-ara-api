@@ -40,8 +40,8 @@ class Crawler:
             title=res["pstTtl"],
             content=res["pstCn"],
             # Swap values as the API response is incorrect (nextPstNo is actually prevPstNo)
-            prev_post_id=res["nextPstNo"],
-            next_post_id=res["prevPstNo"],
+            prev_post_id=res.setdefault("nextPstNo"),
+            next_post_id=res.setdefault("prevPstNo"),
             board_id=res["boardNo"],
             group_id=res["pstGroupNo"],
             group_level=res["pstGroupLvl"],

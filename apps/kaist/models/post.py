@@ -1,7 +1,5 @@
 from django.db import models
 
-from apps.kaist.portal.post_response import PostResponse as PostDict
-
 
 class Post(models.Model):
     id = models.BigIntegerField(primary_key=True)
@@ -36,32 +34,6 @@ class Post(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    @staticmethod
-    def from_typed_dict(post: PostDict):
-        return Post(
-            id=post["pstNo"],
-            title=post["pstTtl"],
-            content=post["pstCn"],
-            prev_post_id=post["prevPstNo"],
-            next_post_id=post["nextPstNo"],
-            board_id=post["boardNo"],
-            group_id=post["pstGroupNo"],
-            group_level=post["pstGroupLvl"],
-            group_count=post["pstGroupCnt"],
-            is_deleted=post["delYn"] == "Y",
-            is_public=post["publicYn"] == "Y",
-            attachment_count=post["atchFileCnt"],
-            view_count=post["inqCnt"],
-            writer_id=post["pstWrtrId"],
-            writer_name=post["pstWrtrNm"],
-            writer_department=post["pstWrtrDeptNm"],
-            writer_email=post["pstWrtrEml"],
-            registered_at=post["regDt"],
-            registered_user_id=post["regUser"],
-            changed_at=post["chgDt"],
-            changed_user_id=post["chgUser"],
-        )
 
     def __str__(self):
         return f"{self.title} ({self.id})"
