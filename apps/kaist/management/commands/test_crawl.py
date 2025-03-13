@@ -7,8 +7,18 @@ from ara.log import log
 
 
 class Command(BaseCommand):
+    help = "Crawl and save posts from the latest saved post up to the specified batch size."
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--batch-size",
+            default=32,
+            type=int,
+            help="Number of posts to crawl",
+        )
+
     def handle(self, *args, **options):
-        self.fetch_and_save_from_the_latest(batch_size=20)
+        self.fetch_and_save_from_the_latest(batch_size=options["batch_size"])
 
     @staticmethod
     def fetch_and_save_from_the_latest(batch_size: int = 32):
