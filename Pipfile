@@ -39,6 +39,7 @@ tqdm = "*"
 lxml = "*"
 django-ses = "*"
 pydantic = "*"
+slack-sdk = "*"
 
 [dev-packages]
 black = "*"

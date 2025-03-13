@@ -74,7 +74,6 @@ class Crawler:
         )
 
         if "application/json" not in response.headers["Content-Type"]:
-            # TODO: Send an alert to the admin
             raise SessionExpiredException(f"Failed to get post {post_id}")
 
         post = cls._parse_response(response.json())
