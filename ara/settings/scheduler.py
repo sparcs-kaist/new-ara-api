@@ -30,20 +30,24 @@ def create_scheduler_config(name, period=None, crontab=None):
 
 
 SCHEDULERS = {
+    # At every 10th minute past every hour from 6 through 18 on every day-of-week from Monday through Friday
     "CRAWL_PORTAL": create_scheduler_config(
         name="CRAWL_PORTAL",
-        crontab=crontab(minute="*/10"),  # At every 10th minute
+        crontab=crontab(minute="*/10", hour="6-18", day_of_week="1-5"),
     ),
+    # At minute 0
     "SAVE_DAILY_BEST": create_scheduler_config(
         name="SAVE_DAILY_BEST",
         crontab=crontab(minute="0"),
     ),
+    # At minute 0
     "SAVE_WEEKLY_BEST": create_scheduler_config(
         name="SAVE_WEEKLY_BEST",
         crontab=crontab(minute="0"),
     ),
+    # At 07:00 AM
     "SEND_EMAIL_FOR_REPLY_REMINDER": create_scheduler_config(
         name="SEND_EMAIL_FOR_REPLY_REMINDER",
-        crontab=crontab(minute="0", hour="7"),  # At 07:00 AM
+        crontab=crontab(minute="0", hour="7"),
     ),
 }
