@@ -6,6 +6,8 @@ from pytz import timezone as pytz_timezone
 
 from apps.kaist.models import Post
 from apps.kaist.portal.post_response import PostResponse
+from ara import redis
+from ara.log import log
 from ara.settings import PORTAL_JSESSIONID
 
 
@@ -14,8 +16,11 @@ class SessionExpiredException(Exception):
 
 
 class Crawler:
+    SESSION_KEY = "JSESSIONID"
+    SESSION_REDIS_KEY = "crawler:jsessionid"
+
     _session = requests.Session()
-    _session_id = PORTAL_JSESSIONID
+    _session.cookies.set(SESSION_KEY, PORTAL_JSESSIONID)
 
     _KST = pytz_timezone("Asia/Seoul")
 
@@ -68,16 +73,26 @@ class Crawler:
         :param post_id: The ID of the post to get
         """
 
-        response = cls._session.get(
-            url=f"https://portal.kaist.ac.kr/wz/api/board/recents/{post_id}?menuNo=21",
-            cookies={"JSESSIONID": cls._session_id},
-        )
+        retry_count = 1
 
-        if "application/json" not in response.headers["Content-Type"]:
-            raise SessionExpiredException(f"Failed to get post {post_id}")
+        while retry_count >= 0:
+            response = cls._session.get(
+                f"https://portal.kaist.ac.kr/wz/api/board/recents/{post_id}?menuNo=21"
+            )
 
-        post = cls._parse_response(response.json())
-        return post
+            if cls._has_fetched_successfully(response):
+                post = cls._parse_response(response.json())
+                return post
+
+            if retry_count == 0:
+                raise SessionExpiredException(f"Failed to get post {post_id}")
+
+            cls.update_session_id()
+            retry_count -= 1
+
+    @classmethod
+    def _has_fetched_successfully(cls, response: requests.Response) -> bool:
+        return "application/json" in response.headers["Content-Type"]
 
     @classmethod
     def find_next_post(cls, post: Post) -> Post | None:
@@ -86,5 +101,10 @@ class Crawler:
         return cls.get_post(post.next_post_id)
 
     @classmethod
-    def update_session_id(cls, session_id: str) -> None:
-        cls.session_id = session_id
+    def update_session_id(cls) -> None:
+        new_session_id = redis.get(cls.SESSION_REDIS_KEY).decode()
+        if new_session_id is not None:
+            log.info(
+                f"KAIST Portal Crawler :: JSESSIONID updated to ({new_session_id})"
+            )
+            cls._session.cookies.set(cls.SESSION_KEY, new_session_id)
