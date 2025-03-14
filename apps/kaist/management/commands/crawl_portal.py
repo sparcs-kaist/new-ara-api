@@ -18,9 +18,17 @@ class Command(BaseCommand):
             action="store_true",
             help="Visualize crawling progress",
         )
+        parser.add_argument(
+            "--single",
+            type=int,
+            help="Crawl a single post by its ID",
+        )
 
     def handle(self, *args, **options):
-        Worker.fetch_and_save_from_the_latest(
-            batch_size=options["batch_size"],
-            visualize=options["visualize"],
-        )
+        if options["single"] is None:
+            Worker.fetch_and_save_from_the_latest(
+                batch_size=options["batch_size"],
+                visualize=options["visualize"],
+            )
+        else:
+            Worker.fetch_and_save_single(post_id=options["single"])

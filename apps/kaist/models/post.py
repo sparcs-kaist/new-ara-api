@@ -26,7 +26,7 @@ class Post(models.Model):
     writer_department = models.CharField(max_length=128, null=True, blank=True)
     writer_email = models.CharField(max_length=64, null=True, blank=True)
 
-    registered_at = models.DateTimeField()
+    registered_at = models.DateTimeField(db_index=True)
     registered_user_id = models.CharField(max_length=32)
 
     changed_at = models.DateTimeField()
