@@ -133,7 +133,7 @@ class Worker:
 
     @staticmethod
     def _send_no_new_post_alert() -> None:
-        slack_webhook_client.send(text=f":blobhaj_ghostie_alive: 새로운 공지가 없어요.")
+        slack_webhook_client.send(text=f":blobhaj_innocent: 새로운 공지가 없어요.")
         log.info("KAIST Portal Crawler :: No new post found")
 
     @staticmethod
