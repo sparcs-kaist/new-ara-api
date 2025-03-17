@@ -30,10 +30,10 @@ def create_scheduler_config(name, period=None, crontab=None):
 
 
 SCHEDULERS = {
-    # At every 10th minute past every hour from 9 through 18
+    # At every 10th minute
     "CRAWL_PORTAL": create_scheduler_config(
         name="CRAWL_PORTAL",
-        crontab=crontab(minute="*/10", hour="9-18"),
+        crontab=crontab(minute="*/10"),
     ),
     # At minute 0
     "SAVE_DAILY_BEST": create_scheduler_config(
