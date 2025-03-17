@@ -30,16 +30,24 @@ def create_scheduler_config(name, period=None, crontab=None):
 
 
 SCHEDULERS = {
+    # At every 10th minute
     "CRAWL_PORTAL": create_scheduler_config(
-        "CRAWL_PORTAL", crontab=crontab(minute=0)
-    ),  # 매 0분 (1시간마다)
+        name="CRAWL_PORTAL",
+        crontab=crontab(minute="*/10"),
+    ),
+    # At minute 0
     "SAVE_DAILY_BEST": create_scheduler_config(
-        "SAVE_DAILY_BEST", crontab=crontab(minute=0)
+        name="SAVE_DAILY_BEST",
+        crontab=crontab(minute="0"),
     ),
+    # At minute 0
     "SAVE_WEEKLY_BEST": create_scheduler_config(
-        "SAVE_WEEKLY_BEST", crontab=crontab(minute=0)
+        name="SAVE_WEEKLY_BEST",
+        crontab=crontab(minute="0"),
     ),
+    # At 07:00 AM
     "SEND_EMAIL_FOR_REPLY_REMINDER": create_scheduler_config(
-        "SEND_EMAIL_FOR_REPLY_REMINDER", crontab=crontab(hour=7, minute=0)
-    ),  # 매일 오전 7시
+        name="SEND_EMAIL_FOR_REPLY_REMINDER",
+        crontab=crontab(minute="0", hour="7"),
+    ),
 }
