@@ -1,16 +1,15 @@
 import time
 from collections import defaultdict
 
-from apps.core.management.scripts.portal_crawler import crawl_hour, crawl_view
 from apps.core.management.scripts.reminder_email_for_reply import send_email
 from apps.core.models import BestArticle
+from apps.kaist.portal.worker import Worker as PortalCrawlWorker
 from ara import celery_app, redis
 
 
 @celery_app.task
 def crawl_portal():
-    crawl_view()
-    crawl_hour()
+    PortalCrawlWorker.fetch_and_save_from_the_latest(batch_size=32)
 
 
 def _get_redis_key(type_):
