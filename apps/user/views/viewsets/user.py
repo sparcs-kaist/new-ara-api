@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from rest_framework import decorators, permissions, response, status
 
-from apps.user.models import UserProfile
+from apps.user.models import Group, UserGroup, UserProfile
 from apps.user.models.user.manual import ManualUser
 from apps.user.permissions.user import UserPermission
 from ara.classes.sparcssso import Client as SSOClient
@@ -232,10 +232,12 @@ class UserViewSet(ActionAPIViewSet):
             # 2. 아직 승인 이전, 회원가입을 시도했던 공용 계정 회원
             if (not user_profile.user.is_active) and (is_kaist or is_manual):
                 user_profile.user.is_active = True
+                if user_profile.has_group_by_id(1):  # 1 = UNAUTHORIZED
+                    user_profile.remove_group_by_id(1)
                 if is_manual:
-                    user_profile.group = manual_user.org_type
+                    user_profile.add_group(manual_user.org_type)
                 elif is_kaist:
-                    user_profile.group = UserProfile.UserGroup.KAIST_MEMBER
+                    user_profile.add_group_by_id(2)  # 2 = KAIST_MEMBER
                     user_profile.sso_user_info = user_info
                 user_profile.save()
 
@@ -258,7 +260,7 @@ class UserViewSet(ActionAPIViewSet):
                     password=str(uuid.uuid4()),
                     is_active=is_kaist or is_manual,
                 )
-                user_group = UserProfile.UserGroup.UNAUTHORIZED
+                user_group = Group.search_by_id(1)  # 1 = UNAUTHORIZED
 
                 if is_manual:
                     manual_user.user = new_user
@@ -268,7 +270,7 @@ class UserViewSet(ActionAPIViewSet):
                     user_group = manual_user.org_type
 
                 elif is_kaist:
-                    user_group = UserProfile.UserGroup.KAIST_MEMBER
+                    user_group = Group.search_by_id(2)  # 2 = KAIST_MEMBER
 
                 user_profile = UserProfile.objects.create(
                     uid=user_info["uid"],
@@ -276,9 +278,10 @@ class UserViewSet(ActionAPIViewSet):
                     nickname=user_nickname,
                     sso_user_info=user_info,
                     user=new_user,
-                    group=user_group,
                     picture=user_profile_picture,
                 )
+
+                UserGroup.objects.create(user=new_user, group=user_group)
 
         if not user_profile.user.is_active:
             return redirect(
