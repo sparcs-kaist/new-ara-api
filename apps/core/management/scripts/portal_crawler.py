@@ -146,13 +146,13 @@ def _get_portal_article(url, session):
 
     for tr in trs:
         if len(list(tr.children)) == 3:
-            html = tr.find("td").prettify()
+            html = str(tr.find("td"))
             break
 
     if html is None:
         for tr in trs:
             if len(list(tr.children)) == 2:
-                html = tr.find("td").prettify()
+                html = str(tr.find("td"))
                 break
 
     html = _save_portal_image(html, session)
@@ -191,11 +191,21 @@ def crawl_hour(day=None):
         linklist = []
         links = soup.select("table > tbody > tr > td > a")
         dates = soup.select("table > tbody > tr > td:nth-child(5)")
+        total = soup.select("div > ul > li > em")[0].get_text()
 
-        if links:
-            log.info("------- portal login success!")
-        else:
-            log.info("------- portal login failed!")
+        if not links:
+            log.error("------- portal login failed!")
+            raise RuntimeError("portal login failed!")
+
+        if int(total) < 10_000:
+            """
+            If the total number of response articles is small,
+            all responses are public. (LOGIN FAILED)
+            """
+            log.error("------- portal login cookie failed!")
+            raise RuntimeError(f"portal login cookie {COOKIES} failed!")
+
+        log.info("------- portal login success!")
 
         today_date = str(day).replace("-", ".")
         for link, date in zip(links, dates):
@@ -299,7 +309,14 @@ def crawl_hour(day=None):
         last_portal_article_in_db.save()
         new_articles.pop()
 
-    created_articles = Article.objects.bulk_create(new_articles)
+    # @NOTE
+    # MySQL's bulk_create method does not return IDs. However, PortalViewCount requires the IDs of the created articles.
+    # Therefore, insert one article at a time and retrieve their IDs.
+    # Reference: https://docs.djangoproject.com/en/5.0/ref/models/querysets/#bulk-create
+    created_articles = []
+    for new_article in new_articles:
+        new_article.save()
+        created_articles.append(new_article)
 
     new_portal_view_counts = []
 
