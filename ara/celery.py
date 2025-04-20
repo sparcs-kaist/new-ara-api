@@ -20,6 +20,7 @@ app.conf.result_expires = timedelta(days=1)  # default도 하루임
 app.autodiscover_tasks(["apps.core.management.tasks"])
 app.conf.timezone = "Asia/Seoul"
 
+
 # Task 등록시 이름은 동사로 시작하도록 합시다
 app.conf.beat_schedule = {
     "crawl_portal": {
@@ -40,6 +41,11 @@ app.conf.beat_schedule = {
     "send_email_for_reply_reminder": {
         "task": "apps.core.management.tasks.send_email_for_reply_reminder",
         "schedule": settings.SCHEDULERS["SEND_EMAIL_FOR_REPLY_REMINDER"]["CRONTAB"],
+        "args": [],
+    },
+    "crawl_meal": {
+        "task": "apps.core.management.tasks.crawl_meal",
+        "schedule": settings.SCHEDULERS["CRAWL_MEAL"]["CRONTAB"],
         "args": [],
     },
 }
