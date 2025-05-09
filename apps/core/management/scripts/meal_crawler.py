@@ -381,20 +381,23 @@ def crawl_daily_meal(date : str):
             cur_name = course_name
         #아침/점심/저녁밥이 나온다면..
         if course_plain_data[0]:
+            course_meal[cur_name]['morning_menu'] = []
             for (course_name, course_price) , menu_li in course_plain_data[0].items():
-                course_meal[cur_name]['morning_menu'] = {'course_name' : course_name,
+                course_meal[cur_name]['morning_menu'].append({'course_name' : course_name,
                                                          'price' : course_price,
-                                                         'menu_list' : menu_li}
+                                                         'menu_list' : menu_li})
         if course_plain_data[1]:
+            course_meal[cur_name]['lunch_menu'] = []
             for (course_name, course_price) , menu_li in course_plain_data[1].items():
-                course_meal[cur_name]['lunch_menu'] = {'course_name' : course_name,
+                course_meal[cur_name]['lunch_menu'].append({'course_name' : course_name,
                                                          'price' : course_price,
-                                                         'menu_list' : menu_li}
+                                                         'menu_list' : menu_li})
         if course_plain_data[2]:
+            course_meal[cur_name]['dinner_menu'] = []
             for (course_name, course_price) , menu_li in course_plain_data[2].items():
-                course_meal[cur_name]['dinner_menu'] = {'course_name' : course_name,
+                course_meal[cur_name]['dinner_menu'].append({'course_name' : course_name,
                                                          'price' : course_price,
-                                                         'menu_list' : menu_li}
+                                                         'menu_list' : menu_li})
     #pretty_print (디버깅용)
     """
     import pprint
