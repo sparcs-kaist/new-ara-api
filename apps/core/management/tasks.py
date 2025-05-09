@@ -85,8 +85,8 @@ def crawl_meal():
     # 현재 날짜를 가져오기
     current_date = datetime.now()
 
-    # 7일간의 날짜 리스트 생성
-    dates = [(current_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(7)]
+    # 앞 뒤 7일간의 날짜 리스트 생성
+    dates = [(current_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(-7, 7)]
     for date in dates:
         #식단 크롤링
         crawl_daily_meal(date)
