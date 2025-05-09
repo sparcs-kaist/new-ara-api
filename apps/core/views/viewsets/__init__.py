@@ -9,3 +9,4 @@ from .faq import *
 from .notification import *
 from .report import *
 from .scrap import *
+from .meal import *

@@ -68,3 +68,11 @@ router.register(
     prefix=r"best_searches",
     viewset=viewsets.BestSearchViewSet,
 )
+
+#meal : 학식 크롤링 기능
+router.register(
+    prefix=r"meals",
+    viewset=viewsets.MealViewSet,
+    #단순한 api여서 queryset을 사용하지 않았으므로 basename 설정.
+    basename="meal",
+)
