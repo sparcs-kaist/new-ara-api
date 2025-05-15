@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.user.models import UserProfile
+from apps.user.models import Group, UserGroup, UserProfile
 from apps.user.models.user.manual import ManualUser
 from ara.classes.admin import MetaDataModelAdmin
 
@@ -10,7 +10,6 @@ class UserProfileAdmin(MetaDataModelAdmin):
     list_filter = (
         "see_sexual",
         "see_social",
-        "group",
         "is_newara",
     )
     list_display = (
@@ -18,7 +17,6 @@ class UserProfileAdmin(MetaDataModelAdmin):
         "sid",
         "nickname",
         "user",
-        "group",
     )
     search_fields = (
         "uid",
@@ -37,3 +35,37 @@ class ManualUserAdmin(MetaDataModelAdmin):
         "applicant_name",
         "sso_email",
     )
+
+
+@admin.register(UserGroup)
+class UserGroupAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "nickname",
+        "email",
+        "group",
+    )
+    list_filter = ("group",)
+    search_fields = (
+        "user__id",
+        "user__profile__nickname",
+        "user__email",
+    )
+
+    @admin.display(description="닉네임")
+    def nickname(self, obj: UserGroup):
+        return obj.user.profile.nickname
+
+    @admin.display(description="이메일")
+    def email(self, obj: UserGroup):
+        return obj.user.email
+
+
+@admin.register(Group)
+class GroupAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "description",
+        "is_official",
+    )
+    search_fields = ("name",)

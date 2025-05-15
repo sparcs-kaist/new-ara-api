@@ -11,7 +11,7 @@ from rest_framework import (
 
 from apps.core.filters.comment import CommentFilter
 from apps.core.models import Article, Comment, CommentDeleteLog, UserProfile, Vote
-from apps.core.models.board import BoardAccessPermissionType, NameType
+from apps.core.models.board import NameType
 from apps.core.permissions.comment import CommentPermission
 from apps.core.serializers.comment import (
     CommentCreateActionSerializer,
@@ -64,10 +64,7 @@ class CommentViewSet(
         # self.check_object_permissions(request, parent_article)
 
         # Check permission
-        user_group = request.user.profile.group
-        if parent_article.parent_board.group_has_access_permission(
-            BoardAccessPermissionType.COMMENT, user_group
-        ):
+        if parent_article.parent_board.permission_list_by_user(request.user).COMMENT:
             return super().create(request, *args, **kwargs)
         return response.Response(
             {"message": gettext("Permission denied")}, status=status.HTTP_403_FORBIDDEN
@@ -87,13 +84,10 @@ class CommentViewSet(
             )
             parent_article = parent_comment.parent_article
 
-        print(parent_article)
+        # print(parent_article)
 
         created_by = self.request.user
-        is_school_admin = (
-            UserProfile.objects.get(user_id=created_by).group
-            == UserProfile.UserGroup.COMMUNICATION_BOARD_ADMIN
-        )
+        is_school_admin = UserProfile.objects.get(user_id=created_by).is_school_admin
 
         if is_school_admin and parent_article.name_type != NameType.ANONYMOUS:
             name_type = NameType.REGULAR
