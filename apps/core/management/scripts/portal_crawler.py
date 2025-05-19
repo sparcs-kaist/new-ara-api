@@ -117,6 +117,9 @@ def _get_portal_article(url, session):
     article_req = session.get(url, cookies=COOKIES)
     soup = bs(article_req.text, "lxml")
 
+    #기존에 있던 계정 DB와 충돌을 피하기 위해 writer를 'KAIST Portal'로 통일하여 지정
+    #2025.05.19 - hot fix
+    """
     writer = (
         soup.find("th", text="작성자(소속)")
         .findNext("td")
@@ -124,6 +127,8 @@ def _get_portal_article(url, session):
         .contents[0]
         .strip()
     )
+    """
+    writer = "KAIST Portal"
 
     created_at_view_count_str = (
         soup.find("th", text="작성일(조회수)").findNext("td").contents[0].strip()
