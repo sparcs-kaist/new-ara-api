@@ -86,7 +86,8 @@ def crawl_meal():
     current_date = datetime.now()
 
     # 앞 뒤 7일간의 날짜 리스트 생성
-    dates = [(current_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(-7, 7)]
+    # 이전 날짜 7일에 경우 학식이 변경된 경우를 아직 처리하지 못 해서 보류. 미래 7일만 가져온다.
+    dates = [(current_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(0, 7)]
     for date in dates:
         #식단 크롤링
         crawl_daily_meal(date)
