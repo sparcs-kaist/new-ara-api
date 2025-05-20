@@ -1,22 +1,23 @@
-from enum import IntEnum, IntFlag, auto
+from enum import IntFlag, auto
 
 from django.db import models
 from django_extensions.db.fields import AutoSlugField
 
+from apps.user.models import Group
 from ara.db.models import MetaDataModel
+
 from .board_group import BoardGroup
+from .board_permission import (
+    DEFAULT_PERMISSIONS,
+    BoardAccessPermission,
+    BoardPermission,
+)
 
 
 class NameType(IntFlag):
     REGULAR = auto()
     ANONYMOUS = auto()
     REALNAME = auto()
-
-
-class BoardAccessPermissionType(IntEnum):
-    READ = 0
-    WRITE = 1
-    COMMENT = 2
 
 
 class Board(MetaDataModel):
@@ -31,24 +32,6 @@ class Board(MetaDataModel):
     en_name = models.CharField(
         verbose_name="게시판 영문 이름",
         max_length=32,
-    )
-    # 사용자 그룹에 대해 접근 권한을 제어하는 bit mask 입니다.
-    # access_mask & (1 << user.group) > 0 일 때 접근이 가능합니다.
-    # 사용자 그룹의 값들은 `UserGroup`을 참고하세요.
-    read_access_mask = models.SmallIntegerField(
-        # UNAUTHORIZED, EXTERNAL_ORG 제외 모든 사용자 읽기 권한 부여
-        verbose_name="읽기 권한",
-        default=0b011011110,
-    )
-    write_access_mask = models.SmallIntegerField(
-        # UNAUTHORIZED, STORE_EMPLOYEE, EXTERNAL_ORG 제외 모든 사용자 쓰기 권한 부여
-        verbose_name="쓰기 권한",
-        default=0b011011010,
-    )
-    comment_access_mask = models.SmallIntegerField(
-        # UNAUTHORIZED 제외 모든 사용자 댓글 권한 부여
-        verbose_name="댓글 권한",
-        default=0b011111110,
     )
     is_readonly = models.BooleanField(
         verbose_name="읽기 전용 게시판",
@@ -113,18 +96,11 @@ class Board(MetaDataModel):
     def __str__(self) -> str:
         return self.ko_name
 
-    def group_has_access_permission(
-        self, access_type: BoardAccessPermissionType, group: int
-    ) -> bool:
-        mask = None
-        if access_type == BoardAccessPermissionType.READ:
-            mask = self.read_access_mask
-        elif access_type == BoardAccessPermissionType.WRITE:
-            mask = self.write_access_mask
-        elif access_type == BoardAccessPermissionType.COMMENT:
-            mask = self.comment_access_mask
-        else:
-            # TODO: Handle error
-            return False
+    def permission_list_by_group(self, group: Group) -> BoardAccessPermission:
+        return BoardPermission.permission_list_by_group(group, self)
 
-        return (mask & (1 << group)) > 0
+    def permission_list_by_user(self, user) -> BoardAccessPermission:
+        return BoardPermission.permission_list_by_user(user, self)
+
+    def set_default_permission(self):
+        BoardPermission.add_permission_bulk_by_board(self, DEFAULT_PERMISSIONS)

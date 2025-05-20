@@ -12,6 +12,7 @@ def set_board(request):
         ko_name="자유 게시판",
         en_name="Free Board",
     )
+    request.cls.board.set_default_permission()
 
 
 @pytest.fixture(scope="class")

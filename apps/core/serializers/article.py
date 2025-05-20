@@ -8,7 +8,7 @@ from rest_framework.utils.serializer_helpers import ReturnDict
 
 from apps.core.documents import ArticleDocument
 from apps.core.models import Article, ArticleHiddenReason, Block, Board, Comment, Scrap
-from apps.core.models.board import BoardAccessPermissionType, NameType
+from apps.core.models.board import NameType
 from apps.core.serializers.attachment import AttachmentSerializer
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.mixins.hidden import (
@@ -534,9 +534,9 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
         user_is_superuser = self.context["request"].user.is_superuser
         if not user_is_superuser and board.is_readonly:
             raise serializers.ValidationError(gettext("This board is read only."))
-        user_has_write_permission = board.group_has_access_permission(
-            BoardAccessPermissionType.WRITE, self.context["request"].user.profile.group
-        )
+        user_has_write_permission = board.permission_list_by_user(
+            self.context["request"].user
+        ).WRITE
         if not user_has_write_permission:
             raise exceptions.PermissionDenied()
         return board
