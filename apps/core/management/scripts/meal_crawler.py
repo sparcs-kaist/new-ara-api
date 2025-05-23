@@ -134,13 +134,29 @@ def _parser_east1_course(menu_list : str, time : int):
     Menu = list(filter(lambda x: x != '' and x != ' ' and x != '\n', Menu))
     Menu = list(filter(lambda x: '하루과일' not in x and '글로벌' not in x , Menu))
 
+    #2025-05-09 - 동맛골 1층 카페테리아가 식기세척기 고장으로 인해 운영하지 않음
+    #이때 '미운영' 이라는 텍스트가 포함되어 있었음.
+
     #모든 메뉴가 100원 단위. -> '00원' 이라는 텍스트가 포함된 부분을 찾으면 어디인지 알 수 있다.
     #이걸 기준으로 각 코스를 나누면 된다.
     Courses = {}
+    #2025.05 샐러드 메뉴 등장 - 샐러드 처리 로직
+    offset = 0
+    for line in Menu:
+        if '샐러드' in line:
+            offset += 1
+        else:
+            break
+    #샐러드 메뉴정보 -> 제거
+    for _ in range(offset):
+        Menu.pop(0)
+
     for txt in Menu:
         #하루과일 : 파싱 x
         if '하루과일' in txt:
             break #하루과일은 항상 맨 마지막에 있다.
+        if '미운영' in txt:
+            break #어떤 이유로 식당이 운영하지 않는경우
         #코스 이름이 나온 경우
         if ('00원' in txt) or ('<' in txt and '>' in txt): #카페테리아 메뉴까지 같이 처리하기 위해 조건 추가.
             txt_match = re.match(r"<(.+?) (\d+,?\d*)원>", txt.strip()) #코스 이름과 가격은 <> 안에
@@ -175,9 +191,21 @@ def _parser_east1_cafeteria(menu_list : str, time : int) -> list:
         Menu = list(filter(lambda x: x != '' and x != ' ' and x != '\n', Menu))
         Menus = []
 
+
         #토/일요일 같이 영업 안하는 경우.
         if len(Menu) == 0:
             return {}
+        
+        #2025.05 샐러드 메뉴 등장 - 샐러드 처리 로직
+        offset = 0
+        for line in Menu:
+            if '샐러드' in line:
+                offset += 1
+            else:
+                break
+        #샐러드 메뉴정보 -> 제거
+        for _ in range(offset):
+            Menu.pop(0)
 
         #카페테리아가 영업하지 않는 날
         if '<Cafeteria>' not in Menu.pop(0):
@@ -193,6 +221,7 @@ def _parser_east1_cafeteria(menu_list : str, time : int) -> list:
                 allergy_list = [int(num) for num in allergy.split(",")] if allergy else []  # 숫자 목록을 리스트로 변환
                 price = int(txt_match.group(3).replace(",", ""))  # 쉼표 제거 후 가격 정수 변환
                 Menus.append({'menu_name' : menu_name, 'price' : price, 'allergy' : allergy_list})
+            print(f"최종 결과 : {Menus}")
             return Menus
 
     else:
@@ -212,6 +241,18 @@ def _parser_east2(menu_list : str, time : int):
         return {}
     if '미운영' in Menu[0]:
         return {}
+
+    #2025-05 샐러드 메뉴 등장 - 샐러드 처리 로직. (샐러드는 항상 맨 윗줄에 있고, 각 줄별로 샐러드 라는 단어 나옴).
+    offset = 0
+    for line in Menu:
+        if '샐러드' in line:
+            offset += 1
+        else:
+            break
+    #샐러드 메뉴정보 -> 제거
+    for _ in range(offset):
+        Menu.pop(0)    
+
     
     Courses = {}
     for txt in Menu:
@@ -222,6 +263,7 @@ def _parser_east2(menu_list : str, time : int):
             break
         #코스 이름이 나온 경우 - 동맛골 2층은 '<>'로 가격이 둘러쌓여 있음.
         if '00원' in txt:
+            print(txt)
             txt_match = re.match(r"<(.+?) (\d+,?\d*)원>", txt.strip())
             course_name = txt_match.group(1)
             course_price = int(txt_match.group(2).replace(",", ""))
@@ -413,7 +455,6 @@ def crawl_daily_meal(date : str):
     pipe.json().set(course_key ,'.', course_meal)
     pipe.execute()
 
-    print("celery가 일하고 있어요!")
     return
 
 
