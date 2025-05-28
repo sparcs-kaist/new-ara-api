@@ -48,6 +48,7 @@ isort = "*"
 pre-commit = "*"
 ipython = "*"
 pytest-cov = "*"
+djangorestframework-simplejwt = "*"
 
 [requires]
 python_version = "3.11"
