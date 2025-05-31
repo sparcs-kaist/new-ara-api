@@ -16,6 +16,7 @@ def set_board(request):
         ko_name="테스트 게시판",
         en_name="Test Board",
     )
+    request.cls.board.set_default_permission()
 
 
 @pytest.fixture(scope="class")
@@ -26,6 +27,7 @@ def set_anon_board(request):
         en_name="Anonymous",
         name_type=NameType.ANONYMOUS,
     )
+    request.cls.anon_board.set_default_permission()
 
 
 @pytest.fixture(scope="class")

@@ -4,8 +4,15 @@ from django.utils import timezone
 from rest_framework import status
 
 from apps.core.models import Article, Block, Board, Comment, Topic, Vote
-from apps.core.models.board import BoardAccessPermissionType, NameType
-from apps.user.models import UserProfile
+from apps.core.models.board import NameType
+from apps.core.models.board_permission import (
+    DEFAULT_COMMENT_PERMISSION,
+    DEFAULT_READ_PERMISSION,
+    DEFAULT_WRITE_PERMISSION,
+    BoardAccessPermissionType,
+    BoardPermission,
+)
+from apps.user.models import Group, UserGroup, UserProfile
 from ara.settings import MIN_TIME, SCHOOL_RESPONSE_VOTE_THRESHOLD
 from tests.conftest import RequestSetting, TestCase, Utils
 
@@ -18,6 +25,7 @@ def set_boards(request):
         en_name="Test Board",
         name_type=NameType.REGULAR,
     )
+    request.cls.board.set_default_permission()
 
     request.cls.anon_board = Board.objects.create(
         slug="anonymous",
@@ -25,6 +33,7 @@ def set_boards(request):
         en_name="Anonymous",
         name_type=NameType.ANONYMOUS,
     )
+    request.cls.anon_board.set_default_permission()
 
     request.cls.free_board = Board.objects.create(
         slug="free",
@@ -32,6 +41,7 @@ def set_boards(request):
         en_name="Free",
         name_type=NameType.ANONYMOUS | NameType.REGULAR,
     )
+    request.cls.free_board.set_default_permission()
 
     request.cls.realname_board = Board.objects.create(
         slug="test realname board",
@@ -39,13 +49,31 @@ def set_boards(request):
         en_name="Test realname Board",
         name_type=NameType.REALNAME,
     )
+    request.cls.realname_board.set_default_permission()
 
     request.cls.regular_access_board = Board.objects.create(
         slug="regular access",
         ko_name="일반 접근 권한 게시판",
         en_name="Regular Access Board",
-        read_access_mask=0b11011110,
-        write_access_mask=0b11011010,
+        # read_access_mask=0b11011110,
+        # write_access_mask=0b11011010,
+    )
+    permission_bulk: list[tuple[int, BoardAccessPermissionType]] = [
+        (2, BoardAccessPermissionType.READ),
+        (3, BoardAccessPermissionType.READ),
+        (4, BoardAccessPermissionType.READ),
+        (5, BoardAccessPermissionType.READ),
+        (7, BoardAccessPermissionType.READ),
+        (8, BoardAccessPermissionType.READ),
+        (2, BoardAccessPermissionType.WRITE),
+        (4, BoardAccessPermissionType.WRITE),
+        (5, BoardAccessPermissionType.WRITE),
+        (7, BoardAccessPermissionType.WRITE),
+        (8, BoardAccessPermissionType.WRITE),
+    ]
+    permission_bulk.extend(DEFAULT_COMMENT_PERMISSION)
+    BoardPermission.add_permission_bulk_by_board(
+        request.cls.regular_access_board, permission_bulk
     )
 
     # Though its name is 'advertiser accessible', enterprise is also accessible
@@ -53,29 +81,74 @@ def set_boards(request):
         slug="advertiser accessible",
         ko_name="외부인(홍보 계정) 접근 가능 게시판",
         en_name="Advertiser Accessible Board",
-        read_access_mask=0b11111110,
-        write_access_mask=0b11111110,
+        # read_access_mask=0b11111110,
+        # write_access_mask=0b11111110,
+    )
+    permission_bulk: list[tuple[int, BoardAccessPermissionType]] = [
+        (2, BoardAccessPermissionType.READ),
+        (3, BoardAccessPermissionType.READ),
+        (4, BoardAccessPermissionType.READ),
+        (5, BoardAccessPermissionType.READ),
+        (7, BoardAccessPermissionType.READ),
+        (8, BoardAccessPermissionType.READ),
+        (2, BoardAccessPermissionType.WRITE),
+        (4, BoardAccessPermissionType.WRITE),
+        (5, BoardAccessPermissionType.WRITE),
+        (6, BoardAccessPermissionType.WRITE),
+        (7, BoardAccessPermissionType.WRITE),
+        (8, BoardAccessPermissionType.WRITE),
+    ]
+    permission_bulk.extend(DEFAULT_COMMENT_PERMISSION)
+    BoardPermission.add_permission_bulk_by_board(
+        request.cls.advertiser_accessible_board, permission_bulk
     )
 
     request.cls.nonwritable_board = Board.objects.create(
         slug="nonwritable",
         ko_name="글 작성 불가 게시판",
         en_name="Nonwritable Board",
-        write_access_mask=0b00000000,
+        # write_access_mask=0b00000000,
+    )
+    permission_bulk: list[tuple[int, BoardAccessPermissionType]] = []
+    permission_bulk.extend(DEFAULT_READ_PERMISSION)
+    permission_bulk.extend(DEFAULT_COMMENT_PERMISSION)
+    BoardPermission.add_permission_bulk_by_board(
+        request.cls.nonwritable_board, permission_bulk
     )
 
     request.cls.newsadmin_writable_board = Board.objects.create(
         slug="newsadmin writable",
         ko_name="뉴스게시판 관리인 글 작성 가능 게시판",
         en_name="Newsadmin Writable Board",
-        write_access_mask=0b10000000,
+        # write_access_mask=0b10000000,
+    )
+    permission_bulk: list[tuple[int, BoardAccessPermissionType]] = [
+        (8, BoardAccessPermissionType.WRITE),
+    ]
+    permission_bulk.extend(DEFAULT_READ_PERMISSION)
+    permission_bulk.extend(DEFAULT_COMMENT_PERMISSION)
+    BoardPermission.add_permission_bulk_by_board(
+        request.cls.newsadmin_writable_board, permission_bulk
     )
 
     request.cls.enterprise_writable_board = Board.objects.create(
         slug="enterprise writable",
         ko_name="입주업체 글 작성 가능 게시판",
         en_name="Enterprise Writable Board",
-        write_access_mask=0b11011110,
+        # write_access_mask=0b11011110,
+    )
+    permission_bulk: list[tuple[int, BoardAccessPermissionType]] = [
+        (2, BoardAccessPermissionType.WRITE),
+        (3, BoardAccessPermissionType.WRITE),
+        (4, BoardAccessPermissionType.WRITE),
+        (5, BoardAccessPermissionType.WRITE),
+        (7, BoardAccessPermissionType.WRITE),
+        (8, BoardAccessPermissionType.WRITE),
+    ]
+    permission_bulk.extend(DEFAULT_READ_PERMISSION)
+    permission_bulk.extend(DEFAULT_COMMENT_PERMISSION)
+    BoardPermission.add_permission_bulk_by_board(
+        request.cls.enterprise_writable_board, permission_bulk
     )
 
 
@@ -173,17 +246,29 @@ def set_kaist_articles(request):
             user=request.cls.kaist_user,
             nickname="KAIST User",
             agree_terms_of_service_at=timezone.now(),
-            group=UserProfile.UserGroup.KAIST_MEMBER,
             sso_user_info={},
+        )
+        UserGroup.objects.get_or_create(
+            user=request.cls.kaist_user,
+            group=Group.search_by_id(2),  # 2 = KAIST member
         )
 
     request.cls.kaist_board, _ = Board.objects.get_or_create(
         slug="kaist-only",
         ko_name="KAIST Board",
         en_name="KAIST Board",
-        read_access_mask=0b00000010,
-        write_access_mask=0b00000010,
+        # read_access_mask=0b00000010,
+        # write_access_mask=0b00000010,
     )
+    permission_bulk: list[tuple[int, BoardAccessPermissionType]] = [
+        (2, BoardAccessPermissionType.READ),
+        (2, BoardAccessPermissionType.WRITE),
+    ]
+    permission_bulk.extend(DEFAULT_COMMENT_PERMISSION)
+    BoardPermission.add_permission_bulk_by_board(
+        request.cls.kaist_board, permission_bulk
+    )
+
     request.cls.kaist_article, _ = Article.objects.get_or_create(
         title="example article",
         content="example content",
@@ -328,10 +413,11 @@ class TestArticle(TestCase, RequestSetting):
     # get request 시 user의 read 권한 확인 테스트
     def test_check_read_permission_when_get(self):
         group_users = []
-        for idx, group in enumerate(UserProfile.UserGroup):
-            user = Utils.create_user_with_index(idx, group)
+        for group in Group.objects.all():
+            user = Utils.create_user_with_index(group.group_id, group)
             group_users.append(user)
-        assert len(group_users) == len(UserProfile.UserGroup)
+
+        assert len(group_users) == len(Group.objects.all())
 
         articles = [self.regular_access_article, self.advertiser_accessible_article]
 
@@ -339,9 +425,7 @@ class TestArticle(TestCase, RequestSetting):
             for article in articles:
                 res = self.http_request(user, "get", f"articles/{article.id}")
 
-                if article.parent_board.group_has_access_permission(
-                    BoardAccessPermissionType.READ, user.profile.group
-                ):
+                if article.parent_board.permission_list_by_user(user).READ:
                     assert res.status_code == status.HTTP_200_OK
                     assert res.data["id"] == article.id
                 else:
@@ -350,10 +434,10 @@ class TestArticle(TestCase, RequestSetting):
     # create 단계에서 user의 write 권한 확인 테스트
     def test_check_write_permission_when_create(self):
         group_users = []
-        for idx, group in enumerate(UserProfile.UserGroup):
-            user = Utils.create_user_with_index(idx, group)
+        for group in Group.objects.all():
+            user = Utils.create_user_with_index(group.group_id, group)
             group_users.append(user)
-        assert len(group_users) == len(UserProfile.UserGroup)
+        assert len(group_users) == len(Group.objects.all())
 
         boards = [
             self.regular_access_board,
@@ -378,9 +462,7 @@ class TestArticle(TestCase, RequestSetting):
                     },
                 )
 
-                if board.group_has_access_permission(
-                    BoardAccessPermissionType.WRITE, user.profile.group
-                ):
+                if board.permission_list_by_user(user).WRITE:
                     assert res.status_code == status.HTTP_201_CREATED
                 else:
                     assert res.status_code == status.HTTP_403_FORBIDDEN
@@ -697,6 +779,12 @@ class TestArticle(TestCase, RequestSetting):
         """
         THRESHOLD = 5
         board = Board.objects.create(top_threshold=THRESHOLD)
+        permission_bulk: list[tuple[int, BoardAccessPermissionType]] = []
+        permission_bulk.extend(DEFAULT_READ_PERMISSION)
+        permission_bulk.extend(DEFAULT_WRITE_PERMISSION)
+        permission_bulk.extend(DEFAULT_COMMENT_PERMISSION)
+        BoardPermission.add_permission_bulk_by_board(board, permission_bulk)
+
         article = Article.objects.create(created_by=self.user, parent_board=board)
         pk = article.pk
 
@@ -919,9 +1007,12 @@ class TestHiddenArticles(TestCase, RequestSetting):
                     **profile_kwargs,
                     "user": user_instance,
                     "agree_terms_of_service_at": timezone.now(),
-                    "group": UserProfile.UserGroup.KAIST_MEMBER,
                     "sso_user_info": {},
                 }
+            )
+            UserGroup.objects.get_or_create(
+                user=user_instance,
+                group=Group.search_by_id(2),  # 2 = KAIST member
             )
         return user_instance
 
