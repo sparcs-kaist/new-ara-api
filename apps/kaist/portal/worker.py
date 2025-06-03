@@ -87,18 +87,20 @@ class Worker:
 
     @staticmethod
     def get_or_create_user(post: Post) -> User:
+        #Policy Changed : 닉네임 중복 오류 방지를 위해 모든 포탈 게시물은
+        #작성자를 KAIST Porttal로 표시합니다.
         user, is_user_created = User.objects.update_or_create(
-            username=post.writer_id,
+            username="KAIST Portal",
             defaults={
-                "first_name": post.writer_name,
-                "email": post.writer_email or "",
+                "first_name": "KAIST Portal",
+                "email": "kaistportal@sparcs.org" or "",
                 "is_active": False,
             },
         )
         if is_user_created:
             UserProfile.objects.create(
                 user=user,
-                nickname=post.writer_name,
+                nickname="KAIST Portal",
                 picture="user_profiles/default_pictures/KAIST-logo.png",
                 is_newara=False,
             )
