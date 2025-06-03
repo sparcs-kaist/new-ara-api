@@ -19,10 +19,6 @@ from apps.user.permissions.user import UserPermission
 from ara.classes.sparcssso import Client as SSOClient
 from ara.classes.viewset import ActionAPIViewSet
 
-#for jwt
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.http import JsonResponse
-
 NOUNS = [
     "외계인",
     "펭귄",
@@ -147,7 +143,6 @@ class UserViewSet(ActionAPIViewSet):
     action_permission_classes = {
         "sso_login": (permissions.AllowAny,),
         "sso_login_callback": (permissions.AllowAny,),
-        "refresh_token": (permissions.AllowAny,),
     }
 
     @cached_property
@@ -296,37 +291,17 @@ class UserViewSet(ActionAPIViewSet):
 
         login(request, user_profile.user)
 
-        #jwt token
-        refresh = RefreshToken.for_user(user_profile.user)
-        access_token = str(refresh.access_token)
-        refresh_token = str(refresh)
-
         _next = request.session.get("next", "/")
 
-        # 이용약관 미동의자
-        if (request.user.is_authenticated and
-            request.user.profile.agree_terms_of_service_at is None):
-            tos_url = f"{urlparse(_next).scheme}://{urlparse(_next).netloc}/tos"
-        else:
-            tos_url = None
+        # redirect to frontend's terms of service agreement page if user did not agree it yet
+        if (
+            request.user.is_authenticated
+            and request.user.profile.agree_terms_of_service_at is None
+        ):
+            _next = urlparse(_next)
+            return redirect(to=f"{_next.scheme}://{_next.netloc}/tos")
 
-        # API 요청이면 JSON 응답, 아니면 redirect
-        if request.headers.get("Accept") == "application/json" or request.GET.get("mode") == "json":
-            res = JsonResponse({
-                "detail": "login success",
-                "next": tos_url or _next,
-                "access": access_token,
-                "refresh": refresh_token,
-            })
-            res.set_cookie("access", access_token) #프로덕션 환경에서는 보안 설정 필요.
-            res.set_cookie("refresh", refresh_token)
-            return res
-
-        # 웹 요청이면 기존 redirect 흐름 유지
-        res = redirect(to=tos_url or _next)
-        res.set_cookie("access", access_token)
-        res.set_cookie("refresh", refresh_token)
-        return res
+        return redirect(to=_next)
 
     @decorators.action(detail=True, methods=["post"])
     def sso_unregister(self, request, *args, **kwargs):
@@ -356,27 +331,3 @@ class UserViewSet(ActionAPIViewSet):
         return response.Response(
             status=status.HTTP_200_OK,
         )
-
-    #jwt -> refresh toekn
-    @decorators.action(detail=False, methods=['post'])
-    def refresh_token(self, request):
-        refresh_token = request.COOKIES.get('refresh')
-        if not refresh_token:
-            return response.Response({'error': 'Refresh token not provided'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            token = RefreshToken(refresh_token)
-            access_token = str(token.access_token)
-        except Exception:
-            return response.Response({'error': 'Invalid refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
-
-        resp = response.Response({'access': access_token})
-        resp.set_cookie(
-            'access',
-            access_token,
-            httponly=True,
-            secure=True,
-            samesite='Lax',
-        )
-        return resp
-    
