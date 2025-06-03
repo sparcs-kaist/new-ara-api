@@ -62,8 +62,10 @@ class Worker:
             for post in new_posts:
                 user = cls.get_or_create_user(post=post)
                 cls.create_article(post=post, user=user)
-
-        cls._send_success_alert(post_count=len(posts))
+        try:
+            cls._send_success_alert(post_count=len(posts))
+        except:
+            pass
 
     @classmethod
     def fetch_and_save_single(cls, post_id: int) -> None:
@@ -82,8 +84,10 @@ class Worker:
             )
             user = cls.get_or_create_user(post=post)
             cls.create_article(post=post, user=user)
-
-        cls._send_success_single_alert(post_id=post_id)
+        try:
+            cls._send_success_single_alert(post_id=post_id)
+        except:
+            pass
 
     @staticmethod
     def get_or_create_user(post: Post) -> User:
