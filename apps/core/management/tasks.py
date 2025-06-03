@@ -1,18 +1,19 @@
 import time
 from collections import defaultdict
 
-from apps.core.management.scripts.portal_crawler import crawl_hour, crawl_view
 from apps.core.management.scripts.reminder_email_for_reply import send_email
-from apps.core.management.scripts.meal_crawler import crawl_daily_meal
 from apps.core.models import BestArticle
-from ara import celery_app, redis
+from apps.kaist.portal.worker import Worker as PortalCrawlWorker
+from apps.core.management.scripts.meal_crawler import crawl_daily_meal
 
+from ara import celery_app, redis
 from datetime import datetime, timedelta
+
+
 
 @celery_app.task
 def crawl_portal():
-    crawl_view()
-    crawl_hour()
+    PortalCrawlWorker.fetch_and_save_from_the_latest(batch_size=32)
 
 
 def _get_redis_key(type_):
@@ -78,7 +79,6 @@ def save_weekly_best():
 def send_email_for_reply_reminder():
     send_email()
 
-#학식 크롤링
 @celery_app.task
 def crawl_meal():
     #현재 날짜로 부터 앞으로 일주일간 식단 크롤링
