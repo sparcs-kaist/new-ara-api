@@ -41,7 +41,6 @@ django-ses = "*"
 pydantic = "*"
 slack-sdk = "*"
 pytz = "*"
-djangorestframework-simplejwt = "*"
 
 [dev-packages]
 black = "*"
