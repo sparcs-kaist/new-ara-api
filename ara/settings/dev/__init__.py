@@ -45,7 +45,6 @@ DEBUG_TOOLBAR_CONFIG = {
 REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = (
     "rest_framework.authentication.BasicAuthentication",
     "ara.authentication.CsrfExemptSessionAuthentication",
-    "ara.authentication.JWTCookieAuthentication",
 )
 
 LOGGING["disable_existing_loggers"] = False
