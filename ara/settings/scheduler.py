@@ -31,7 +31,7 @@ def create_scheduler_config(name, period=None, crontab=None):
 
 SCHEDULERS = {
     "CRAWL_PORTAL": create_scheduler_config(
-        "CRAWL_PORTAL", crontab=crontab(minute=0)
+        "CRAWL_PORTAL", crontab=crontab(minute="*/10"),
     ),  # 매 0분 (1시간마다)
     "SAVE_DAILY_BEST": create_scheduler_config(
         "SAVE_DAILY_BEST", crontab=crontab(minute=0)
