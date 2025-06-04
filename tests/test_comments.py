@@ -20,6 +20,7 @@ def set_boards(request):
         en_name="Test Board",
         name_type=NameType.REGULAR,
     )
+    request.cls.board.set_default_permission()
 
     request.cls.realname_board = Board.objects.create(
         slug="test realname board",
@@ -27,6 +28,7 @@ def set_boards(request):
         en_name="Test realname Board",
         name_type=NameType.REALNAME,
     )
+    request.cls.realname_board.set_default_permission()
 
 
 @pytest.fixture(scope="class")
