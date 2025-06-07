@@ -22,5 +22,10 @@ class JWTCookieAuthentication(JWTAuthentication):
         if raw_token is None:
             return None
 
-        validated_token = self.get_validated_token(raw_token)
+        try:
+            validated_token = self.get_validated_token(raw_token)
+        except Exception:
+            # 예외 발생 시 None 반환, 세션 인증으로 넘어가게 함
+            return None
+
         return self.get_user(validated_token), validated_token
