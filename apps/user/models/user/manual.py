@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 
-from apps.user.models import UserProfile
+from apps.user.models import Group
 from ara.db.models import MetaDataModel
 
 
@@ -25,9 +25,10 @@ class ManualUser(MetaDataModel):
         verbose_name="업체/단체 이름",
     )
 
-    org_type = models.IntegerField(
-        choices=UserProfile.UserGroup.choices,
-        default=UserProfile.UserGroup.UNAUTHORIZED,
+    org_type: Group = models.ForeignKey(
+        on_delete=models.CASCADE,
+        to="user.Group",
+        verbose_name="업체/단체 그룹",
     )
 
     applicant_name = models.CharField(
