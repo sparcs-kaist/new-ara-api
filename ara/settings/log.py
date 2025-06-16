@@ -43,5 +43,10 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": False,
         },
+        "auth_logger": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
 }

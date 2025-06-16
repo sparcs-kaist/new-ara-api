@@ -23,6 +23,10 @@ from ara.classes.viewset import ActionAPIViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.http import JsonResponse
 
+#for log
+import logging
+logger = logging.getLogger("auth_logger")
+
 NOUNS = [
     "외계인",
     "펭귄",
@@ -174,6 +178,11 @@ class UserViewSet(ActionAPIViewSet):
             return response.Response(
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        # logging
+        logger.info(
+            f" Requested state: {request.GET.get('state')}, Session state: {request.session.get('state')}"
+        )
 
         # Security Issues
         if request.GET.get("state") != request.session.get("state"):
