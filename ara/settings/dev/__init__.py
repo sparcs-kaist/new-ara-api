@@ -8,7 +8,6 @@ from ..djangorestframework import REST_FRAMEWORK
 DEBUG = True
 
 CORS_ALLOW_ALL_ORIGINS = True
-ALLOWED_HOSTS = ["*"]
 
 SSO_IS_BETA = False
 
