@@ -12,10 +12,17 @@ ALLOWED_HOSTS = ["*"]
 
 SSO_IS_BETA = False
 
-SESSION_COOKIE_SAMESITE = "Lax"
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SAMESITE = "Lax"
-CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SECURE = True
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost",
+    "http://127.0.0.1",
+    "https://sparcs.org",
+    "https://*.sparcs.org",  # 모든 하위 도메인 허용
+]
 
 INSTALLED_APPS += [
     "corsheaders",
