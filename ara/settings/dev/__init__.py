@@ -7,22 +7,18 @@ from ..djangorestframework import REST_FRAMEWORK
 
 DEBUG = True
 
-CORS_ALLOW_ALL_ORIGINS = True
 ALLOWED_HOSTS = ["*"]
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.sparcs.org",
+    "http://localhost",
+]
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 SSO_IS_BETA = False
 
 SESSION_COOKIE_SAMESITE = "None"
 SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SAMESITE = "None"
-CSRF_COOKIE_SECURE = True
-
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost",
-    "http://127.0.0.1",
-    "https://sparcs.org",
-    "https://*.sparcs.org",  # 모든 하위 도메인 허용
-]
 
 INSTALLED_APPS += [
     "corsheaders",
