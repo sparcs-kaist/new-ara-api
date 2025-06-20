@@ -4,7 +4,6 @@ from django.utils import timezone
 
 from apps.core.models import Comment, Notification
 from apps.core.models.communication_article import SchoolResponseStatus
-from apps.user.models import UserProfile
 
 
 @receiver(models.signals.post_save, sender=Comment)
@@ -33,8 +32,7 @@ def comment_post_save_signal(created, instance, **kwargs):
         )
         if (
             article.parent_board.is_school_communication
-            and comment.created_by.profile.group
-            == UserProfile.UserGroup.COMMUNICATION_BOARD_ADMIN
+            and comment.created_by.profile.is_school_admin
             and article.communication_article.school_response_status
             != SchoolResponseStatus.ANSWER_DONE
         ):

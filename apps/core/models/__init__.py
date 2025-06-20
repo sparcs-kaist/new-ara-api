@@ -7,6 +7,7 @@ from .best_search import *
 from .block import *
 from .board import *
 from .board_group import *
+from .board_permission import *
 from .comment import *
 from .comment_log import *
 from .communication_article import *
