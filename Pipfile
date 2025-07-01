@@ -42,6 +42,8 @@ pydantic = "*"
 slack-sdk = "*"
 pytz = "*"
 djangorestframework-simplejwt = "*"
+channels = "*"
+channels-redis = "*"
 
 [dev-packages]
 black = "*"
