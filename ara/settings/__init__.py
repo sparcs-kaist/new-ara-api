@@ -11,6 +11,7 @@ from .scheduler import *
 from .sentry import *
 from .spectacular import *
 from .sso import *
+from .websocket import *
 
 if env("DJANGO_ENV") == "development":
     from .dev import *
