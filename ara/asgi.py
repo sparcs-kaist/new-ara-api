@@ -4,10 +4,8 @@ defined in the ASGI_APPLICATION setting.
 """
 
 import os
-
-from django.core.asgi import get_asgi_application
-
+from ara.websocket import application as websocket_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ara.settings')
 
-application = get_asgi_application()
+application = websocket_application
