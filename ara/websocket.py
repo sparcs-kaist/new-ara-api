@@ -59,6 +59,6 @@ def send_message(instance, state, objects, silent=True, sync=True):
 
 application = ProtocolTypeRouter({
     'websocket': AuthMiddlewareStack(
-        URLRouter([path('ws', WebSocketHandler)])
+        URLRouter([path('ws/', WebSocketHandler.as_asgi())])
     ),
 })
