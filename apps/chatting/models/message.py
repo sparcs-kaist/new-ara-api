@@ -1,8 +1,10 @@
 from enum import Enum
 import datetime
 
+from django.conf import settings
 from django.db import IntegrityError, models, transaction
 from ara.db.models import MetaDataModel
+from apps.chatting.models.room import ChatRoom
 
 class ChatMessageType(str, Enum):
     TEXT = "TEXT"
@@ -35,20 +37,20 @@ class ChatMessage(MetaDataModel):
         default = "",
     ),
     # 메시지가 존재하는 채팅방
-    room_id : int = models.PositiveIntegerField(
+    room_id = models.ForeignKey(
         verbose_name= "메시지가 속한 채팅방 ID",
-        default = None,
-        blank = False,
-        null = True,
-        index = True,
+        to=ChatRoom,
+        on_delete=models.CASCADE,
+        related_name="message_set",
+        db_index=True,
     )
     # 메시지 보낸 유저
-    created_by : int = models.PositiveIntegerField(
-        verbose_name = "메시지 작성자",
-        blank = False,
-        null = True,
-        default = None,
-        index = True,
+    created_by = models.ForeignKey(
+        verbose_name="메시지 작성자",
+        to=settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="message_set",
+        db_index=True,
     )
     #메시지 만료 시점
     expired_at = models.DateTimeField(
@@ -58,3 +60,7 @@ class ChatMessage(MetaDataModel):
         auto_now = False,
         default = None
     )
+
+    # created_at : 메시지 작성 일시
+    # updated_at : 메시지가 수정되었을 때
+    # deleted_at : 메시지가 (사용자에 의해) 삭제되었을 때. (아직 백업 테이블로 이동 X)
