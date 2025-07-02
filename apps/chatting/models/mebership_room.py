@@ -31,7 +31,7 @@ class ChatRoomMemberShip(MetaDataModel):
         db_index=True,
     )
     # 해당 User가 참여하고 있는 채팅방 ID
-    room_id = models.ForeignKey(
+    chat_room = models.ForeignKey(
         verbose_name="room_id",
         to=ChatRoom,
         on_delete=models.CASCADE,

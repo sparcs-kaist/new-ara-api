@@ -27,7 +27,7 @@ class ChatRoom(MetaDataModel):
         null = False,
     )
     #채팅방의 권한 부여 방식 - 다른 DB 테이블로 빠짐
-    room_permission = models.CharField()
+    # self.room_permission
 
     #최근 메시지가 온 시간
     recent_message_at = models.DateTimeField(

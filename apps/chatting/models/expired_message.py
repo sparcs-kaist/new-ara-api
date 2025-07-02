@@ -14,6 +14,12 @@ class ChatMessageType(str, Enum):
 
 #ChatMessage 모델과 동일하게 쓰이나, 쿼리 성능 향상을 위해 만료된 메세지를 백업용으로만 쓴다.
 class ExpiredChatMessage(MetaDataModel):
+    # 유니크 순서쌍 정의
+    class Meta:
+        constratints = [
+            models.UniqueConstraint(fields = ['chat_room', 'message_id'], name = 'unique_chatroom_messageid')
+        ]
+        
     # 메시지의 종류
     message_type : ChatMessageType = models.CharField(
         max_length = 20,
@@ -23,7 +29,7 @@ class ExpiredChatMessage(MetaDataModel):
         blank = False,
         null = False,
     ),
-    # 메시지의 고유 ID (room_id, message_id) 순서쌍은 unique
+    # 메시지의 고유 ID (chat_room, message_id) 순서쌍은 unique
     message_id : int = models.PositiveIntegerField(
         verbose_name = "메시지 ID",
         default = None,
@@ -38,8 +44,8 @@ class ExpiredChatMessage(MetaDataModel):
         default = "",
     ),
     # 메시지가 존재하는 채팅방
-    room_id = models.ForeignKey(
-        verbose_name= "메시지가 속한 채팅방 ID",
+    chat_room = models.ForeignKey(
+        verbose_name= "메시지가 속한 채팅방",
         to=ChatRoom,
         on_delete=models.CASCADE,
         related_name="expired_message_set",

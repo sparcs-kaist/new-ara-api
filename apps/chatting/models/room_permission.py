@@ -17,11 +17,11 @@ class ChatUserRole(str, Enum):
 #User의 Type 별 권한 설정 테이블
 class ChatRoomPermission(MetaDataModel):
     # permission이 적용될 채팅방 / 채팅방 하나당 하나의 Permission 존재 (1:1 realationship))
-    room_id = models.OneToOneField(
-        verbose_name = "채팅방 ID",
+    chat_room = models.OneToOneField(
+        verbose_name = "권한이 적용될 채팅방",
         to=ChatRoom,
         on_delete=models.CASCADE,
-        related_name="permission_set",
+        related_name="room_permission",
         db_index=True,
     )
     # 입장 권한 (전체 or Invited)

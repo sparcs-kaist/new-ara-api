@@ -1,5 +1,5 @@
 from enum import Enum
-import datetime
+from datetime import timezone
 
 from django.conf import settings
 from django.db import IntegrityError, models, transaction
@@ -56,6 +56,24 @@ class ChatRoomInvitation(MetaDataModel):
         default = None,
     )
 
-    # deleted_at : 초대장이 삭제 (취소) 되었을 때
+    # deleted_at : 초대장이 삭제 (취소) 되었을 때 (혹은 수락해서 요청이 완료되었을 때)
     # created_at : 초대장이 생성 되었을 때
+
+    #초대장 유효성 검사
+    def is_valid_invitation(self) -> bool :
+        if self.expired_at is not None and self.expired_at < timezone.now():
+            return False
+        return True
     
+    #초대장 수락 - 성공 유무 반환 (나머지 다 한다음에 작업해야지....)
+    @transaction.atomic
+    def accept_invitation(self) -> bool :
+        try :
+        except : 
+            return False
+        finally :
+
+        if not self.is_valid_invitation():
+            return False
+        # 초대장 수락 로직
+        return True
