@@ -71,16 +71,16 @@ class ChatMessage(MetaDataModel):
     # updated_at : 메시지가 수정되었을 때
     # deleted_at : 메시지가 (사용자에 의해) 삭제되었을 때. (아직 백업 테이블로 이동 X)
 
+    @classmethod
     @transaction.atomic
-    def save(self, *args, **kwargs):
-        if self.message_id is None:
-            # race_condition 방지 : 해당 채팅방의 메시지 row를 락 걸고 가장 큰 message_id를 가져옴
-            last = (
-                ChatMessage.objects.select_for_update()
-                .filter(chat_room=self.chat_room)
-                .order_by('-message_id')
-                .first()
-            )
-            self.message_id = (last.message_id if last else 0) + 1
-        super().save(*args, **kwargs)
+    def create(cls, **kwargs):
+        # race_condition 방지: 해당 채팅방의 메시지 row에 락을 걸고 가장 큰 message_id를 가져옴
+        chat_room = kwargs.get('chat_room')
+        if not chat_room:
+            raise ValueError("chat_room is missing.")
+
+        last_message = cls.objects.select_for_update().filter(chat_room=chat_room).order_by('-message_id').first()
+        kwargs['message_id'] = (last_message.message_id if last_message else 0) + 1
+
+        return super().create(**kwargs)
 

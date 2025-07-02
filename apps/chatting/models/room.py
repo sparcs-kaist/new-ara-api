@@ -73,6 +73,14 @@ class ChatRoom(MetaDataModel):
     #created_at : 채팅방 생성 시
     #deleted_at : 채팅방이 삭제되었을 때
 
+    @classmethod
+    @transaction.atomic
+    def create(cls, **kwargs):
+        # race_condition 방지: 채팅방 row에 락을 걸고 가장 큰 room_id를 가져옴
+        last_room = cls.objects.select_for_update().order_by('-room_id').first()
+        kwargs['room_id'] = (last_room.room_id if last_room else 0) + 1
+        return super().create(**kwargs)
+
     #User가 room에 참여 했는지 return
     def is_user_participated(self, user) -> bool:
         return self.membership_info_set.filter(user=user).exists()
