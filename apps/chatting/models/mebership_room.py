@@ -69,3 +69,6 @@ class ChatRoomMemberShip(MetaDataModel):
         blank = False,
         null = True,
     )
+
+    # created_at : 채팅방에 참여시
+    # deleted_at : 채팅방에서 나갔을 때 (완전히 다시 참여할 수 없는 것은 아니므로 soft delete를 이용!)

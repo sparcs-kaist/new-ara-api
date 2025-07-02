@@ -32,3 +32,6 @@ class ChatRoom(MetaDataModel):
         blank = False,
         null = True,
     )
+
+    #created_at : 채팅방 생성 시
+    #deleted_at : 채팅방이 삭제되었을 때

@@ -58,3 +58,7 @@ class ChatMessage(MetaDataModel):
         auto_now = False,
         default = None
     )
+
+    # created_at : 메시지 작성 일시
+    # updated_at : 메시지가 수정되었을 때
+    # deleted_at : 메시지가 (사용자에 의해) 삭제되었을 때. (아직 백업 테이블로 이동 X)

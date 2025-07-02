@@ -45,4 +45,7 @@ class ChatRoomInvitation(MetaDataModel):
         auto_now = False,
         default = None,
     )
+
+    # deleted_at : 초대장이 삭제 (취소) 되었을 때
+    # created_at : 초대장이 생성 되었을 때
     

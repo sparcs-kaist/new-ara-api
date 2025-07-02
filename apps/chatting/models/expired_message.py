@@ -51,3 +51,6 @@ class ExpiredChatMessage(MetaDataModel):
         default = None,
         index = True,
     )
+
+    # created_at : 메시지 데이터가 백업 데이터 테이블로 이동한 일시
+    # deleted_at : 메시지가 완전히 삭제된 시간 (이 작업은 hard-delete 이므로 사실상 이 필드는 쓰이지 않음)
