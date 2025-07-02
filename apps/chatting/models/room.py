@@ -12,8 +12,20 @@ class ChatRoomType(str, Enum):
     GROUP_DM = "GROUP_DM" # 그룹 채팅방 (permission이 없이 유저 모두 동일한 참여자.)
     OPEN_CHAT = "OPEN_CHAT" # 오픈 그룹 채팅방 (role에 따라 permission이 설정된다.)
 
+class ChatNameType(str, Enum):
+    NICKNAME = "NICKNAME"  # 닉네임
+    ANONYMOUS = "ANONYMOUS"  # 익명
+    REAL_NAME = "REAL_NAME"  # 실명
+
 # 각각의 유저가 참여하고 있는 채팅방 정보
 class ChatRoom(MetaDataModel):
+    room_title : str = models.CharField(
+        verbose_name = "채팅방 이름",
+        max_length = 100,
+        default = "아라 채팅방",
+        blank = False,
+        null = False,
+    ),
     room_id : int = models.PositiveIntegerField(
         verbose_name = "room_id",
         default = 0,
@@ -26,6 +38,15 @@ class ChatRoom(MetaDataModel):
         max_length = 20,
         choices = [(room_type.value, room_type.name) for room_type in ChatRoomType],
         default = ChatRoomType.OPEN_CHAT.value,
+        blank = False,
+        null = False,
+    )
+    # 채팅방에서 이름 표시 방식
+    chat_name_type : str = models.CharField(
+        verbose_name= "chat_name_type",
+        max_length = 20,
+        choices= [(name_type.value, name_type.name) for name_type in ChatNameType],
+        default = ChatNameType.NICKNAME.value,
         blank = False,
         null = False,
     )
