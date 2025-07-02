@@ -4,6 +4,7 @@ import datetime
 from django.conf import settings
 from django.db import IntegrityError, models, transaction
 from ara.db.models import MetaDataModel
+from apps.chatting.models.room import ChatRoom
 
 # 각각의 채팅방에서 사용자의 역할
 class ChatUserRole(str, Enum):
@@ -30,10 +31,12 @@ class ChatRoomMemberShip(MetaDataModel):
         db_index=True,
     )
     # 해당 User가 참여하고 있는 채팅방 ID
-    room_id : int = models.PositiveIntegerField(
-        verbose_name = "room_id",
-        default = 0,
-        index = True,
+    room_id = models.ForeignKey(
+        verbose_name="room_id",
+        to=ChatRoom,
+        on_delete=models.CASCADE,
+        related_name="membership_info_set",
+        db_index=True,
     )
     # User의 채팅방에서의 역할
     role : ChatUserRole = models.CharField(

@@ -3,6 +3,7 @@ import datetime
 
 from django.db import IntegrityError, models, transaction
 from ara.db.models import MetaDataModel
+from apps.chatting.models.room import ChatRoom
 
 # 각각의 채팅방에서 사용자의 역할
 class ChatUserRole(str, Enum):
@@ -15,15 +16,14 @@ class ChatUserRole(str, Enum):
 
 #User의 Type 별 권한 설정 테이블
 class ChatRoomPermission(MetaDataModel):
-    # permission이 적용될 채팅방
-    room_id : int = models.PositiveIntegerField(
+    # permission이 적용될 채팅방 / 채팅방 하나당 하나의 Permission 존재 (1:1 realationship))
+    room_id = models.OneToOneField(
         verbose_name = "채팅방 ID",
-        default = None,
-        blank = False,
-        null = True,
-        index = True,
-        unique= True, #하나의 채팅방에는 하나의 권한 관리 체계만 존재
-    ),
+        to=ChatRoom,
+        on_delete=models.CASCADE,
+        related_name="permission_set",
+        db_index=True,
+    )
     # 입장 권한 (전체 or Invited)
     entrance_permission : str = models.CharField(
         verbose_name = "입장 권한",
