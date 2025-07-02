@@ -10,7 +10,8 @@ class ChatMessageType(str, Enum):
     FILE = "FILE"
     EMOTICON = "EMOTICON"
 
-class ChatMessage(MetaDataModel):
+#ChatMessage 모델과 동일하게 쓰이나, 쿼리 성능 향상을 위해 만료된 메세지를 백업용으로만 쓴다.
+class ExpiredChatMessage(MetaDataModel):
     # 메시지의 종류
     message_type : ChatMessageType = models.CharField(
         max_length = 20,
@@ -49,12 +50,4 @@ class ChatMessage(MetaDataModel):
         null = True,
         default = None,
         index = True,
-    )
-    #메시지 만료 시점
-    expired_at = models.DateTimeField(
-        verbose_name = "메시지 만료 시점",
-        null = True,
-        blank = False,
-        auto_now = False,
-        default = None
     )
