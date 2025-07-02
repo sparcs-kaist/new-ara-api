@@ -13,6 +13,12 @@ class ChatMessageType(str, Enum):
     EMOTICON = "EMOTICON"
 
 class ChatMessage(MetaDataModel):
+    # 유니크 순서쌍 정의
+    class Meta:
+        constratints = [
+            models.UniqueConstraint(fields = ['chat_room', 'message_id'], name = 'unique_chatroom_messageid')
+        ]
+    
     # 메시지의 종류
     message_type : ChatMessageType = models.CharField(
         max_length = 20,
@@ -22,7 +28,7 @@ class ChatMessage(MetaDataModel):
         blank = False,
         null = False,
     ),
-    # 메시지의 고유 ID (room_id, message_id) 순서쌍은 unique
+    # 메시지의 고유 ID (chat_room, message_id) 순서쌍은 unique
     message_id : int = models.PositiveIntegerField(
         verbose_name = "메시지 ID",
         default = None,
@@ -37,8 +43,8 @@ class ChatMessage(MetaDataModel):
         default = "",
     ),
     # 메시지가 존재하는 채팅방
-    room_id = models.ForeignKey(
-        verbose_name= "메시지가 속한 채팅방 ID",
+    chat_room = models.ForeignKey(
+        verbose_name= "메시지가 속한 채팅방",
         to=ChatRoom,
         on_delete=models.CASCADE,
         related_name="message_set",
@@ -64,3 +70,17 @@ class ChatMessage(MetaDataModel):
     # created_at : 메시지 작성 일시
     # updated_at : 메시지가 수정되었을 때
     # deleted_at : 메시지가 (사용자에 의해) 삭제되었을 때. (아직 백업 테이블로 이동 X)
+
+    @classmethod
+    @transaction.atomic
+    def create(cls, **kwargs):
+        # race_condition 방지: 해당 채팅방의 메시지 row에 락을 걸고 가장 큰 message_id를 가져옴
+        chat_room = kwargs.get('chat_room')
+        if not chat_room:
+            raise ValueError("chat_room is missing.")
+
+        last_message = cls.objects.select_for_update().filter(chat_room=chat_room).order_by('-message_id').first()
+        kwargs['message_id'] = (last_message.message_id if last_message else 0) + 1
+
+        return super().create(**kwargs)
+
