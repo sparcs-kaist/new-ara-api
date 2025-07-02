@@ -1,6 +1,7 @@
 from enum import Enum
 import datetime
 
+from django.conf import settings
 from django.db import IntegrityError, models, transaction
 from ara.db.models import MetaDataModel
 
@@ -21,10 +22,12 @@ class ChatNameType(str, Enum):
 # 각각의 유저가 참여하고 있는 채팅방 정보
 class ChatRoomMemberShip(MetaDataModel):
     # User ID
-    user_id : int = models.PositiveIntegerField(
-        verbose_name = "user_id",
-        default = 0,
-        index = True,
+    user_id = models.ForeignKey(
+        verbose_name="User 정보",
+        to=settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="room_participant_set",
+        db_index=True,
     )
     # 해당 User가 참여하고 있는 채팅방 ID
     room_id : int = models.PositiveIntegerField(

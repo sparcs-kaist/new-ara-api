@@ -18,7 +18,7 @@ class ChatRoom(MetaDataModel):
         unique = True,
     )
     # 채팅방 타입
-    room_type : ChatRoomType = models.CharFeld(
+    room_type : ChatRoomType = models.CharField(
         verbose_name = "room_type",
         max_length = 20,
         choices = [(room_type.value, room_type.name) for room_type in ChatRoomType],
@@ -26,7 +26,6 @@ class ChatRoom(MetaDataModel):
         blank = False,
         null = False,
     )
-
     #채팅방의 권한 부여 방식 - 다른 DB 테이블로 빠짐
     room_permission = models.CharField()
 

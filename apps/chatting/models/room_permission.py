@@ -13,6 +13,7 @@ class ChatUserRole(str, Enum):
     BLOCKED = "BLOCKED"          # 차단됨 - 채팅방에서 차단된 사람
     BLOCKER = "BLOCKER"         # 채팅방을 차단한 사람 (초대 거부)
 
+#User의 Type 별 권한 설정 테이블
 class ChatRoomPermission(MetaDataModel):
     # permission이 적용될 채팅방
     room_id : int = models.PositiveIntegerField(

@@ -1,6 +1,7 @@
 from enum import Enum
 import datetime
 
+from django.conf import settings
 from django.db import IntegrityError, models, transaction
 from ara.db.models import MetaDataModel
 
@@ -43,12 +44,12 @@ class ChatMessage(MetaDataModel):
         index = True,
     )
     # 메시지 보낸 유저
-    created_by : int = models.PositiveIntegerField(
-        verbose_name = "메시지 작성자",
-        blank = False,
-        null = True,
-        default = None,
-        index = True,
+    created_by = models.ForeignKey(
+        verbose_name="메시지 작성자",
+        to=settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="message_set",
+        db_index=True,
     )
     #메시지 만료 시점
     expired_at = models.DateTimeField(

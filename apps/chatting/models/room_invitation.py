@@ -1,6 +1,7 @@
 from enum import Enum
 import datetime
 
+from django.conf import settings
 from django.db import IntegrityError, models, transaction
 from ara.db.models import MetaDataModel
 
@@ -13,20 +14,20 @@ class ChatInvitedUserRole(str, Enum):
 
 class ChatRoomInvitation(MetaDataModel):
     # 초대받은 유저의 ID
-    invitation_to : int = models.PositiveIntegerField(
-        verbose_name = "초대받은 유저의 ID",
-        default = None,
-        blank = False,
-        null = True,
-        index = True,
+    invitation_to = models.ForeignKey(
+        verbose_name="초대받은 유저의 ID",
+        to=settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="invited_set",
+        db_index=True,
     )
     # 초대한 유저의 ID
-    invitation_from : int = models.PositiveIntegerField(
-        verbose_name = "초대한 유저의 ID",
-        default = None,
-        blank = False,
-        null = True,
-        index = True,
+    invitation_from  = models.ForeignKey(
+        verbose_name="초대한 유저의 ID",
+        to=settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="inviting_set",
+        db_index=True,
     )
     # 초대받은 User가 부여받을 Role
     invitation_role : ChatInvitedUserRole = models.CharField(
