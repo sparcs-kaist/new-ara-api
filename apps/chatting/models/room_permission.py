@@ -88,3 +88,6 @@ class ChatRoomPermission(MetaDataModel):
         blank = False,
         null = False,
     ),
+
+    # created_at : 채팅방이 처음 생성될 때 같이 생성됨
+    # deleted_at : 채팅방이 삭제될 때 같이 삭제됨
