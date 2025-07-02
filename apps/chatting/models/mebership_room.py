@@ -23,7 +23,7 @@ class ChatNameType(str, Enum):
 # 각각의 유저가 참여하고 있는 채팅방 정보
 class ChatRoomMemberShip(MetaDataModel):
     # User ID
-    user_id = models.ForeignKey(
+    user = models.ForeignKey(
         verbose_name="User 정보",
         to=settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -32,7 +32,7 @@ class ChatRoomMemberShip(MetaDataModel):
     )
     # 해당 User가 참여하고 있는 채팅방 ID
     chat_room = models.ForeignKey(
-        verbose_name="room_id",
+        verbose_name="chat_room",
         to=ChatRoom,
         on_delete=models.CASCADE,
         related_name="membership_info_set",
