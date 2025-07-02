@@ -42,7 +42,7 @@ class ChatRoomPermission(MetaDataModel):
         max_length = 20,
         choices = [
             ("ALL", "전체"),
-            ("ADMIN", "관리자만"),
+            ("ADMIN", "관리자 이상"),
             ("OWNER", "소유자만"),
         ],
         default = "ALL",
@@ -55,9 +55,9 @@ class ChatRoomPermission(MetaDataModel):
         max_length = 20,
         choices = [
             ("ALL", "전체"),
-            ("ADMIN", "관리자만"),
+            ("ADMIN", "관리자 이상"),
             ("OWNER", "소유자만"),
-            ("PARTICIPANT", "참여자만"),
+            ("PARTICIPANT", "참여자 이상"),
         ],
         default = "ALL",
         blank = False,
@@ -69,9 +69,9 @@ class ChatRoomPermission(MetaDataModel):
         max_length = 20,
         choices = [
             ("ALL", "전체"),
-            ("ADMIN", "관리자만"),
+            ("ADMIN", "관리자 이상"),
             ("OWNER", "소유자만"),
-            ("PARTICIPANT", "참여자만"),
+            ("PARTICIPANT", "참여자 이상"),
         ],
         default = "ALL",
         blank = False,
@@ -82,13 +82,51 @@ class ChatRoomPermission(MetaDataModel):
         max_length = 20,
         choices = [
             ("ALL", "전체"),
-            ("ADMIN", "관리자만"),
+            ("ADMIN", "관리자 이상"),
             ("OWNER", "소유자만"),
         ],
         default = "OWNER",
         blank = False,
         null = False,
     ),
+    room_delete_permission : str = models.CharField(
+        verbose_name = "채팅방 삭제 권한",
+        max_length = 20,
+        choices = [
+            ("ALL", "전체"),
+            ("ADMIN", "관리자 이상"),
+            ("OWNER", "소유자만"),
+            ("PARTICIPANT", "참여자 이상"),
+        ],
+        default = "OWNER",
+        blank = False,
+        null = False,
+    )
 
     # created_at : 채팅방이 처음 생성될 때 같이 생성됨
     # deleted_at : 채팅방이 삭제될 때 같이 삭제됨
+
+    # 권한 업데이트
+    @transaction.atomic
+    def update_permission(
+        self,
+        entrance : str = None,
+        invite : str = None,
+        message : str = None,
+        kick : str = None,
+        permission_update : str = None,
+        delete_room : str = None,
+    ):
+        if entrance is not None:
+            self.entrance_permission = entrance
+        if invite is not None:
+            self.invite_permission = invite
+        if message is not None:
+            self.messagee_permisson = message
+        if kick is not None:
+            self.kick_permission = kick
+        if permission_update is not None:
+            self.permission_update_permmission = permission_update
+        if delete_room is not None:
+            self.room_delete_permission = delete_room
+        self.save()
