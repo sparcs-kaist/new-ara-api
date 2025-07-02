@@ -4,7 +4,7 @@ import datetime
 from django.conf import settings
 from django.db import IntegrityError, models, transaction
 from ara.db.models import MetaDataModel
-from apps.chatting.models.room import ChatRoom
+from apps.chatting.models.room import ChatRoom, ChatRoomType
 from apps.chatting.models.message import ChatMessage
 
 # 각각의 채팅방에서 사용자의 역할
@@ -66,3 +66,12 @@ class ChatRoomMemberShip(MetaDataModel):
 
     # created_at : 채팅방에 참여시
     # deleted_at : 채팅방에서 나갔을 때 (완전히 다시 참여할 수 없는 것은 아니므로 soft delete를 이용!)
+
+    @classmethod
+    def is_dm_exist(cls, user1, user2) -> bool:
+        # 두 유저 동시 참여 & 채팅방 타입 DM 존재 조회
+        return ChatRoom.objects.filter(
+            membership_info_set__user=user1,
+            membership_info_set__user=user2,
+            room_type=ChatRoomType.DM.value
+        ).exists()

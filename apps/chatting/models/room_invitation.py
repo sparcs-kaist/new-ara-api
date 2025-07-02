@@ -67,7 +67,7 @@ class ChatRoomInvitation(MetaDataModel):
             return False
         return True
     
-    #초대장 수락 - 성공 유무 반환 (나머지 다 한다음에 작업해야지....)
+    #초대장 수락
     @transaction.atomic
     def accept_invitation(self) -> None :
         # 초대장 유효성 검사
@@ -94,4 +94,8 @@ class ChatRoomInvitation(MetaDataModel):
         )
 
         #처리 완료된 초대장 삭제
+        self.delete()
+
+    # 초대장 거절 : 초대장 삭제
+    def reject_invitation(self) -> None :
         self.delete()
