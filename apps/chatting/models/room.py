@@ -5,7 +5,7 @@ from django.db import IntegrityError, models, transaction
 from ara.db.models import MetaDataModel
 
 # 각각의 유저가 참여하고 있는 채팅방 정보
-class  ChatRoom(MetaDataModel):
+class ChatRoom(MetaDataModel):
     room_id : int = models.PositiveIntegerField(
         verbose_name = "room_id",
         default = 0,
