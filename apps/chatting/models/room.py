@@ -3,8 +3,6 @@ import datetime
 
 from django.db import IntegrityError, models, transaction
 from ara.db.models import MetaDataModel
-from apps.chatting.models.message import ChatMessage
-
 
 
 class ChatRoomType(str, Enum):
@@ -29,7 +27,7 @@ class ChatRoom(MetaDataModel):
     room_id : int = models.PositiveIntegerField(
         verbose_name = "room_id",
         default = 0,
-        index = True,
+        db_index = True,
         unique = True,
     )
     # 채팅방 타입
@@ -63,7 +61,7 @@ class ChatRoom(MetaDataModel):
     )
     # 가장 최근의 메시지
     recent_message = models.OneToOneField(
-        ChatMessage,
+        "chatting.ChatMessage", #순환 참조 막기 위해 문자열 참조로 우회
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

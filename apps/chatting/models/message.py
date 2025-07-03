@@ -15,7 +15,7 @@ class ChatMessageType(str, Enum):
 class ChatMessage(MetaDataModel):
     # 유니크 순서쌍 정의
     class Meta:
-        constratints = [
+        constraints = [
             models.UniqueConstraint(fields = ['chat_room', 'message_id'], name = 'unique_chatroom_messageid')
         ]
     
@@ -45,7 +45,7 @@ class ChatMessage(MetaDataModel):
     # 메시지가 존재하는 채팅방
     chat_room = models.ForeignKey(
         verbose_name= "메시지가 속한 채팅방",
-        to=ChatRoom,
+        to="chatting.ChatRoom", # 순환 참조 막기 위해 문자열 참조로 우회
         on_delete=models.CASCADE,
         related_name="message_set",
         db_index=True,

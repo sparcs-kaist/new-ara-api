@@ -3,6 +3,7 @@ import datetime
 
 from django.conf import settings
 from django.db import IntegrityError, models, transaction
+from django.db.models import Q
 from ara.db.models import MetaDataModel
 from apps.chatting.models.room import ChatRoom, ChatRoomType
 from apps.chatting.models.message import ChatMessage
@@ -18,7 +19,13 @@ class ChatUserRole(str, Enum):
 
 # 각각의 유저가 참여하고 있는 채팅방 정보
 class ChatRoomMemberShip(MetaDataModel):
-    # User ID
+    # 유니크 순서쌍 정의
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields = ['chat_room', 'user'], name = 'unique_chatroom_user')
+        ]
+    
+    # User object
     user = models.ForeignKey(
         verbose_name="User 정보",
         to=settings.AUTH_USER_MODEL,
@@ -47,7 +54,6 @@ class ChatRoomMemberShip(MetaDataModel):
         null = True,
         blank = False,
         auto_now = True,
-        default = None
     )
     last_seen_message = models.OneToOneField(
         ChatMessage,
@@ -69,11 +75,10 @@ class ChatRoomMemberShip(MetaDataModel):
 
     @classmethod
     def is_dm_exist(cls, user1, user2) -> bool:
-        # 두 유저 동시 참여 & 채팅방 타입 DM 존재 조회
         return ChatRoom.objects.filter(
-            membership_info_set__user=user1,
-            membership_info_set__user=user2,
             room_type=ChatRoomType.DM.value
+        ).filter(
+            Q(membership_info_set__user=user1) & Q(membership_info_set__user=user2)
         ).exists()
     
     #User의 DM을 Block 설정 하는 경우
@@ -81,8 +86,7 @@ class ChatRoomMemberShip(MetaDataModel):
     @classmethod
     def block_dm(cls, blocker, blocked) -> None:
         dm_room = ChatRoom.objects.filter(
-            membership_info_set__user=blocker,
-            membership_info_set__user=blocked,
+            Q(membership_info_set__user=blocker) & Q(membership_info_set__user=blocked),
             room_type=ChatRoomType.DM.value
         ).first()
 
@@ -120,9 +124,8 @@ class ChatRoomMemberShip(MetaDataModel):
     #blocker : 자신이 block한 사람을 차단 해제 하려는 User
     #blocked : blocked 된 User -> 차단 해제 대상
     def unblock_dm(cls, blocker, blocked) -> None:
-        dm_room = ChatRoom.lojects.filter(
-            membership_info_set__user=blocker,
-            membership_info_set__user=blocked,
+        dm_room = ChatRoom.objects.filter(
+            Q(membership_info_set__user=blocker) & Q(membership_info_set__user=blocked),
             room_type=ChatRoomType.DM.value
         ).first()
 
@@ -154,15 +157,13 @@ class ChatRoomMemberShip(MetaDataModel):
     @classmethod
     def get_blocked_room_list(cls, user) -> list:
         return ChatRoom.objects.filter(
-            membership_info_set__user=user,
-            membership_info_set__role=ChatUserRole.BLOCKER.value
+            Q(membership_info_set__user=user) & Q(membership_info_set__role=ChatUserRole.BLOCKER.value)
         )
     
     # 차단한 group_room (그룹채팅, 오픈 채팅) 방 리스트 조회
     @classmethod
     def get_blocked_group_room_list(cls, user) -> list:
         return ChatRoom.objects.filter(
-            membership_info_set__user=user,
-            membership_info_set__role=ChatUserRole.BLOCKER.value,
+            Q(membership_info_set__user=user) & Q(membership_info_set__role=ChatUserRole.BLOCKER.value),
             room_type=ChatRoomType.GROUP.value
         )
