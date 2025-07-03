@@ -23,7 +23,7 @@ class ChatRoom(MetaDataModel):
         default = "아라 채팅방",
         blank = False,
         null = False,
-    ),
+    )
     room_id : int = models.PositiveIntegerField(
         verbose_name = "room_id",
         default = 0,
