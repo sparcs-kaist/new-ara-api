@@ -113,3 +113,28 @@ class ChatRoomMemberShip(MetaDataModel):
                 role=ChatUserRole.BLOCKED.value,
                 chat_room=dm_room #dm_room 에도 자동 반영
             )
+
+    #User의 Unblock 설정
+    @transaction.atomic
+    @classmethod
+    #blocker : 자신이 block한 사람을 차단 해제 하려는 User
+    #blocked : blocked 된 User -> 차단 해제 대상
+    def unblock_dm(cls, blocker, blocked) -> None:
+        dm_room = ChatRoom.lojects.filter(
+            membership_info_set__user=blocker,
+            membership_info_set__user=blocked,
+            room_type=ChatRoomType.DM.value
+        ).first()
+
+        # 채팅방이 존재하지 않는 경우 : (Blocked 되지 않은 경우임)
+        if not dm_room:
+            raise IntegrityError("차단되지 않은 User입니다.")
+
+        # Blocked 상태에서 Unblock 상태로 변경
+        blocker_membership = dm_room.membership_info_set.filter(user=blocker).first()
+        blocker_membership.role = ChatUserRole.PARTICIPANT.value
+        blocker_membership.save()
+
+        blocked_membership = dm_room.membership_info_set.filter(user=blocked).first()
+        blocked_membership.role = ChatUserRole.PARTICIPANT.value
+        blocked_membership.save()
