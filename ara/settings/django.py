@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "django_elasticsearch_dsl",
     "django_filters",
     "apps.core",
+    "apps.chatting",
     "apps.user",
     "apps.global_notice",
     "apps.calendar",

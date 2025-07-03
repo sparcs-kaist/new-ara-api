@@ -21,7 +21,7 @@ class ChatRoomInvitation(MetaDataModel):
         verbose_name = "초대된 채팅방",
         to = ChatRoom,
         on_delete = models.CASCADE,
-        realted_name = "invitation_set",
+        related_name = "invitation_set",
         db_index = True,
     )
     # 초대받은 유저의 ID

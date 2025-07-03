@@ -25,7 +25,7 @@ class ChatRoomPermission(MetaDataModel):
         db_index=True,
     )
     # 입장 권한 (전체 or Invited)
-    entrance_permission : str = models.CharField(
+    entrance_permission = models.CharField(
         verbose_name = "입장 권한",
         max_length = 20,
         choices = [
@@ -37,7 +37,7 @@ class ChatRoomPermission(MetaDataModel):
         null = False,
     ),
     # 초대할 수 있는 사용자
-    invite_permission : str = models.CharField(
+    invite_permission = models.CharField(
         verbose_name = "초대 권한",
         max_length = 20,
         choices = [
@@ -50,7 +50,7 @@ class ChatRoomPermission(MetaDataModel):
         null = False,
     ),
     # 메세지 보내기 권한
-    messagee_permisson : str = models.CharField(
+    message_permission = models.CharField(
         verbose_name = "메세지 보내기 권한",
         max_length = 20,
         choices = [
@@ -64,7 +64,7 @@ class ChatRoomPermission(MetaDataModel):
         null = False,
     ),
     # 유저 강퇴 권한
-    kick_permission : str = models.CharField(
+    kick_permission = models.CharField(
         verbose_name = "유저 강퇴 권한",
         max_length = 20,
         choices = [
@@ -77,7 +77,7 @@ class ChatRoomPermission(MetaDataModel):
         blank = False,
         null = False,
     ),
-    permission_update_permmission : str = models.CharField(
+    permission_update_permmission = models.CharField(
         verbose_name = "권한 업데이트 권한",
         max_length = 20,
         choices = [
@@ -89,7 +89,7 @@ class ChatRoomPermission(MetaDataModel):
         blank = False,
         null = False,
     ),
-    room_delete_permission : str = models.CharField(
+    room_delete_permission = models.CharField(
         verbose_name = "채팅방 삭제 권한",
         max_length = 20,
         choices = [

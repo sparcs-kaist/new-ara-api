@@ -16,8 +16,8 @@ class ChatMessageType(str, Enum):
 class ExpiredChatMessage(MetaDataModel):
     # 유니크 순서쌍 정의
     class Meta:
-        constratints = [
-            models.UniqueConstraint(fields = ['chat_room', 'message_id'], name = 'unique_chatroom_messageid')
+        constraints = [
+            models.UniqueConstraint(fields = ['chat_room', 'message_id'], name = 'unique_chatroom_expired_messageid')
         ]
         
     # 메시지의 종류
@@ -46,18 +46,18 @@ class ExpiredChatMessage(MetaDataModel):
     # 메시지가 존재하는 채팅방
     chat_room = models.ForeignKey(
         verbose_name= "메시지가 속한 채팅방",
-        to=ChatRoom,
+        to="chatting.ChatRoom", # 순환 참조 막기 위해 문자열 참조로 우회
         on_delete=models.CASCADE,
         related_name="expired_message_set",
-        db_index=True,
+        #db_index=True, (expired는 index 필요 X)
     )
     # 메시지 보낸 유저
     created_by = models.ForeignKey(
         verbose_name="메시지 작성자",
         to=settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="message_set",
-        db_index=True,
+        related_name="expired_message_set",
+        #db_index=True, (expired는 index 필요 X)
     )
 
     # created_at : 메시지 데이터가 백업 데이터 테이블로 이동한 일시
