@@ -28,7 +28,7 @@ class ExpiredChatMessage(MetaDataModel):
         verbose_name = "message_type",
         blank = False,
         null = False,
-    ),
+    )
     # 메시지의 고유 ID (chat_room, message_id) 순서쌍은 unique
     message_id : int = models.PositiveIntegerField(
         verbose_name = "메시지 ID",
@@ -42,7 +42,7 @@ class ExpiredChatMessage(MetaDataModel):
         blank = False,
         null = False,
         default = "",
-    ),
+    )
     # 메시지가 존재하는 채팅방
     chat_room = models.ForeignKey(
         verbose_name= "메시지가 속한 채팅방",
