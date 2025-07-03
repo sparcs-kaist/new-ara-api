@@ -75,3 +75,41 @@ class ChatRoomMemberShip(MetaDataModel):
             membership_info_set__user=user2,
             room_type=ChatRoomType.DM.value
         ).exists()
+    
+    #User의 DM을 Block 설정 하는 경우
+    @transaction.atomic
+    @classmethod
+    def block_dm(cls, blocker, blocked) -> None:
+        dm_room = ChatRoom.objects.filter(
+            membership_info_set__user=blocker,
+            membership_info_set__user=blocked,
+            room_type=ChatRoomType.DM.value
+        ).first()
+
+        # 이미 채팅방이 존재하는 경우
+        if dm_room:
+            blocker_membership = dm_room.membership_info_set.filter(user=blocker).first()
+            blocker_membership.role = ChatUserRole.BLOCKER.value
+            blocker_membership.save()
+
+            blocked_membership = dm_room.membership_info_set.filter(user=blocked).first()
+            blocked_membership.role = ChatUserRole.BLOCKED.value
+            blocked_membership.save()
+
+        # 채팅방이 존재하지 않은 경우 차단 처리
+        else:
+            dm_room = ChatRoom.objects.create(
+                room_type=ChatRoomType.DM.value
+            )
+            
+            blocker_membership = ChatRoomMemberShip.objects.create(
+                user=blocker,
+                role=ChatUserRole.BLOCKER.value,
+                chat_room=dm_room #dm_room 에도 자동 반영
+            )
+            
+            blocked_membership = ChatRoomMemberShip.objects.create(
+                user=blocked,
+                role=ChatUserRole.BLOCKED.value,
+                chat_room=dm_room #dm_room 에도 자동 반영
+            )
