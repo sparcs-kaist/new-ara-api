@@ -138,3 +138,31 @@ class ChatRoomMemberShip(MetaDataModel):
         blocked_membership = dm_room.membership_info_set.filter(user=blocked).first()
         blocked_membership.role = ChatUserRole.PARTICIPANT.value
         blocked_membership.save()
+
+    
+    # 차단한 user_list 조회
+    # user가 차단한 리스트를 조회한다.
+    @classmethod
+    def get_block_user_list(cls, user) -> list:
+        return cls.objects.filter(
+            user=user,
+            role=ChatUserRole.BLOCKER.value
+        )
+
+    # 차단한 채팅방 list 조회
+    # dm_room과 group_room을 모두 포함한다.
+    @classmethod
+    def get_blocked_room_list(cls, user) -> list:
+        return ChatRoom.objects.filter(
+            membership_info_set__user=user,
+            membership_info_set__role=ChatUserRole.BLOCKER.value
+        )
+    
+    # 차단한 group_room (그룹채팅, 오픈 채팅) 방 리스트 조회
+    @classmethod
+    def get_blocked_group_room_list(cls, user) -> list:
+        return ChatRoom.objects.filter(
+            membership_info_set__user=user,
+            membership_info_set__role=ChatUserRole.BLOCKER.value,
+            room_type=ChatRoomType.GROUP.value
+        )

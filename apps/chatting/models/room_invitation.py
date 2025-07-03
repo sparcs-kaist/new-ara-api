@@ -99,3 +99,9 @@ class ChatRoomInvitation(MetaDataModel):
     # 초대장 거절 : 초대장 삭제
     def reject_invitation(self) -> None :
         self.delete()
+
+    # 받은 초대장 리스트 조회
+    def get_received_invitations(user) -> list:
+        return ChatRoomInvitation.objects.filter(
+            invitation_to=user,
+        )
