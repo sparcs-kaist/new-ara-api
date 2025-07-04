@@ -12,7 +12,7 @@ class DMSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatRoom
         fields = [
-            'id', 'room_type', 'created_at', 'recent_message_at', 
+            'id', 'room_title', 'room_type', 'created_at', 'recent_message_at', 
             'recent_message', 'other_user'
         ]
         read_only_fields = ['room_type', 'created_at', 'recent_message_at', 'recent_message']

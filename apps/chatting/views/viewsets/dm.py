@@ -24,15 +24,17 @@ from apps.chatting.permissions.dm import CreateDMPermission, LeaveDMPermission, 
 @extend_schema_view(
     update=extend_schema(exclude=True),
     partial_update=extend_schema(exclude=True),
+    retrieve=extend_schema(exclude=True),  # GET /dm/{id} 제외
+    destroy=extend_schema(exclude=True),   # DELETE /dm/{id} 제외
 )
 class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
+    http_method_name = ['get', 'post', 'patch'] #delete 제외
     queryset = ChatRoom.objects.filter(room_type=ChatRoomType.DM.value)
     serializer_class = DMSerializer
     
     action_permission_classes = {
         "list": (permissions.IsAuthenticated,),
         "create": (permissions.IsAuthenticated, CreateDMPermission,),
-        "leave": (permissions.IsAuthenticated, LeaveDMPermission),
         "block": (permissions.IsAuthenticated, BlockDMPermission),
         "unblock": (permissions.IsAuthenticated, UnblockDMPermission),
     }
@@ -85,19 +87,7 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             status=status.HTTP_201_CREATED
         )
     
-    # dm/ DELETE: DM 방 나가기
-    @action(detail=True, methods=["delete"])
-    def leave(self, request, pk=None):
-        dm_room = self.get_object()
-        membership = ChatRoomMemberShip.objects.filter(
-            chat_room=dm_room, 
-            user=request.user
-        ).first()
-        
-        if membership:
-            membership.delete()
-        
-        return response.Response(status=status.HTTP_204_NO_CONTENT)
+    # dm/ DELETE: DM 방 나가기 : 로직상 지원 X (DM은 방을 나간다는 개념이 없음)
     
     # dm/block PATCH: DM 차단하기 - block_dm 메서드 활용
     @action(detail=True, methods=["patch"])
