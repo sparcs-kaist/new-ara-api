@@ -73,7 +73,7 @@ class ChatRoomPermission(MetaDataModel):
             ("OWNER", "소유자만"),
             ("PARTICIPANT", "참여자 이상"),
         ],
-        default = "ALL",
+        default = "ADMIN",
         blank = False,
         null = False,
     )

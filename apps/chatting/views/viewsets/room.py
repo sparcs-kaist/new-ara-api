@@ -10,6 +10,8 @@ from rest_framework.decorators import action
 
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
+from datetime import timezone
+
 from ara.classes.viewset import ActionAPIViewSet
 from apps.chatting.models.room import ChatRoom
 from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole
@@ -25,7 +27,7 @@ from apps.chatting.permissions.room import RoomReadPermission, RoomBlockPermissi
 class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     queryset = ChatRoom.objects.all()
     serializer_class = ChatRoomCreateSerializer
-    permission_classes = [RoomReadPermission]
+    permission_classes = [permissions.IsAuthenticated]
     
     action_permission_classes = {
         "leave": (permissions.IsAuthenticated, RoomLeavePermission),
@@ -43,7 +45,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
     def get_queryset(self):
         """자신이 참여한 방만"""
-        return ChatRoom.objects.filter(memberships__user=self.request.user).distinct()
+        return ChatRoom.objects.filter(membership_info_set__user=self.request.user).distinct()
 
     @action(detail=True, methods=["post"])
     def leave(self, request, pk=None):

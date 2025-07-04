@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from apps.chatting.models.room import ChatRoom, ChatRoomType
+from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole
 from apps.chatting.models.room_permission import ChatRoomPermission
 
 class ChatRoomCreateSerializer(serializers.ModelSerializer):
@@ -21,7 +22,14 @@ class ChatRoomCreateSerializer(serializers.ModelSerializer):
             message_permission="PARTICIPANT",  # 참여자 이상 메시지 보내기 가능
             # 기타 필요한 권한 설정
         )
-        
+
+        #채팅방 생성자는 membership_room 에 OWNER로 추가하기
+        ChatRoomMemberShip.objects.create(
+            chat_room=room,
+            user=self.context['request'].user,
+            role=ChatUserRole.OWNER.value
+        )
+
         return room
     
     def validate(self, attrs):
