@@ -81,8 +81,11 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         return super().get_serializer_class()
 
     def get_queryset(self):
-        """자신이 참여한 방만"""
-        return ChatRoom.objects.filter(membership_info_set__user=self.request.user).distinct()
+        # GET 요청시 : 자신과 관련된 채팅방만..
+        if self.request.method == "GET":
+            return ChatRoom.objects.filter(membership_info_set__user=self.request.user).distinct()
+        return ChatRoom.objects.all()
+
 
     @action(detail=True, methods=["post"])
     def leave(self, request, pk=None):
@@ -92,6 +95,8 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             membership.delete()
         return response.Response(status=status.HTTP_204_NO_CONTENT)
 
+    # chat/room/<roomid>/read : 해당 room의 채팅방 읽음 처리
+    # @Todo : last_seen_message_id 도 업데이트 해야한다.
     @action(detail=True, methods=["patch"])
     def read(self, request, pk=None):
         room = self.get_object()
@@ -101,17 +106,37 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             membership.save()
         return response.Response(status=status.HTTP_200_OK)
 
+    # chat/room/<roomid>/block : 해당 room 차단.
+    # chat/room/<roomid>/block{"unblock" : true} : 해당 room 차단 해제
     @action(detail=True, methods=["patch"])
     def block(self, request, pk=None):
         room = self.get_object()
-        block = request.data.get("block", True)
-        membership, created = ChatRoomMemberShip.objects.get_or_create(chat_room=room, user=request.user)
-        membership.role = ChatUserRole.BLOCKER.value if block else ChatUserRole.PARTICIPANT.value
+        
+        # 명시적으로 "unblock"이 true일 때만 차단 해제, 그 외에는 항상 차단
+        unblock = request.data.get("unblock", False)
+        
+        membership, created = ChatRoomMemberShip.objects.get_or_create(
+            chat_room=room, 
+            user=request.user
+        )
+        
+        # unblock이 True일 때만 PARTICIPANT로 변경, 그 외에는 BLOCKER
+        membership.role = ChatUserRole.PARTICIPANT.value if unblock else ChatUserRole.BLOCKER.value
         membership.save()
+        
         return response.Response(status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=["patch"])
+    def unblock(self, request, pk=None):
+        room = self.get_object()
+        membership = ChatRoomMemberShip.objects.filter(chat_room=room, user=request.user).first()
+        if membership and membership.role == ChatUserRole.BLOCKER.value:
+            # 차단 해제시 바로 참여자로 변경하면, 차단이 초대를 우회할 수 있으므로 방에서 나간것 처리 = 삭제
+            membership.delete()
+            return response.Response(status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"])
-    def blocked(self, request):
+    def blocked_list(self, request):
         blocked_rooms = ChatRoomMemberShip.get_blocked_room_list(request.user)
         serializer = self.get_serializer(blocked_rooms, many=True)
         return response.Response(serializer.data)
