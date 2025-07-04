@@ -59,10 +59,14 @@ class RoomBlockPermission(permissions.BasePermission):
             user=request.user
         ).first()
         
-        return membership and \
-            (membership.role != ChatUserRole.BLOCKER.value) and \
-            (membership.role != ChatUserRole.BLOCKED.value) and \
-            (membership.role != ChatUserRole.OWNER.value)
+        # 아직 참여 안 한 채팅방 - 차단 허용
+        if membership is None:
+            return True
+            
+        # 멤버십이 있는 경우 - 특정 역할이 아닌 경우만 차단 허용
+        return (membership.role != ChatUserRole.BLOCKER.value) and \
+               (membership.role != ChatUserRole.BLOCKED.value) and \
+               (membership.role != ChatUserRole.OWNER.value)
 
 
 
