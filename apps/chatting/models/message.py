@@ -3,6 +3,8 @@ import datetime
 
 from django.conf import settings
 from django.db import IntegrityError, models, transaction
+from django.utils import timezone
+
 from ara.db.models import MetaDataModel
 from apps.chatting.models.room import ChatRoom
 
@@ -66,12 +68,14 @@ class ChatMessage(MetaDataModel):
         if not chat_room:
             raise ValueError("chat_room is missing.")
 
-        # message_id 계산
-        last_message = cls.objects.select_for_update().filter(chat_room=chat_room).order_by('-message_id').first()
-        kwargs['message_id'] = (last_message.message_id if last_message else 0) + 1
-
-        # super().create(...) 대신 cls(**kwargs).save()
+        # 메시지 생성
         instance = cls(**kwargs)
         instance.save()
+
+        # 방의 최근 메시지 정보 업데이트
+        chat_room.recent_message = instance
+        chat_room.recent_message_at = timezone.now()
+        chat_room.save()
+
         return instance
 
