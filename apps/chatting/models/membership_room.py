@@ -65,7 +65,7 @@ class ChatRoomMemberShip(MetaDataModel):
     #채팅방 알림 설정 여부
     subscribed : bool = models.BooleanField(
         verbose_name= "subscribed",
-        default = True,
+        default = False,
         blank = False,
         null = True,
     )
