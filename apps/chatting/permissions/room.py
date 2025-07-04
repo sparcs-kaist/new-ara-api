@@ -68,6 +68,7 @@ class RoomBlockPermission(permissions.BasePermission):
                (membership.role != ChatUserRole.BLOCKED.value) and \
                (membership.role != ChatUserRole.OWNER.value)
 
+#채팅방 차단 해제 : (view에서 BLOCKER인 경우만 처리하므로, 별도의 Permission 필요 X)
 
 
 #채팅방 차단 목록 조회 : IsAuthenticated

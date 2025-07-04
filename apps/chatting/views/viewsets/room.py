@@ -125,6 +125,15 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         membership.save()
         
         return response.Response(status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=["patch"])
+    def unblock(self, request, pk=None):
+        room = self.get_object()
+        membership = ChatRoomMemberShip.objects.filter(chat_room=room, user=request.user).first()
+        if membership and membership.role == ChatUserRole.BLOCKER.value:
+            # 차단 해제시 바로 참여자로 변경하면, 차단이 초대를 우회할 수 있으므로 방에서 나간것 처리 = 삭제
+            membership.delete()
+            return response.Response(status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"])
     def blocked_list(self, request):
