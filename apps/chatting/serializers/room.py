@@ -47,3 +47,37 @@ class ChatRoomCreateSerializer(serializers.ModelSerializer):
         
         return attrs
     
+class ChatRoomSerializer(serializers.ModelSerializer):
+    """
+    채팅방 정보 조회용 Serializer
+    """
+    class Meta:
+        model = ChatRoom
+        fields = [
+            'id', 'room_title', 'room_type', 'chat_name_type',
+            'recent_message_at', 'recent_message'
+        ]
+        read_only_fields = ['recent_message_at', 'recent_message']
+
+class ChatRoomByIdSerializer(serializers.Serializer):
+    """
+    채팅방 ID를 받아서 채팅방 객체를 반환하는 Serializer
+    """
+    room_id = serializers.IntegerField()
+    
+    def validate_room_id(self, value):
+        try:
+            # 입력받은 ID로 채팅방 객체 조회
+            room = ChatRoom.objects.get(id=value)
+            # validate_room_id 메서드의 반환값이 직렬화된 값이 됨
+            return room
+        except ChatRoom.DoesNotExist:
+            raise serializers.ValidationError(f"ID가 {value}인 채팅방이 존재하지 않습니다.")
+            
+    def create(self, validated_data):
+        # validated_data['room_id']는 이미 ChatRoom 객체임
+        return validated_data['room_id']
+        
+    def to_representation(self, instance):
+        # ChatRoom 객체를 반환할 때 사용할 시리얼라이저
+        return ChatRoomSerializer(instance).data

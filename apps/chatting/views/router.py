@@ -17,6 +17,8 @@ router.register(
     viewset=viewsets.ChatMessageViewSet,
     basename="chat_message"
 )
+아직 구현이 안 된 부분.
+"""
 
 # 채팅방 초대 관련 ViewSet
 router.register(
@@ -25,12 +27,12 @@ router.register(
     basename="chat_invitation"
 )
 
+"""
 # DM 관련 ViewSet
 router.register(
     prefix=r"chat/dm",
     viewset=viewsets.ChatDMViewSet,
     basename="chat_dm"
 )
-
-아직 구현이 안 된 부분.
 """
+
