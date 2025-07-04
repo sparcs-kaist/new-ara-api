@@ -1,6 +1,7 @@
 from rest_framework import permissions
 from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole, ChatRoom, ChatRoomType
 from django.db.models import Q
+import time
 
 #DM 생성 권한 - 이미 만들어진 방이 없고, 차단 상태가 아닌 경우
 class CreateDMPermission(permissions.BasePermission):
@@ -8,15 +9,11 @@ class CreateDMPermission(permissions.BasePermission):
         if not request.user.is_authenticated:
             return False
         
-        dm_to = request.data.get("target_user")
+        dm_to = request.data.get("dm_to")
         if not dm_to:   
             return False
         #두 User 사이에 이미 만들어진 DM 방이 있는지 확인
-        existing_dm = ChatRoom.objects.filter(
-        room_type=ChatRoomType.DM.value
-        ).filter(
-            Q(membership_info_set__user=request.user) & Q(membership_info_set__user_id=dm_to)
-        ).exists()
+        existing_dm = ChatRoomMemberShip.is_dm_exist(request.user, dm_to)
         if existing_dm:
             return False
         return True

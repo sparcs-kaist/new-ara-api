@@ -8,6 +8,7 @@ from rest_framework import (
 )
 from rest_framework.decorators import action
 from django.db.models import Q
+from django.db import IntegrityError
 
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
@@ -30,7 +31,7 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     
     action_permission_classes = {
         "list": (permissions.IsAuthenticated,),
-        "create": (permissions.IsAuthenticated, CreateDMPermission),
+        "create": (permissions.IsAuthenticated, CreateDMPermission,),
         "leave": (permissions.IsAuthenticated, LeaveDMPermission),
         "block": (permissions.IsAuthenticated, BlockDMPermission),
         "unblock": (permissions.IsAuthenticated, UnblockDMPermission),
@@ -49,34 +50,21 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             ).distinct()
         return super().get_queryset()
     
-    # dm/ POST: DM 방 만들기
+    # dm/ POST: DM 방 만들기 - 기존 메서드 활용
     def create(self, request, *args, **kwargs):
+        # 이미 존재하는 DM인 경우 : permission에서 block
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
         # 대화 상대 ID
         dm_to = serializer.validated_data['dm_to']
         
-        # 이미 존재하는 DM인지 확인
-        existing_dm = ChatRoom.objects.filter(
-            room_type=ChatRoomType.DM.value
-        ).filter(
-            Q(membership_info_set__user=request.user) & 
-            Q(membership_info_set__user=dm_to)
-        ).first()
-        
-        if existing_dm:
-            # 이미 존재하는 경우 기존 DM 반환
-            return response.Response(
-                DMSerializer(existing_dm).data,
-                status=status.HTTP_200_OK
-            )
-        
         # 새 DM 생성
+        user_nickname = request.user.profile.nickname
+        dm_to_nickname = dm_to.profile.nickname
         dm_room = ChatRoom.objects.create(
             room_type=ChatRoomType.DM.value,
-            room_title=f"DM_{request.user.id}_{dm_to.id}",  # 내부 식별용
-            created_by=request.user
+            room_title=f"DM_{user_nickname},{dm_to_nickname}",
         )
         
         # 두 사용자 모두 참가자로 추가
@@ -93,7 +81,7 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         )
         
         return response.Response(
-            DMSerializer(dm_room).data,
+            DMSerializer(dm_room, context={'request': request}).data,
             status=status.HTTP_201_CREATED
         )
     
@@ -111,36 +99,48 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         
         return response.Response(status=status.HTTP_204_NO_CONTENT)
     
-    # dm/block PATCH: DM 차단하기
+    # dm/block PATCH: DM 차단하기 - block_dm 메서드 활용
     @action(detail=True, methods=["patch"])
     def block(self, request, pk=None):
         dm_room = self.get_object()
         
-        # 명시적으로 "unblock"이 true일 때만 차단 해제, 그 외에는 항상 차단
-        unblock = request.data.get("unblock", False)
+        # 상대방 찾기
+        other_user = dm_room.membership_info_set.exclude(user=request.user).first()
+        if not other_user:
+            return response.Response(
+                {"error": "DM 상대방을 찾을 수 없습니다."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
-        membership, created = ChatRoomMemberShip.objects.get_or_create(
-            chat_room=dm_room, 
-            user=request.user
-        )
-        
-        # 차단 또는 해제
-        membership.role = ChatUserRole.PARTICIPANT.value if unblock else ChatUserRole.BLOCKER.value
-        membership.save()
-        
-        return response.Response(status=status.HTTP_200_OK)
+        # 차단 처리 - 모델 메서드 활용
+        try:
+            ChatRoomMemberShip.block_dm(request.user, other_user.user)
+            return response.Response(status=status.HTTP_200_OK)
+        except Exception as e:
+            return response.Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
     
-    # dm/unblock PATCH: DM 차단 해제하기
+    # dm/unblock PATCH: DM 차단 해제하기 - unblock_dm 메서드 활용
     @action(detail=True, methods=["patch"])
     def unblock(self, request, pk=None):
         dm_room = self.get_object()
-        membership = ChatRoomMemberShip.objects.filter(
-            chat_room=dm_room, 
-            user=request.user
-        ).first()
         
-        if membership and membership.role == ChatUserRole.BLOCKER.value:
-            membership.role = ChatUserRole.PARTICIPANT.value
-            membership.save()
-        
-        return response.Response(status=status.HTTP_200_OK)
+        # 상대방 찾기
+        other_user = dm_room.membership_info_set.exclude(user=request.user).first()
+        if not other_user:
+            return response.Response(
+                {"error": "DM 상대방을 찾을 수 없습니다."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        # 차단 해제 처리 - 모델 메서드 활용
+        try:
+            ChatRoomMemberShip.unblock_dm(request.user, other_user.user)
+            return response.Response(status=status.HTTP_200_OK)
+        except IntegrityError as e:
+            return response.Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )

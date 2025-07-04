@@ -70,9 +70,10 @@ class ChatRoomMemberShip(MetaDataModel):
     @classmethod
     def is_dm_exist(cls, user1, user2) -> bool:
         return ChatRoom.objects.filter(
-            room_type=ChatRoomType.DM.value
+            room_type=ChatRoomType.DM.value,
+            membership_info_set__user=user1
         ).filter(
-            Q(membership_info_set__user=user1) & Q(membership_info_set__user=user2)
+            membership_info_set__user=user2
         ).exists()
     
     #User의 DM을 Block 설정 하는 경우
