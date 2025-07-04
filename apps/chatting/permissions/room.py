@@ -5,7 +5,7 @@ from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRol
 #채팅방 생성 : 모든 로그인한 User (IsAuthenticated)
     
 #채팅방 삭제 : 채팅방 소유자 (Owner)만 가능
-class RoomDeletePermission(permissions.BasePermissions):
+class RoomDeletePermission(permissions.BasePermission):
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
             return False
@@ -48,7 +48,7 @@ class RoomLeavePermission(permissions.BasePermission):
         return membership and membership.role != ChatUserRole.OWNER.value
     
 #채팅방 차단 : BLOCKER, BLOCKED, OWNER일 경우 불가능
-class RoomBlockPermission(permissions.BasePermissions):
+class RoomBlockPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
             return False

@@ -10,6 +10,7 @@ router.register(
     basename="chat_room"
 )
 
+"""
 # 메시지 관련 ViewSet
 router.register(
     prefix=r"chat/message",
@@ -30,3 +31,6 @@ router.register(
     viewset=viewsets.ChatDMViewSet,
     basename="chat_dm"
 )
+
+아직 구현이 안 된 부분.
+"""
