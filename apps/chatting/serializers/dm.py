@@ -37,3 +37,15 @@ class DMCreateSerializer(serializers.Serializer):
     dm_to = serializers.PrimaryKeyRelatedField(
         queryset=get_user_model().objects.all()
     )
+
+class DMBlockSerializer(serializers.Serializer):
+    """
+    DM 차단/차단해제용 시리얼라이저
+    """
+    user_id = serializers.IntegerField(help_text="차단/해제할 사용자 ID")
+
+class DMActionResponseSerializer(serializers.Serializer):
+    """
+    DM 액션 응답용 시리얼라이저
+    """
+    message = serializers.CharField(help_text="처리 결과 메시지")
