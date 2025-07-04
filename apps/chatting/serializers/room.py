@@ -46,3 +46,4 @@ class ChatRoomCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("그룹/오픈 채팅방은 제목이 필요합니다.")
         
         return attrs
+    

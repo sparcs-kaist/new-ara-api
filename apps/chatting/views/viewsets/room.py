@@ -43,6 +43,43 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         "blocked": ChatRoomCreateSerializer,
     }
 
+    method_permission_classes = {
+        "POST": (permissions.IsAuthenticated,), # 채팅방 생성 권한 : 모든 로그인 된 User
+        "DELETE": (RoomDeletePermission,)
+    }
+
+    method_serializer_class = {
+        "POST": ChatRoomCreateSerializer,
+    }
+
+    def destroy(self, request, *args, **kwargs):
+        room = self.get_object()
+
+        # 부속 데이터 먼저 정리
+        ChatRoomMemberShip.objects.filter(chat_room=room).delete() #User의 Membership 삭제
+        room.room_permission.delete()  #Room에 설정된 Permission도 삭제 (1:1 관계이므로 바로 삭제)
+
+        room.delete()
+        return response.Response(status=status.HTTP_204_NO_CONTENT)
+
+    def get_permissions(self):
+        if self.action in self.action_permission_classes:
+            return [perm() for perm in self.action_permission_classes[self.action]]
+        
+        if self.request.method in self.method_permission_classes:
+            return [perm() for perm in self.method_permission_classes[self.request.method]]
+
+        return super().get_permissions()
+
+    def get_serializer_class(self):
+        if self.action in self.action_serializer_class:
+            return self.action_serializer_class[self.action]
+
+        if self.request.method in self.method_serializer_class:
+            return self.method_serializer_class[self.request.method]
+
+        return super().get_serializer_class()
+
     def get_queryset(self):
         """자신이 참여한 방만"""
         return ChatRoom.objects.filter(membership_info_set__user=self.request.user).distinct()
