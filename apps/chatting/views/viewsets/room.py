@@ -15,7 +15,7 @@ from datetime import timezone
 from ara.classes.viewset import ActionAPIViewSet
 from apps.chatting.models.room import ChatRoom
 from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole
-from apps.chatting.serializers.room import  ChatRoomCreateSerializer
+from apps.chatting.serializers.room import  ChatRoomCreateSerializer, ChatRoomSerializer
 from apps.chatting.permissions.room import RoomReadPermission, RoomBlockPermission, RoomDeletePermission, RoomLeavePermission
 
 # chat/room 엔드포인트의 PATCH, PUT 비활성화
@@ -26,10 +26,10 @@ from apps.chatting.permissions.room import RoomReadPermission, RoomBlockPermissi
 
 class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     queryset = ChatRoom.objects.all()
-    serializer_class = ChatRoomCreateSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    
+    serializer_class = serializers.Serializer
+
     action_permission_classes = {
+        "list": (permissions.IsAuthenticated,),
         "create": (permissions.IsAuthenticated,),
         "destroy": (RoomDeletePermission,),
         "leave": (permissions.IsAuthenticated, RoomLeavePermission),
@@ -40,19 +40,8 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
     action_serializer_class = {
         "create": ChatRoomCreateSerializer,
-        "leave": ChatRoomCreateSerializer,
-        "read": ChatRoomCreateSerializer,
-        "block": ChatRoomCreateSerializer,
-        "blocked": ChatRoomCreateSerializer,
-    }
-
-    method_permission_classes = {
-        "POST": (permissions.IsAuthenticated,), # 채팅방 생성 권한 : 모든 로그인 된 User
-        "DELETE": (RoomDeletePermission,)
-    }
-
-    method_serializer_class = {
-        "POST": ChatRoomCreateSerializer,
+        "list": ChatRoomSerializer,
+        "blocked": ChatRoomSerializer,
     }
 
     def destroy(self, request, *args, **kwargs):
@@ -64,24 +53,6 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         room.delete()
         return response.Response(status=status.HTTP_204_NO_CONTENT)
-
-    def get_permissions(self):
-        if self.action in self.action_permission_classes:
-            return [perm() for perm in self.action_permission_classes[self.action]]
-        
-        if self.request.method in self.method_permission_classes:
-            return [perm() for perm in self.method_permission_classes[self.request.method]]
-
-        return super().get_permissions()
-
-    def get_serializer_class(self):
-        if self.action in self.action_serializer_class:
-            return self.action_serializer_class[self.action]
-
-        if self.request.method in self.method_serializer_class:
-            return self.method_serializer_class[self.request.method]
-
-        return super().get_serializer_class()
 
     def get_queryset(self):
         # GET 요청시 : 자신과 관련된 채팅방만..

@@ -10,7 +10,7 @@ from rest_framework.decorators import action
 
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
-from datetime import timezone
+from django.utils import timezone
 
 from ara.classes.viewset import ActionAPIViewSet
 from apps.chatting.models.room import ChatRoom
@@ -30,7 +30,16 @@ from apps.chatting.serializers.invitation import (
 @extend_schema_view(
     update=extend_schema(exclude=True),
     partial_update=extend_schema(exclude=True),
+    accept=extend_schema(
+        request=None,  # 요청 본문 없음을 명시
+        description="초대장을 수락합니다. 요청 본문이 필요하지 않습니다."
+    ),
+    deny=extend_schema(
+        request=None,  # 요청 본문 없음을 명시
+        description="초대장을 거절합니다. 요청 본문이 필요하지 않습니다."
+    )
 )
+
 class ChatInvitationViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     queryset = ChatRoomInvitation.objects.all()
     serializer_class = ChatInvitationSerializer
@@ -68,8 +77,8 @@ class ChatInvitationViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             )
     
     # 초대장 거절 (POST /chat/invitations/{id}/deny/)
-    @action(detail=True, methods=["post"])
+    @action(detail=True, methods=["delete"])
     def deny(self, request, pk=None):
         invitation = self.get_object()
         invitation.reject_invitation()
-        return response.Response(status=status.HTTP_200_OK)
+        return response.Response(status=status.HTTP_204_NO_CONTENT)

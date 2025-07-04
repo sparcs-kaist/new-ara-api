@@ -1,5 +1,5 @@
 from enum import Enum
-from datetime import timezone
+from django.utils import timezone
 
 from django.conf import settings
 from django.db import IntegrityError, models, transaction
