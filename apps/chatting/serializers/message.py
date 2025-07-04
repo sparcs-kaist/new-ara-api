@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.utils import timezone
 from datetime import timedelta
-from apps.chatting.models.message import ChatMessage, ChatMessageType
+from apps.chatting.models.message import ChatMessage
 from apps.chatting.models.room import ChatRoom
 from apps.user.serializers.user import PublicUserSerializer
 
@@ -24,10 +24,15 @@ class MessageCreateSerializer(serializers.ModelSerializer):
     """
     메시지 생성용 시리얼라이저
     """
+    chat_room = serializers.PrimaryKeyRelatedField(
+        queryset=ChatRoom.objects.all(),
+        help_text="메시지를 보낼 채팅방 ID"
+    )
+
     class Meta:
         model = ChatMessage
-        fields = ['message_type', 'message_content']  # expired_at 제거
-        
+        fields = ['message_type', 'message_content', 'chat_room']
+    
     def validate_message_content(self, value):
         if not value.strip():
             raise serializers.ValidationError("메시지 내용이 비어있습니다.")
@@ -36,7 +41,7 @@ class MessageCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # expired_at을 현재 시점으로부터 30일 뒤로 자동 설정
         validated_data['expired_at'] = timezone.now() + timedelta(days=30)
-        return super().create(validated_data)
+        return ChatMessage.create(**validated_data)
 
 class MessageUpdateSerializer(serializers.ModelSerializer):
     """
