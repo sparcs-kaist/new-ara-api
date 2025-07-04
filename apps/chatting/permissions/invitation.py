@@ -1,5 +1,6 @@
 from rest_framework import permissions
 from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole
+from apps.chatting.models.room import ChatRoom
 
 # 역할 상수 정리
 ALLOWED_INVITATION_ROLES = [
@@ -33,10 +34,15 @@ class CreateInvitationPermission(permissions.BasePermission):
     차단된 사람은 초대 불가
     """
     def has_permission(self, request, view):
-        if not request.user.is_authenticated:
+        invited_room_id = request.data.get("invited_room")
+        if not invited_room_id:
+            return False  # 방 정보 없으면 권한 없음 처리
+
+        try:
+            room = ChatRoom.objects.get(pk=invited_room_id)
+        except ChatRoom.DoesNotExist:
             return False
-        
-        room = view.get_object()
+
         membership = get_membership(room, request.user)
 
         invited_user_id = request.data.get("invitation_to")
@@ -46,7 +52,6 @@ class CreateInvitationPermission(permissions.BasePermission):
                 return False
 
         return membership and membership.role in ALLOWED_INVITATION_ROLES
-
 
 # 초대 삭제 권한 (거절과는 다름)
 class DeleteInvitationPermission(permissions.BasePermission):

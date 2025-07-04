@@ -22,8 +22,8 @@ from apps.chatting.permissions.invitation import (
     RejectInvitationPermission,
 )
 from apps.chatting.serializers.invitation import (
-    ChatRoomInvitationSerializer,
-    ChatRoomInvitationCreateSerializer,
+    ChatInvitationSerializer,
+    ChatInvitationCreateSerializer,
 )
 
 
@@ -31,21 +31,21 @@ from apps.chatting.serializers.invitation import (
     update=extend_schema(exclude=True),
     partial_update=extend_schema(exclude=True),
 )
-class ChatRoomInvitationViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
+class ChatInvitationViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     queryset = ChatRoomInvitation.objects.all()
-    serializer_class = ChatRoomInvitationSerializer
-    
-    action_serializer_class = {
-        "create": ChatRoomInvitationCreateSerializer,
-    }
-    
-    # 각 action에 대한 권한 설정
+    serializer_class = ChatInvitationSerializer
+
     action_permission_classes = {
-        "create": (permissions.IsAuthenticated, CreateInvitationPermission,),
-        "destroy": (permissions.IsAuthenticated, DeleteInvitationPermission,),
-        "list": (permissions.IsAuthenticated,),
         "accept": (permissions.IsAuthenticated, AcceptInvitationPermission,),
         "deny": (permissions.IsAuthenticated, RejectInvitationPermission,),
+        "create": (CreateInvitationPermission,),
+        "list": (permissions.IsAuthenticated,),
+        "destroy": (DeleteInvitationPermission,),
+        "retrieve": (permissions.IsAuthenticated,),
+    }
+
+    action_serializer_class = {
+        "create": ChatInvitationCreateSerializer,
     }
     
     def get_queryset(self):

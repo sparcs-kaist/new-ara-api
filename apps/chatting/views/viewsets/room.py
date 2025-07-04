@@ -30,6 +30,8 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     permission_classes = [permissions.IsAuthenticated]
     
     action_permission_classes = {
+        "create": (permissions.IsAuthenticated,),
+        "destroy": (RoomDeletePermission,),
         "leave": (permissions.IsAuthenticated, RoomLeavePermission),
         "read": (permissions.IsAuthenticated, RoomReadPermission),
         "block": (permissions.IsAuthenticated, RoomBlockPermission),
@@ -37,6 +39,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     }
 
     action_serializer_class = {
+        "create": ChatRoomCreateSerializer,
         "leave": ChatRoomCreateSerializer,
         "read": ChatRoomCreateSerializer,
         "block": ChatRoomCreateSerializer,
