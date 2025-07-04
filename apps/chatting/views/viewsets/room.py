@@ -41,7 +41,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     action_serializer_class = {
         "create": ChatRoomCreateSerializer,
         "list": ChatRoomSerializer,
-        "blocked": ChatRoomSerializer,
+        "blocked_list": ChatRoomSerializer,
     }
 
     def destroy(self, request, *args, **kwargs):
