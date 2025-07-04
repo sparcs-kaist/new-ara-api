@@ -58,3 +58,18 @@ class BlockDMPermission(permissions.BasePermission):
                 ChatUserRole.BLOCKER.value,
             ]
         )
+    
+#DM 차단 해제 권한 - 해당 user가 이미 차단 상태인 경우
+class UnblockDMPermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return False
+
+        room = view.get_object()
+        membership = ChatRoomMemberShip.objects.filter(
+            chat_room=room,
+            user=request.user
+        ).first()
+
+        # 이미 차단 상태인 경우에만 차단 해제 가능
+        return membership and membership.role == ChatUserRole.BLOCKER.value
