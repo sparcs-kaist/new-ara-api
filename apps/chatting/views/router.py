@@ -27,12 +27,10 @@ router.register(
     basename="chat_invitation"
 )
 
-"""
 # DM 관련 ViewSet
 router.register(
     prefix=r"chat/dm",
-    viewset=viewsets.ChatDMViewSet,
+    viewset=viewsets.DMViewSet,
     basename="chat_dm"
 )
-"""
 
