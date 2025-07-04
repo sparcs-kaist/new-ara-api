@@ -83,3 +83,5 @@ class RejectInvitationPermission(permissions.BasePermission):
             request.user.is_authenticated
             and obj.invitation_to == request.user
         )
+
+#자신의 초대장 조회 권한 : 로그인 한 User 라면 모두 가능
