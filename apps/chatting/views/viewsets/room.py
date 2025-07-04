@@ -86,7 +86,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             return ChatRoom.objects.filter(membership_info_set__user=self.request.user).distinct()
         return ChatRoom.objects.all()
 
-
+    # chat/room/<roomid>/leave : 해당 room 나가기
     @action(detail=True, methods=["post"])
     def leave(self, request, pk=None):
         room = self.get_object()
@@ -107,7 +107,6 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         return response.Response(status=status.HTTP_200_OK)
 
     # chat/room/<roomid>/block : 해당 room 차단.
-    # chat/room/<roomid>/block{"unblock" : true} : 해당 room 차단 해제
     @action(detail=True, methods=["patch"])
     def block(self, request, pk=None):
         room = self.get_object()
@@ -125,7 +124,8 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         membership.save()
         
         return response.Response(status=status.HTTP_200_OK)
-    
+
+    # chat/room/<roomid>/unblock : 해당 room 차단 해제.
     @action(detail=True, methods=["patch"])
     def unblock(self, request, pk=None):
         room = self.get_object()

@@ -19,12 +19,6 @@ class ChatUserRole(str, Enum):
 
 # 각각의 유저가 참여하고 있는 채팅방 정보
 class ChatRoomMemberShip(MetaDataModel):
-    # 유니크 순서쌍 정의
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields = ['chat_room', 'user'], name = 'unique_chatroom_user')
-        ]
-    
     # User object
     user = models.ForeignKey(
         verbose_name="User 정보",
