@@ -6,11 +6,10 @@ from rest_framework import (
     status,
     viewsets,
 )
+from django.utils import timezone
 from rest_framework.decorators import action
 
 from drf_spectacular.utils import extend_schema, extend_schema_view
-
-from datetime import timezone
 
 from ara.classes.viewset import ActionAPIViewSet
 from apps.chatting.models.room import ChatRoom
@@ -77,6 +76,12 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         membership = ChatRoomMemberShip.objects.filter(chat_room=room, user=request.user).first()
         if membership:
             membership.last_seen_at = timezone.now()
+            
+            # 최근 메시지 가져오기
+            recent_message = room.message_set.order_by('-created_at').first()
+            if recent_message:
+                membership.last_seen_message = recent_message
+            
             membership.save()
         return response.Response(status=status.HTTP_200_OK)
 
