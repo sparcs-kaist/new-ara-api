@@ -145,3 +145,6 @@ SESSION_COOKIE_SECURE = True
 EMAIL_BACKEND = "django_ses.SESBackend"
 
 CORS_ALLOW_CREDENTIALS = True
+
+#one_app jwt secret
+ONE_APP_JWT_SECRET = env("ONE_APP_JWT_SECRET")
