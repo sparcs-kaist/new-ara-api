@@ -4,6 +4,7 @@ import random
 import uuid
 from urllib.parse import urlparse
 
+import jwt
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model, login, logout
@@ -227,7 +228,7 @@ class UserViewSet(ActionAPIViewSet):
 
         try:  # 로그인
             user_profile = UserProfile.objects.get(
-                sid=user_info["sid"],
+                uid=user_info["uid"],
             )
 
             if user_profile.inactive_due_at:
@@ -388,4 +389,86 @@ class UserViewSet(ActionAPIViewSet):
             samesite='Lax',
         )
         return resp
-    
+
+    @decorators.action(detail=False, methods=["post"], url_path="oneapp-login", permission_classes=[permissions.AllowAny])
+    def oneapp_login(self, request):
+        """
+        One App JWT Access Token 기반 간편 로그인/회원가입
+        """
+        import datetime
+
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return response.Response({"error": "No JWT token"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        token = auth_header.split(" ")[1]
+        try:
+            payload = jwt.decode(token, settings.ONE_APP_JWT_SECRET, algorithms=["HS256"])
+        except jwt.InvalidTokenError:
+            return response.Response({"error": "Invalid JWT token"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        uid = payload.get("uid")
+        oid = payload.get("oid")
+        now_str = datetime.datetime.now().strftime("%Y-%m-%d")
+
+        # POST payload에서 kaist info 정보 가져오기
+        # POST payload 전체가 kaist_v2_info임.
+        post_data = request.data
+
+        # user_info 빌드
+        user_info = {
+            "sid": None,
+            "uid": uid,
+            "email": post_data.get("email"),
+            "flags": [],
+            "gender": "",
+            "birthday": "",
+            "kaist_id": post_data.get("ku_std_no") or post_data.get("kaist_uid"),
+            "last_name": post_data.get("user_eng_nm", "").split(",")[0].strip(),
+            "sparcs_id": None,
+            "first_name": post_data.get("user_eng_nm", "").split(",")[1].strip(),
+            "kaist_info": None,
+            "twitter_id": None,
+            "facebook_id": None,
+            "kaist_v2_info": post_data,
+            "kaist_info_time": "",
+            "kaist_v2_info_time": now_str,
+        }
+
+        # UserProfile 생성/조회
+        from django.contrib.auth import get_user_model
+        try:
+            profile = UserProfile.objects.get(uid=uid)
+            user = profile.user
+        except UserProfile.DoesNotExist:  # 회원가입
+            user_nickname = _make_random_name()
+            user_profile_picture = get_profile_picture()
+            email = user_info["email"]
+
+            with transaction.atomic():
+                new_user = get_user_model().objects.create_user(
+                    email=email,
+                    username=str(uuid.uuid4()),
+                    password=str(uuid.uuid4()),
+                    is_active=True #One App 로그인 -> 항상 활성화된 상태
+                )
+                user_group = UserProfile.UserGroup.KAIST_MEMBER
+
+                user_profile = UserProfile.objects.create(
+                    uid=uid,
+                    sid=None, #One App -> sid 저장하지 않음.
+                    nickname=user_nickname,
+                    sso_user_info=user_info,
+                    user=new_user,
+                    group=user_group,
+                    picture=user_profile_picture,
+                )
+
+        return response.Response({
+            "detail": "oneapp login success",
+            "uid": uid,
+            "nickname": user_profile.nickname if 'user_profile' in locals() else profile.nickname,
+            "oid": oid,
+            "user_info": user_info,
+            "user_id": (user_profile.user.id if 'user_profile' in locals() else user.id),
+        }, status=status.HTTP_200_OK)
