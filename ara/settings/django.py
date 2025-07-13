@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "apps.global_notice",
     "apps.calendar",
     "apps.kaist",
+    "apps.one_app",
 ]
 
 MIDDLEWARE = [
