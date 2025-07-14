@@ -405,10 +405,25 @@ class UserViewSet(ActionAPIViewSet):
 
         try:
             payload = jwt.decode(token, settings.ONE_APP_JWT_SECRET, algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            return response.Response({
+                "error": f"Expired JWT token"
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
+        except jwt.DecodeError:
+            return response.Response({
+                "error": f"Decode error in JWT token"
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
         except jwt.InvalidTokenError:
             return response.Response({
-                "error": f"Invalid JWT token / token : '{token}', secret : '{settings.ONE_APP_JWT_SECRET}'",
-                }, status=status.HTTP_401_UNAUTHORIZED)
+                "error": f"Invalid JWT token"
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
+        except Exception as e:
+            return response.Response({
+                "error": f"Unexpected error during JWT decode: {type(e).__name__}: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         uid = payload.get("uid")
         oid = payload.get("oid")
