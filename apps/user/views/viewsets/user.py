@@ -459,6 +459,23 @@ class UserViewSet(ActionAPIViewSet):
             profile = UserProfile.objects.get(uid=uid)
             user = profile.user
         except UserProfile.DoesNotExist:  # 회원가입
+            #One APP의 경우 sso info 무결성 검증
+            required_fields = [
+                "kaist_uid", "user_eng_nm", "login_type", "std_dept_kor_nm",
+                "std_dept_eng_nm", "user_nm", "std_status_kor", "std_dept_id",
+                "std_no", "user_id", "camps_div_cd", "socps_cd",
+                "email", "std_prog_code", "kaist_org_id"
+            ]
+            missing_fields = [
+                field for field in required_fields
+                if not post_data.get(field)
+            ]
+            
+            if missing_fields:
+                return response.Response({
+                    "error": "SSO info 부족",
+                    "missing_fields": missing_fields
+                }, status=status.HTTP_401_UNAUTHORIZED)
             user_nickname = _make_random_name()
             user_profile_picture = get_profile_picture()
             email = user_info["email"]
