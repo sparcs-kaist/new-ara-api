@@ -407,9 +407,7 @@ class UserViewSet(ActionAPIViewSet):
             payload = jwt.decode(token, settings.ONE_APP_JWT_SECRET, algorithms=["HS256"])
         except jwt.InvalidTokenError:
             return response.Response({
-                "error": "Invalid JWT token",
-                "token": f'"{token}"',  # 토큰 앞뒤로 따옴표 추가
-                "secret": f'"{settings.ONE_APP_JWT_SECRET}"'  # 시크릿 앞뒤로 따옴표 추가
+                "error": f"Invalid JWT token / token : '{token}', secret : '{settings.ONE_APP_JWT_SECRET}'",
                 }, status=status.HTTP_401_UNAUTHORIZED)
 
         uid = payload.get("uid")
