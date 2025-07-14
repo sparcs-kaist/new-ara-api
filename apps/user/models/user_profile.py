@@ -136,6 +136,10 @@ class UserProfile(MetaDataModel):
         kaist_info = self.sso_user_info["kaist_info"]
         if kaist_info:
             return json.loads(kaist_info)["ku_kname"]
+        kaist_v2_info = self.sso_user_info["kaist_v2_info"]
+        if kaist_v2_info:
+            return json.loads(kaist_v2_info)["user_nm"]
+            
         return self.sso_user_info["last_name"] + self.sso_user_info["first_name"]
 
     @cached_property
