@@ -390,7 +390,7 @@ class UserViewSet(ActionAPIViewSet):
         )
         return resp
 
-    @decorators.action(detail=False, methods=["post"], url_path="oneapp-login", permission_classes=[permissions.AllowAny])
+    @decorators.action(detail=False, methods=["post"], url_path="oneapp-login", permission_classes=[permissions.AllowAny],authentication_classes=[])
     def oneapp_login(self, request):
         """ 
         One App JWT Access Token 기반 간편 로그인/회원가입
