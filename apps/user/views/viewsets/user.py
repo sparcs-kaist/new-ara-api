@@ -392,7 +392,7 @@ class UserViewSet(ActionAPIViewSet):
 
     @decorators.action(detail=False, methods=["post"], url_path="oneapp-login", permission_classes=[permissions.AllowAny])
     def oneapp_login(self, request):
-        """
+        """ 
         One App JWT Access Token 기반 간편 로그인/회원가입
         """
         import datetime
@@ -402,10 +402,15 @@ class UserViewSet(ActionAPIViewSet):
             return response.Response({"error": "No JWT token"}, status=status.HTTP_401_UNAUTHORIZED)
 
         token = auth_header.split(" ")[1]
+
         try:
             payload = jwt.decode(token, settings.ONE_APP_JWT_SECRET, algorithms=["HS256"])
         except jwt.InvalidTokenError:
-            return response.Response({"error": "Invalid JWT token"}, status=status.HTTP_401_UNAUTHORIZED)
+            return response.Response({
+                "error": "Invalid JWT token",
+                "token": f'"{token}"',  # 토큰 앞뒤로 따옴표 추가
+                "secret": f'"{settings.ONE_APP_JWT_SECRET}"'  # 시크릿 앞뒤로 따옴표 추가
+                }, status=status.HTTP_401_UNAUTHORIZED)
 
         uid = payload.get("uid")
         oid = payload.get("oid")
