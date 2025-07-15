@@ -65,7 +65,7 @@ class UserProfileViewSet(
         ],
         responses={200: PublicUserProfileSearchSerializer(many=True)},
     )
-    @action(detail=False, methods=["get"], permission_classes=[AllowAny])
+    @action(detail=False, methods=["get"])
     def search(self, request):
         query = request.query_params.get("query", None)
         if query:
