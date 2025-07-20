@@ -8,6 +8,7 @@ from rest_framework import (
 )
 from django.utils import timezone
 from rest_framework.decorators import action
+from django.db.models import Greatest
 
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
@@ -57,10 +58,16 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         return response.Response(status=status.HTTP_204_NO_CONTENT)
 
     def get_queryset(self):
-        # GET 요청시 : 자신과 관련된 채팅방만..
+        qs = ChatRoom.objects.all()
         if self.request.method == "GET":
-            return ChatRoom.objects.filter(membership_info_set__user=self.request.user).distinct()
-        return ChatRoom.objects.all()
+            qs = qs.filter(membership_info_set__user=self.request.user).distinct()
+            ordering = self.request.query_params.get('ordering')
+            if not ordering:
+                # 기본 정렬: created_at과 recent_message_at 중 더 최근인 값 기준
+                qs = qs.annotate(
+                    latest_at=Greatest('created_at', 'recent_message_at')
+                ).order_by('-latest_at')
+        return qs
 
     # chat/room/<roomid> (GET) : 해당 room의 자세한 정보 조회 (User정보 까지)
     @extend_schema(
