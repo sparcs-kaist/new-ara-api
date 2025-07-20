@@ -30,6 +30,18 @@ from apps.chatting.permissions.dm import (
     UnblockDMPermission,
 )
 
+import random
+
+#랜덤 프로필 사진 지정 함수
+#일단은 적당한 asset이 아직 만들어지지 않은 관계로 기존의 UserProfile과 동일하게 사용
+def get_default_chatroom_picture() -> str:
+    colors = ["blue", "red", "gray"]
+    numbers = ["1", "2", "3"]
+
+    col = random.choice(colors)
+    num = random.choice(numbers)
+    return f"user_profiles/default_pictures/{col}-default{num}.png"
+
 
 @extend_schema_view(
     update=extend_schema(exclude=True),
@@ -91,9 +103,14 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         # 새 DM 생성
         user_nickname = request.user.profile.nickname
         dm_to_nickname = dm_to.profile.nickname
+
+        # 요청에 picture가 있으면 사용, 없으면 기본 프사
+        picture = request.data.get('picture') or get_default_chatroom_picture()
+
         dm_room = ChatRoom.objects.create(
             room_type=ChatRoomType.DM.value,
             room_title=f"DM_{user_nickname},{dm_to_nickname}",
+            picture=picture,
         )
         
         # 두 사용자 모두 참가자로 추가

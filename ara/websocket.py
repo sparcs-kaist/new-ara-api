@@ -9,6 +9,7 @@ from django.conf import settings
 from django.urls import path
 from django.core.asgi import get_asgi_application
 
+from apps.chatting.consumers.chat import ChatConsumer
 
 channel_layer = get_channel_layer()
 
@@ -61,6 +62,7 @@ def send_message(instance, state, objects, silent=True, sync=True):
 application = ProtocolTypeRouter({
     'http': get_asgi_application(),
     'websocket': AuthMiddlewareStack(
-        URLRouter([path('ws/', WebSocketHandler.as_asgi())])
+        URLRouter([path('ws/', WebSocketHandler.as_asgi()),
+                   path('ws/chat/', ChatConsumer.as_asgi()),])
     ),
 })

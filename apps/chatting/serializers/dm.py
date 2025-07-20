@@ -3,6 +3,7 @@ from apps.chatting.models.room import ChatRoom, ChatRoomType
 from apps.user.serializers.user import PublicUserSerializer
 from django.contrib.auth import get_user_model
 
+
 class DMSerializer(serializers.ModelSerializer):
     """
     DM 조회용 시리얼라이저
@@ -13,7 +14,7 @@ class DMSerializer(serializers.ModelSerializer):
         model = ChatRoom
         fields = [
             'id', 'room_title', 'room_type', 'created_at', 'recent_message_at', 
-            'recent_message', 'other_user'
+            'picture', 'recent_message', 'other_user'
         ]
         read_only_fields = ['room_type', 'created_at', 'recent_message_at', 'recent_message']
     
