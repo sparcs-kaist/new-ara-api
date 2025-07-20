@@ -157,6 +157,8 @@ def _parser_east1_course(menu_list : str, time : int):
             break #하루과일은 항상 맨 마지막에 있다.
         if '미운영' in txt:
             break #어떤 이유로 식당이 운영하지 않는경우
+        if '이벤트' in txt:
+            continue #2025.07.20 초복 이벤트 등 이벤트는 parsing에서 제외
         #코스 이름이 나온 경우
         if ('00원' in txt) or ('<' in txt and '>' in txt): #카페테리아 메뉴까지 같이 처리하기 위해 조건 추가.
             txt_match = re.match(r"<(.+?) (\d+,?\d*)원>", txt.strip()) #코스 이름과 가격은 <> 안에
