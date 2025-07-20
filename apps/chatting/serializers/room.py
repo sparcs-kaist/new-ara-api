@@ -2,6 +2,17 @@ from rest_framework import serializers
 from apps.chatting.models.room import ChatRoom, ChatRoomType
 from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole
 from apps.chatting.models.room_permission import ChatRoomPermission
+import random
+
+#랜덤 프로필 사진 지정 함수
+#일단은 적당한 asset이 아직 만들어지지 않은 관계로 기존의 UserProfile과 동일하게 사용
+def get_default_chatroom_picture() -> str:
+    colors = ["blue", "red", "gray"]
+    numbers = ["1", "2", "3"]
+
+    col = random.choice(colors)
+    num = random.choice(numbers)
+    return f"user_profiles/default_pictures/{col}-default{num}.png"
 
 class ChatRoomCreateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -10,6 +21,9 @@ class ChatRoomCreateSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         # 1. 채팅방 생성
+        # picture 필드가 없으면 기본 프사로 지정
+        if 'picture' not in validated_data or not validated_data.get('picture'):
+            validated_data['picture'] = get_default_chatroom_picture()
         room = ChatRoom.objects.create(**validated_data)
         
         # @Todo : 채팅방이 오픈 채팅일 경우 권한 설정 Option에 따라 Permission 만들기
@@ -55,7 +69,7 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         model = ChatRoom
         fields = [
             'id', 'room_title', 'room_type', 'chat_name_type',
-            'recent_message_at', 'recent_message'
+            'picture', 'recent_message_at', 'recent_message'
         ]
         read_only_fields = ['recent_message_at', 'recent_message']
 

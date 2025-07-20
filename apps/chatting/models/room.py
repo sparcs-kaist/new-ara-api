@@ -42,6 +42,16 @@ class ChatRoom(MetaDataModel):
         blank = False,
         null = False,
     )
+
+    # 채팅방 사진
+    picture = models.ImageField(
+        null=True,
+        blank=True,
+        default=None,
+        upload_to="chat_room/pictures",
+        verbose_name="채팅방 이미지",
+    )
+    
     #채팅방의 권한 부여 방식 - 다른 DB 테이블로 빠짐
     # self.room_permission
 
