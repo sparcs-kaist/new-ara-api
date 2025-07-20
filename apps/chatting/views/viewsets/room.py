@@ -14,7 +14,7 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from ara.classes.viewset import ActionAPIViewSet
 from apps.chatting.models.room import ChatRoom
 from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole
-from apps.chatting.serializers.room import  ChatRoomCreateSerializer, ChatRoomSerializer
+from apps.chatting.serializers.room import  ChatRoomCreateSerializer, ChatRoomSerializer, ChatRoomDetailSerializer
 from apps.chatting.permissions.room import RoomReadPermission, RoomBlockPermission, RoomDeletePermission, RoomLeavePermission
 from apps.user.serializers.user import PublicUserSerializer
 from apps.chatting.serializers.message import MessageSerializer
@@ -63,6 +63,10 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         return ChatRoom.objects.all()
 
     # chat/room/<roomid> (GET) : 해당 room의 자세한 정보 조회 (User정보 까지)
+    @extend_schema(
+        responses={200: ChatRoomDetailSerializer},
+        description="특정 채팅방의 상세 정보(참여자, 최근 메시지 등) 반환"
+    )
     def retrieve(self, request, *args, **kwargs):
         room = self.get_object()
 

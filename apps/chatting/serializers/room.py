@@ -2,6 +2,9 @@ from rest_framework import serializers
 from apps.chatting.models.room import ChatRoom, ChatRoomType
 from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole
 from apps.chatting.models.room_permission import ChatRoomPermission
+from apps.user.serializers.user import PublicUserSerializer
+from apps.chatting.serializers.message import MessageSerializer
+
 import random
 
 #랜덤 프로필 사진 지정 함수
@@ -95,3 +98,8 @@ class ChatRoomByIdSerializer(serializers.Serializer):
     def to_representation(self, instance):
         # ChatRoom 객체를 반환할 때 사용할 시리얼라이저
         return ChatRoomSerializer(instance).data
+
+class ChatRoomDetailSerializer(serializers.Serializer):
+    room = ChatRoomSerializer()
+    members = PublicUserSerializer(many=True)
+    recent_message = MessageSerializer(allow_null=True)
