@@ -72,9 +72,9 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         model = ChatRoom
         fields = [
             'id', 'room_title', 'room_type', 'chat_name_type',
-            'picture', 'recent_message_at', 'recent_message'
+            'picture', 'recent_message_at', 'recent_message', 'created_at'
         ]
-        read_only_fields = ['recent_message_at', 'recent_message']
+        read_only_fields = ['recent_message_at', 'recent_message', 'created_at']
 
 class ChatRoomByIdSerializer(serializers.Serializer):
     """
