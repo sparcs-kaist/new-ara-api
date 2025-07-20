@@ -8,7 +8,7 @@ from rest_framework import (
 )
 from django.utils import timezone
 from rest_framework.decorators import action
-from django.db.models import Greatest
+from django.db.models.functions import Greatest
 
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
