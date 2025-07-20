@@ -16,6 +16,8 @@ from apps.chatting.models.room import ChatRoom
 from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole
 from apps.chatting.serializers.room import  ChatRoomCreateSerializer, ChatRoomSerializer
 from apps.chatting.permissions.room import RoomReadPermission, RoomBlockPermission, RoomDeletePermission, RoomLeavePermission
+from apps.user.serializers.user import PublicUserSerializer
+from apps.chatting.serializers.message import MessageSerializer
 
 # chat/room 엔드포인트의 PATCH, PUT 비활성화
 @extend_schema_view(
@@ -35,6 +37,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         "read": (permissions.IsAuthenticated, RoomReadPermission),
         "block": (permissions.IsAuthenticated, RoomBlockPermission),
         "blocked": (permissions.IsAuthenticated,),
+        "retrieve": (permissions.IsAuthenticated,),
     }
 
     action_serializer_class = {
@@ -58,6 +61,33 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         if self.request.method == "GET":
             return ChatRoom.objects.filter(membership_info_set__user=self.request.user).distinct()
         return ChatRoom.objects.all()
+
+    # chat/room/<roomid> (GET) : 해당 room의 자세한 정보 조회 (User정보 까지)
+    def retrieve(self, request, *args, **kwargs):
+        room = self.get_object()
+
+        # 참여자 목록 가져오기
+        memberships = ChatRoomMemberShip.objects.filter(chat_room=room)
+        users = [membership.user for membership in memberships]
+
+        # 본인이 참여한 채팅방이 아니면 403 반환
+        if request.user not in users:
+            return response.Response(
+                {"detail": "이 채팅방 정보를 조회할 권한이 없습니다."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        room_data = ChatRoomSerializer(room, context={'request': request}).data
+        users_data = PublicUserSerializer(users, many=True).data
+
+        recent_message = room.message_set.order_by('-created_at').first()
+        recent_message_data = MessageSerializer(recent_message).data if recent_message else None
+
+        return response.Response({
+            "room": room_data,
+            "members": users_data,
+            "recent_message": recent_message_data,
+        })
 
     # chat/room/<roomid>/leave : 해당 room 나가기
     @action(detail=True, methods=["post"])
