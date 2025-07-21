@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from datetime import timedelta
 
 from ara.settings import MIN_TIME
 
@@ -27,7 +28,12 @@ class MetaDataManager(models.Manager):
     queryset_class = MetaDataQuerySet
 
     def get_queryset(self):
-        return self.queryset_class(self.model).filter(deleted_at=MIN_TIME)
+        now = timezone.now()
+        tolerance = timedelta(seconds=10)  # timezone 오차 보정 : 10초 여유
+        adjusted_now = now + tolerance
+        return self.queryset_class(self.model).filter(
+            models.Q(deleted_at=MIN_TIME) | models.Q(deleted_at__gt=adjusted_now)
+        )
 
     @property
     def queryset_with_deleted(self):

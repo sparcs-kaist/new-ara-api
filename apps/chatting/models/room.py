@@ -91,7 +91,7 @@ class ChatRoom(MetaDataModel):
 
         # 그 외의 경우 초대장이 있는지 확인
         else:
-            return self.invitation_set.filter(invitation_to=user, deleted_at=None).exists()
+            return self.invitation_set.filter(invitation_to=user).exists()
 
     #User가 room에 어떤 permission을 가지고 있는지 return
     def get_permission_info(self, user):
