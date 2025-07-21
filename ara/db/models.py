@@ -27,7 +27,10 @@ class MetaDataManager(models.Manager):
     queryset_class = MetaDataQuerySet
 
     def get_queryset(self):
-        return self.queryset_class(self.model).filter(deleted_at=MIN_TIME)
+        now = timezone.now()
+        return self.queryset_class(self.model).filter(
+            models.Q(deleted_at=MIN_TIME) | models.Q(deleted_at__gt=now)
+        )
 
     @property
     def queryset_with_deleted(self):
