@@ -68,6 +68,8 @@ class ChatRoomSerializer(serializers.ModelSerializer):
     """
     채팅방 정보 조회용 Serializer
     """
+    recent_message = MessageSerializer(read_only=True)
+
     class Meta:
         model = ChatRoom
         fields = [
