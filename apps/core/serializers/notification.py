@@ -34,3 +34,9 @@ class NotificationSerializer(BaseNotificationSerializer):
     related_comment = BaseCommentSerializer(
         read_only=True,
     )
+
+    from apps.chatting.serializers.room import ChatRoomSerializer
+
+    related_chat_room = ChatRoomSerializer(
+        read_only=True,
+    )
