@@ -29,7 +29,7 @@ class MetaDataManager(models.Manager):
 
     def get_queryset(self):
         now = timezone.now()
-        tolerance = timedelta(seconds=10)  # timezone 오차 보정 : 10초 여유
+        tolerance = timedelta(seconds=10)  # timezone 오차 보정 : 10초 여유 -> prevent race condition
         adjusted_now = now + tolerance
         return self.queryset_class(self.model).filter(
             models.Q(deleted_at=MIN_TIME) | models.Q(deleted_at__gt=adjusted_now)

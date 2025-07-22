@@ -20,7 +20,7 @@ def get_default_chatroom_picture() -> str:
 class ChatRoomCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatRoom
-        fields = ['room_title', 'room_type', 'chat_name_type']
+        fields = ['room_title', 'room_type', 'chat_name_type', 'picture']
     
     def create(self, validated_data):
         # 1. 채팅방 생성
