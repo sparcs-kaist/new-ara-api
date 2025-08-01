@@ -429,7 +429,6 @@ class UserViewSet(ActionAPIViewSet):
         now_str = datetime.datetime.now().strftime("%Y-%m-%d")
 
 
-
         # UserProfile 생성/조회
         from django.contrib.auth import get_user_model
         try:
@@ -437,25 +436,40 @@ class UserViewSet(ActionAPIViewSet):
             user = profile.user
         except UserProfile.DoesNotExist:  # 회원가입
             #payload에 sso_info가 포함되어서 넘어온다.
+            
+            post_data = request.data
+            sso_info = post_data.get('ssoInfo')
+            try:
+                decoded_info = jwt.decode(token, settings.ONE_APP_JWT_SECRET, algorithms=["HS256"])
+            except:
+                return response.Response({
+                    "error" : "SSO Info 무결성 검증 실패"
+                }, status=status.HTTP_401_UNAUTHORIZED)
+
+            #uid가 다를 경우 401
+            if decoded_info.get("uid") != uid:
+                return response.Response({
+                    "error" : "SSO Info 무결성 검증 실패"
+                }, status=status.HTTP_401_UNAUTHORIZED)
 
             # user_info 빌드
             user_info = {
                 "sid": None,
                 "uid": uid,
-                "email": payload.get("email"),
-                "flags": payload.get("flags"),
-                "gender": payload.get("gender"),
-                "birthday": payload.get("birthday"),
-                "kaist_id": payload.get("kaist_id"),
-                "last_name": payload.get("last_name"),
-                "sparcs_id": payload.get("sparcs_id"),
-                "first_name": payload.get("first_name"),
-                "kaist_info": payload.get("kaist_info"),
-                "twitter_id": payload.get("twitter_id"),
-                "facebook_id": payload.get("facebook_id"),
-                "kaist_v2_info": payload.get("kaist_v2_info"),
-                "kaist_info_time": payload.get("kaist_info_time"),
-                "kaist_v2_info_time": payload.get("kaist_v2_info_time"),
+                "email": decoded_info.get("email"),
+                "flags": decoded_info.get("flags"),
+                "gender": decoded_info.get("gender"),
+                "birthday": decoded_info.get("birthday"),
+                "kaist_id": decoded_info.get("kaist_id"),
+                "last_name": decoded_info.get("last_name"),
+                "sparcs_id": decoded_info.get("sparcs_id"),
+                "first_name": decoded_info.get("first_name"),
+                "kaist_info": decoded_info.get("kaist_info"),
+                "twitter_id": decoded_info.get("twitter_id"),
+                "facebook_id": decoded_info.get("facebook_id"),
+                "kaist_v2_info": decoded_info.get("kaist_v2_info"),
+                "kaist_info_time": decoded_info.get("kaist_info_time"),
+                "kaist_v2_info_time": decoded_info.get("kaist_v2_info_time"),
             }
             user_nickname = _make_random_name()
             user_profile_picture = get_profile_picture()
