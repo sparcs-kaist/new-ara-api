@@ -426,32 +426,9 @@ class UserViewSet(ActionAPIViewSet):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         uid = payload.get("uid")
-        oid = payload.get("oid")
         now_str = datetime.datetime.now().strftime("%Y-%m-%d")
 
-        # POST payload에서 kaist info 정보 가져오기
-        # POST payload 전체가 kaist_v2_info임.
-        post_data = request.data
 
-        # user_info 빌드
-        user_info = {
-            "sid": None,
-            "uid": uid,
-            "email": post_data.get("email"),
-            "flags": [],
-            "gender": "",
-            "birthday": "",
-            "kaist_id": post_data.get("ku_std_no") or post_data.get("kaist_uid"),
-            "last_name": post_data.get("user_eng_nm", "").split(",")[0].strip(),
-            "sparcs_id": None,
-            "first_name": post_data.get("user_eng_nm", "").split(",")[1].strip(),
-            "kaist_info": None,
-            "twitter_id": None,
-            "facebook_id": None,
-            "kaist_v2_info": post_data,
-            "kaist_info_time": "",
-            "kaist_v2_info_time": now_str,
-        }
 
         # UserProfile 생성/조회
         from django.contrib.auth import get_user_model
@@ -459,23 +436,27 @@ class UserViewSet(ActionAPIViewSet):
             profile = UserProfile.objects.get(uid=uid)
             user = profile.user
         except UserProfile.DoesNotExist:  # 회원가입
-            #One APP의 경우 sso info 무결성 검증
-            required_fields = [
-                "kaist_uid", "user_eng_nm", "login_type", "std_dept_kor_nm",
-                "std_dept_eng_nm", "user_nm", "std_status_kor", "std_dept_id",
-                "std_no", "user_id", "camps_div_cd", "socps_cd",
-                "email", "std_prog_code", "kaist_org_id"
-            ]
-            missing_fields = [
-                field for field in required_fields
-                if not post_data.get(field)
-            ]
-            
-            if missing_fields:
-                return response.Response({
-                    "error": "SSO info 부족",
-                    "missing_fields": missing_fields
-                }, status=status.HTTP_401_UNAUTHORIZED)
+            #payload에 sso_info가 포함되어서 넘어온다.
+
+            # user_info 빌드
+            user_info = {
+                "sid": None,
+                "uid": uid,
+                "email": payload.get("email"),
+                "flags": payload.get("flags"),
+                "gender": payload.get("gender"),
+                "birthday": payload.get("birthday"),
+                "kaist_id": payload.get("kaist_id"),
+                "last_name": payload.get("last_name"),
+                "sparcs_id": payload.get("sparcs_id"),
+                "first_name": payload.get("first_name"),
+                "kaist_info": payload.get("kaist_info"),
+                "twitter_id": payload.get("twitter_id"),
+                "facebook_id": payload.get("facebook_id"),
+                "kaist_v2_info": payload.get("kaist_v2_info"),
+                "kaist_info_time": payload.get("kaist_info_time"),
+                "kaist_v2_info_time": payload.get("kaist_v2_info_time"),
+            }
             user_nickname = _make_random_name()
             user_profile_picture = get_profile_picture()
             email = user_info["email"]
@@ -503,7 +484,6 @@ class UserViewSet(ActionAPIViewSet):
             "detail": "oneapp login success",
             "uid": uid,
             "nickname": user_profile.nickname if 'user_profile' in locals() else profile.nickname,
-            "oid": oid,
             "user_info": user_info,
             "user_id": (user_profile.user.id if 'user_profile' in locals() else user.id),
         }, status=status.HTTP_200_OK)
