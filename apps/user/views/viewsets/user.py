@@ -498,6 +498,5 @@ class UserViewSet(ActionAPIViewSet):
             "detail": "oneapp login success",
             "uid": uid,
             "nickname": user_profile.nickname if 'user_profile' in locals() else profile.nickname,
-            "user_info": user_info,
             "user_id": (user_profile.user.id if 'user_profile' in locals() else user.id),
         }, status=status.HTTP_200_OK)
