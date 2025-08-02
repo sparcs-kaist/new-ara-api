@@ -1,5 +1,6 @@
 from .article import *
 from .article_log import *
+from .article_metadata import *
 from .attachment import *
 from .best_article import *
 from .best_comment import *
