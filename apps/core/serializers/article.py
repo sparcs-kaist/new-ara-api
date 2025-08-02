@@ -9,8 +9,13 @@ from rest_framework.utils.serializer_helpers import ReturnDict
 from apps.core.documents import ArticleDocument
 from apps.core.models import Article, ArticleHiddenReason, Block, Board, Comment, Scrap
 from apps.core.models.board import BoardAccessPermissionType, NameType
+from apps.core.models.article_metadata import ArticleMetadata
 from apps.core.serializers.attachment import AttachmentSerializer
 from apps.core.serializers.board import BoardSerializer
+from apps.core.serializers.article_metadata import (
+    BaseArticleMetadataSerializer,
+    ArticleMetadataSerializer,
+)
 from apps.core.serializers.mixins.hidden import (
     HiddenSerializerFieldMixin,
     HiddenSerializerMixin,
@@ -111,6 +116,15 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
             )
 
             return queryset.count() // view.paginator.page_size + 1
+        return None
+
+    metadata = serializers.SerializerMethodField(read_only=True)
+
+    def get_metadata(self, obj):
+        # article_metadata_set으로 접근 (related_name)
+        metadata = obj.article_metadata_set.first()
+        if metadata:
+            return ArticleMetadataSerializer(metadata).data
         return None
 
 
@@ -541,6 +555,21 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
             raise exceptions.PermissionDenied()
         return board
 
+    def create(self, validated_data):
+        article = super().create(validated_data)
+
+        # 요청에 metadata가 포함된 경우에만 생성
+        metadata = self.initial_data.get('metadata')
+        if metadata:
+            if not isinstance(metadata, dict):
+                raise serializers.ValidationError({"metadata": "메타데이터는 유효한 JSON 형식이어야 합니다."})
+            ArticleMetadata.objects.create(
+                article=article,
+                metadata=metadata
+            )
+
+        return article
+
 
 class ArticleUpdateActionSerializer(BaseArticleSerializer):
     class Meta(BaseArticleSerializer.Meta):
@@ -561,3 +590,27 @@ class ArticleUpdateActionSerializer(BaseArticleSerializer):
             "parent_board",
             "commented_at",
         )
+
+    def update(self, instance, validated_data):
+        article = super().update(instance, validated_data)
+        
+        # metadata 필드가 요청에 포함된 경우에만 처리
+        if 'metadata' in self.initial_data:
+            metadata = self.initial_data.get('metadata')
+            if not isinstance(metadata, dict):
+                raise serializers.ValidationError({"metadata": "메타데이터는 유효한 JSON 형식이어야 합니다."})
+            
+            # 기존 메타데이터가 있는지 확인
+            metadata_obj = article.article_metadata_set.first()
+            
+            if metadata_obj:
+                if metadata:  # 비어있지 않으면 업데이트
+                    metadata_obj.metadata = metadata
+                    metadata_obj.save()
+            elif metadata:  # 기존에 없고 새로 추가하는 경우
+                ArticleMetadata.objects.create(
+                    article=article,
+                    metadata=metadata
+                )
+        
+        return article
