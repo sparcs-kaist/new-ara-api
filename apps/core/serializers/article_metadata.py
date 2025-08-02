@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from apps.core.models import article_metadata
+from ara.classes.serializers import MetaDataModelSerializer
 
 
 class BaseArticleMetadataSerializer(MetaDataModelSerializer):
