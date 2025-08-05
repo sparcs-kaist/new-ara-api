@@ -10,6 +10,7 @@ DEBUG = True
 ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = [
     "https://*.sparcs.org",
+    "https://*.dev.sparcs.org",
     "http://localhost",
 ]
 
