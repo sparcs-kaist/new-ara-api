@@ -12,7 +12,7 @@ from django.utils.translation import gettext
 from apps.user.views.viewsets import NOUNS, get_profile_picture
 from ara.classes.decorator import cache_by_user
 from ara.db.models import MetaDataModel, MetaDataQuerySet
-from ara.sanitizer import sanitize
+from ara.sanitizer import comment_sanitize
 from ara.settings import HASH_SECRET_VALUE, MIN_TIME
 
 from .block import Block
@@ -127,7 +127,7 @@ class Comment(MetaDataModel):
         except AssertionError:
             raise IntegrityError("self.content and self.attachment should exist.")
 
-        self.content = sanitize(self.content)
+        self.content = comment_sanitize(self.content)
 
         super(Comment, self).save(
             force_insert=force_insert,
