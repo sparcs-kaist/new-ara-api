@@ -62,6 +62,4 @@ def sanitize(content):
         }
     )
 
-    return bleach.linkify(
-        bleach.clean(content, tags=allowed_tags, attributes=_allowed_attributes)
-    )
+    return bleach.clean(content, tags=allowed_tags, attributes=_allowed_attributes)
