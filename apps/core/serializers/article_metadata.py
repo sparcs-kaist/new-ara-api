@@ -4,13 +4,7 @@ from apps.core.models import article_metadata
 from ara.classes.serializers import MetaDataModelSerializer
 
 
-class BaseArticleMetadataSerializer(MetaDataModelSerializer):
+class ArticleMetadataSerializer(MetaDataModelSerializer):
     class Meta:
         model = article_metadata.ArticleMetadata
-        fields = "__all__"
-
-
-class ArticleMetadataSerializer(BaseArticleMetadataSerializer):
-    data = serializers.JSONField(
-        read_only=True,
-    )
+        fields = ("metadata",)  # JSON 필드만 노출

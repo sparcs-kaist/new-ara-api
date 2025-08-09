@@ -124,10 +124,9 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
 
     @extend_schema_field(ArticleMetadataSerializer)  # Swagger에 metadata 스키마 노출
     def get_metadata(self, obj):
-        # article_metadata_set으로 접근 (related_name)
-        metadata = obj.article_metadata_set.first()
-        if metadata:
-            return ArticleMetadataSerializer(metadata).data
+        meta_obj = obj.article_metadata_set.first()
+        if meta_obj is not None:
+            return meta_obj.metadata
         return None
 
 
