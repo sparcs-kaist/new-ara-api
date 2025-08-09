@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.utils.translation import gettext
 from rest_framework import exceptions, serializers
 from rest_framework.utils.serializer_helpers import ReturnDict
-from drf_spectacular.utils import extend_schema_field  # 추가
+from drf_spectacular.utils import extend_schema_field, OpenApiTypes  # 수정: OpenApiTypes 추가
 
 from apps.core.documents import ArticleDocument
 from apps.core.models import Article, ArticleHiddenReason, Block, Board, Comment, Scrap
@@ -14,10 +14,6 @@ from apps.core.models.board import BoardAccessPermissionType, NameType
 from apps.core.models.article_metadata import ArticleMetadata
 from apps.core.serializers.attachment import AttachmentSerializer
 from apps.core.serializers.board import BoardSerializer
-from apps.core.serializers.article_metadata import (
-    BaseArticleMetadataSerializer,
-    ArticleMetadataSerializer,
-)
 from apps.core.serializers.mixins.hidden import (
     HiddenSerializerFieldMixin,
     HiddenSerializerMixin,
@@ -122,11 +118,11 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
 
     metadata = serializers.SerializerMethodField(read_only=True)
 
-    @extend_schema_field(ArticleMetadataSerializer)  # Swagger에 metadata 스키마 노출
+    @extend_schema_field(OpenApiTypes.OBJECT)  # 수정: 실제 반환은 dict(JSON)
     def get_metadata(self, obj):
         meta_obj = obj.article_metadata_set.first()
         if meta_obj is not None:
-            return meta_obj.metadata
+            return meta_obj.metadata  # JSON만 반환
         return None
 
 
