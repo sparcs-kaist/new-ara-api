@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.utils.translation import gettext
 from rest_framework import exceptions, serializers
 from rest_framework.utils.serializer_helpers import ReturnDict
+from drf_spectacular.utils import extend_schema_field  # 추가
 
 from apps.core.documents import ArticleDocument
 from apps.core.models import Article, ArticleHiddenReason, Block, Board, Comment, Scrap
@@ -121,6 +122,7 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
 
     metadata = serializers.SerializerMethodField(read_only=True)
 
+    @extend_schema_field(ArticleMetadataSerializer)  # Swagger에 metadata 스키마 노출
     def get_metadata(self, obj):
         # article_metadata_set으로 접근 (related_name)
         metadata = obj.article_metadata_set.first()
@@ -352,12 +354,16 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
         after = None if len(after) == 0 else after[0]
         return after, before
 
-    def get_attachments(self, obj: Article) -> ReturnDict | None:
+    attachments = serializers.SerializerMethodField(read_only=True)
+
+    @extend_schema_field(AttachmentSerializer(many=True))  # Swagger에 attachments 스키마 노출
+    def get_attachments(self, obj: Article) -> ReturnDict | list:
         if self.visible_verdict(obj):
             attachments = obj.attachments.all()
             serializer = AttachmentSerializer(attachments, many=True)
             return serializer.data
-        return None
+        # 이전: return None
+        return []  # 항상 리스트로 응답
 
     def get_my_comment_profile(self, obj):
         created_by = self.context["request"].user
@@ -472,6 +478,17 @@ class ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSeriali
     read_status = serializers.SerializerMethodField(
         read_only=True,
     )
+    # 목록 응답에도 attachments 포함
+    attachments = serializers.SerializerMethodField(read_only=True)
+
+    @extend_schema_field(AttachmentSerializer(many=True))  # Swagger 스키마 힌트
+    def get_attachments(self, obj: Article) -> ReturnDict | list:
+        if self.visible_verdict(obj):
+            attachments = obj.attachments.all()
+            serializer = AttachmentSerializer(attachments, many=True)
+            return serializer.data
+        # 이전: return None
+        return []  # 항상 리스트로 응답
 
     attachment_type = serializers.SerializerMethodField(
         read_only=True,
@@ -606,7 +623,7 @@ class ArticleUpdateActionSerializer(BaseArticleSerializer):
 
         # 요청에 metadata 필드가 있었는지 확인
         if "metadata" in self.initial_data:
-            metadata_obj = article.article_metadata_set.first()
+            metadata_obj = instance.article_metadata_set.first()
 
             if metadata_obj:
                 if metadata_data is not None:  # 업데이트할 내용이 있으면
@@ -615,6 +632,6 @@ class ArticleUpdateActionSerializer(BaseArticleSerializer):
                 else:  # 내용이 null이면 삭제
                     metadata_obj.delete()
             elif metadata_data is not None:  # 기존에 없고 새로 추가하는 경우
-                ArticleMetadata.objects.create(article=article, metadata=metadata_data)
+                ArticleMetadata.objects.create(article=instance, metadata=metadata_data)
 
         return article
