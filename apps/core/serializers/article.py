@@ -1,6 +1,7 @@
 import datetime
 from enum import Enum
 
+from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext
 from rest_framework import exceptions, serializers
@@ -528,6 +529,12 @@ class BestArticleListActionSerializer(
 
 
 class ArticleCreateActionSerializer(BaseArticleSerializer):
+    metadata = serializers.JSONField(
+        required=False,
+        write_only=True,
+        help_text="게시물에 첨부할 JSON 형식의 메타데이터입니다.",
+    )
+
     class Meta(BaseArticleSerializer.Meta):
         exclude = (
             "migrated_hit_count",
@@ -555,23 +562,24 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
             raise exceptions.PermissionDenied()
         return board
 
+    @transaction.atomic
     def create(self, validated_data):
+        metadata_data = validated_data.pop("metadata", None)
         article = super().create(validated_data)
 
-        # 요청에 metadata가 포함된 경우에만 생성
-        metadata = self.initial_data.get('metadata')
-        if metadata:
-            if not isinstance(metadata, dict):
-                raise serializers.ValidationError({"metadata": "메타데이터는 유효한 JSON 형식이어야 합니다."})
-            ArticleMetadata.objects.create(
-                article=article,
-                metadata=metadata
-            )
+        if metadata_data:
+            ArticleMetadata.objects.create(article=article, metadata=metadata_data)
 
         return article
 
 
 class ArticleUpdateActionSerializer(BaseArticleSerializer):
+    metadata = serializers.JSONField(
+        required=False,
+        write_only=True,
+        help_text="게시물에 첨부할 JSON 형식의 메타데이터입니다. null을 보내면 기존 메타데이터가 삭제됩니다.",
+    )
+
     class Meta(BaseArticleSerializer.Meta):
         exclude = (
             "migrated_hit_count",
@@ -591,26 +599,22 @@ class ArticleUpdateActionSerializer(BaseArticleSerializer):
             "commented_at",
         )
 
+    @transaction.atomic
     def update(self, instance, validated_data):
+        metadata_data = validated_data.pop("metadata", None)
         article = super().update(instance, validated_data)
-        
-        # metadata 필드가 요청에 포함된 경우에만 처리
-        if 'metadata' in self.initial_data:
-            metadata = self.initial_data.get('metadata')
-            if not isinstance(metadata, dict):
-                raise serializers.ValidationError({"metadata": "메타데이터는 유효한 JSON 형식이어야 합니다."})
-            
-            # 기존 메타데이터가 있는지 확인
+
+        # 요청에 metadata 필드가 있었는지 확인
+        if "metadata" in self.initial_data:
             metadata_obj = article.article_metadata_set.first()
-            
+
             if metadata_obj:
-                if metadata:  # 비어있지 않으면 업데이트
-                    metadata_obj.metadata = metadata
+                if metadata_data is not None:  # 업데이트할 내용이 있으면
+                    metadata_obj.metadata = metadata_data
                     metadata_obj.save()
-            elif metadata:  # 기존에 없고 새로 추가하는 경우
-                ArticleMetadata.objects.create(
-                    article=article,
-                    metadata=metadata
-                )
-        
+                else:  # 내용이 null이면 삭제
+                    metadata_obj.delete()
+            elif metadata_data is not None:  # 기존에 없고 새로 추가하는 경우
+                ArticleMetadata.objects.create(article=article, metadata=metadata_data)
+
         return article
