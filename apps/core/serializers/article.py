@@ -463,6 +463,15 @@ class ArticleAttachmentType(Enum):
 
 
 class ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
+    # Base의 exclude에 attachments가 들어가 있으므로 여기서 exclude 재정의
+    class Meta(BaseArticleSerializer.Meta):
+        exclude = (
+            "migrated_hit_count",
+            "migrated_positive_vote_count",
+            "migrated_negative_vote_count",
+            "content_text",
+        )
+
     parent_topic = TopicSerializer(
         read_only=True,
     )
@@ -478,16 +487,14 @@ class ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSeriali
     read_status = serializers.SerializerMethodField(
         read_only=True,
     )
-    # 목록 응답에도 attachments 포함
     attachments = serializers.SerializerMethodField(read_only=True)
 
-    @extend_schema_field(AttachmentSerializer(many=True))  # Swagger 스키마 힌트
+    @extend_schema_field(AttachmentSerializer(many=True))
     def get_attachments(self, obj: Article) -> ReturnDict | list:
         if self.visible_verdict(obj):
             attachments = obj.attachments.all()
             serializer = AttachmentSerializer(attachments, many=True)
             return serializer.data
-        # 이전: return None
         return []  # 항상 리스트로 응답
 
     attachment_type = serializers.SerializerMethodField(
