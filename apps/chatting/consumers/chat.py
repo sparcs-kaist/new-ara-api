@@ -1,7 +1,7 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 
-#채팅 관련 Socket 을 핸들링하는 Consumer 클래스
+# 채팅 관련 Socket 을 핸들링하는 Consumer 클래스
 class ChatRoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         await self.accept()
@@ -104,6 +104,7 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
         )
 
     async def broadcast_update(self, payload: dict | None = None):
+        """클라이언트 요청(message_new)을 처리하고 그룹으로 브로드캐스트"""
         if not self.room_name:
             return
         await self.channel_layer.group_send(
@@ -125,7 +126,6 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
         })
 
     # 그룹에서 이벤트 받는 핸들러들
-
     async def user_join(self, event):
         await self.send(text_data=json.dumps({
             'type': 'user_join',
@@ -167,3 +167,4 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
             },
             'user': event.get('user'),
         }))
+
