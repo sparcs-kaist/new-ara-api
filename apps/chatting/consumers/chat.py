@@ -1,7 +1,7 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 
-#채팅 관련 Socket 을 핸들링하는 Consumer 클래스
+# 채팅 관련 Socket 을 핸들링하는 Consumer 클래스
 class ChatRoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         await self.accept()
@@ -23,7 +23,7 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
         elif event_type == 'typing_start':
             await self.typing_start()
         elif event_type == 'message_new':
-            await self.message_new(data['message'])
+            await self.send_message(data['message'])
         # 여기에 더 필요한 이벤트 타입 추가
 
     async def connect_room(self, room_id):
@@ -66,20 +66,20 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
             }
         )
 
-    async def message_new(self, message):
+    async def send_message(self, message):
+        """클라이언트 요청(message_new)을 처리하고 그룹으로 브로드캐스트"""
         if not self.room_name:
             return
         await self.channel_layer.group_send(
             self.room_name,
             {
-                'type': 'message_new',
+                'type': 'broadcast_message',  # 그룹 이벤트 핸들러와 매칭
                 'message': message,
                 'user': self.channel_name,
             }
         )
 
     # 그룹에서 이벤트 받는 핸들러들
-
     async def user_join(self, event):
         await self.send(text_data=json.dumps({
             'type': 'user_join',
@@ -98,7 +98,8 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
             'user': event['user'],
         }))
 
-    async def message_new(self, event):
+    async def broadcast_message(self, event):
+        """그룹에서 전파된 새 메시지를 클라이언트로 전달"""
         await self.send(text_data=json.dumps({
             'type': 'message_new',
             'message': event['message'],
