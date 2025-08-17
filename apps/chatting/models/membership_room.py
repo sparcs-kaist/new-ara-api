@@ -49,7 +49,8 @@ class ChatRoomMemberShip(MetaDataModel):
         blank = False,
         auto_now = True,
     )
-    last_seen_message = models.OneToOneField(
+    # 여러 사용자가 같은 "마지막으로 본 메시지"를 가리킬 수 있어야 하므로 FK로 정의한다.
+    last_seen_message = models.ForeignKey(
         ChatMessage,
         on_delete=models.SET_NULL,
         null=True,
