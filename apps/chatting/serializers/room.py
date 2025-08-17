@@ -101,7 +101,15 @@ class ChatRoomByIdSerializer(serializers.Serializer):
         # ChatRoom 객체를 반환할 때 사용할 시리얼라이저
         return ChatRoomSerializer(instance).data
 
+class ChatRoomMemberWithLastSeenSerializer(serializers.Serializer):
+    """
+    채팅방 멤버 정보와 마지막 접속 시간을 포함하는 Serializer
+    """
+    user = PublicUserSerializer()
+    role = serializers.CharField()
+    last_seen_at = serializers.DateTimeField(allow_null=True)
+
 class ChatRoomDetailSerializer(serializers.Serializer):
     room = ChatRoomSerializer()
-    members = PublicUserSerializer(many=True)
+    members = ChatRoomMemberWithLastSeenSerializer(many=True)
     recent_message = MessageSerializer(allow_null=True)

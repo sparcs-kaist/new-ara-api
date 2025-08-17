@@ -89,14 +89,22 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             )
 
         room_data = ChatRoomSerializer(room, context={'request': request}).data
-        users_data = PublicUserSerializer(users, many=True).data
+        
+        # members 데이터를 membership 정보와 함께 구성
+        members_data = []
+        for membership in memberships:
+            members_data.append({
+                'user': PublicUserSerializer(membership.user).data,
+                'role': membership.role,
+                'last_seen_at': membership.last_seen_at
+            })
 
         recent_message = room.message_set.order_by('-created_at').first()
         recent_message_data = MessageSerializer(recent_message).data if recent_message else None
 
         return response.Response({
             "room": room_data,
-            "members": users_data,
+            "members": members_data,
             "recent_message": recent_message_data,
         })
 
