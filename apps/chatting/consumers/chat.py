@@ -141,7 +141,8 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
                 'message_id': message_id
             }
         )
-    #특정 유저 타이핑 시작 이벤트 처리
+
+    # 특정 유저 타이핑 시작 이벤트 처리 (브로드캐스트)
     async def typing_start(self, user_id):
         if not self.room_name:
             return
@@ -153,7 +154,7 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
             }
         )
 
-    #특정 유저 타이핑 정지 이벤트 처리
+    # 특정 유저 타이핑 정지 이벤트 처리 (브로드캐스트)
     async def typing_stop(self, user_id):
         if not self.room_name:
             return
@@ -164,15 +165,6 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
                 'user': user_id,
             }
         )
-
-    # Deprecated: kept for compatibility; delegate to unified room_update
-    async def broadcast_message_new(self, message):
-        await self.broadcast_update({
-            'resource': 'messages',
-            'change': 'created',
-            'data': message,
-            'room_id': message.get('room_id') if isinstance(message, dict) else None,
-        })
 
     # 그룹에서 이벤트 받는 핸들러들
     async def user_join(self, event):
@@ -195,11 +187,23 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
             'user': event['user'],
         }))
 
-    async def room_update(self, event):
+    # 추가: user_typing_start/stop 및 message_deleted 이벤트 핸들러
+    async def user_typing_start(self, event):
         await self.send(text_data=json.dumps({
-            'type': 'room_update',
-            'payload': event.get('payload', {}),
+            'type': 'user_typing_start',
             'user': event.get('user'),
+        }))
+
+    async def user_typing_stop(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'user_typing_stop',
+            'user': event.get('user'),
+        }))
+
+    async def message_deleted(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'message_deleted',
+            'message_id': event.get('message_id'),
         }))
 
     # Backward-compat: if any producer still emits message_new to the group,
