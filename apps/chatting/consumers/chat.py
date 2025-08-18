@@ -37,6 +37,20 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
         if event_type == 'update':
             await self.broadcast_update(data.get('payload', {}))
             return
+        #메시지 삭제 처리
+        if event_type == "message_deleted":
+            await self.broadcast_message_deleted(data.get('message_id'))
+            return
+        
+        #상대방이 메시지를 타이핑 시작했을때
+        if event_type == 'typing_start':
+            await self.typing_start(data.get('user_id'))
+            return
+        
+        #상대방이 메시지 타이핑을 종료했을 때
+        if event_type == 'typing_stop':
+            await self.typing_stop(data.get('user_id'))
+            return
 
         # Legacy protocol (backward compatibility)
         if event_type == 'connect_room':
@@ -113,6 +127,41 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
                 'type': 'room_update',
                 'payload': payload or {},
                 'user': self._user_identity(),
+            }
+        )
+
+    async def broadcast_message_deleted(self, message_id : int):
+        """ 클라이언트 요청(message_deleted)을 처리하고 그룹으로 브로드캐스트"""
+        if not self.room_name:
+            return
+        await self.channel_layer.group_send(
+            self.room_name,
+            {
+                'type' : 'message_deleted',
+                'message_id': message_id
+            }
+        )
+    #특정 유저 타이핑 시작 이벤트 처리
+    async def typing_start(self, user_id):
+        if not self.room_name:
+            return
+        await self.channel_layer.group_send(
+            self.room_name,
+            {
+                'type': 'user_typing_start',
+                'user': user_id,
+            }
+        )
+
+    #특정 유저 타이핑 정지 이벤트 처리
+    async def typing_stop(self, user_id):
+        if not self.room_name:
+            return
+        await self.channel_layer.group_send(
+            self.room_name,
+            {
+                'type': 'user_typing_stop',
+                'user': user_id,
             }
         )
 
