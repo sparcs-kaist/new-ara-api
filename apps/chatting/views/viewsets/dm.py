@@ -74,7 +74,7 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         "create": (permissions.IsAuthenticated, CreateDMPermission,),
         "block": (permissions.IsAuthenticated, BlockDMPermission,),  # 권한 추가
         "unblock": (permissions.IsAuthenticated, UnblockDMPermission,),  # 권한 추가
-    "user_dm": (permissions.IsAuthenticated,),
+        "user_dm": (permissions.IsAuthenticated,),
     }
     
     action_serializer_class = {
@@ -290,7 +290,7 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         description="요청자와 대상 사용자 사이에 존재하는 DM 방의 ID를 반환합니다. 없으면 null.",
         responses={200: DMRoomLookupResponseSerializer},
     )
-    @action(detail=False, methods=["get"], url_path=r"user/(?P<user_id>\\d+)")
+    @action(detail=False, methods=["get"], url_path=r"user/(?P<user_id>\d+)")
     def user_dm(self, request, user_id=None):
         try:
             from django.contrib.auth import get_user_model

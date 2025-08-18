@@ -2,8 +2,19 @@ from rest_framework import serializers
 from apps.chatting.models.room_invitation import ChatRoomInvitation
 from apps.chatting.models.membership_room import ChatUserRole
 from apps.user.serializers.user import PublicUserSerializer
+from apps.chatting.models.room import ChatRoom
 from datetime import timedelta
 from django.utils import timezone
+
+
+class ChatRoomLiteSerializer(serializers.ModelSerializer):
+    """초대장 응답에 포함될 최소한의 채팅방 정보"""
+    class Meta:
+        model = ChatRoom
+        fields = [
+            'id', 'room_title', 'room_type', 'chat_name_type',
+            'picture', 'recent_message_at'
+        ]
 
 
 class ChatInvitationSerializer(serializers.ModelSerializer):
@@ -12,13 +23,15 @@ class ChatInvitationSerializer(serializers.ModelSerializer):
     """
     invitation_from_data = PublicUserSerializer(source='invitation_from', read_only=True)
     invitation_to_data = PublicUserSerializer(source='invitation_to', read_only=True)
+    invited_room_data = ChatRoomLiteSerializer(source='invited_room', read_only=True)
 
     class Meta:
         model = ChatRoomInvitation
         fields = [
             'id', 'invited_room', 'invitation_to', 'invitation_from',
             'invitation_role', 'expired_at', 'created_at',
-            'invitation_from_data', 'invitation_to_data'
+            'invitation_from_data', 'invitation_to_data',
+            'invited_room_data'
         ]
         read_only_fields = ['created_at']
 
