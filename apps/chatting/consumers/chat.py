@@ -206,7 +206,6 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
             'message_id': event.get('message_id'),
         }))
 
-    # room_update 이벤트 수신 핸들러 (원래 버전으로 복구)
     async def room_update(self, event):
         await self.send(text_data=json.dumps({
             'type': 'room_update',
