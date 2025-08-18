@@ -206,8 +206,14 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
             'message_id': event.get('message_id'),
         }))
 
+    # room_update 이벤트 수신 핸들러 (원래 버전으로 복구)
+    async def room_update(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'room_update',
+            'payload': event.get('payload', {}),
+        }))
+
     # Backward-compat: if any producer still emits message_new to the group,
-    # convert it to unified room_update for clients
     async def message_new(self, event):
         msg = event.get('message')
         await self.send(text_data=json.dumps({
