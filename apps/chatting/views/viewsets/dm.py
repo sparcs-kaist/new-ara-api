@@ -43,6 +43,11 @@ def get_default_chatroom_picture() -> str:
     return f"user_profiles/default_pictures/{col}-default{num}.png"
 
 
+class DMRoomLookupResponseSerializer(serializers.Serializer):
+    """dm/user/{user_id} 응답 스키마"""
+    dm_room = serializers.IntegerField(allow_null=True)
+
+
 @extend_schema_view(
     update=extend_schema(exclude=True),
     partial_update=extend_schema(exclude=True),
@@ -69,6 +74,7 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         "create": (permissions.IsAuthenticated, CreateDMPermission,),
         "block": (permissions.IsAuthenticated, BlockDMPermission,),  # 권한 추가
         "unblock": (permissions.IsAuthenticated, UnblockDMPermission,),  # 권한 추가
+    "user_dm": (permissions.IsAuthenticated,),
     }
     
     action_serializer_class = {
@@ -278,3 +284,34 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 {"error": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+    # GET /api/chat/dm/user/{user_id}: 요청 유저와 대상 유저 사이 DM 방 존재 여부 조회
+    @extend_schema(
+        description="요청자와 대상 사용자 사이에 존재하는 DM 방의 ID를 반환합니다. 없으면 null.",
+        responses={200: DMRoomLookupResponseSerializer},
+    )
+    @action(detail=False, methods=["get"], url_path=r"user/(?P<user_id>\\d+)")
+    def user_dm(self, request, user_id=None):
+        try:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            other_user = User.objects.get(id=user_id)
+        except Exception:
+            return response.Response(
+                {"detail": "해당 사용자가 존재하지 않습니다."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        room = (
+            ChatRoom.objects.filter(room_type=ChatRoomType.DM.value)
+            .filter(membership_info_set__user_id=request.user.id)
+            .filter(membership_info_set__user_id=other_user.id)
+            .values("id")
+            .first()
+        )
+
+        data = {"dm_room": room["id"] if room else None}
+
+        # 응답 직렬화 후 반환 (스웨거 스키마에도 반영됨)
+        serializer = DMRoomLookupResponseSerializer(data)
+        return response.Response(serializer.data, status=status.HTTP_200_OK)
