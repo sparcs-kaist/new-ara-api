@@ -19,6 +19,7 @@ from apps.chatting.serializers.room import  ChatRoomCreateSerializer, ChatRoomSe
 from apps.chatting.permissions.room import RoomReadPermission, RoomBlockPermission, RoomDeletePermission, RoomLeavePermission
 from apps.user.serializers.user import PublicUserSerializer
 from apps.chatting.serializers.message import MessageSerializer
+from ara.settings import MIN_TIME
 
 # chat/room 엔드포인트의 PATCH, PUT 비활성화
 @extend_schema_view(
@@ -60,7 +61,10 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def get_queryset(self):
         qs = ChatRoom.objects.all()
         if self.request.method == "GET":
-            qs = qs.filter(membership_info_set__user=self.request.user).distinct()
+            qs = qs.filter(
+                membership_info_set__user=self.request.user,
+                membership_info_set__deleted_at=MIN_TIME,
+            ).distinct()
             ordering = self.request.query_params.get('ordering')
             if not ordering:
                 # 기본 정렬: created_at과 recent_message_at 중 더 최근인 값 기준
