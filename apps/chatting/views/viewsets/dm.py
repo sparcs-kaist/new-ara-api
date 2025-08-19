@@ -31,6 +31,7 @@ from apps.chatting.permissions.dm import (
 )
 
 import random
+from ara.settings import MIN_TIME
 
 #랜덤 프로필 사진 지정 함수
 #일단은 적당한 asset이 아직 만들어지지 않은 관계로 기존의 UserProfile과 동일하게 사용
@@ -93,7 +94,8 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         if self.request.method == "GET":
             return ChatRoom.objects.filter(
                 room_type=ChatRoomType.DM.value,
-                membership_info_set__user=self.request.user
+                membership_info_set__user=self.request.user,
+                membership_info_set__deleted_at=MIN_TIME,
             ).distinct()
         return super().get_queryset()
     
