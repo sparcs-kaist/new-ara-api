@@ -31,7 +31,7 @@ from apps.core.models import (
     Vote,
 )
 from apps.core.models.board import NameType
-from apps.core.permissions.article import ArticlePermission, ArticleReadPermission
+from apps.core.permissions.article import ArticlePermission, ArticleReadPermission, ArticleModifyPermission
 from apps.core.serializers.article import (
     ArticleCreateActionSerializer,
     ArticleListActionSerializer,
@@ -67,6 +67,10 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         "create": (
             permissions.IsAuthenticated,
             # Check WritePermission in ArticleCreateActionSerializer
+        ),
+        "update": (
+            permissions.IsAuthenticated,
+            ArticleModifyPermission,
         ),
         "vote_cancel": (
             permissions.IsAuthenticated,
