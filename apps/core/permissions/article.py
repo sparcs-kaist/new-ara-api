@@ -20,7 +20,7 @@ class ArticleReadPermission(permissions.BasePermission):
         )
 
 class ArticleModifyPermission(permissions.BasePermission):
-    message = "해당 게시물에 대한 수정 권한이 없습니다."
+    message = "게시글 수정은 작성자 본인만 가능합니다"
 
     def has_object_permission(self, request, view, obj: Article):
         return obj.parent_board.group_has_access_permission(

@@ -72,10 +72,6 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             permissions.IsAuthenticated,
             ArticleModifyPermission,
         ),
-        "delete": (
-            permissions.IsAuthenticated,
-            ArticleModifyPermission,
-        ),
         "vote_cancel": (
             permissions.IsAuthenticated,
             ArticleReadPermission,
