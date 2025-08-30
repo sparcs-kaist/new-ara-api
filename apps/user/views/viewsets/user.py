@@ -367,28 +367,6 @@ class UserViewSet(ActionAPIViewSet):
             status=status.HTTP_200_OK,
         )
 
-    #jwt -> refresh toekn
-    @decorators.action(detail=False, methods=['post'])
-    def refresh_token(self, request):
-        refresh_token = request.COOKIES.get('refresh')
-        if not refresh_token:
-            return response.Response({'error': 'Refresh token not provided'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            token = RefreshToken(refresh_token)
-            access_token = str(token.access_token)
-        except Exception:
-            return response.Response({'error': 'Invalid refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
-
-        resp = response.Response({'access': access_token})
-        resp.set_cookie(
-            'access',
-            access_token,
-            httponly=True,
-            secure=True,
-            samesite='Lax',
-        )
-        return resp
 
     @decorators.action(detail=False, methods=["post"], url_path="oneapp-login", permission_classes=[permissions.AllowAny],authentication_classes=[])
     def oneapp_login(self, request):
