@@ -47,7 +47,6 @@ DEBUG_TOOLBAR_CONFIG = {
 REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = (
     "rest_framework.authentication.BasicAuthentication",
     "ara.authentication.CsrfExemptSessionAuthentication",
-    "ara.authentication.JWTCookieAuthentication",
     "ara.authentication.OneAppJWTAuthentication", #OneApp전용 JWT 인증 Class
 )
 
