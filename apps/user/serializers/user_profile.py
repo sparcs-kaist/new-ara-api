@@ -2,12 +2,10 @@ from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from django.utils.translation import gettext
 from rest_framework import serializers
-
 from apps.user.models import UserProfile
-from ara.classes.serializers import MetaDataModelSerializer
 
 
-class BaseUserProfileSerializer(MetaDataModelSerializer):
+class BaseUserProfileSerializer(serializers.ModelSerializer):
     email = serializers.SerializerMethodField()
     is_official = serializers.SerializerMethodField()
 
@@ -100,3 +98,20 @@ class MyPageUserProfileSerializer(BaseUserProfileSerializer):
             parent_comment__created_by=obj.user, is_positive=True
         ).count()
         return num_article_votes + num_comment_votes
+
+
+class PublicUserProfileSearchSerializer(serializers.ModelSerializer):
+    """
+    사용자 검색용 공개 프로필 Serializer
+    """
+
+    class Meta:
+        model = UserProfile
+        fields = (
+            "picture",
+            "nickname",
+            "user",
+            "is_official",
+            "is_school_admin",
+        )
+        read_only_fields = fields

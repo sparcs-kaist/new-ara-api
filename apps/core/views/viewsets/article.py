@@ -31,7 +31,7 @@ from apps.core.models import (
     Vote,
 )
 from apps.core.models.board import NameType
-from apps.core.permissions.article import ArticlePermission, ArticleReadPermission
+from apps.core.permissions.article import ArticlePermission, ArticleReadPermission, ArticleModifyPermission
 from apps.core.serializers.article import (
     ArticleCreateActionSerializer,
     ArticleListActionSerializer,
@@ -67,6 +67,10 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         "create": (
             permissions.IsAuthenticated,
             # Check WritePermission in ArticleCreateActionSerializer
+        ),
+        "update": (
+            permissions.IsAuthenticated,
+            ArticleModifyPermission,
         ),
         "vote_cancel": (
             permissions.IsAuthenticated,
@@ -110,6 +114,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         queryset = queryset.prefetch_related(
             "attachments",
             "communication_article",
+            "article_metadata_set",  # prefetch 추가
         )
 
         # optimizing queryset for list action
@@ -158,6 +163,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 "parent_board__group",
             ).prefetch_related(
                 "attachments",
+                "article_metadata_set",  # prefetch 추가
                 models.Prefetch(
                     "vote_set",
                     queryset=Vote.objects.select_related(
@@ -471,6 +477,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             "parent_topic",
             "attachments",
             "communication_article",
+            "article_metadata_set",  # prefetch 추가
             ArticleReadLog.prefetch_my_article_read_log(self.request.user),
         )
 
@@ -485,9 +492,13 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             timezone.now().date(), datetime.time.min, datetime.timezone.utc
         )
         # get the articles that are created_at within a week and order by hit_count
-        top_articles = Article.objects.filter(
-            created_at__gte=current_date - datetime.timedelta(days=7)
-        ).order_by("-hit_count", "-pk")
+        top_articles = (
+            Article.objects.filter(
+                created_at__gte=current_date - datetime.timedelta(days=7)
+            )
+            .order_by("-hit_count", "-pk")
+            .prefetch_related("article_metadata_set")  # prefetch 추가
+        )
 
         search_keyword = request.query_params.get("main_search__contains")
         if search_keyword:

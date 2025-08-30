@@ -4,7 +4,11 @@ from collections import defaultdict
 from apps.core.management.scripts.reminder_email_for_reply import send_email
 from apps.core.models import BestArticle
 from apps.kaist.portal.worker import Worker as PortalCrawlWorker
+from apps.core.management.scripts.meal_crawler import crawl_daily_meal
+
 from ara import celery_app, redis
+from datetime import datetime, timedelta
+
 
 
 @celery_app.task
@@ -74,3 +78,17 @@ def save_weekly_best():
 @celery_app.task
 def send_email_for_reply_reminder():
     send_email()
+
+@celery_app.task
+def crawl_meal():
+    #현재 날짜로 부터 앞으로 일주일간 식단 크롤링
+    # 현재 날짜를 가져오기
+    current_date = datetime.now()
+
+    # 앞 뒤 7일간의 날짜 리스트 생성
+    # 이전 날짜 7일에 경우 학식이 변경된 경우를 아직 처리하지 못 해서 보류. 미래 7일만 가져온다.
+    dates = [(current_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(0, 7)]
+    for date in dates:
+        #식단 크롤링
+        crawl_daily_meal(date)
+        time.sleep(2)

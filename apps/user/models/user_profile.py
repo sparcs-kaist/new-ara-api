@@ -133,9 +133,14 @@ class UserProfile(MetaDataModel):
         if not self.sso_user_info:
             return self.nickname  # Portal crawled users
 
-        kaist_info = self.sso_user_info["kaist_info"]
+        kaist_info = self.sso_user_info.get("kaist_info")
         if kaist_info:
-            return json.loads(kaist_info)["ku_kname"]
+            return json.loads(kaist_info).get("ku_kname")
+        
+        kaist_v2_info = self.sso_user_info.get("kaist_v2_info")
+        if kaist_v2_info:
+            return json.loads(kaist_v2_info).get("user_nm")
+            
         return self.sso_user_info["last_name"] + self.sso_user_info["first_name"]
 
     @cached_property

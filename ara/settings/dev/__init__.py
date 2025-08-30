@@ -10,6 +10,7 @@ DEBUG = True
 ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = [
     "https://*.sparcs.org",
+    "https://*.dev.sparcs.org",
     "http://localhost",
 ]
 
@@ -18,6 +19,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 SSO_IS_BETA = False
 
 SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SECURE = True
 
 INSTALLED_APPS += [
     "corsheaders",
@@ -45,6 +47,7 @@ DEBUG_TOOLBAR_CONFIG = {
 REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = (
     "rest_framework.authentication.BasicAuthentication",
     "ara.authentication.CsrfExemptSessionAuthentication",
+    "ara.authentication.OneAppJWTAuthentication", #OneApp전용 JWT 인증 Class
 )
 
 LOGGING["disable_existing_loggers"] = False

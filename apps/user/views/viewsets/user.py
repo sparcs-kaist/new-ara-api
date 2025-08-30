@@ -4,6 +4,7 @@ import random
 import uuid
 from urllib.parse import urlparse
 
+import jwt
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model, login, logout
@@ -18,6 +19,14 @@ from apps.user.models.user.manual import ManualUser
 from apps.user.permissions.user import UserPermission
 from ara.classes.sparcssso import Client as SSOClient
 from ara.classes.viewset import ActionAPIViewSet
+
+#for jwt
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.http import JsonResponse
+
+#for log
+import logging
+logger = logging.getLogger("auth_logger")
 
 NOUNS = [
     "외계인",
@@ -143,6 +152,7 @@ class UserViewSet(ActionAPIViewSet):
     action_permission_classes = {
         "sso_login": (permissions.AllowAny,),
         "sso_login_callback": (permissions.AllowAny,),
+        "refresh_token": (permissions.AllowAny,),
     }
 
     @cached_property
@@ -169,6 +179,11 @@ class UserViewSet(ActionAPIViewSet):
             return response.Response(
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        # logging
+        logger.info(
+            f" Requested state: {request.GET.get('state')}, Session state: {request.session.get('state')}"
+        )
 
         # Security Issues
         if request.GET.get("state") != request.session.get("state"):
@@ -213,7 +228,7 @@ class UserViewSet(ActionAPIViewSet):
 
         try:  # 로그인
             user_profile = UserProfile.objects.get(
-                sid=user_info["sid"],
+                uid=user_info["uid"],
             )
 
             if user_profile.inactive_due_at:
@@ -291,17 +306,37 @@ class UserViewSet(ActionAPIViewSet):
 
         login(request, user_profile.user)
 
+        #jwt token
+        refresh = RefreshToken.for_user(user_profile.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+
         _next = request.session.get("next", "/")
 
-        # redirect to frontend's terms of service agreement page if user did not agree it yet
-        if (
-            request.user.is_authenticated
-            and request.user.profile.agree_terms_of_service_at is None
-        ):
-            _next = urlparse(_next)
-            return redirect(to=f"{_next.scheme}://{_next.netloc}/tos")
+        # 이용약관 미동의자
+        if (request.user.is_authenticated and
+            request.user.profile.agree_terms_of_service_at is None):
+            tos_url = f"{urlparse(_next).scheme}://{urlparse(_next).netloc}/tos"
+        else:
+            tos_url = None
 
-        return redirect(to=_next)
+        # API 요청이면 JSON 응답, 아니면 redirect
+        if request.headers.get("Accept") == "application/json" or request.GET.get("mode") == "json":
+            res = JsonResponse({
+                "detail": "login success",
+                "next": tos_url or _next,
+                "access": access_token,
+                "refresh": refresh_token,
+            })
+            res.set_cookie("access", access_token) #프로덕션 환경에서는 보안 설정 필요.
+            res.set_cookie("refresh", refresh_token)
+            return res
+
+        # 웹 요청이면 기존 redirect 흐름 유지
+        res = redirect(to=tos_url or _next)
+        res.set_cookie("access", access_token)
+        res.set_cookie("refresh", refresh_token)
+        return res
 
     @decorators.action(detail=True, methods=["post"])
     def sso_unregister(self, request, *args, **kwargs):
@@ -331,3 +366,115 @@ class UserViewSet(ActionAPIViewSet):
         return response.Response(
             status=status.HTTP_200_OK,
         )
+
+
+    @decorators.action(detail=False, methods=["post"], url_path="oneapp-login", permission_classes=[permissions.AllowAny],authentication_classes=[])
+    def oneapp_login(self, request):
+        """ 
+        One App JWT Access Token 기반 간편 로그인/회원가입
+        """
+        import datetime
+
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return response.Response({"error": "No JWT token"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        token = auth_header.split(" ")[1]
+
+        try:
+            payload = jwt.decode(token, settings.ONE_APP_JWT_SECRET, algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            return response.Response({
+                "error": f"Expired JWT token"
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
+        except jwt.DecodeError:
+            return response.Response({
+                "error": f"Decode error in JWT token"
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
+        except jwt.InvalidTokenError:
+            return response.Response({
+                "error": f"Invalid JWT token"
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
+        except Exception as e:
+            return response.Response({
+                "error": f"Unexpected error during JWT decode: {type(e).__name__}: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        uid = payload.get("uid")
+        now_str = datetime.datetime.now().strftime("%Y-%m-%d")
+
+
+        # UserProfile 생성/조회
+        from django.contrib.auth import get_user_model
+        try:
+            profile = UserProfile.objects.get(uid=uid)
+            user = profile.user
+        except UserProfile.DoesNotExist:  # 회원가입
+            #payload에 sso_info가 포함되어서 넘어온다.
+            
+            post_data = request.data
+            sso_info = post_data.get('ssoInfo')
+            try:
+                decoded_info = jwt.decode(token, settings.ONE_APP_JWT_SECRET, algorithms=["HS256"])
+            except:
+                return response.Response({
+                    "error" : "SSO Info 무결성 검증 실패"
+                }, status=status.HTTP_401_UNAUTHORIZED)
+
+            #uid가 다를 경우 401
+            if decoded_info.get("uid") != uid:
+                return response.Response({
+                    "error" : "SSO Info 무결성 검증 실패"
+                }, status=status.HTTP_401_UNAUTHORIZED)
+
+            # user_info 빌드
+            user_info = {
+                "sid": None,
+                "uid": uid,
+                "email": decoded_info.get("email"),
+                "flags": decoded_info.get("flags"),
+                "gender": decoded_info.get("gender"),
+                "birthday": decoded_info.get("birthday"),
+                "kaist_id": decoded_info.get("kaist_id"),
+                "last_name": decoded_info.get("last_name"),
+                "sparcs_id": decoded_info.get("sparcs_id"),
+                "first_name": decoded_info.get("first_name"),
+                "kaist_info": decoded_info.get("kaist_info"),
+                "twitter_id": decoded_info.get("twitter_id"),
+                "facebook_id": decoded_info.get("facebook_id"),
+                "kaist_v2_info": decoded_info.get("kaist_v2_info"),
+                "kaist_info_time": decoded_info.get("kaist_info_time"),
+                "kaist_v2_info_time": decoded_info.get("kaist_v2_info_time"),
+            }
+            user_nickname = _make_random_name()
+            user_profile_picture = get_profile_picture()
+            email = user_info["email"]
+
+            with transaction.atomic():
+                new_user = get_user_model().objects.create_user(
+                    email=email,
+                    username=str(uuid.uuid4()),
+                    password=str(uuid.uuid4()),
+                    is_active=True #One App 로그인 -> 항상 활성화된 상태
+                )
+                user_group = UserProfile.UserGroup.KAIST_MEMBER
+
+                user_profile = UserProfile.objects.create(
+                    uid=uid,
+                    sid=None, #One App -> sid 저장하지 않음.
+                    nickname=user_nickname,
+                    sso_user_info=user_info,
+                    user=new_user,
+                    group=user_group,
+                    picture=user_profile_picture,
+                )
+
+        return response.Response({
+            "detail": "oneapp login success",
+            "uid": uid,
+            "nickname": user_profile.nickname if 'user_profile' in locals() else profile.nickname,
+            "user_id": (user_profile.user.id if 'user_profile' in locals() else user.id),
+        }, status=status.HTTP_200_OK)

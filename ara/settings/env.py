@@ -21,4 +21,5 @@ env = environ.Env(
     SSO_SECRET_KEY=(str, os_environ.get("SSO_SECRET_KEY")),
     PORTAL_JSESSIONID=(str, os_environ.get("PORTAL_JSESSIONID")),
     HASH_SECRET_VALUE=(int, os_environ.get("HASH_SECRET_VALUE", "1")),
+    ONE_APP_JWT_SECRET=(str, os_environ.get("ONE_APP_JWT_SECRET", "default_secret")),
 )

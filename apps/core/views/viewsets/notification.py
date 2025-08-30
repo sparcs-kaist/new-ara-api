@@ -28,6 +28,7 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
             .select_related(
                 "related_article",
                 "related_comment",
+                "related_chat_room",
             )
             .prefetch_related(
                 "related_article__attachments",

@@ -1,14 +1,17 @@
 import datetime
 from enum import Enum
 
+from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext
 from rest_framework import exceptions, serializers
 from rest_framework.utils.serializer_helpers import ReturnDict
+from drf_spectacular.utils import extend_schema_field, OpenApiTypes  # 수정: OpenApiTypes 추가
 
 from apps.core.documents import ArticleDocument
 from apps.core.models import Article, ArticleHiddenReason, Block, Board, Comment, Scrap
 from apps.core.models.board import BoardAccessPermissionType, NameType
+from apps.core.models.article_metadata import ArticleMetadata
 from apps.core.serializers.attachment import AttachmentSerializer
 from apps.core.serializers.board import BoardSerializer
 from apps.core.serializers.mixins.hidden import (
@@ -111,6 +114,15 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
             )
 
             return queryset.count() // view.paginator.page_size + 1
+        return None
+
+    metadata = serializers.SerializerMethodField(read_only=True)
+
+    @extend_schema_field(OpenApiTypes.OBJECT)  # 수정: 실제 반환은 dict(JSON)
+    def get_metadata(self, obj):
+        meta_obj = obj.article_metadata_set.first()
+        if meta_obj is not None:
+            return meta_obj.metadata  # JSON만 반환
         return None
 
 
@@ -337,12 +349,16 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
         after = None if len(after) == 0 else after[0]
         return after, before
 
-    def get_attachments(self, obj: Article) -> ReturnDict | None:
+    attachments = serializers.SerializerMethodField(read_only=True)
+
+    @extend_schema_field(AttachmentSerializer(many=True))  # Swagger에 attachments 스키마 노출
+    def get_attachments(self, obj: Article) -> ReturnDict | list:
         if self.visible_verdict(obj):
             attachments = obj.attachments.all()
             serializer = AttachmentSerializer(attachments, many=True)
             return serializer.data
-        return None
+        # 이전: return None
+        return []  # 항상 리스트로 응답
 
     def get_my_comment_profile(self, obj):
         created_by = self.context["request"].user
@@ -442,6 +458,15 @@ class ArticleAttachmentType(Enum):
 
 
 class ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
+    # Base의 exclude에 attachments가 들어가 있으므로 여기서 exclude 재정의
+    class Meta(BaseArticleSerializer.Meta):
+        exclude = (
+            "migrated_hit_count",
+            "migrated_positive_vote_count",
+            "migrated_negative_vote_count",
+            "content_text",
+        )
+
     parent_topic = TopicSerializer(
         read_only=True,
     )
@@ -457,6 +482,15 @@ class ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSeriali
     read_status = serializers.SerializerMethodField(
         read_only=True,
     )
+    attachments = serializers.SerializerMethodField(read_only=True)
+
+    @extend_schema_field(AttachmentSerializer(many=True))
+    def get_attachments(self, obj: Article) -> ReturnDict | list:
+        if self.visible_verdict(obj):
+            attachments = obj.attachments.all()
+            serializer = AttachmentSerializer(attachments, many=True)
+            return serializer.data
+        return []  # 항상 리스트로 응답
 
     attachment_type = serializers.SerializerMethodField(
         read_only=True,
@@ -514,6 +548,12 @@ class BestArticleListActionSerializer(
 
 
 class ArticleCreateActionSerializer(BaseArticleSerializer):
+    metadata = serializers.JSONField(
+        required=False,
+        write_only=True,
+        help_text="게시물에 첨부할 JSON 형식의 메타데이터입니다.",
+    )
+
     class Meta(BaseArticleSerializer.Meta):
         exclude = (
             "migrated_hit_count",
@@ -541,8 +581,24 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
             raise exceptions.PermissionDenied()
         return board
 
+    @transaction.atomic
+    def create(self, validated_data):
+        metadata_data = validated_data.pop("metadata", None)
+        article = super().create(validated_data)
+
+        if metadata_data:
+            ArticleMetadata.objects.create(article=article, metadata=metadata_data)
+
+        return article
+
 
 class ArticleUpdateActionSerializer(BaseArticleSerializer):
+    metadata = serializers.JSONField(
+        required=False,
+        write_only=True,
+        help_text="게시물에 첨부할 JSON 형식의 메타데이터입니다. null을 보내면 기존 메타데이터가 삭제됩니다.",
+    )
+
     class Meta(BaseArticleSerializer.Meta):
         exclude = (
             "migrated_hit_count",
@@ -561,3 +617,23 @@ class ArticleUpdateActionSerializer(BaseArticleSerializer):
             "parent_board",
             "commented_at",
         )
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        metadata_data = validated_data.pop("metadata", None)
+        article = super().update(instance, validated_data)
+
+        # 요청에 metadata 필드가 있었는지 확인
+        if "metadata" in self.initial_data:
+            metadata_obj = instance.article_metadata_set.first()
+
+            if metadata_obj:
+                if metadata_data is not None:  # 업데이트할 내용이 있으면
+                    metadata_obj.metadata = metadata_data
+                    metadata_obj.save()
+                else:  # 내용이 null이면 삭제
+                    metadata_obj.delete()
+            elif metadata_data is not None:  # 기존에 없고 새로 추가하는 경우
+                ArticleMetadata.objects.create(article=instance, metadata=metadata_data)
+
+        return article

@@ -1,5 +1,7 @@
 from django.db import models
 from django.utils import timezone
+from datetime import timedelta
+from django.db.models.functions import Now
 
 from ara.settings import MIN_TIME
 
@@ -27,7 +29,11 @@ class MetaDataManager(models.Manager):
     queryset_class = MetaDataQuerySet
 
     def get_queryset(self):
-        return self.queryset_class(self.model).filter(deleted_at=MIN_TIME)
+        tolerance = timedelta(seconds=1)  # timezone 오차 보정 : 10초 여유 -> prevent race condition
+        adjusted_now = Now() + tolerance #db의 Now를 써야지 timezone.now()를 쓰면 시간이 고정되는 버그 발생
+        return self.queryset_class(self.model).filter(
+            models.Q(deleted_at=MIN_TIME) | models.Q(deleted_at__gt=adjusted_now)
+        )
 
     @property
     def queryset_with_deleted(self):

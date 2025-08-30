@@ -12,7 +12,7 @@ from django.utils.translation import gettext
 from apps.user.views.viewsets import NOUNS, get_profile_picture
 from ara.classes.decorator import cache_by_user
 from ara.db.models import MetaDataModel, MetaDataQuerySet
-from ara.sanitizer import sanitize
+from ara.sanitizer import comment_sanitize
 from ara.settings import HASH_SECRET_VALUE, MIN_TIME
 
 from .block import Block
@@ -20,6 +20,12 @@ from .board import NameType
 from .report import Report
 
 User = get_user_model()
+
+
+class CommentType(str, Enum):
+    TEXT = "TEXT"
+    IMAGE = "IMAGE"
+    FILE = "FILE"
 
 
 class CommentHiddenReason(Enum):
@@ -34,7 +40,13 @@ class Comment(MetaDataModel):
     class Meta(MetaDataModel.Meta):
         verbose_name = "댓글"
         verbose_name_plural = "댓글 목록"
-
+    
+    type = models.CharField(
+        max_length=20,
+        choices=[(comment_type.value, comment_type.name) for comment_type in CommentType],
+        default=CommentType.TEXT.value,
+        verbose_name="댓글 타입",
+    )
     content = models.TextField(
         default=None,
         verbose_name="본문",
@@ -65,6 +77,8 @@ class Comment(MetaDataModel):
         related_name="comment_set",
         verbose_name="작성자",
     )
+    # New Ara 이전에 있던 댓글들을 마이그레이션 하면서 만들어진 attachment 필드 입니다
+    # DB 저장을 위한 필드이고, 지금은 첨부파일이 있을 경우 TYPE를 FILE로 지정하고, 파일 링크를 content에 저장합니다.
     attachment = models.ForeignKey(
         on_delete=models.CASCADE,
         to="core.Attachment",
@@ -127,7 +141,7 @@ class Comment(MetaDataModel):
         except AssertionError:
             raise IntegrityError("self.content and self.attachment should exist.")
 
-        self.content = sanitize(self.content)
+        self.content = comment_sanitize(self.content)
 
         super(Comment, self).save(
             force_insert=force_insert,
