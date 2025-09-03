@@ -13,6 +13,8 @@ def sanitize(content):
                     "kaist.ac.kr",
                     "sparcs-newara.s3.amazonaws.com",
                     "sparcs-newara-dev.s3.amazonaws.com",
+                    "newara-dev.cdn.sparcs.org",
+                    "newara.cdn.sparcs.org",
                 )
             )
 
