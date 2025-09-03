@@ -28,3 +28,8 @@ STORAGES = {
 AWS_SES_REGION_NAME = "ap-northeast-2"
 
 AWS_SES_REGION_ENDPOINT = "email.ap-northeast-2.amazonaws.com"
+
+
+#cdn
+AWS_S3_PUBLIC_URL = env("AWS_S3_PUBLIC_URL")
+AWS_S3_PUBLIC_URL_STATIC = env("AWS_S3_PUBLIC_URL_STATIC")
