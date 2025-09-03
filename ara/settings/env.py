@@ -22,4 +22,8 @@ env = environ.Env(
     PORTAL_JSESSIONID=(str, os_environ.get("PORTAL_JSESSIONID")),
     HASH_SECRET_VALUE=(int, os_environ.get("HASH_SECRET_VALUE", "1")),
     ONE_APP_JWT_SECRET=(str, os_environ.get("ONE_APP_JWT_SECRET", "default_secret")),
+
+    #AWS CDN
+    AWS_S3_PUBLIC_URL=(str, os_environ.get("AWS_S3_PUBLIC_URL", "")),
+    AWS_S3_PUBLIC_URL_STATIC=(str, os_environ.get("AWS_S3_PUBLIC_URL_STATIC", "")),
 )
