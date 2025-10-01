@@ -191,7 +191,9 @@ class Article(MetaDataModel):
         if not self.parent_board.is_readonly:
             self.content = sanitize(self.content)
 
-        if self.content[0] == "{":
+        if len(self.content) == 0 :
+            self.content_text = ""
+        elif self.content[0] == "{":
             self.content_text = self.extract_text_from_json(self.content)
         else:
             self.content_text = " ".join(
