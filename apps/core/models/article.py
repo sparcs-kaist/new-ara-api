@@ -196,7 +196,7 @@ class Article(MetaDataModel):
             bs4.BeautifulSoup(self.content, features="html5lib").find_all(string=True)
             )
         else:
-            extract_text_from_json(self.content)
+            self.content_text = self.extract_text_from_json(self.content)
 
         super().save(
             force_insert=force_insert,
