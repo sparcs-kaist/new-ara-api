@@ -1,6 +1,7 @@
 from enum import Enum
 
 import bs4
+import json
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage
@@ -190,9 +191,12 @@ class Article(MetaDataModel):
         if not self.parent_board.is_readonly:
             self.content = sanitize(self.content)
 
-        self.content_text = " ".join(
+        if self.content[0] == "<":
+            self.content_text = " ".join(
             bs4.BeautifulSoup(self.content, features="html5lib").find_all(string=True)
-        )
+            )
+        else:
+            extract_text_from_json(self.content)
 
         super().save(
             force_insert=force_insert,
@@ -328,3 +332,67 @@ class Article(MetaDataModel):
             reasons.append(ArticleHiddenReason.ACCESS_DENIED_CONTENT)
 
         return reasons
+
+    # json 형식에서 text 추출
+    def extract_text_from_json(data_string):
+        try:
+            data = json.loads(data_string)
+        except json.JSONDecodeError as e:
+            return f"JSONDecodeError: {e}"
+
+        def traverse(node):
+            node_type = node.get("type")
+
+            if node_type == "text":
+                return node.get("text", "")
+            if node_type == "hardBreak":
+                return "\n"
+            if node_type in ["attachmentImage", "linkBookmark"]:
+                return ""
+
+            full_text = ""
+            content = node.get("content")
+            if content and isinstance(content, list):
+                for i, child_node in enumerate(content):
+                    full_text += traverse(child_node)
+                    
+                    child_type = child_node.get("type")
+                    if child_type in ["paragraph", "heading", "blockquote", "listItem", "codeBlock"]:
+                        if i < len(content) - 1:
+                            full_text += '\n'
+
+            return full_text
+
+        result_lines = []
+        
+        node_list = None
+        if isinstance(data, dict):
+            if 'content' in data:
+                content_value = data['content']
+                if isinstance(content_value, dict) and 'content' in content_value:
+                    node_list = content_value.get('content')
+                elif isinstance(content_value, list):
+                    node_list = content_value
+            elif data.get("type") == "doc" and "content" in data:
+                node_list = data.get("content")
+
+
+        if isinstance(node_list, list):
+            for top_level_node in node_list:
+                node_type = top_level_node.get("type")
+                
+                if node_type == "codeBlock":
+                    code_content = top_level_node.get("content", [{}])[0].get("text", "")
+                    result_lines.append(code_content)
+                    continue
+
+                block_text = traverse(top_level_node)
+                
+                lines = block_text.strip().split('\n')
+                
+                for line in lines:
+                    stripped_line = line.strip()
+                    if stripped_line:
+                        result_lines.append(stripped_line)
+
+        return "\n".join(result_lines)
