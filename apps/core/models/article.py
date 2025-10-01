@@ -334,7 +334,7 @@ class Article(MetaDataModel):
         return reasons
 
     # json 형식에서 text 추출
-    def extract_text_from_json(data_string):
+    def extract_text_from_json(self, data_string):
         try:
             data = json.loads(data_string)
         except json.JSONDecodeError as e:
