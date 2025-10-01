@@ -191,12 +191,13 @@ class Article(MetaDataModel):
         if not self.parent_board.is_readonly:
             self.content = sanitize(self.content)
 
-        if self.content[0] == "<":
+        if:
+            self.content_text = self.extract_text_from_json(self.content)
+        else:
+            if self.content[0] == "<":
             self.content_text = " ".join(
             bs4.BeautifulSoup(self.content, features="html5lib").find_all(string=True)
             )
-        else:
-            self.content_text = self.extract_text_from_json(self.content)
 
         super().save(
             force_insert=force_insert,
