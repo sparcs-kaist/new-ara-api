@@ -340,7 +340,7 @@ class Article(MetaDataModel):
         try:
             data = json.loads(data_string)
         except json.JSONDecodeError as e:
-            return f"JSONDecodeError: {e}"
+            return ""
 
         def traverse(node):
             node_type = node.get("type")
