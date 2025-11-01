@@ -14,6 +14,8 @@ from ara.settings import PORTAL_JSESSIONID
 class SessionExpiredException(Exception):
     ...
 
+class DeletedPostException(Exception):
+    ...
 
 class Crawler:
     SESSION_KEY = "JSESSIONID"
@@ -31,6 +33,14 @@ class Crawler:
             .astimezone(cls._KST)
             .astimezone(django_timezone.utc)
         )
+    
+    @classmethod
+    def _is_deleted_post(cls, html_txt: str) -> bool:
+        if not html_txt:
+            return False
+        # 삭제 판단의 기준이 되는 text
+        mask_txt = ["서비스 이용에 불편을 드려 죄송합니다.", ]
+        return any(txt in html_txt for txt in mask_txt)
 
     @classmethod
     def _parse_response(cls, res: PostResponse) -> Post:
@@ -83,6 +93,9 @@ class Crawler:
             if cls._has_fetched_successfully(response):
                 post = cls._parse_response(response.json())
                 return post
+            
+            if cls._is_deleted_post(response.text):
+                raise DeletedPostException(f"Post {post_id} has been deleted")
 
             if retry_count == 0:
                 raise SessionExpiredException(f"Failed to get post {post_id}")
@@ -98,7 +111,16 @@ class Crawler:
     def find_next_post(cls, post: Post) -> Post | None:
         if post.next_post_id is None:
             return None
-        return cls.get_post(post.next_post_id)
+        try:
+            return cls.get_post(post.next_post_id)
+        except DeletedPostException:
+            try:
+                fresh = cls.get_post(post.id)
+            except DeletedPostException:
+                return None
+            if fresh.next_post_id and fresh.next_post_id != post.next_post_id:
+                return cls.get_post(fresh.next_post_id)
+            return None
 
     @classmethod
     def update_session_id(cls) -> None:

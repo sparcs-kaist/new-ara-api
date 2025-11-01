@@ -5,7 +5,7 @@ from tqdm import tqdm
 from apps.core.models import Article
 from apps.kaist.models import Post
 from apps.kaist.portal.crawl_iterator import CrawlIterator
-from apps.kaist.portal.crawler import Crawler, SessionExpiredException
+from apps.kaist.portal.crawler import Crawler, DeletedPostException, SessionExpiredException
 from apps.user.models import UserProfile
 from ara.log import log
 from library.slack.webhook import slack_webhook_client
@@ -21,6 +21,19 @@ class Worker:
     )
 
     @staticmethod
+    def find_valid_anchor_start_id(latest_post : Post) -> int:
+        # 삭제되지 않은 가장 최신 공지 찾기
+        current = latest_post
+        while True:
+            try:
+                live_post = Crawler.get_post(current.id)
+                return live_post.id
+            except DeletedPostException:
+                prev = Post.objects.filter(next_post_id=current.id).first()
+                current = prev
+                continue
+
+    @staticmethod
     def fetch_from_the_latest(batch_size: int, visualize: bool) -> list[Post]:
         """
         Crawl posts from the latest saved post up to the specified batch size.
@@ -31,7 +44,9 @@ class Worker:
 
         latest_post = Post.objects.latest("registered_at")
 
-        iterator = CrawlIterator(start_id=latest_post.id, limit=batch_size)
+        start_id = Worker.find_valid_anchor_start_id(latest_post)
+
+        iterator = CrawlIterator(start_id=start_id, limit=batch_size)
         if visualize:
             iterator = tqdm(iterator, total=batch_size)
 
@@ -71,6 +86,8 @@ class Worker:
     def fetch_and_save_single(cls, post_id: int) -> None:
         try:
             post = Crawler.get_post(post_id)
+        except DeletedPostException:
+            return
         except SessionExpiredException:
             cls._send_session_expired_alert()
             return

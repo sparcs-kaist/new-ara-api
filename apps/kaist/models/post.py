@@ -1,6 +1,6 @@
 from django.db import models
 
-
+# Log for crawled KAIST portal posts
 class Post(models.Model):
     id = models.BigIntegerField(primary_key=True)
 
