@@ -1,3 +1,5 @@
+# This is deprecated. Use portal_crawler_v2 instead.
+
 import hashlib
 import re
 import uuid
