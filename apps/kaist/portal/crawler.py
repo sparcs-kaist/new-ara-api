@@ -5,7 +5,7 @@ from django.utils import timezone as django_timezone
 from pytz import timezone as pytz_timezone
 
 from apps.kaist.models import Post
-from apps.kaist.portal.post_response import PostResponse
+from apps.kaist.portal.post_response import PostResponse, RecentPostListResponse, RecentPostItem
 from ara import redis
 from ara.log import log
 from ara.settings import PORTAL_JSESSIONID
@@ -15,6 +15,9 @@ class SessionExpiredException(Exception):
     ...
 
 class DeletedPostException(Exception):
+    """
+    recent post가 삭제된 경우 삭제된 경우 발생하는 exception : 크롤링 시작 지점 조정 필요
+    """
     ...
 
 class Crawler:
@@ -41,6 +44,18 @@ class Crawler:
         # 삭제 판단의 기준이 되는 text
         mask_txt = ["서비스 이용에 불편을 드려 죄송합니다.", ]
         return any(txt in html_txt for txt in mask_txt)
+    
+    #post 사이의 링크가 끊긴 경우를 위해 현재를 기준으로 가장 최근 post id를 가져옵니다.
+    @classmethod
+    def _get_recent_post_id(cls) -> int:
+        response : RecentPostListResponse = cls._session.get(
+            f"https://portal.kaist.ac.kr/wz/api/board/recents?menuNo=21"
+        ).json()
+        #최신순으로 정렬
+        sorted = response.sort(key = lambda x : int(x['rnum']))
+        for post_item in sorted:
+            if post_item['delYn'] == 'N':
+                return post_item['pstNo']
 
     @classmethod
     def _parse_response(cls, res: PostResponse) -> Post:

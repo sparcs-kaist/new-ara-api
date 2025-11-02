@@ -30,6 +30,11 @@ class Worker:
                 return live_post.id
             except DeletedPostException:
                 prev = Post.objects.filter(next_post_id=current.id).first()
+                #link가 끊긴 경우
+                if prev is None:
+                    Worker._send_post_link_broken_alert()
+                    recent_post_id = Crawler._get_recent_post_id()
+                    return recent_post_id
                 current = prev
                 continue
 
@@ -131,6 +136,7 @@ class Worker:
     def create_article(cls, post: Post, user: User) -> None:
         # TODO: Save portal image if needed
         # TODO: Enable disabled hyperlinks (wrap it with <a> tag)
+        # TODO : Resolve AWS S3 budget problem....
         Article.objects.create(
             parent_board_id=cls.PORTAL_NOTICE_BOARD_ID,
             title=post.title,
@@ -172,3 +178,17 @@ class Worker:
             ]
         )
         log.error("KAIST Portal Crawler :: JSESSIONID has expired")
+
+    @staticmethod
+    def _send_post_link_broken_alert() -> None:
+        slack_webhook_client.send(
+            blocks = [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": ":blobhaj_ghostie_surprise: 포탈 게시물 간의 링크가 끊겼어요! 새로운 게시글이 작성되면 다시 작동할거에요, 크앙! <!here>",
+                    },
+                }
+            ]
+        )
