@@ -49,7 +49,7 @@ class Crawler:
     @classmethod
     def _get_recent_post_id(cls) -> int:
         response : RecentPostListResponse = cls._session.get(
-            f"https://portal.kaist.ac.kr/wz/api/board/recents?menuNo=21"
+            f"https://portal.kaist.ac.kr/wz/api/board/recents"
         ).json()
         #최신순으로 정렬
         sorted = response.sort(key = lambda x : int(x['rnum']))
@@ -102,7 +102,7 @@ class Crawler:
 
         while retry_count >= 0:
             response = cls._session.get(
-                f"https://portal.kaist.ac.kr/wz/api/board/recents/{post_id}?menuNo=21"
+                f"https://portal.kaist.ac.kr/wz/api/board/recents/{post_id}"
             )
 
             if cls._has_fetched_successfully(response):
