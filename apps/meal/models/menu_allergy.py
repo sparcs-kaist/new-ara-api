@@ -5,7 +5,7 @@ from ara.db.models import MetaDataModel
 class MenuAllergy(MetaDataModel):
     allergen_code = models.PositiveIntegerField(
         verbose_name="알러지 번호",
-        black=True,
+        blank=True,
         null=True,
     )
     menu_id = models.ForeignKey(
@@ -14,6 +14,7 @@ class MenuAllergy(MetaDataModel):
         on_delete=models.CASCADE,
         related_name="allergy_set",
         db_index=True,
+        null = True,
     )
     cafeteria_menu_id = models.ForeignKey(
         verbose_name="카페테리아 메뉴",
@@ -21,4 +22,5 @@ class MenuAllergy(MetaDataModel):
         on_delete=models.CASCADE,
         related_name="allergy_set",
         db_index=True,
+        null = True,
     ) 

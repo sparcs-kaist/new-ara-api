@@ -5,7 +5,7 @@ from ara.db.models import MetaDataModel
 class Menu(MetaDataModel):
     menu_name = models.TextField(
         verbose_name="메뉴명",
-        black=True,
+        blank=True,
         null=True,
     )
     course_id = models.ForeignKey(
