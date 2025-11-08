@@ -47,7 +47,7 @@ class Worker:
         :param visualize: Whether to visualize the crawling progress
         """
 
-        latest_post = Post.objects.latest("registered_at")
+        latest_post = Post.objects.latest("created_at")
 
         start_id = Worker.find_valid_anchor_start_id(latest_post)
 
