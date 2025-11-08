@@ -48,7 +48,12 @@ class Crawler:
     #post 사이의 링크가 끊긴 경우를 위해 현재를 기준으로 가장 최근 post id를 가져옵니다.
     @classmethod
     def _get_recent_post_id(cls) -> int:
-        resp = cls._session.get("https://portal.kaist.ac.kr/wz/api/board/recents")
+        try:
+            payload = resp.json()
+        except json.JSONDecodeError as e:
+            raise RuntimeError(
+                f"Failed to parse JSON. status={resp.status_code} url={resp.url} snippet={repr(resp.text)}"
+            ) from e
         payload = resp.json()  # 제공된 응답은 유효 JSON
         items = payload["data"]
         items_sorted = sorted(items, key=lambda x: int(x["rnum"]))
