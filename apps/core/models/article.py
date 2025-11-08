@@ -190,18 +190,15 @@ class Article(MetaDataModel):
 
         if not self.parent_board.is_readonly:
             self.content = sanitize(self.content)
-        self.content_text = ""
-        """
-        for optimize query
         if len(self.content) == 0 :
             self.content_text = ""
         elif self.content[0] == "{":
-            self.content_text = self.extract_text_from_json(self.content)
+            self.content_text = ""
+            # self.content_text = self.extract_text_from_json(self.content) - for query optimization
         else:
             self.content_text = " ".join(
             bs4.BeautifulSoup(self.content, features="html5lib").find_all(string=True)
             )
-        """
 
         super().save(
             force_insert=force_insert,
