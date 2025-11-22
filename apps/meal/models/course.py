@@ -8,16 +8,18 @@ class MealType(str, Enum):
     LUNCH = "LUNCH" # 중식
     DINNER = "DINNER" # 석식
 
-class Course(MetaDataModel):
-    class MealType(models.IntegerChoices):
-        BREAKFAST = 0, "조식"
-        LUNCH = 1, "중식"
-        DINNER = 2, "석식"
-        
-    restaurant_name = models.CharField(
+class Course(MetaDataModel):  
+    restaurant_id = models.ForeignKey(
+        to="meal.Restaurant",
+        on_delete=models.CASCADE,
+        related_name="courses",
         verbose_name="식당 이름",
-        max_length=32,
+        db_index=True,
     )
+    course_name = models.CharField(
+        verbose_name="코스 이름",
+        max_length=32,
+    )    
     price = models.PositiveIntegerField(
         verbose_name="가격",
         blank=True,

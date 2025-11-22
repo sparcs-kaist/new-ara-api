@@ -9,6 +9,13 @@ class MealType(str, Enum):
     DINNER = "DINNER" # 석식
 
 class CafeteriaMenu(MetaDataModel):
+    restaurant_id = models.ForeignKey(
+        to="meal.Restaurant",
+        on_delete=models.CASCADE,
+        related_name="cafeteria_menus",
+        verbose_name="식당 이름",
+        db_index=True,
+    )
     menu_name = models.TextField(
         verbose_name="메뉴명",
     )

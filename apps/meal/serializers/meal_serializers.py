@@ -2,7 +2,7 @@ from rest_framework import serializers
 from ..models import Course, Menu, CafeteriaMenu
 
 class BaseMenuSerializer(serializers.ModelSerializer):
-    """알러지 코드 추출 및 경고 플래그 표시 여부 결정"""
+    """알러지 코드 추출 및 경고 플래그 표시 여부 확인"""
     allergy_codes = serializers.SerializerMethodField()
     has_user_allergy = serializers.SerializerMethodField() 
 
@@ -28,9 +28,10 @@ class CafeteriaMenuSerializer(BaseMenuSerializer):
 
 class CourseSerializer(serializers.ModelSerializer):
     menus = MenuSerializer(source='filtered_menus', many=True, read_only=True)
+    
     class Meta:
         model = Course
-        fields = ('restaurant_name', 'price', 'menus')
+        fields = ('course_name', 'price', 'menus')
 
 class DailyMealResponseSerializer(serializers.Serializer):
     courses = CourseSerializer(many=True)
