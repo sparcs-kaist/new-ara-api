@@ -1,6 +1,6 @@
 from django.urls import path, include
-from .views.router import router
+from .router import router
 
 urlpatterns = [
-    path("api/", include(router.urls)),
+    path("", include(router.urls)),
 ]
