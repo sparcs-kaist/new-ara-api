@@ -7,15 +7,33 @@ from datetime import datetime
 import copy
 import re
 import json
+import logging
 
-#redis가져오기
-from ara import redis
-from redis.commands.json import JSON
+# DB 모델 가져오기
+from django.db import transaction
+from apps.meal.models import Restaurant, Course, Menu, CafeteriaMenu, MenuAllergy, MealType
 
-#일단은 주석 처리하자. from apps.core.models import Meal
+# 로깅 설정
+logger = logging.getLogger(__name__)
 
 common_url = "https://www.kaist.ac.kr/kr/html/campus/053001.html?dvs_cd="
 valid_restaurant_names = ["fclt", "west", "east1", "east2", "emp"]
+
+# 식당 코드와 DB 이름 매핑
+RESTAURANT_CODE_TO_NAME = {
+    "fclt": "카이마루",
+    "west": "서맛골",
+    "east1": "동맛골 1층",
+    "east2": "동맛골 2층",
+    "emp": "교수회관"
+}
+
+# 시간대 인덱스를 MealType으로 변환
+TIME_INDEX_TO_MEAL_TYPE = {
+    0: MealType.BREAKFAST,
+    1: MealType.LUNCH,
+    2: MealType.DINNER
+}
 
 """
 식당별 perfix
@@ -384,83 +402,200 @@ def _crawl_meal(restaurant_name : str ,date : str):
 #cafeteria_menu_20250324 
 #course_menu_20250324 와 같은 형식으로.
 
-#api에서 내보낼 json형식으로 곧바로 redis에 저장하기 (model이 따로 없어서 Serializer를 거치지 않는다!)
-def crawl_daily_meal(date : str):
-    digit_8_date = date.replace("-", "") #날짜를 key에 활용하기 위해서 8자리 형식으로 변환.
-    restaurant_names = {"fclt" : "카이마루", "west" : "서맛골", "east1" : "동맛골 1층", "east2" : "동맛골 2층", "emp" : "교수회관"}
-    #최종적으로 저장할 dictionary : (cafeteria_meal/ course_meal)
-    #dictonary의 기본 format setting
-    cafeteria_meal = {'date' : date}
-    course_meal = {'date' : date}
+def _get_or_create_restaurant(restaurant_name: str) -> Restaurant:
+    """식당 객체를 가져오거나 생성"""
+    restaurant, _ = Restaurant.objects.get_or_create(restaurant_name=restaurant_name)
+    return restaurant
 
-    #자세한 형식이 궁금하다면 Notion의 학식 API 문서 참고.
-    for rest_name in restaurant_names:
-        cafeteria_meal[rest_name] = {'name' : restaurant_names[rest_name], 'type' : "cafeteria", 
-                                     'morning_menu' : [] , 'lunch_menu' : [], 'dinner_menu' : []}
-        course_meal[rest_name] = {'name' : restaurant_names[rest_name], 'type' : "cafeteria", 
-                                     'morning_menu' : [] , 'lunch_menu' : [], 'dinner_menu' : []}
 
-    Course_restaurant = ["fclt", "west", "east1_course", "east2", "emp"]
-    Cafeteria_restaurant = ["east1_cafeteria"]
-
-    #카페테리아 정보 가공
-    for cafeteria_name in Cafeteria_restaurant:
-        #데이터 가져와서 가공하기
-        cafeteria_plain_data = _crawl_meal(restaurant_name= cafeteria_name, date=date)
+def _save_course_to_db(restaurant: Restaurant, date: str, meal_time: MealType, course_data: dict):
+    """코스 메뉴 데이터를 DB에 저장"""
+    for (course_name, course_price), menu_list in course_data.items():
+        # Course 생성
+        course = Course.objects.create(
+            restaurant_id=restaurant,
+            course_name=course_name,
+            price=course_price,
+            date=date,
+            meal_time=meal_time.value
+        )
         
-        #'cafeteria_meal['east1'] 에만 추가하면 된다. cafeteria crawl 함수는 리스트를 반환하므로 바로 넣어주면 된다.
-        if cafeteria_plain_data[0]:
-            cafeteria_meal['east1']['morning_menu'] = cafeteria_plain_data[0]
-        if cafeteria_plain_data[1]:
-            cafeteria_meal['east1']['lunch_menu'] = cafeteria_plain_data[1]
-        if cafeteria_plain_data[2]:
-            cafeteria_meal['east1']['dinner_menu'] = cafeteria_plain_data[2]
+        # Menu 및 MenuAllergy 생성
+        for menu_item in menu_list:
+            menu_name = menu_item[0]
+            allergy_list = menu_item[1] if len(menu_item) > 1 else []
+            
+            menu = Menu.objects.create(
+                menu_name=menu_name,
+                course_id=course
+            )
+            
+            # 알러지 정보 저장
+            for allergen_code in allergy_list:
+                MenuAllergy.objects.create(
+                    allergen_code=allergen_code,
+                    menu_id=menu
+                )
 
-    #코스메뉴 정보 가공
-    for course_name in Course_restaurant:
-        course_plain_data = _crawl_meal(restaurant_name=course_name, date= date)
-        if (course_name == "east1_course"):
-            cur_name = "east1"
+
+def _save_cafeteria_to_db(restaurant: Restaurant, date: str, meal_time: MealType, cafeteria_data: list):
+    """카페테리아 메뉴 데이터를 DB에 저장"""
+    for menu_item in cafeteria_data:
+        menu_name = menu_item.get('menu_name', '')
+        price = menu_item.get('price')
+        allergy_list = menu_item.get('allergy', [])
+        
+        cafeteria_menu = CafeteriaMenu.objects.create(
+            restaurant_id=restaurant,
+            menu_name=menu_name,
+            price=price,
+            date=date,
+            meal_time=meal_time.value
+        )
+        
+        # 알러지 정보 저장
+        for allergen_code in allergy_list:
+            MenuAllergy.objects.create(
+                allergen_code=allergen_code,
+                cafeteria_menu_id=cafeteria_menu
+            )
+
+
+def _delete_existing_meal_data(date: str):
+    """해당 날짜의 기존 식단 데이터 삭제"""
+    # Course와 연관된 Menu, MenuAllergy는 CASCADE로 삭제됨
+    Course.objects.filter(date=date).delete()
+    # CafeteriaMenu와 연관된 MenuAllergy도 CASCADE로 삭제됨
+    CafeteriaMenu.objects.filter(date=date).delete()
+
+
+def _delete_restaurant_meal_data(restaurant: Restaurant, date: str):
+    """특정 식당의 해당 날짜 식단 데이터 삭제"""
+    Course.objects.filter(restaurant_id=restaurant, date=date).delete()
+    CafeteriaMenu.objects.filter(restaurant_id=restaurant, date=date).delete()
+
+
+def _crawl_and_save_course_restaurant(restaurant_code: str, date: str) -> bool:
+    """
+    코스 메뉴 식당 크롤링 및 DB 저장 (식당 단위 트랜잭션)
+    성공 시 True, 실패 시 False 반환
+    """
+    # east1_course -> east1 매핑
+    if restaurant_code == "east1_course":
+        db_restaurant_name = RESTAURANT_CODE_TO_NAME["east1"]
+    else:
+        db_restaurant_name = RESTAURANT_CODE_TO_NAME[restaurant_code]
+    
+    try:
+        with transaction.atomic():
+            restaurant = _get_or_create_restaurant(db_restaurant_name)
+            
+            # 크롤링
+            course_plain_data = _crawl_meal(restaurant_name=restaurant_code, date=date)
+            
+            if course_plain_data is False:
+                logger.warning(f"[{restaurant_code}] 크롤링 실패 - HTTP 요청 실패")
+                return False
+            
+            # 해당 식당의 기존 코스 메뉴 데이터 삭제 (카페테리아 제외)
+            Course.objects.filter(restaurant_id=restaurant, date=date).delete()
+            
+            # 아침/점심/저녁 데이터 저장
+            for time_idx, meal_data in enumerate(course_plain_data):
+                if meal_data:
+                    meal_type = TIME_INDEX_TO_MEAL_TYPE[time_idx]
+                    _save_course_to_db(restaurant, date, meal_type, meal_data)
+            
+            logger.info(f"[{restaurant_code}] 코스 메뉴 저장 완료")
+            return True
+            
+    except Exception as e:
+        logger.error(f"[{restaurant_code}] 코스 메뉴 저장 실패: {str(e)}")
+        return False
+
+
+def _crawl_and_save_cafeteria_restaurant(restaurant_code: str, date: str) -> bool:
+    """
+    카페테리아 식당 크롤링 및 DB 저장 (식당 단위 트랜잭션)
+    성공 시 True, 실패 시 False 반환
+    """
+    # east1_cafeteria -> east1 매핑
+    db_restaurant_name = RESTAURANT_CODE_TO_NAME["east1"]
+    
+    try:
+        with transaction.atomic():
+            restaurant = _get_or_create_restaurant(db_restaurant_name)
+            
+            # 크롤링
+            cafeteria_plain_data = _crawl_meal(restaurant_name=restaurant_code, date=date)
+            
+            if cafeteria_plain_data is False:
+                logger.warning(f"[{restaurant_code}] 크롤링 실패 - HTTP 요청 실패")
+                return False
+            
+            # 해당 식당의 기존 카페테리아 메뉴 데이터 삭제
+            CafeteriaMenu.objects.filter(restaurant_id=restaurant, date=date).delete()
+            
+            # 아침/점심/저녁 데이터 저장
+            for time_idx, meal_data in enumerate(cafeteria_plain_data):
+                if meal_data and isinstance(meal_data, list) and len(meal_data) > 0:
+                    meal_type = TIME_INDEX_TO_MEAL_TYPE[time_idx]
+                    _save_cafeteria_to_db(restaurant, date, meal_type, meal_data)
+            
+            logger.info(f"[{restaurant_code}] 카페테리아 메뉴 저장 완료")
+            return True
+            
+    except Exception as e:
+        logger.error(f"[{restaurant_code}] 카페테리아 메뉴 저장 실패: {str(e)}")
+        return False
+
+
+#api에서 내보낼 json형식으로 곧바로 redis에 저장하기 (model이 따로 없어서 Serializer를 거치지 않는다!)
+def crawl_daily_meal(date: str):
+    """
+    일일 식단 크롤링 메인 함수
+    각 식당별로 독립적으로 크롤링 및 저장하여, 한 식당 실패 시 다른 식당에 영향 없음
+    """
+    logger.info(f"=== 식단 크롤링 시작: {date} ===")
+    
+    # 결과 추적
+    results = {
+        'success': [],
+        'failed': []
+    }
+    
+    # 코스 메뉴 식당 처리
+    Course_restaurant = ["fclt", "west", "east1_course", "east2", "emp"]
+    for course_code in Course_restaurant:
+        if _crawl_and_save_course_restaurant(course_code, date):
+            results['success'].append(course_code)
         else:
-            cur_name = course_name
-        #아침/점심/저녁밥이 나온다면..
-        if course_plain_data[0]:
-            course_meal[cur_name]['morning_menu'] = []
-            for (course_name, course_price) , menu_li in course_plain_data[0].items():
-                course_meal[cur_name]['morning_menu'].append({'course_name' : course_name,
-                                                         'price' : course_price,
-                                                         'menu_list' : menu_li})
-        if course_plain_data[1]:
-            course_meal[cur_name]['lunch_menu'] = []
-            for (course_name, course_price) , menu_li in course_plain_data[1].items():
-                course_meal[cur_name]['lunch_menu'].append({'course_name' : course_name,
-                                                         'price' : course_price,
-                                                         'menu_list' : menu_li})
-        if course_plain_data[2]:
-            course_meal[cur_name]['dinner_menu'] = []
-            for (course_name, course_price) , menu_li in course_plain_data[2].items():
-                course_meal[cur_name]['dinner_menu'].append({'course_name' : course_name,
-                                                         'price' : course_price,
-                                                         'menu_list' : menu_li})
-    #pretty_print (디버깅용)
-    """
-    import pprint
-    pprint.pprint(course_meal)"
-    """
-    #redis에 저장하기
-    digit_8_date = date.replace("-", "") #날짜를 key에 활용하기 위해서 8자리 형식으로 변환.
-    cafeteria_key = 'cafeteria_menu' + digit_8_date
-    course_key = 'course_menu' + digit_8_date
-
-    pipe = redis.pipeline()
-    pipe.json().set(cafeteria_key ,'.', cafeteria_meal)
-    pipe.json().set(course_key ,'.', course_meal)
-    pipe.execute()
-
-    return
+            results['failed'].append(course_code)
+    
+    # 카페테리아 식당 처리
+    Cafeteria_restaurant = ["east1_cafeteria"]
+    for cafeteria_code in Cafeteria_restaurant:
+        if _crawl_and_save_cafeteria_restaurant(cafeteria_code, date):
+            results['success'].append(cafeteria_code)
+        else:
+            results['failed'].append(cafeteria_code)
+    
+    # 결과 로깅
+    logger.info(f"=== 식단 크롤링 완료: {date} ===")
+    logger.info(f"성공: {results['success']}")
+    if results['failed']:
+        logger.warning(f"실패: {results['failed']}")
+    
+    return results
 
 
 if __name__ == '__main__':
+    # Django 설정이 필요한 경우
+    import django
+    import os
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ara.settings")
+    django.setup()
+    
     print("식단 크롤링 시작")
-    res = crawl_daily_meal(date = current_date())
-    print(res)
+    res = crawl_daily_meal(date=current_date())
+    print(f"결과: {res}")
