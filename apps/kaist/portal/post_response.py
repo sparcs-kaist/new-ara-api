@@ -32,6 +32,13 @@ class PostResponse(TypedDict):
     nextPstNo: int
     prevPstTtl: str
     nextPstTtl: str
+    board: BoardDetail
+
+class BoardDetail(TypedDict):
+    boardNo : int
+    menuNo : int
+    menuNm : str
+    boardNm : str
 
 class RecentPostItem(TypedDict):
     rnum : str # 순번. 가장 최근 것 부터 1, 2, ... 10
