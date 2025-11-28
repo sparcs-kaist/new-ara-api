@@ -1,6 +1,6 @@
 from django.urls import path
-from .views.trending_posts import TrendingPostsView
+from .views.portal_notice import PortalNoticeView
 
 urlpatterns = [
-    path("trending/", TrendingPostsView.as_view(), name="trending_posts"),
+    path("portal_notice/", PortalNoticeView.as_view(), name="portal_notice"),
 ]

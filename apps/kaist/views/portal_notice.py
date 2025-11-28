@@ -2,18 +2,39 @@ from datetime import timedelta
 from django.utils import timezone
 from django.db.models import Subquery, OuterRef, F, IntegerField, Value
 from django.db.models.functions import Coalesce
-from rest_framework.views import APIView
+from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework import decorators
 
 from apps.kaist.models import Post, PostViewCountLog
 from apps.kaist.serializers.trending_posts import TrendingPostsSerializer
 
-class TrendingPostsView(APIView):
-    """
-    최근 24시간 동안 조회수가 가장 많이 상승한 게시물 5개 조회
-    """
-    def get(self, request):
+class PortalNoticeView(viewsets.ModelViewSet):
+
+    def list(self, request):
+        """게시판 번호와 limit으로 공지사항 조회"""
+        board = request.query_params.get('board')
+        limit = request.query_params.get('limit', 10)
+        
+        try:
+            limit = int(limit)
+        except ValueError:
+            limit = 10
+        
+        queryset = Post.objects.all()
+        
+        if board:
+            queryset = queryset.filter(board_id=board)
+        
+        queryset = queryset.order_by('-registered_at')[:limit]
+        
+        serializer = TrendingPostsSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    #최근 24시간 동안 조회수 증가량이 가장 많은 게시물 조회
+    @decorators.action(detail=True, methods=["get"])
+    def trending(self, request):
         now = timezone.now()
         time_24_hours_ago = now - timedelta(hours=24)
         search_range_start = now - timedelta(days=7)

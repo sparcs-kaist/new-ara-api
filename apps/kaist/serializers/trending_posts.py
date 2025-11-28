@@ -12,7 +12,7 @@ class TrendingPostsSerializer(serializers.ModelSerializer):
             'id',
             'title',
             'writer_name',
-            'current_view_count',
+            'view_count',
             'growth',
             'registered_at',
             'portal_url',
