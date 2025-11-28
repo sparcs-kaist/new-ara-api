@@ -38,3 +38,12 @@ class Post(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.id})"
+    
+    #@Todo : parsing 해올때 foreign key로 article id 저장해놓기
+    def get_ara_article(self) -> int | None:
+        from apps.core.models import Article
+        try:
+            article = Article.objects.get(title=self.title)
+            return article.id
+        except Article.DoesNotExist:
+            return None
