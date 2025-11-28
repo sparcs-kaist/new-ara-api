@@ -1,14 +1,10 @@
-import bs4
 from bs4 import BeautifulSoup
 import requests
-from lxml import etree
-import time
 from datetime import datetime, date as date_type
-import copy
 import re
 import json
 import logging
-from typing import Dict, List, Tuple, Union, TypedDict, Optional
+from typing import Dict, List, Tuple, Union, TypedDict
 
 # DB 모델 가져오기
 from django.db import transaction
@@ -33,7 +29,6 @@ class CafeteriaMenuItemType(TypedDict):
 CafeteriaDataType = List[CafeteriaMenuItemType]
 
 common_url = "https://www.kaist.ac.kr/kr/html/campus/053001.html?dvs_cd="
-valid_restaurant_names = ["fclt", "west", "east1", "east2", "emp"]
 
 # 식당 코드와 DB 이름 매핑
 RESTAURANT_CODE_TO_NAME = {
@@ -571,18 +566,6 @@ def _save_cafeteria_to_db(restaurant: Restaurant, date: date_type, meal_time: Me
             )
 
 
-def _delete_existing_meal_data(date: date_type):
-    """해당 날짜의 기존 식단 데이터 삭제 (soft delete)"""
-    Course.objects.filter(date=date).delete()
-    CafeteriaMenu.objects.filter(date=date).delete()
-
-
-def _delete_restaurant_meal_data(restaurant: Restaurant, date: date_type):
-    """특정 식당의 해당 날짜 식단 데이터 삭제 (soft delete)"""
-    Course.objects.filter(restaurant_id=restaurant, date=date).delete()
-    CafeteriaMenu.objects.filter(restaurant_id=restaurant, date=date).delete()
-
-
 def _delete_course_by_meal_time(restaurant: Restaurant, date: date_type, meal_time: MealType):
     """특정 식당의 특정 시간대 코스 메뉴 삭제 (soft delete)"""
     Course.objects.filter(
@@ -743,12 +726,11 @@ def _crawl_and_save_cafeteria_restaurant(restaurant_code: str, date_str: str) ->
         return 'failed'
 
 
-#api에서 내보낼 json형식으로 곧바로 redis에 저장하기 (model이 따로 없어서 Serializer를 거치지 않는다!)
 def crawl_daily_meal(date: str):
     """
     일일 식단 크롤링 메인 함수
     각 식당별로 독립적으로 크롤링 및 저장하여, 한 식당 실패 시 다른 식당에 영향 없음
-    변경사항이 있는 경우에만 DB 업데이트
+    DB 기반으로 기존 데이터와 비교하여 변경사항이 있는 경우에만 업데이트
     """
     logger.info(f"=== 식단 크롤링 시작: {date} ===")
     
