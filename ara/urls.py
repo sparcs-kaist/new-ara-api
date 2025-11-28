@@ -30,6 +30,7 @@ urlpatterns = [
     path("", include(("apps.calendar.urls", "calendar"))),
     path("", include(("apps.chatting.urls", "chatting"))),
     path("", include(("apps.meal.urls", "meal"))),
+    path("api/kaist/", include(("apps.kaist.urls", "kaist"))),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
         "api/schema/swagger/",

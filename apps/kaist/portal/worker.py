@@ -192,3 +192,26 @@ class Worker:
                 }
             ]
         )
+
+    @staticmethod
+    def snapshot_recent_posts_view_count() -> None:
+        """
+        1시간 간격으로 실행되어야 합니다.
+        최근 게시물들의 현재 조회수를 PostViewCountLog에 기록합니다.
+        최근 7일 이내에 등록된 게시물만 추적합니다.
+        """
+        tracking_start_time = timezone.now() - timedelta(days=7)
+        target_posts = Post.objects.filter(registered_at__gte=tracking_start_time)
+
+        logs_to_create = []
+        for post in target_posts:
+            logs_to_create.append(
+                PostViewCountLog(
+                    post=post,
+                    view_count=post.view_count
+                )
+            )
+
+        if logs_to_create:
+            PostViewCountLog.objects.bulk_create(logs_to_create)
+            log.info(f"KAIST Portal Worker :: Snapshot created for {len(logs_to_create)} posts.")
