@@ -21,12 +21,11 @@ class MealViewSet(viewsets.ViewSet):
                 required=True,
             ),
             OpenApiParameter(
-                name='restaurant_name',
-                type=OpenApiTypes.STR,
+                name='restaurant_id',
+                type=OpenApiTypes.INT,
                 location=OpenApiParameter.QUERY,
-                description='식당 이름 (카이마루, 서맛골, 동맛골 1층, 동맛골 2층, 교수회관)',
+                description='식당 ID (1: 카이마루, 2: 서맛골, 3: 동맛골 1층, 4: 동맛골 2층, 5: 교수회관)',
                 required=True,
-                enum=['카이마루', '서맛골', '동맛골 1층', '동맛골 2층', '교수회관'],
             ),
             OpenApiParameter(
                 name='meal_time',
@@ -47,7 +46,7 @@ class MealViewSet(viewsets.ViewSet):
     )
     def list(self, request):
         date_str = request.query_params.get('date') 
-        restaurant_name = request.query_params.get('restaurant_name')
+        restaurant_name = request.query_params.get('restaurant_id')
         meal_time = request.query_params.get('meal_time')
         
         if not all([date_str, restaurant_name, meal_time]):
@@ -57,6 +56,11 @@ class MealViewSet(viewsets.ViewSet):
         except (ValueError, TypeError):
              return Response({'error': 'Invalid date'}, status=status.HTTP_400_BAD_REQUEST)
 
+        try:
+            restaurant_id = int(restaurant_id)
+        except (ValueError, TypeError):
+            return Response({'error': 'Invalid restaurant_id'}, status=status.HTTP_400_BAD_REQUEST)
+        
         """알러지 필터 context 생성"""
         raw_codes = request.query_params.get('allergy_codes', '')
         user_allergies = [int(c.strip()) for c in raw_codes.split(',') if c.strip()]
@@ -66,7 +70,7 @@ class MealViewSet(viewsets.ViewSet):
         all_menus_qs = Menu.objects.all().prefetch_related('allergy_set')
         
         course_queryset = Course.objects.filter(
-            restaurant_id__restaurant_name=restaurant_name, 
+            restaurant_id=restaurant_id, 
             date=query_date,
             meal_time=meal_time
         ).prefetch_related(
@@ -77,7 +81,7 @@ class MealViewSet(viewsets.ViewSet):
         
         """카페테리아 메뉴 조회"""
         cafeteria_queryset = CafeteriaMenu.objects.filter(
-            restaurant_id__restaurant_name=restaurant_name,
+            restaurant_id=restaurant_id,
             date=query_date,
             meal_time=meal_time,
         ).prefetch_related('allergy_set')
@@ -86,7 +90,7 @@ class MealViewSet(viewsets.ViewSet):
 
 
         return Response({
-            'restaurant': restaurant_name,
+            'restaurant_id': restaurant_id,
             'courses': course_serializer.data,
             'cafeteria_menus': cafeteria_serializer.data,
         }, status=status.HTTP_200_OK)
