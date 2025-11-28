@@ -2,11 +2,49 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from django.db.models import Prefetch
 from datetime import date as date_type
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 from ..models import Course, Menu, CafeteriaMenu
 from ..serializers.meal_serializers import CourseSerializer, CafeteriaMenuSerializer
 
 class MealViewSet(viewsets.ViewSet):
 
+    @extend_schema(
+        summary="식단 조회",
+        description="특정 날짜, 식당, 시간대의 식단 정보를 조회합니다.",
+        parameters=[
+            OpenApiParameter(
+                name='date',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='조회할 날짜 (YYYYMMDD 형식, 예: 20251128)',
+                required=True,
+            ),
+            OpenApiParameter(
+                name='restaurant_name',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='식당 이름 (카이마루, 서맛골, 동맛골 1층, 동맛골 2층, 교수회관)',
+                required=True,
+                enum=['카이마루', '서맛골', '동맛골 1층', '동맛골 2층', '교수회관'],
+            ),
+            OpenApiParameter(
+                name='meal_time',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='식사 시간대 (BREAKFAST, LUNCH, DINNER)',
+                required=True,
+                enum=['BREAKFAST', 'LUNCH', 'DINNER'],
+            ),
+            OpenApiParameter(
+                name='allergy_codes',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='필터링할 알러지 코드 (쉼표로 구분, 예: 1,5,6)',
+                required=False,
+            ),
+        ],
+    )
     def list(self, request):
         date_str = request.query_params.get('date') 
         restaurant_name = request.query_params.get('restaurant_name')
