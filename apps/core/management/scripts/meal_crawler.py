@@ -2,7 +2,6 @@ from bs4 import BeautifulSoup
 import requests
 from datetime import datetime, date as date_type
 import re
-import json
 import logging
 from typing import Dict, List, Tuple, Union, TypedDict
 
@@ -431,72 +430,22 @@ def _get_or_create_restaurant(restaurant_name: str) -> Restaurant:
     return restaurant
 
 
-def _get_existing_course_data(restaurant: Restaurant, date: date_type, meal_time: MealType) -> CourseDataType:
-    """DB에서 기존 코스 메뉴 데이터를 크롤링 형식으로 조회"""
-    existing_data: CourseDataType = {}
-    
-    courses = Course.objects.filter(
-        restaurant_id=restaurant, 
-        date=date, 
-        meal_time=meal_time.value
-    ).prefetch_related('menu_set__allergy_set')
-    
-    for course in courses:
-        key = (course.course_name, course.price)
-        menu_list = []
-        for menu in course.menu_set.all():
-            allergy_codes = [a.allergen_code for a in menu.allergy_set.all()]
-            menu_list.append([menu.menu_name, allergy_codes])
-        existing_data[key] = menu_list
-    
-    return existing_data
-
-
-def _get_existing_cafeteria_data(restaurant: Restaurant, date: date_type, meal_time: MealType) -> CafeteriaDataType:
-    """DB에서 기존 카페테리아 메뉴 데이터를 크롤링 형식으로 조회"""
-    existing_data: CafeteriaDataType = []
-    
-    cafeteria_menus = CafeteriaMenu.objects.filter(
+def _has_course_data(restaurant: Restaurant, date: date_type, meal_time: MealType) -> bool:
+    """해당 식당/날짜/시간대에 코스 데이터가 있는지 확인"""
+    return Course.objects.filter(
         restaurant_id=restaurant,
         date=date,
         meal_time=meal_time.value
-    ).prefetch_related('allergy_set')
-    
-    for menu in cafeteria_menus:
-        allergy_codes = [a.allergen_code for a in menu.allergy_set.all()]
-        existing_data.append({
-            'menu_name': menu.menu_name,
-            'price': menu.price,
-            'allergy': allergy_codes
-        })
-    
-    return existing_data
+    ).exists()
 
 
-def _normalize_course_data(data: CourseDataType) -> str:
-    """코스 데이터를 정규화된 문자열로 변환 (비교용)"""
-    if not data:
-        return ""
-    serializable = {f"{k[0]}_{k[1]}": sorted([str(v) for v in vals]) for k, vals in sorted(data.items())}
-    return json.dumps(serializable, sort_keys=True, ensure_ascii=False)
-
-
-def _normalize_cafeteria_data(data: CafeteriaDataType) -> str:
-    """카페테리아 데이터를 정규화된 문자열로 변환 (비교용)"""
-    if not data:
-        return ""
-    sorted_data = sorted(data, key=lambda x: (x.get('menu_name', ''), x.get('price', 0)))
-    return json.dumps(sorted_data, sort_keys=True, ensure_ascii=False)
-
-
-def _is_course_data_equal(existing: CourseDataType, new: CourseDataType) -> bool:
-    """두 코스 데이터가 동일한지 비교"""
-    return _normalize_course_data(existing) == _normalize_course_data(new)
-
-
-def _is_cafeteria_data_equal(existing: CafeteriaDataType, new: CafeteriaDataType) -> bool:
-    """두 카페테리아 데이터가 동일한지 비교"""
-    return _normalize_cafeteria_data(existing) == _normalize_cafeteria_data(new)
+def _has_cafeteria_data(restaurant: Restaurant, date: date_type, meal_time: MealType) -> bool:
+    """해당 식당/날짜/시간대에 카페테리아 데이터가 있는지 확인"""
+    return CafeteriaMenu.objects.filter(
+        restaurant_id=restaurant,
+        date=date,
+        meal_time=meal_time.value
+    ).exists()
 
 
 def _save_course_to_db(restaurant: Restaurant, date: date_type, meal_time: MealType, course_data: dict):
@@ -566,24 +515,10 @@ def _save_cafeteria_to_db(restaurant: Restaurant, date: date_type, meal_time: Me
             )
 
 
-def _delete_course_by_meal_time(restaurant: Restaurant, date: date_type, meal_time: MealType):
-    """특정 식당의 특정 시간대 코스 메뉴 삭제 (soft delete)"""
-    Course.objects.filter(
-        restaurant_id=restaurant, date=date, meal_time=meal_time.value
-    ).delete()
-
-
-def _delete_cafeteria_by_meal_time(restaurant: Restaurant, date: date_type, meal_time: MealType):
-    """특정 식당의 특정 시간대 카페테리아 메뉴 삭제 (soft delete)"""
-    CafeteriaMenu.objects.filter(
-        restaurant_id=restaurant, date=date, meal_time=meal_time.value
-    ).delete()
-
-
 def _crawl_and_save_course_restaurant(restaurant_code: str, date_str: str) -> str:
     """
     코스 메뉴 식당 크롤링 및 DB 저장
-    DB의 기존 데이터와 비교하여 변경된 경우에만 업데이트
+    데이터가 없는 경우에만 저장
     
     Args:
         restaurant_code: 식당 코드 (fclt, west, east1_course, east2, emp)
@@ -600,51 +535,39 @@ def _crawl_and_save_course_restaurant(restaurant_code: str, date_str: str) -> st
     else:
         db_restaurant_name = RESTAURANT_CODE_TO_NAME[restaurant_code]
     
-    # 문자열을 date 객체로 변환
     date = _parse_date(date_str)
     
     try:
-        # 먼저 크롤링 (트랜잭션 밖에서)
+        restaurant = _get_or_create_restaurant(db_restaurant_name)
+        
+        # 저장이 필요한 시간대 확인 (데이터가 없는 시간대만)
+        times_to_save = []
+        for time_idx in range(3):
+            meal_type = TIME_INDEX_TO_MEAL_TYPE[time_idx]
+            if not _has_course_data(restaurant, date, meal_type):
+                times_to_save.append(time_idx)
+        
+        # 모든 시간대에 데이터가 이미 있으면 스킵
+        if not times_to_save:
+            logger.debug(f"[{restaurant_code}] 이미 데이터 존재 - 스킵")
+            return 'skipped'
+        
+        # 크롤링
         course_plain_data = _crawl_meal(restaurant_name=restaurant_code, date=date_str)
         
         if course_plain_data is False:
-            logger.warning(f"[{restaurant_code}] 크롤링 실패 - HTTP 요청 실패")
+            logger.warning(f"[{restaurant_code}] 크롤링 실패")
             return 'failed'
         
-        restaurant = _get_or_create_restaurant(db_restaurant_name)
-        
-        # DB의 기존 데이터와 비교하여 변경된 시간대만 확인
-        changes_needed = []
-        for time_idx, new_meal_data in enumerate(course_plain_data):
-            meal_type = TIME_INDEX_TO_MEAL_TYPE[time_idx]
-            
-            # DB에서 기존 데이터 조회
-            existing_data = _get_existing_course_data(restaurant, date, meal_type)
-            
-            # 새 데이터가 비어있고 기존 데이터도 비어있으면 스킵
-            if not new_meal_data and not existing_data:
-                continue
-            
-            # 데이터가 다르면 변경 필요
-            if not _is_course_data_equal(existing_data, new_meal_data or {}):
-                changes_needed.append((time_idx, new_meal_data, meal_type))
-        
-        # 변경사항이 없으면 스킵
-        if not changes_needed:
-            logger.debug(f"[{restaurant_code}] 변경사항 없음 - 스킵")
-            return 'skipped'
-        
-        # 변경사항이 있는 시간대만 업데이트
+        # 데이터가 없는 시간대만 저장
         with transaction.atomic():
-            for time_idx, meal_data, meal_type in changes_needed:
-                # 해당 시간대 기존 데이터 삭제 (soft delete)
-                _delete_course_by_meal_time(restaurant, date, meal_type)
+            for time_idx in times_to_save:
+                meal_type = TIME_INDEX_TO_MEAL_TYPE[time_idx]
+                meal_data = course_plain_data[time_idx]
                 
-                # 새 데이터 저장
                 if meal_data:
                     _save_course_to_db(restaurant, date, meal_type, meal_data)
-                
-                logger.info(f"[{restaurant_code}] {meal_type.value} 메뉴 업데이트됨")
+                    logger.info(f"[{restaurant_code}] {meal_type.value} 저장됨")
         
         return 'updated'
             
@@ -656,70 +579,48 @@ def _crawl_and_save_course_restaurant(restaurant_code: str, date_str: str) -> st
 def _crawl_and_save_cafeteria_restaurant(restaurant_code: str, date_str: str) -> str:
     """
     카페테리아 식당 크롤링 및 DB 저장
-    DB의 기존 데이터와 비교하여 변경된 경우에만 업데이트
+    데이터가 없는 경우에만 저장
     
     Args:
         restaurant_code: 식당 코드 (east1_cafeteria)
         date_str: 날짜 문자열 (YYYY-MM-DD 형식)
     
     Returns:
-        'updated': 변경사항이 있어 업데이트됨
-        'skipped': 변경사항 없음
+        'updated': 새로 저장됨
+        'skipped': 이미 데이터 존재
         'failed': 실패
     """
-    # east1_cafeteria -> east1 매핑
     db_restaurant_name = RESTAURANT_CODE_TO_NAME["east1"]
-    
-    # 문자열을 date 객체로 변환
     date = _parse_date(date_str)
     
     try:
-        # 먼저 크롤링 (트랜잭션 밖에서)
+        restaurant = _get_or_create_restaurant(db_restaurant_name)
+        
+        # 카페테리아는 점심만 있음
+        lunch_type = TIME_INDEX_TO_MEAL_TYPE[1]
+        
+        # 이미 데이터가 있으면 스킵
+        if _has_cafeteria_data(restaurant, date, lunch_type):
+            logger.debug(f"[{restaurant_code}] 이미 데이터 존재 - 스킵")
+            return 'skipped'
+        
+        # 크롤링
         cafeteria_plain_data = _crawl_meal(restaurant_name=restaurant_code, date=date_str)
         
         if cafeteria_plain_data is False:
-            logger.warning(f"[{restaurant_code}] 크롤링 실패 - HTTP 요청 실패")
+            logger.warning(f"[{restaurant_code}] 크롤링 실패")
             return 'failed'
         
-        restaurant = _get_or_create_restaurant(db_restaurant_name)
+        # 점심 데이터만 저장
+        lunch_data = cafeteria_plain_data[1] if len(cafeteria_plain_data) > 1 else None
         
-        # DB의 기존 데이터와 비교하여 변경된 시간대만 확인
-        changes_needed = []
-        for time_idx, new_meal_data in enumerate(cafeteria_plain_data):
-            meal_type = TIME_INDEX_TO_MEAL_TYPE[time_idx]
-            
-            # DB에서 기존 데이터 조회
-            existing_data = _get_existing_cafeteria_data(restaurant, date, meal_type)
-            
-            # 새 데이터 정규화
-            new_data_list = new_meal_data if (new_meal_data and isinstance(new_meal_data, list)) else []
-            
-            # 새 데이터가 비어있고 기존 데이터도 비어있으면 스킵
-            if not new_data_list and not existing_data:
-                continue
-            
-            # 데이터가 다르면 변경 필요
-            if not _is_cafeteria_data_equal(existing_data, new_data_list):
-                changes_needed.append((time_idx, new_data_list, meal_type))
+        if lunch_data and isinstance(lunch_data, list) and len(lunch_data) > 0:
+            with transaction.atomic():
+                _save_cafeteria_to_db(restaurant, date, lunch_type, lunch_data)
+                logger.info(f"[{restaurant_code}] {lunch_type.value} 저장됨")
+            return 'updated'
         
-        # 변경사항이 없으면 스킵
-        if not changes_needed:
-            logger.debug(f"[{restaurant_code}] 변경사항 없음 - 스킵")
-            return 'skipped'
-        
-        # 변경사항이 있는 시간대만 업데이트
-        with transaction.atomic():
-            for time_idx, meal_data, meal_type in changes_needed:
-                # 해당 시간대 기존 데이터 삭제 (soft delete)
-                _delete_cafeteria_by_meal_time(restaurant, date, meal_type)
-                
-                # 새 데이터 저장
-                if meal_data:
-                    _save_cafeteria_to_db(restaurant, date, meal_type, meal_data)
-                
-                logger.info(f"[{restaurant_code}] {meal_type.value} 메뉴 업데이트됨")
-        
-        return 'updated'
+        return 'skipped'
             
     except Exception as e:
         logger.error(f"[{restaurant_code}] 카페테리아 메뉴 저장 실패: {str(e)}")
@@ -729,12 +630,11 @@ def _crawl_and_save_cafeteria_restaurant(restaurant_code: str, date_str: str) ->
 def crawl_daily_meal(date: str):
     """
     일일 식단 크롤링 메인 함수
-    각 식당별로 독립적으로 크롤링 및 저장하여, 한 식당 실패 시 다른 식당에 영향 없음
-    DB 기반으로 기존 데이터와 비교하여 변경사항이 있는 경우에만 업데이트
+    각 식당별로 독립적으로 크롤링 및 저장
+    데이터가 없는 경우에만 저장 (있으면 스킵)
     """
     logger.info(f"=== 식단 크롤링 시작: {date} ===")
     
-    # 결과 추적
     results = {
         'updated': [],
         'skipped': [],
