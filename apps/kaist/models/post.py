@@ -11,6 +11,7 @@ class Post(models.Model):
     next_post_id = models.BigIntegerField(null=True, blank=True)
 
     board_id = models.IntegerField()
+    board_name = models.CharField(max_length=128, null=True, default=None)
     group_id = models.IntegerField()
     group_level = models.IntegerField()
     group_count = models.IntegerField()

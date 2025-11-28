@@ -79,6 +79,7 @@ class Crawler:
             prev_post_id=res.setdefault("nextPstNo"),
             next_post_id=res.setdefault("prevPstNo"),
             board_id=res["boardNo"],
+            board_name=res["board"]["boardNm"],
             group_id=res["pstGroupNo"],
             group_level=res["pstGroupLvl"],
             group_count=res["pstGroupCnt"],
