@@ -15,7 +15,6 @@ from datetime import datetime, timedelta
 def crawl_portal():
     PortalCrawlWorker.fetch_and_save_from_the_latest(batch_size=32)
 
-
 def _get_redis_key(type_):
     return f"articles:{type_}"
 
@@ -64,6 +63,9 @@ def _get_best(days, period):
 
     return BestArticle.objects.bulk_create(articles)
 
+@celery_app.task
+def sync_portal_view_counts():
+    PortalCrawlWorker.sync_portal_view_count()
 
 @celery_app.task
 def save_daily_best():

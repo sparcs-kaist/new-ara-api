@@ -126,6 +126,19 @@ class Crawler:
             retry_count -= 1
 
     @classmethod
+    def get_view_count(cls, post_id : int) -> int | None:
+
+        response = cls._session.get(
+            f"https://portal.kaist.ac.kr/wz/api/board/recents/{post_id}"
+        )
+        if cls._has_fetched_successfully(response):
+            post = cls._parse_response(response.json())
+            return post.view_count
+            
+        else:
+            return None
+
+    @classmethod
     def _has_fetched_successfully(cls, response: requests.Response) -> bool:
         return "application/json" in response.headers["Content-Type"]
 

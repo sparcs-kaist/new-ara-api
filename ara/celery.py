@@ -28,6 +28,11 @@ app.conf.beat_schedule = {
         "schedule": settings.SCHEDULERS["CRAWL_PORTAL"]["CRONTAB"],
         "args": [],
     },
+    "sync_portal_view_counts": {
+        "task": "apps.core.management.tasks.sync_portal_view_counts",
+        "schedule": settings.SCHEDULERS["SYNC_PORTAL_VIEW_COUNTS"]["CRONTAB"],
+        "args": [],
+    },
     "save_daily_best": {
         "task": "apps.core.management.tasks.save_daily_best",
         "schedule": settings.SCHEDULERS["SAVE_DAILY_BEST"]["CRONTAB"],
