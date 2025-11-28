@@ -46,10 +46,10 @@ class MealViewSet(viewsets.ViewSet):
     )
     def list(self, request):
         date_str = request.query_params.get('date') 
-        restaurant_name = request.query_params.get('restaurant_id')
+        restaurant_id = request.query_params.get('restaurant_id')
         meal_time = request.query_params.get('meal_time')
         
-        if not all([date_str, restaurant_name, meal_time]):
+        if not all([date_str, restaurant_id, meal_time]):
             return Response({'error': 'Missing parameters'}, status=status.HTTP_400_BAD_REQUEST)
         try:
             query_date = date_type(int(date_str[:4]), int(date_str[4:6]), int(date_str[6:]))
