@@ -369,7 +369,14 @@ def _parser_emp(menu_list: List[str], time: int) -> CourseDataType:
                 Courses[temp].append( [txt.strip(), []] )# 괄호가 없으면 빈 리스트 반환
     return Courses
 
-def _crawl_meal(restaurant_name : str ,date : str):
+def _crawl_meal(restaurant_name: str, date: str) -> Union[List[Union[CourseDataType, CafeteriaDataType, None]], bool]:
+    """
+    식당 웹페이지에서 식단 정보를 크롤링
+    
+    Returns:
+        성공 시: [아침데이터, 점심데이터, 저녁데이터] 리스트
+        실패 시: False
+    """
     #카페테리아가 있는 동맛골 1층만 따로 처리.
     if 'east1' in restaurant_name:
         url = common_url + f"east1&stt_dt={date}"
