@@ -583,34 +583,18 @@ def _delete_restaurant_meal_data(restaurant: Restaurant, date: date_type):
     CafeteriaMenu.objects.filter(restaurant_id=restaurant, date=date).delete()
 
 
-def _hard_delete_course_by_meal_time(restaurant: Restaurant, date: date_type, meal_time: MealType):
-    """특정 식당의 특정 시간대 코스 메뉴 hard delete (실제 삭제)"""
-    # Course에 연결된 Menu, MenuAllergy도 hard delete
-    courses = Course.objects.filter(
+def _delete_course_by_meal_time(restaurant: Restaurant, date: date_type, meal_time: MealType):
+    """특정 식당의 특정 시간대 코스 메뉴 삭제 (soft delete)"""
+    Course.objects.filter(
         restaurant_id=restaurant, date=date, meal_time=meal_time.value
-    )
-    course_ids = list(courses.values_list('id', flat=True))
-    
-    if course_ids:
-        # Menu에 연결된 MenuAllergy hard delete
-        menus = Menu.objects.filter(course_id__in=course_ids)
-        menu_ids = list(menus.values_list('id', flat=True))
-        if menu_ids:
-            MenuAllergy.objects.filter(menu_id__in=menu_ids).hard_delete()
-        menus.hard_delete()
-        courses.hard_delete()
+    ).delete()
 
 
-def _hard_delete_cafeteria_by_meal_time(restaurant: Restaurant, date: date_type, meal_time: MealType):
-    """특정 식당의 특정 시간대 카페테리아 메뉴 hard delete (실제 삭제)"""
-    cafeteria_menus = CafeteriaMenu.objects.filter(
+def _delete_cafeteria_by_meal_time(restaurant: Restaurant, date: date_type, meal_time: MealType):
+    """특정 식당의 특정 시간대 카페테리아 메뉴 삭제 (soft delete)"""
+    CafeteriaMenu.objects.filter(
         restaurant_id=restaurant, date=date, meal_time=meal_time.value
-    )
-    cafeteria_ids = list(cafeteria_menus.values_list('id', flat=True))
-    
-    if cafeteria_ids:
-        MenuAllergy.objects.filter(cafeteria_menu_id__in=cafeteria_ids).hard_delete()
-        cafeteria_menus.hard_delete()
+    ).delete()
 
 
 def _crawl_and_save_course_restaurant(restaurant_code: str, date_str: str) -> str:
@@ -670,8 +654,8 @@ def _crawl_and_save_course_restaurant(restaurant_code: str, date_str: str) -> st
         # 변경사항이 있는 시간대만 업데이트
         with transaction.atomic():
             for time_idx, meal_data, meal_type in changes_needed:
-                # 해당 시간대 기존 데이터 hard delete
-                _hard_delete_course_by_meal_time(restaurant, date, meal_type)
+                # 해당 시간대 기존 데이터 삭제 (soft delete)
+                _delete_course_by_meal_time(restaurant, date, meal_type)
                 
                 # 새 데이터 저장
                 if meal_data:
@@ -743,8 +727,8 @@ def _crawl_and_save_cafeteria_restaurant(restaurant_code: str, date_str: str) ->
         # 변경사항이 있는 시간대만 업데이트
         with transaction.atomic():
             for time_idx, meal_data, meal_type in changes_needed:
-                # 해당 시간대 기존 데이터 hard delete
-                _hard_delete_cafeteria_by_meal_time(restaurant, date, meal_type)
+                # 해당 시간대 기존 데이터 삭제 (soft delete)
+                _delete_cafeteria_by_meal_time(restaurant, date, meal_type)
                 
                 # 새 데이터 저장
                 if meal_data:
