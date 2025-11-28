@@ -18,7 +18,7 @@ class PostResponse(TypedDict):
     atchFileCnt: int
     rcmdtnCnt: int
     cmntCnt: int
-    inqCnt: int
+    inqCnt: int # 조회수
     pstWrtrId: str
     pstWrtrNm: str
     pstWrtrDeptNm: str
