@@ -42,12 +42,7 @@ SCHEDULERS = {
     "SEND_EMAIL_FOR_REPLY_REMINDER": create_scheduler_config(
         "SEND_EMAIL_FOR_REPLY_REMINDER", crontab=crontab(hour=7, minute=0)
     ),  # 매일 오전 7시
-    """
     "CRAWL_MEAL": create_scheduler_config(
-        "CRAWL_MEAL", crontab=crontab(hour=0, minute=10) #매일 자정 10분 이후
-    ), 
-    """
-    "CRAWL_MEAL": create_scheduler_config(
-        "CRAWL_MEAL", crontab=crontab(minute="*/3")  # 매 3분 마다 - dev 서버 테스트 용도
+        "CRAWL_MEAL", crontab=crontab(minute="*/3")  # 매 3분 마다 - dev 서버 테스트 용도, 실제로는 hour=0, minute=10
     ),
 }
