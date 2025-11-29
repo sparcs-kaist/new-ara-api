@@ -146,17 +146,19 @@ def _parser_west(menu_list: List[str], time: int) -> CourseDataType:
             temp = (course_name, course_price)
         #메뉴가 나온 경우.
         else:
-            txt_match = re.match(r"(.+?)(\d+(\.\d+)*)?$", txt.strip())
+            # 괄호 안에 숫자들이 있는 경우를 먼저 체크 (쉼표나 점으로 구분)
+            # 예: "소고기미역국(5, 6, 16)" or "무말랭이(5,6)" or "콩나물국(5)"
+            txt_match = re.match(r"(.+?)\(([\d,.\s]+)\)\s*$", txt.strip())
             if txt_match:
-                name = txt_match.group(1).strip()  # 음식 이름 추출
-                numbers = txt_match.group(2)      # 숫자 부분 추출
-                if numbers:
-                    # 숫자를 점(.)으로 구분하고 정수 리스트로 변환
-                    numbers_list = list(map(int, numbers.split(".")))
-                    Courses[temp].append([name, numbers_list])
-                else:
-                    # 숫자가 없으면 빈 리스트 반환
-                    Courses[temp].append([name, []])
+                name = txt_match.group(1).strip()
+                numbers_str = txt_match.group(2)
+                # 쉼표와 점을 모두 구분자로 처리, 공백 제거
+                numbers_str = numbers_str.replace(" ", "").replace(".", ",")
+                allergy_list = [int(n) for n in numbers_str.split(",") if n.strip()]
+                Courses[temp].append([name, allergy_list])
+            else:
+                # 괄호가 없거나 숫자가 아닌 경우
+                Courses[temp].append([txt.strip(), []])
                 
     return Courses
 
