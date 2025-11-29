@@ -50,7 +50,7 @@ class Crawler:
     def _get_recent_post_id(cls) -> int:
         try : 
             response = cls._session.get(
-                f"https://portal.kaist.ac.kr/wz/api/board/recents/{post_id}"
+                f"https://portal.kaist.ac.kr/wz/api/board/recents/"
             )
             payload = response.json()  # 제공된 응답은 유효 JSON
             items = payload["data"]
@@ -95,6 +95,7 @@ class Crawler:
             registered_user_id=res["regUser"],
             changed_at=cls._parse_datetime_string(res["chgDt"]),
             changed_user_id=res["chgUser"],
+            ara_article_id=None,  # 게시글 생성 이후
         )
 
     @classmethod

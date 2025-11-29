@@ -6,12 +6,34 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import decorators
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 
 from apps.kaist.models import Post, PostViewCountLog
 from apps.kaist.serializers.trending_posts import TrendingPostsSerializer
 
 class PortalNoticeView(viewsets.ModelViewSet):
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='board',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description='게시판 번호 (board_id)',
+                required=False,
+            ),
+            OpenApiParameter(
+                name='limit',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description='조회할 게시글 수 (기본값: 10)',
+                required=False,
+            ),
+        ],
+        responses={200: TrendingPostsSerializer(many=True)},
+        summary='포탈 공지사항 목록 조회',
+    )
     def list(self, request):
         """게시판 번호와 limit으로 공지사항 조회"""
         board = request.query_params.get('board')
@@ -33,7 +55,7 @@ class PortalNoticeView(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     #최근 24시간 동안 조회수 증가량이 가장 많은 게시물 조회
-    @decorators.action(detail=True, methods=["get"])
+    @decorators.action(detail=False, methods=["get"])
     def trending(self, request):
         now = timezone.now()
         time_24_hours_ago = now - timedelta(hours=24)
