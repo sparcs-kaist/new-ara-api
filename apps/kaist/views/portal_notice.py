@@ -2,7 +2,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.db.models import Subquery, OuterRef, F, IntegerField, Value
 from django.db.models.functions import Coalesce
-from rest_framework import viewsets
+from rest_framework import viewsets, mixins
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import decorators
@@ -12,7 +12,7 @@ from drf_spectacular.types import OpenApiTypes
 from apps.kaist.models import Post, PostViewCountLog
 from apps.kaist.serializers.trending_posts import TrendingPostsSerializer
 
-class PortalNoticeView(viewsets.ModelViewSet):
+class PortalNoticeView(viewsets.GenericViewSet):
 
     @extend_schema(
         parameters=[
@@ -23,13 +23,6 @@ class PortalNoticeView(viewsets.ModelViewSet):
                 description='게시판 번호 (board_id)',
                 required=False,
             ),
-            OpenApiParameter(
-                name='limit',
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.QUERY,
-                description='조회할 게시글 수 (기본값: 10)',
-                required=False,
-            ),
         ],
         responses={200: TrendingPostsSerializer(many=True)},
         summary='포탈 공지사항 목록 조회',
@@ -37,7 +30,6 @@ class PortalNoticeView(viewsets.ModelViewSet):
     def list(self, request):
         """게시판 번호와 limit으로 공지사항 조회"""
         board = request.query_params.get('board')
-        limit = request.query_params.get('limit', 10)
         
         try:
             limit = int(limit)
@@ -49,7 +41,7 @@ class PortalNoticeView(viewsets.ModelViewSet):
         if board:
             queryset = queryset.filter(board_id=board)
         
-        queryset = queryset.order_by('-registered_at')[:limit]
+        queryset = queryset.order_by('-registered_at')
         
         serializer = TrendingPostsSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
