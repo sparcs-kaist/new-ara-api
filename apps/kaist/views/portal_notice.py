@@ -73,3 +73,37 @@ class PortalNoticeView(viewsets.GenericViewSet):
 
         serializer = TrendingPostsSerializer(trending_posts, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='ara_article',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description='아라 게시글 ID (ara_article)',
+                required=True,
+            ),
+        ],
+        responses={200: TrendingPostsSerializer()},
+        summary='아라 게시글 ID로 포탈 공지 조회',
+    )
+    @decorators.action(detail=False, methods=["get"])
+    def by_article(self, request):
+        """ara_article ID로 해당하는 Post 하나 조회"""
+        ara_article_id = request.query_params.get('ara_article')
+        
+        if not ara_article_id:
+            return Response(
+                {"error": "ara_article parameter is required"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            post = Post.objects.get(ara_article_id=ara_article_id)
+            serializer = TrendingPostsSerializer(post)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Post.DoesNotExist:
+            return Response(
+                {"error": "Post not found"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
