@@ -134,11 +134,11 @@ class Worker:
         return user
 
     @classmethod
-    def create_article(cls, post: Post, user: User) -> None:
+    def create_article(cls, post: Post, user: User) -> Article:
         # TODO: Save portal image if needed
         # TODO: Enable disabled hyperlinks (wrap it with <a> tag)
         # TODO : Resolve AWS S3 budget problem....
-        Article.objects.create(
+        article = Article.objects.create(
             parent_board_id=cls.PORTAL_NOTICE_BOARD_ID,
             title=post.title,
             content=post.content,
@@ -146,6 +146,10 @@ class Worker:
             url=f"https://portal.kaist.ac.kr/kaist/portal/board/ntc/0#{post.id}",
             created_at=post.registered_at,
         )
+        # Post와 Article 연결
+        post.ara_article = article
+        post.save(update_fields=['ara_article'])
+        return article
 
     @staticmethod
     def _send_success_alert(post_count: int) -> None:

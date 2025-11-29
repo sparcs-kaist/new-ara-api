@@ -1,6 +1,10 @@
-from django.urls import path
-from .views.trending_posts import TrendingPostsView
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views.portal_notice import PortalNoticeView
+
+router = DefaultRouter()
+router.register(r'portal_notice', PortalNoticeView, basename='portal_notice')
 
 urlpatterns = [
-    path("trending/", TrendingPostsView.as_view(), name="trending_posts"),
+    path("", include(router.urls)),
 ]

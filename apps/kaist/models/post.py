@@ -1,4 +1,5 @@
 from django.db import models
+from apps.core.models import Article
 
 # Log for crawled KAIST portal posts
 class Post(models.Model):
@@ -6,6 +7,9 @@ class Post(models.Model):
 
     title = models.CharField(max_length=256, db_index=True)
     content = models.TextField()
+
+    #아라 내부의 포탈 공지 게시물 id
+    ara_article = models.OneToOneField(Article, null = True, default = None, on_delete=models.SET_NULL, related_name='kaist_posts')
 
     prev_post_id = models.BigIntegerField(null=True, blank=True)
     next_post_id = models.BigIntegerField(null=True, blank=True)
@@ -39,11 +43,3 @@ class Post(models.Model):
     def __str__(self):
         return f"{self.title} ({self.id})"
     
-    #@Todo : parsing 해올때 foreign key로 article id 저장해놓기
-    def get_ara_article(self) -> int | None:
-        from apps.core.models import Article
-        try:
-            article = Article.objects.get(title=self.title)
-            return article.id
-        except Article.DoesNotExist:
-            return None

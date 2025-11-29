@@ -2,20 +2,20 @@ from rest_framework import serializers
 from apps.kaist.models import Post
 
 class TrendingPostsSerializer(serializers.ModelSerializer):
-    growth = serializers.IntegerField(source='view_count_growth', read_only=True)
-    current_view_count = serializers.IntegerField(source='view_count', read_only=True)
     portal_url = serializers.SerializerMethodField()
-
     class Meta:
         model = Post
         fields = (
             'id',
+            'board_id', #포탈 내에서 작성된 게시판
+            'board_name', #포탈 내에서 작성된 게시글
             'title',
+            'content',
             'writer_name',
-            'current_view_count',
-            'growth',
+            'writer_department',
             'registered_at',
-            'portal_url',
+            'ara_article',
+            'portal_url', #포탈의 게시물 링크 (현재 작동 안함. ntc 대신 각각의 게시물에 맞는 항목을 수동으로 매핑해줘야함)
         )
 
     def get_portal_url(self, obj):
