@@ -30,12 +30,6 @@ class PortalNoticeView(viewsets.GenericViewSet):
     def list(self, request):
         """게시판 번호와 limit으로 공지사항 조회"""
         board = request.query_params.get('board')
-        
-        try:
-            limit = int(limit)
-        except ValueError:
-            limit = 10
-        
         queryset = Post.objects.all()
         
         if board:
