@@ -178,8 +178,8 @@ class Article(MetaDataModel):
         # viewset의 logic 참고
         indexes = [
             models.Index(
-                fields=['name_type', 'deleted_at', '-created_at'],
-                name='idx_article_list_speedup'
+                fields=['name_type', '-created_at', 'deleted_at'],
+                name='idx_article_list_query'
             ),
         ]
 
