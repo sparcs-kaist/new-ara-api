@@ -173,6 +173,16 @@ class Article(MetaDataModel):
         verbose_name = "게시물"
         verbose_name_plural = "게시물 목록"
 
+        # Complex Indexes
+        # name_type : 차단한 User의 익명글 숨김 처리를 위해 쿼리시에 where절에 포함됨
+        # viewset의 logic 참고
+        indexes = [
+            models.Index(
+                fields=['name_type', 'deleted_at', '-created_at'],
+                name='idx_article_list_speedup'
+            ),
+        ]
+
     def __str__(self):
         return self.title
 
