@@ -177,7 +177,7 @@ class Article(MetaDataModel):
         # name_type : 차단한 User의 익명글 숨김 처리를 위해 쿼리시에 where절에 포함됨 (viewset logic 참고)
         indexes = [
             models.Index(
-                fields=['name_type', '-created_at', 'deleted_at' ],
+                fields=['-created_at', 'name_type', 'deleted_at' ],
                 name='idx_article_list_query'
             ),
         ]
