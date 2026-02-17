@@ -175,11 +175,9 @@ class Article(MetaDataModel):
 
         # Complex Indexes
         # name_type : 차단한 User의 익명글 숨김 처리를 위해 쿼리시에 where절에 포함됨 (viewset logic 참고)
-        # deleted_at : 쿼리가 특정 값 (기본값) + 범위로 필터링 - deleted_at이 포함되면 sql optmizer에 의해 index가 적용되지 않음
-        # 삭제 or 차단된 게시물의 비율이 적으므로, name_type과 -created_at만 활용하여 복합인덱스 생성
         indexes = [
             models.Index(
-                fields=['name_type', '-created_at'],
+                fields=['name_type', '-created_at', 'deleted_at' ],
                 name='idx_article_list_query'
             ),
         ]
