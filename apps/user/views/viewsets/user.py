@@ -411,14 +411,50 @@ class UserViewSet(ActionAPIViewSet):
         from django.contrib.auth import get_user_model
         try:
             profile = UserProfile.objects.get(uid=uid)
+
+            #OneAPP으로 로그인 시에도 SSO Info Update
+            sso_token = request.data.get("ssoInfo")
+            if sso_token:
+                try:
+                    decoded_info = jwt.decode(sso_token, settings.ONE_APP_JWT_SECRET, algorithms=["HS256"])
+                    # uid 일치 확인
+                    if decoded_info.get("uid") == uid:
+                        user_info = {
+                            "sid": profile.sid,  # 기존 sid 유지
+                            "uid": uid,
+                            "email": decoded_info.get("email"),
+                            "flags": decoded_info.get("flags"),
+                            "gender": decoded_info.get("gender"),
+                            "birthday": decoded_info.get("birthday"),
+                            "kaist_id": decoded_info.get("kaist_id"),
+                            "last_name": decoded_info.get("last_name"),
+                            "sparcs_id": decoded_info.get("sparcs_id"),
+                            "first_name": decoded_info.get("first_name"),
+                            "kaist_info": decoded_info.get("kaist_info"),
+                            "twitter_id": decoded_info.get("twitter_id"),
+                            "facebook_id": decoded_info.get("facebook_id"),
+                            "kaist_v2_info": decoded_info.get("kaist_v2_info"),
+                            "kaist_info_time": decoded_info.get("kaist_info_time"),
+                            "kaist_v2_info_time": decoded_info.get("kaist_v2_info_time"),
+                        }
+                        profile.sso_user_info = user_info
+                        profile.save()
+                except (jwt.ExpiredSignatureError, jwt.DecodeError, jwt.InvalidTokenError):
+                    pass  # ssoInfo 디코딩 실패해도 uid로 로그인 허용
+
             user = profile.user
+
         except UserProfile.DoesNotExist:  # 회원가입
             #payload에 sso_info가 포함되어서 넘어온다.
             
-            post_data = request.data
-            sso_info = post_data.get('ssoInfo')
+            sso_token = request.data.get("ssoInfo")
+            if not sso_token:
+                return response.Response({
+                    "error" : "ssoInfo is required for new user registration"
+                }, status=status.HTTP_401_UNAUTHORIZED)
+            
             try:
-                decoded_info = jwt.decode(token, settings.ONE_APP_JWT_SECRET, algorithms=["HS256"])
+                decoded_info = jwt.decode(sso_token, settings.ONE_APP_JWT_SECRET, algorithms=["HS256"])
             except:
                 return response.Response({
                     "error" : "SSO Info 무결성 검증 실패"
@@ -428,6 +464,12 @@ class UserViewSet(ActionAPIViewSet):
             if decoded_info.get("uid") != uid:
                 return response.Response({
                     "error" : "SSO Info 무결성 검증 실패"
+                }, status=status.HTTP_401_UNAUTHORIZED)
+            
+            # SSO Info가 없는 경우
+            if (decoded_info.get("kaist_info") is None) and (decoded_info.get("kaist_v2_info") is None):
+                return response.Response({
+                    "error" : "SSO Info가 없는 계정 입니다."
                 }, status=status.HTTP_401_UNAUTHORIZED)
 
             # user_info 빌드
