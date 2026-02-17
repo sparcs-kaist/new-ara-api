@@ -1,7 +1,8 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.utils import timezone
 from tqdm import tqdm
-from datetime import timezone, timedelta
+from datetime import timedelta
 
 from apps.core.models import Article
 from apps.kaist.models import Post, PostViewCountLog
