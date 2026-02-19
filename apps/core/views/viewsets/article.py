@@ -113,22 +113,8 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             name_type=NameType.ANONYMOUS,
         )
 
-        queryset = queryset.prefetch_related(
-            "attachments",
-            "communication_article",
-            "article_metadata_set",  # prefetch 추가
-        )
-
-        # optimizing queryset for list action
-        queryset = queryset.select_related(
-            "created_by",
-            "created_by__profile",
-            "parent_topic",
-            "parent_board",
-            "parent_board__group",
-        ).prefetch_related(
-            ArticleReadLog.prefetch_my_article_read_log(self.request.user),
-        )
+        # [Optimization] : Deferring table join to use complex index
+        article_queryset = queryset.only('id', 'created_at')
 
         class Paginator(DjangoPaginator):
             @cached_property
@@ -137,10 +123,29 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         # Originated from list function of rest_framework.mixins.ListModelMixin
         page = self.paginator.paginate_queryset(
-            queryset, request, paginator_class=Paginator
+            article_queryset, request, paginator_class=Paginator
         )
+
         if page is not None:
-            serializer = self.get_serializer(page, many=True)
+            target_ids = [article.id for article in page]
+            articles = Article.objects.filter(id__in=target_ids).select_related(
+                "created_by",
+                "created_by__profile",
+                "parent_topic",
+                "parent_board",
+                "parent_board__group",
+            ).prefetch_related(
+                "attachments",
+                "communication_article",
+                "article_metadata_set",  # prefetch 추가
+                ArticleReadLog.prefetch_my_article_read_log(self.request.user),
+            )
+
+            #Reordering articles according to the order of target_ids - id__in : does not guarantee order of queryset
+            article_dict = {article.id: article for article in articles}
+            sorted_page = [article_dict[aid] for aid in target_ids if aid in article_dict]
+
+            serializer = self.get_serializer(sorted_page, many=True)
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
