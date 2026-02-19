@@ -39,6 +39,13 @@ class ArticleHiddenReason(str, Enum):
 
 
 class Article(MetaDataModel):
+    # [Optimization] : Article List Query에서 복합 인덱스를 활용하도록 이 모델에서만 Meta Model을 override 하여 index 제거
+    # Article은 로직 특성상 deleted_at 단일 인덱스를 활용하는 경우는 적음
+    deleted_at = models.DateTimeField(
+        default=MIN_TIME,
+        db_index=False,
+        verbose_name="삭제 시간",
+    )
     title = models.CharField(
         verbose_name="제목",
         max_length=256,
