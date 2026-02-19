@@ -96,18 +96,20 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             exclude_list = [NameType.ANONYMOUS, NameType.REALNAME]
             queryset = queryset.exclude(name_type__in=exclude_list)
 
+        blocked_list = list(self.request.user.block_set.values_list("user", flat=True))
+
         # Compute `count` here to optimize query
         count = (
             queryset.count()
             - queryset.filter(
-                created_by__id__in=self.request.user.block_set.values("user"),
+                created_by__id__in=blocked_list,
                 name_type=NameType.ANONYMOUS,
             ).count()
         )
 
         # exclude article written by blocked users in anonymous board
         queryset = queryset.exclude(
-            created_by__id__in=self.request.user.block_set.values("user"),
+            created_by__id__in=blocked_list,
             name_type=NameType.ANONYMOUS,
         )
 
