@@ -8,7 +8,7 @@ from rest_framework import (
 )
 from django.utils import timezone
 from rest_framework.decorators import action
-from django.db.models.functions import Greatest
+from django.db.models.functions import Greatest, Coalesce
 
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
@@ -69,7 +69,10 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             if not ordering:
                 # 기본 정렬: created_at과 recent_message_at 중 더 최근인 값 기준
                 qs = qs.annotate(
-                    latest_at=Greatest('created_at', 'recent_message_at')
+                    latest_at=Greatest(
+                        'created_at',
+                        Coalesce('recent_message_at', 'created_at'),
+                    )
                 ).order_by('-latest_at')
         return qs
 
