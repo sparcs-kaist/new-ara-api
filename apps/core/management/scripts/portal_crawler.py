@@ -141,7 +141,7 @@ def _get_portal_article(url, session):
     created_at = (
         datetime.strptime(created_at_str, "%Y.%m.%d %H:%M:%S")
         .astimezone(KST)
-        .astimezone(timezone.utc)
+        .astimezone(dt_timezone.utc)
     )
 
     view_count_str = created_at_view_count_str.split("(")[1].split(")")[0]
@@ -248,7 +248,7 @@ def crawl_hour(day=None):
 
         # Since it is time ordered, consequent ones have been posted more than 1 hour ago.
 
-        created_at_utc = info["created_at"].astimezone(timezone.utc)
+        created_at_utc = info["created_at"].astimezone(dt_timezone.utc)
 
         if (
             created_at_utc < last_portal_article_in_db.created_at
@@ -417,7 +417,7 @@ def crawl_view():
     log.info(f"crawl_view running on {now}")
 
     week_ago = (
-        (datetime.today() - timedelta(days=7)).astimezone(KST).astimezone(timezone.utc)
+        (datetime.today() - timedelta(days=7)).astimezone(KST).astimezone(dt_timezone.utc)
     )
 
     session = _login_kaist_portal()
@@ -437,7 +437,7 @@ def crawl_view():
             created_at = (
                 datetime.strptime(created_at_str, "%Y.%m.%d")
                 .astimezone(KST)
-                .astimezone(timezone.utc)
+                .astimezone(dt_timezone.utc)
             )
 
             if week_ago > created_at:
