@@ -56,6 +56,27 @@ class ChatMessage(MetaDataModel):
         default = None
     )
 
+    def clean(self):
+        super().clean()
+
+        if self.message_type in [ChatMessageType.IMAGE.value, ChatMessageType.FILE.value]:
+            # URL에 쿼리스트링이 있을 수 있으므로 path만 추출
+            parsed_url = urlparse(self.message_content)
+            # 추출한 path에서 확장자만 분리 (예: '.jpg', '.svg')
+            ext = os.path.splitext(parsed_url.path)[1].lower()
+
+            allowed_image_exts = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+            allowed_file_exts = allowed_image_exts | {
+                '.pdf', '.doc', '.docx', '.xls', '.xlsx', 
+                '.ppt', '.pptx', '.zip', '.tar', '.gz', '.mp4', '.mp3'
+            }
+
+            if self.message_type == ChatMessageType.IMAGE.value and ext not in allowed_image_exts:
+                raise ValidationError({"message_content": f"허용되지 않은 이미지 확장자입니다: {ext or '확장자 없음'}"})
+            
+            if self.message_type == ChatMessageType.FILE.value and ext not in allowed_file_exts:
+                raise ValidationError({"message_content": f"허용되지 않은 파일 확장자입니다: {ext or '확장자 없음'}"})
+
     # created_at : 메시지 작성 일시
     # updated_at : 메시지가 수정되었을 때
     # deleted_at : 메시지가 (사용자에 의해) 삭제되었을 때. (아직 백업 테이블로 이동 X)
@@ -70,6 +91,7 @@ class ChatMessage(MetaDataModel):
 
         # 메시지 생성
         instance = cls(**kwargs)
+        instance.full_clean() #full clean 호출시 clean()도 호출됨
         instance.save()
 
         # 방의 최근 메시지 정보 업데이트
