@@ -1,7 +1,6 @@
+from django.core.validators import FileExtensionValidator
 from django.db import models
-
 from ara.db.models import MetaDataModel
-
 
 class Attachment(MetaDataModel):
     class Meta(MetaDataModel.Meta):
@@ -12,6 +11,11 @@ class Attachment(MetaDataModel):
         upload_to="files",
         verbose_name="링크",
         max_length=200,
+        validators=[FileExtensionValidator(allowed_extensions=[
+            'jpg', 'jpeg', 'png', 'gif', 'webp', 
+            'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 
+            'zip', 'tar', 'gz', 'mp4', 'mp3'
+        ])]
     )
 
     size = models.BigIntegerField(
