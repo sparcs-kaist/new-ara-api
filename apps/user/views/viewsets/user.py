@@ -20,6 +20,8 @@ from apps.user.models import UserProfile
 from apps.user.models.user.manual import ManualUser
 from apps.user.permissions.user import UserPermission
 from ara.classes.sparcssso import Client as SSOClient
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
+
 from ara.authentication import OneAppJWTAuthentication
 from ara.classes.viewset import ActionAPIViewSet
 
@@ -524,6 +526,19 @@ class UserViewSet(ActionAPIViewSet):
             "user_id": (user_profile.user.id if 'user_profile' in locals() else user.id),
         }, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="next",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="세션 발급 후 redirect할 URL",
+                required=False,
+                default="/",
+            ),
+        ],
+        responses={302: None},
+    )
     @decorators.action(
         detail=False,
         methods=["get"],
