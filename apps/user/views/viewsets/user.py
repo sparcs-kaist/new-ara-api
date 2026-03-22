@@ -12,12 +12,15 @@ from django.db import transaction
 from django.shortcuts import redirect, reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
+from django.utils.http import url_has_allowed_host_and_scheme
 from rest_framework import decorators, permissions, response, status
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from apps.user.models import UserProfile
 from apps.user.models.user.manual import ManualUser
 from apps.user.permissions.user import UserPermission
 from ara.classes.sparcssso import Client as SSOClient
+from ara.authentication import OneAppJWTAuthentication
 from ara.classes.viewset import ActionAPIViewSet
 
 #for jwt
@@ -520,3 +523,34 @@ class UserViewSet(ActionAPIViewSet):
             "nickname": user_profile.nickname if 'user_profile' in locals() else profile.nickname,
             "user_id": (user_profile.user.id if 'user_profile' in locals() else user.id),
         }, status=status.HTTP_200_OK)
+
+    @decorators.action(
+        detail=False,
+        methods=["get"],
+        url_path="exchange",
+        authentication_classes=[JWTAuthentication, OneAppJWTAuthentication],
+        permission_classes=[permissions.IsAuthenticated],
+    )
+    def exchange(self, request, *args, **kwargs):
+        """
+        JWT 인증 기반 세션 발급 엔드포인트.
+        Buddy 앱 등에서 web_view 사용 시 JWT로 인증 후 세션 쿠키를 발급받아 redirect.
+        """
+        redirect_url = request.GET.get("next", "/")
+
+        # Open redirect 방지
+        allowed_hosts = set(settings.ALLOWED_HOSTS)
+        if request.get_host():
+            allowed_hosts.add(request.get_host().split(":")[0])
+
+        if not url_has_allowed_host_and_scheme(
+            redirect_url, allowed_hosts=allowed_hosts
+        ):
+            return response.Response(
+                {"error": "Invalid redirect URL"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        login(request, request.user)
+
+        return redirect(to=redirect_url)
