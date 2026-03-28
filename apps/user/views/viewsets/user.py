@@ -14,7 +14,6 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.http import url_has_allowed_host_and_scheme
 from rest_framework import decorators, permissions, response, status
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from apps.user.models import UserProfile
 from apps.user.models.user.manual import ManualUser
@@ -534,7 +533,7 @@ class UserViewSet(ActionAPIViewSet):
                 location=OpenApiParameter.QUERY,
                 description="세션 발급 후 redirect할 URL",
                 required=False,
-                default="/",
+                default="/board",
             ),
         ],
         responses={302: None},
@@ -543,15 +542,17 @@ class UserViewSet(ActionAPIViewSet):
         detail=False,
         methods=["get"],
         url_path="exchange",
-        authentication_classes=[JWTAuthentication, OneAppJWTAuthentication],
+        authentication_classes=[OneAppJWTAuthentication],
         permission_classes=[permissions.IsAuthenticated],
     )
     def exchange(self, request, *args, **kwargs):
         """
         JWT 인증 기반 세션 발급 엔드포인트.
-        Buddy 앱 등에서 web_view 사용 시 JWT로 인증 후 세션 쿠키를 발급받아 redirect.
+        Buddy 앱 등에서 web_view 사용 시 JWT로 인증 후 세션 쿠키를 발급받아 프론트엔드로 redirect 한다.
         """
         redirect_url = request.GET.get("next", "/")
+        if not redirect_url.startswith(('/', 'http://', 'https://')):
+            redirect_url = '/' + redirect_url
 
         # Open redirect 방지
         allowed_hosts = set(settings.ALLOWED_HOSTS)
