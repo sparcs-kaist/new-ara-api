@@ -255,7 +255,7 @@ def _parser_east1_cafeteria(menu_list: List[str], time: int) -> CafeteriaDataTyp
             return []
         else:
             for txt in Menu:
-                #Cafeterai 메뉴가 끝나면 break
+                #Cafeteria 메뉴가 끝나면 break
                 if ('>' in txt) and ('<' in txt):
                     break
                 txt_match = re.match(r"(.+?)\s*(?:\(([\d,]*)\))?\s*([\d,]+)원", txt.strip())
@@ -760,13 +760,13 @@ def crawl_daily_meal(date: str):
     }
     
     # 코스 메뉴 식당 처리
-    Course_restaurant = ["fclt", "west", "east1_course", "east2", "emp"]
+    Course_restaurant = ["fclt", "west", "emp"]
     for course_code in Course_restaurant:
         result = _crawl_and_save_course_restaurant(course_code, date)
         results[result].append(course_code)
     
     # 카페테리아 식당 처리
-    Cafeteria_restaurant = ["east1_cafeteria"]
+    Cafeteria_restaurant = []
     for cafeteria_code in Cafeteria_restaurant:
         result = _crawl_and_save_cafeteria_restaurant(cafeteria_code, date)
         results[result].append(cafeteria_code)

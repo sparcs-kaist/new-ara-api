@@ -58,6 +58,14 @@ class MealViewSet(viewsets.ViewSet):
 
         try:
             restaurant_id = int(restaurant_id)
+
+            if restaurant_id in [3, 4]:
+                return Response({
+                    'restaurant_id': restaurant_id,
+                    'courses': [],
+                    'cafeteria_menus': []
+                }, status=status.HTTP_200_OK)
+                
         except (ValueError, TypeError):
             return Response({'error': 'Invalid restaurant_id'}, status=status.HTTP_400_BAD_REQUEST)
         
