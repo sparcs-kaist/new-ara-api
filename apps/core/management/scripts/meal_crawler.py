@@ -523,22 +523,24 @@ def _save_course_to_db(restaurant: Restaurant, date: date_type, meal_time: MealT
             meal_time=meal_time.value
         )
         
-        # Menu 및 MenuAllergy 생성
+        # Menu 생성
+        menus_to_create = []
         for menu_item in menu_list:
             menu_name = menu_item[0]
+            menus_to_create.append(Menu(menu_name=menu_name, course_id=course))
+        created_menus = Menu.objects.bulk_create(menus_to_create)
+        
+        # MenuAllergy 생성
+        allergies_to_create = []
+        for menu_obj, menu_item in zip(created_menus, menu_list):
             allergy_list = menu_item[1] if len(menu_item) > 1 else []
-            
-            menu = Menu.objects.create(
-                menu_name=menu_name,
-                course_id=course
-            )
-            
-            # 알러지 정보 저장
             for allergen_code in allergy_list:
-                MenuAllergy.objects.create(
+                allergies_to_create.append(MenuAllergy(
                     allergen_code=allergen_code,
-                    menu_id=menu
-                )
+                    menu_id=menu_obj
+                ))
+        if allergies_to_create:
+            MenuAllergy.objects.bulk_create(allergies_to_create)
 
 
 def _save_cafeteria_to_db(restaurant: Restaurant, date: date_type, meal_time: MealType, cafeteria_data: list):
@@ -550,25 +552,29 @@ def _save_cafeteria_to_db(restaurant: Restaurant, date: date_type, meal_time: Me
         meal_time: MealType enum
         cafeteria_data: [{'menu_name': str, 'price': int, 'allergy': [int, ...]}, ...]
     """
+    # CafeteriaMenu 생성
+    menus_to_create = []
     for menu_item in cafeteria_data:
-        menu_name = menu_item.get('menu_name', '')
-        price = menu_item.get('price')
-        allergy_list = menu_item.get('allergy', [])
-        
-        cafeteria_menu = CafeteriaMenu.objects.create(
+        menus_to_create.append(CafeteriaMenu(
             restaurant_id=restaurant,
-            menu_name=menu_name,
-            price=price,
+            menu_name=menu_item.get('menu_name', ''),
+            price=menu_item.get('price'),
             date=date,
             meal_time=meal_time.value
-        )
-        
-        # 알러지 정보 저장
+        ))
+    created_menus = CafeteriaMenu.objects.bulk_create(menus_to_create)
+    
+    # MenuAllergy 생성
+    allergies_to_create = []
+    for menu_obj, menu_item in zip(created_menus, cafeteria_data):
+        allergy_list = menu_item.get('allergy', [])
         for allergen_code in allergy_list:
-            MenuAllergy.objects.create(
+            allergies_to_create.append(MenuAllergy(
                 allergen_code=allergen_code,
-                cafeteria_menu_id=cafeteria_menu
-            )
+                cafeteria_menu_id=menu_obj
+            ))
+    if allergies_to_create:
+        MenuAllergy.objects.bulk_create(allergies_to_create)
 
 
 def _delete_existing_meal_data(date: date_type):
