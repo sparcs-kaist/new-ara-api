@@ -21,6 +21,9 @@ class AttachmentViewSet(
     }
 
     def perform_create(self, serializer):
+        uploaded_file = self.request.FILES["file"]
+        alias = self.request.data.get("alias") or uploaded_file.name
+
         serializer.save(
             size=self.request.FILES["file"].size,
             mimetype=self.request.FILES["file"].content_type,

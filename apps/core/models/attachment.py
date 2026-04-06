@@ -18,6 +18,13 @@ class Attachment(MetaDataModel):
         ])]
     )
 
+    alias = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name="별칭",
+    )
+
     size = models.BigIntegerField(
         default=-1,
         verbose_name="용량",
@@ -30,4 +37,4 @@ class Attachment(MetaDataModel):
     )
 
     def __str__(self) -> str:
-        return self.file.name
+        return self.alias or self.file.name
