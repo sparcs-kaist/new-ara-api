@@ -251,7 +251,7 @@ def _parser_east1_cafeteria(menu_list: List[str], time: int) -> CafeteriaDataTyp
             return []
         else:
             for txt in Menu:
-                #Cafeterai 메뉴가 끝나면 break
+                #Cafeteria 메뉴가 끝나면 break
                 if ('>' in txt) and ('<' in txt):
                     break
                 txt_match = re.match(r"(.+?)\s*(?:\(([\d,]*)\))?\s*([\d,]+)원", txt.strip())
@@ -469,22 +469,24 @@ def _save_course_to_db(restaurant: Restaurant, date: date_type, meal_time: MealT
             meal_time=meal_time.value
         )
         
-        # Menu 및 MenuAllergy 생성
+        # Menu 생성
+        menus_to_create = []
         for menu_item in menu_list:
             menu_name = menu_item[0]
+            menus_to_create.append(Menu(menu_name=menu_name, course_id=course))
+        created_menus = Menu.objects.bulk_create(menus_to_create)
+        
+        # MenuAllergy 생성
+        allergies_to_create = []
+        for menu_obj, menu_item in zip(created_menus, menu_list):
             allergy_list = menu_item[1] if len(menu_item) > 1 else []
-            
-            menu = Menu.objects.create(
-                menu_name=menu_name,
-                course_id=course
-            )
-            
-            # 알러지 정보 저장
             for allergen_code in allergy_list:
-                MenuAllergy.objects.create(
+                allergies_to_create.append(MenuAllergy(
                     allergen_code=allergen_code,
-                    menu_id=menu
-                )
+                    menu_id=menu_obj
+                ))
+        if allergies_to_create:
+            MenuAllergy.objects.bulk_create(allergies_to_create)
 
 
 def _save_cafeteria_to_db(restaurant: Restaurant, date: date_type, meal_time: MealType, cafeteria_data: list):
@@ -496,25 +498,29 @@ def _save_cafeteria_to_db(restaurant: Restaurant, date: date_type, meal_time: Me
         meal_time: MealType enum
         cafeteria_data: [{'menu_name': str, 'price': int, 'allergy': [int, ...]}, ...]
     """
+    # CafeteriaMenu 생성
+    menus_to_create = []
     for menu_item in cafeteria_data:
-        menu_name = menu_item.get('menu_name', '')
-        price = menu_item.get('price')
-        allergy_list = menu_item.get('allergy', [])
-        
-        cafeteria_menu = CafeteriaMenu.objects.create(
+        menus_to_create.append(CafeteriaMenu(
             restaurant_id=restaurant,
-            menu_name=menu_name,
-            price=price,
+            menu_name=menu_item.get('menu_name', ''),
+            price=menu_item.get('price'),
             date=date,
             meal_time=meal_time.value
-        )
-        
-        # 알러지 정보 저장
+        ))
+    created_menus = CafeteriaMenu.objects.bulk_create(menus_to_create)
+    
+    # MenuAllergy 생성
+    allergies_to_create = []
+    for menu_obj, menu_item in zip(created_menus, cafeteria_data):
+        allergy_list = menu_item.get('allergy', [])
         for allergen_code in allergy_list:
-            MenuAllergy.objects.create(
+            allergies_to_create.append(MenuAllergy(
                 allergen_code=allergen_code,
-                cafeteria_menu_id=cafeteria_menu
-            )
+                cafeteria_menu_id=menu_obj
+            ))
+    if allergies_to_create:
+        MenuAllergy.objects.bulk_create(allergies_to_create)
 
 
 def _crawl_and_save_course_restaurant(restaurant_code: str, date_str: str) -> str:
@@ -644,13 +650,13 @@ def crawl_daily_meal(date: str):
     }
     
     # 코스 메뉴 식당 처리
-    Course_restaurant = ["fclt", "west", "east1_course", "east2", "emp"]
+    Course_restaurant = ["fclt", "west", "emp"]
     for course_code in Course_restaurant:
         result = _crawl_and_save_course_restaurant(course_code, date)
         results[result].append(course_code)
     
     # 카페테리아 식당 처리
-    Cafeteria_restaurant = ["east1_cafeteria"]
+    Cafeteria_restaurant = []
     for cafeteria_code in Cafeteria_restaurant:
         result = _crawl_and_save_cafeteria_restaurant(cafeteria_code, date)
         results[result].append(cafeteria_code)
