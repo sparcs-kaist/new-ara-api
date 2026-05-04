@@ -21,6 +21,14 @@ class DeletedPostException(Exception):
     """
     ...
 
+class PortalUnreachableException(Exception):
+    """
+    Portal 서버에 TCP/TLS 연결이 안 될 때 (ConnectTimeout, ConnectionError 등).
+    session reset 후에도 안 풀리면 발생. 일시적 네트워크/portal-side issue 로 보고
+    celery 다음 cycle 에서 재시도해야 한다.
+    """
+    ...
+
 
 def _build_session() -> requests.Session:
     # connect/read 단계 모두 재시도. celery worker에서 stale keepalive 소켓으로
@@ -113,6 +121,8 @@ class Crawler:
         """
         timeout/retry 가 적용된 GET 요청. ConnectTimeout 등 연결 단계 실패 시
         session 을 재생성해 한 번 더 재시도한다 (stale keepalive 회복용).
+        두 번째 시도도 실패하면 PortalUnreachableException 으로 변환해
+        worker 가 soft-fail 처리할 수 있게 한다.
         """
         try:
             return cls._get_session().get(url, timeout=cls.REQUEST_TIMEOUT)
@@ -121,7 +131,12 @@ class Crawler:
                 f"KAIST Portal Crawler :: connection error on {url} ({e!r}); resetting session"
             )
             cls.reset_session()
-            return cls._get_session().get(url, timeout=cls.REQUEST_TIMEOUT)
+            try:
+                return cls._get_session().get(url, timeout=cls.REQUEST_TIMEOUT)
+            except (requests.ConnectionError, requests.Timeout) as e2:
+                raise PortalUnreachableException(
+                    f"Portal unreachable after session reset: {url} ({e2!r})"
+                ) from e2
 
     @classmethod
     def _parse_response(cls, res: PostResponse) -> Post:

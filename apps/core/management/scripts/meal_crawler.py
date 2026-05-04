@@ -361,10 +361,13 @@ def _save_course_to_db(
             meal_time=meal_time.value,
         )
 
-        menus_to_create = [
-            Menu(menu_name=item[0], course_id=course) for item in menu_list
+        # MySQL 의 bulk_create 는 객체에 PK 를 채워주지 않아서 Django 5 의
+        # unsaved-related-object 체크에 걸린다 (MenuAllergy(menu_id=menu_obj)).
+        # 코스당 메뉴 수가 적으므로 (~10개) 개별 create 로 안전하게 처리한다.
+        created_menus = [
+            Menu.objects.create(menu_name=item[0], course_id=course)
+            for item in menu_list
         ]
-        created_menus = Menu.objects.bulk_create(menus_to_create)
 
         allergies_to_create = []
         for menu_obj, item in zip(created_menus, menu_list):

@@ -7,7 +7,12 @@ from datetime import timedelta
 from apps.core.models import Article
 from apps.kaist.models import Post, PostViewCountLog
 from apps.kaist.portal.crawl_iterator import CrawlIterator
-from apps.kaist.portal.crawler import Crawler, DeletedPostException, SessionExpiredException
+from apps.kaist.portal.crawler import (
+    Crawler,
+    DeletedPostException,
+    PortalUnreachableException,
+    SessionExpiredException,
+)
 from apps.user.models import UserProfile
 from ara.log import log
 from library.slack.webhook import slack_webhook_client
@@ -68,6 +73,11 @@ class Worker:
         except SessionExpiredException:
             cls._send_session_expired_alert()
             return
+        except PortalUnreachableException as e:
+            # 일시적 네트워크/portal-side 장애. 다음 celery cycle 에서 재시도되므로
+            # crash 시키지 않고 로그만 남기고 종료한다.
+            log.warning(f"KAIST Portal Crawler :: portal unreachable, will retry next cycle ({e!r})")
+            return
 
         new_posts = posts[1:]
         if not new_posts:
@@ -97,6 +107,9 @@ class Worker:
             return
         except SessionExpiredException:
             cls._send_session_expired_alert()
+            return
+        except PortalUnreachableException as e:
+            log.warning(f"KAIST Portal Crawler :: portal unreachable for post {post_id} ({e!r})")
             return
 
         with transaction.atomic():
