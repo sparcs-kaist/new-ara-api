@@ -294,6 +294,14 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     )
     @action(detail=False, methods=["get"], url_path=r"user/(?P<user_id>\d+)")
     def user_dm(self, request, user_id=None):
+        # 본인과의 DM 은 지원하지 않으므로 곧바로 null 반환.
+        # (membership 두 번 조인이 같은 user 로 만족되어 가장 최근 DM 방이 잘못
+        #  반환되는 문제가 있었음 - issue #610)
+        if int(user_id) == request.user.id:
+            data = {"dm_room": None}
+            serializer = DMRoomLookupResponseSerializer(data)
+            return response.Response(serializer.data, status=status.HTTP_200_OK)
+
         try:
             from django.contrib.auth import get_user_model
             User = get_user_model()

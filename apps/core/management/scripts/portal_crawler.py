@@ -3,8 +3,7 @@
 import hashlib
 import re
 import uuid
-from datetime import datetime, timedelta
-from datetime import timezone as dt_timezone
+from datetime import datetime, timedelta, timezone as dt_timezone
 
 import boto3
 import requests
@@ -184,7 +183,7 @@ def _get_portal_article(url, session):
 def crawl_hour(day=None):
     # parameter에서 default로 바로 today()하면, 캐싱되어서 업데이트가 안됨
     if day is None:
-        day = timezone.datetime.today().date()
+        day = datetime.today().date()
     log.info(f"crawl_hour running for day {day}")
 
     session = _login_kaist_portal()
@@ -413,7 +412,7 @@ def crawl_view():
     update all portal_view_count of portal articles
     from a week ago until now
     """
-    now = timezone.datetime.today().date()
+    now = datetime.today().date()
     log.info(f"crawl_view running on {now}")
 
     week_ago = (

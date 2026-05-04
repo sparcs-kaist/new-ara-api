@@ -1,7 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone as dt_timezone
 
 import requests
-from django.utils import timezone as django_timezone
 from pytz import timezone as pytz_timezone
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -80,7 +79,7 @@ class Crawler:
         return (
             datetime.strptime(datetime_str, "%Y.%m.%d %H:%M:%S")
             .astimezone(cls._KST)
-            .astimezone(django_timezone.utc)
+            .astimezone(dt_timezone.utc)
         )
     
     @classmethod
