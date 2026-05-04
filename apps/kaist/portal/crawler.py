@@ -3,6 +3,8 @@ from datetime import datetime
 import requests
 from django.utils import timezone as django_timezone
 from pytz import timezone as pytz_timezone
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from apps.kaist.models import Post
 from apps.kaist.portal.post_response import PostResponse, RecentPostListResponse, RecentPostItem
@@ -20,14 +22,58 @@ class DeletedPostException(Exception):
     """
     ...
 
+
+def _build_session() -> requests.Session:
+    # connect/read 단계 모두 재시도. celery worker에서 stale keepalive 소켓으로
+    # ConnectTimeout 이 누적되는 것을 막기 위해 backoff retry 와 풀 사이즈를 명시한다.
+    retry = Retry(
+        total=3,
+        connect=3,
+        read=2,
+        backoff_factor=1.0,
+        status_forcelist=(500, 502, 503, 504),
+        allowed_methods=("GET",),
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(
+        max_retries=retry,
+        pool_connections=20,
+        pool_maxsize=20,
+    )
+    session = requests.Session()
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    session.cookies.set(Crawler.SESSION_KEY, PORTAL_JSESSIONID)
+    return session
+
+
 class Crawler:
     SESSION_KEY = "JSESSIONID"
     SESSION_REDIS_KEY = "crawler:jsessionid"
 
-    _session = requests.Session()
-    _session.cookies.set(SESSION_KEY, PORTAL_JSESSIONID)
+    # (connect_timeout, read_timeout) - 무제한 block 방지
+    REQUEST_TIMEOUT = (5, 30)
+
+    _session = None  # lazy init via _get_session()
 
     _KST = pytz_timezone("Asia/Seoul")
+
+    @classmethod
+    def _get_session(cls) -> requests.Session:
+        if cls._session is None:
+            cls._session = _build_session()
+        return cls._session
+
+    @classmethod
+    def reset_session(cls) -> None:
+        """stale connection pool 을 폐기하고 새로운 session 으로 교체."""
+        old = cls._session
+        cls._session = _build_session()
+        if old is not None:
+            try:
+                old.close()
+            except Exception:
+                pass
 
     @classmethod
     def _parse_datetime_string(cls, datetime_str: str) -> datetime:
@@ -48,20 +94,35 @@ class Crawler:
     #post 사이의 링크가 끊긴 경우를 위해 현재를 기준으로 가장 최근 post id를 가져옵니다.
     @classmethod
     def _get_recent_post_id(cls) -> int:
-        try : 
-            response = cls._session.get(
-                f"https://portal.kaist.ac.kr/wz/api/board/recents/"
+        try:
+            response = cls._request_get(
+                "https://portal.kaist.ac.kr/wz/api/board/recents/"
             )
             payload = response.json()  # 제공된 응답은 유효 JSON
             items = payload["data"]
             items_sorted = sorted(items, key=lambda x: int(x["rnum"]))
-    
+
             for post_item in items_sorted:
                 if post_item["delYn"] == "N":
-                    return int(post_item["pstNo"])           
+                    return int(post_item["pstNo"])
         #응답이 html인 경우 (권한 없음 페이지) session expired
-        except:
+        except Exception:
             raise SessionExpiredException
+
+    @classmethod
+    def _request_get(cls, url: str) -> requests.Response:
+        """
+        timeout/retry 가 적용된 GET 요청. ConnectTimeout 등 연결 단계 실패 시
+        session 을 재생성해 한 번 더 재시도한다 (stale keepalive 회복용).
+        """
+        try:
+            return cls._get_session().get(url, timeout=cls.REQUEST_TIMEOUT)
+        except (requests.ConnectionError, requests.Timeout) as e:
+            log.warning(
+                f"KAIST Portal Crawler :: connection error on {url} ({e!r}); resetting session"
+            )
+            cls.reset_session()
+            return cls._get_session().get(url, timeout=cls.REQUEST_TIMEOUT)
 
     @classmethod
     def _parse_response(cls, res: PostResponse) -> Post:
@@ -109,7 +170,7 @@ class Crawler:
         retry_count = 1
 
         while retry_count >= 0:
-            response = cls._session.get(
+            response = cls._request_get(
                 f"https://portal.kaist.ac.kr/wz/api/board/recents/{post_id}"
             )
 
@@ -129,7 +190,7 @@ class Crawler:
     @classmethod
     def get_view_count(cls, post_id : int) -> int | None:
 
-        response = cls._session.get(
+        response = cls._request_get(
             f"https://portal.kaist.ac.kr/wz/api/board/recents/{post_id}"
         )
         if cls._has_fetched_successfully(response):
@@ -141,7 +202,8 @@ class Crawler:
 
     @classmethod
     def _has_fetched_successfully(cls, response: requests.Response) -> bool:
-        return "application/json" in response.headers["Content-Type"]
+        content_type = response.headers.get("Content-Type", "")
+        return "application/json" in content_type
 
     @classmethod
     def find_next_post(cls, post: Post) -> Post | None:
@@ -165,4 +227,4 @@ class Crawler:
             log.info(
                 f"KAIST Portal Crawler :: JSESSIONID updated to ({new_session_id})"
             )
-            cls._session.cookies.set(cls.SESSION_KEY, new_session_id)
+            cls._get_session().cookies.set(cls.SESSION_KEY, new_session_id)
