@@ -7,8 +7,11 @@ from django.utils.functional import cached_property
 
 from apps.core.models import Article, Comment
 from apps.core.models.board import NameType
+from apps.core.push import (
+    enqueue_push_for_notification,
+    enqueue_push_for_notification_to_users,
+)
 from ara.db.models import MetaDataModel
-from ara.firebase import fcm_notify_comment
 
 from apps.chatting.models.room import ChatRoom
 from apps.chatting.models.message import ChatMessage
@@ -99,42 +102,36 @@ class Notification(MetaDataModel):
             name = cls.get_display_name(_parent_article, _comment.created_by.profile)
             title = f"{name} 님이 새로운 댓글을 작성했습니다."
 
+            notification = cls.objects.create(
+                type="article_commented",
+                title=title,
+                content=_comment.content[:32],
+                related_article=_parent_article,
+                related_comment=None,
+            )
             NotificationReadLog.objects.create(
                 read_by=_parent_article.created_by,
-                notification=cls.objects.create(
-                    type="article_commented",
-                    title=title,
-                    content=_comment.content[:32],
-                    related_article=_parent_article,
-                    related_comment=None,
-                ),
+                notification=notification,
             )
-            fcm_notify_comment(
-                _parent_article.created_by,
-                title,
-                _comment.content[:32],
-                f"post/{_parent_article.id}",
-            )
+            enqueue_push_for_notification(notification, _parent_article.created_by_id)
 
         def notify_comment_commented(_parent_article: Article, _comment: Comment):
             name = cls.get_display_name(_parent_article, _comment.created_by.profile)
             title = f"{name} 님이 새로운 대댓글을 작성했습니다."
 
+            notification = cls.objects.create(
+                type="comment_commented",
+                title=title,
+                content=_comment.content[:32],
+                related_article=_parent_article,
+                related_comment=_comment.parent_comment,
+            )
             NotificationReadLog.objects.create(
                 read_by=_comment.parent_comment.created_by,
-                notification=cls.objects.create(
-                    type="comment_commented",
-                    title=title,
-                    content=_comment.content[:32],
-                    related_article=_parent_article,
-                    related_comment=_comment.parent_comment,
-                ),
+                notification=notification,
             )
-            fcm_notify_comment(
-                _comment.parent_comment.created_by,
-                title,
-                _comment.content[:32],
-                f"post/{_parent_article.id}",
+            enqueue_push_for_notification(
+                notification, _comment.parent_comment.created_by_id
             )
 
         article = (
@@ -185,8 +182,8 @@ class Notification(MetaDataModel):
                 read_by=_notify_to,
                 notification=notification
             )
-            # @Todo : FCM 붙이기
 
+        recipient_ids: list[int] = []
         # 과정이 느리니까 message create 에서 async로 돌리기.
         for membership in _unread_memberships:
             # 4. 이미 읽지 않은 알림이 있는지 확인
@@ -200,3 +197,8 @@ class Notification(MetaDataModel):
 
             # 5. 대상 User에게 알림 보내기
             notify_chat_room_message(membership.user)
+            recipient_ids.append(membership.user_id)
+
+        # FCM push: 한 번에 모든 수신자 토큰을 multicast
+        if recipient_ids:
+            enqueue_push_for_notification_to_users(notification, recipient_ids)
