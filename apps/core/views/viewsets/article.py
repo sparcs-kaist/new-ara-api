@@ -44,7 +44,9 @@ from ara.settings import SCHOOL_RESPONSE_VOTE_THRESHOLD
 
 
 class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
-    queryset = Article.objects.all()
+    # 과목게시판 글 (related_course != None) 은 메인 피드/검색에서 제외.
+    # 접근은 /api/courses/<id>/articles/ 엔드포인트로만 가능.
+    queryset = Article.objects.filter(related_course__isnull=True)
 
     filterset_class = ArticleFilter
     ordering_fields = ["created_at", "positive_vote_count"]
@@ -499,9 +501,11 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             timezone.now().date(), datetime.time.min, datetime.timezone.utc
         )
         # get the articles that are created_at within a week and order by hit_count
+        # 과목게시판 글은 메인 top 에서 제외
         top_articles = (
             Article.objects.filter(
-                created_at__gte=current_date - datetime.timedelta(days=7)
+                created_at__gte=current_date - datetime.timedelta(days=7),
+                related_course__isnull=True,
             )
             .order_by("-hit_count", "-pk")
             .prefetch_related("article_metadata_set")  # prefetch 추가
