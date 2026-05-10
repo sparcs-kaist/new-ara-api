@@ -11,8 +11,9 @@ from rest_framework import (
 
 from apps.core.filters.comment import CommentFilter
 from apps.core.models import Article, Comment, CommentDeleteLog, UserProfile, Vote
-from apps.core.models.board import BoardAccessPermissionType, NameType
+from apps.core.models.board import NameType
 from apps.core.permissions.comment import CommentPermission
+from apps.course.access import can_act_on_comment, can_comment_on_article
 from apps.core.serializers.comment import (
     CommentCreateActionSerializer,
     CommentSerializer,
@@ -63,11 +64,8 @@ class CommentViewSet(
         # TODO: Use CommentPermission for permission checking logic
         # self.check_object_permissions(request, parent_article)
 
-        # Check permission
-        user_group = request.user.profile.group
-        if parent_article.parent_board.group_has_access_permission(
-            BoardAccessPermissionType.COMMENT, user_group
-        ):
+        # 과목글이면 enrollment 체크, 아니면 board comment_access_mask 체크
+        if can_comment_on_article(request.user, parent_article):
             return super().create(request, *args, **kwargs)
         return response.Response(
             {"message": gettext("Permission denied")}, status=status.HTTP_403_FORBIDDEN
@@ -156,9 +154,22 @@ class CommentViewSet(
 
         return super().perform_destroy(instance)
 
+    def _guard_course_comment_access(self, request, comment):
+        """과목글 댓글이면 enrollment 검사. 통과 못하면 403 Response 반환."""
+        if can_act_on_comment(request.user, comment):
+            return None
+        return response.Response(
+            {"message": gettext("해당 게시판에 접근할 권한이 없습니다.")},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
     @decorators.action(detail=True, methods=["post"])
     def vote_cancel(self, request, *args, **kwargs):
         comment = self.get_object()
+
+        denied = self._guard_course_comment_access(request, comment)
+        if denied:
+            return denied
 
         if comment.is_hidden_by_reported() or comment.is_deleted():
             return response.Response(
@@ -182,6 +193,10 @@ class CommentViewSet(
     @decorators.action(detail=True, methods=["post"])
     def vote_positive(self, request, *args, **kwargs):
         comment = self.get_object()
+
+        denied = self._guard_course_comment_access(request, comment)
+        if denied:
+            return denied
 
         if comment.created_by_id == request.user.id:
             return response.Response(
@@ -214,6 +229,10 @@ class CommentViewSet(
     @decorators.action(detail=True, methods=["post"])
     def vote_negative(self, request, *args, **kwargs):
         comment = self.get_object()
+
+        denied = self._guard_course_comment_access(request, comment)
+        if denied:
+            return denied
 
         if comment.created_by_id == request.user.id:
             return response.Response(

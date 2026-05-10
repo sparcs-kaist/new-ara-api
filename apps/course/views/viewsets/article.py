@@ -8,7 +8,7 @@ URL: /api/courses/<course_id>/articles/[<pk>/]
 from __future__ import annotations
 
 from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import permissions, response, status, viewsets
 
 from apps.core.models import Article
@@ -23,6 +23,13 @@ from apps.course.serializers import (
 )
 
 
+@extend_schema_view(
+    list=extend_schema(tags=["course"]),
+    create=extend_schema(tags=["course"]),
+    retrieve=extend_schema(tags=["course"]),
+    partial_update=extend_schema(tags=["course"]),
+    destroy=extend_schema(tags=["course"]),
+)
 class CourseArticleViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticated, IsEnrolledInCourse)
     serializer_class = CourseArticleSerializer

@@ -17,7 +17,7 @@ import logging
 
 from django.db.models import Count
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import OpenApiParameter, extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import decorators, mixins, permissions, response, viewsets
 
 from apps.course.models import Course
@@ -28,6 +28,11 @@ from apps.otl.sync import OtlSyncError, sync_user_courses
 log = logging.getLogger(__name__)
 
 
+@extend_schema_view(
+    list=extend_schema(tags=["course"]),
+    retrieve=extend_schema(tags=["course"]),
+    me=extend_schema(tags=["course"]),
+)
 class CourseViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,

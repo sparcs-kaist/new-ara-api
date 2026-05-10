@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from apps.core.models import Article, ArticleReadLog, Comment, Report
 from apps.core.permissions.report import ReportPermission
 from apps.core.serializers.report import ReportCreateActionSerializer, ReportSerializer
+from apps.course.access import can_act_on_comment, can_read_article
 from ara.classes.viewset import ActionAPIViewSet
 from ara.settings import env
 
@@ -113,6 +114,12 @@ class ReportViewSet(
                     },
                     status=status.HTTP_403_FORBIDDEN,
                 )
+            # 과목글이면 enrollment 검사 (defense in depth)
+            if not can_read_article(request.user, parent_article):
+                return Response(
+                    {"message": gettext("해당 게시판에 접근할 권한이 없습니다.")},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         elif parent_comment_id:
             parent_comment = Comment.objects.filter(id=parent_comment_id).first()
             if (
@@ -126,6 +133,11 @@ class ReportViewSet(
                             "Cannot report comments that are deleted or hidden by reports"
                         )
                     },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if not can_act_on_comment(request.user, parent_comment):
+                return Response(
+                    {"message": gettext("해당 게시판에 접근할 권한이 없습니다.")},
                     status=status.HTTP_403_FORBIDDEN,
                 )
 
