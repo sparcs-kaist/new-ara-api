@@ -26,4 +26,7 @@ env = environ.Env(
     #AWS CDN
     AWS_S3_PUBLIC_URL=(str, os_environ.get("AWS_S3_PUBLIC_URL", "")),
     AWS_S3_PUBLIC_URL_STATIC=(str, os_environ.get("AWS_S3_PUBLIC_URL_STATIC", "")),
+
+    # OTL backend (course sync). 환경별 기본값은 settings/prod, settings/dev 에서.
+    OTL_API_BASE_URL=(str, os_environ.get("OTL_API_BASE_URL", "")),
 )
