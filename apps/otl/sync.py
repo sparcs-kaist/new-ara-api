@@ -96,11 +96,21 @@ def _apply_sync_payload(user, payload: dict) -> list[int]:
     같은 (year, semester, course_code, prof_set) 분반들은 한 Course 로 합본.
     Returns: 이번 sync 에서 새로 생성된 Course id 리스트 (학점/학과 enrich 대상).
     """
+    # 응답 구조 검증: 합법적으로 빈 list 인 경우와 OTL bug 로 key 자체가 없는
+    # 경우를 구분한다. key 가 없으면 sync 실패로 보고 enrollment 를 건드리지 않는다.
+    if not isinstance(payload, dict) or "lecturesWrap" not in payload:
+        raise OtlSyncError(
+            f"OTL response missing lecturesWrap key: keys={list(payload) if isinstance(payload, dict) else type(payload).__name__}"
+        )
+    wraps = payload.get("lecturesWrap")
+    if not isinstance(wraps, list):
+        raise OtlSyncError(f"OTL lecturesWrap is not a list: {type(wraps).__name__}")
+
     now = timezone.now()
     grouped: dict[tuple, list[dict]] = defaultdict(list)
     prof_pool: dict[int, str] = {}
 
-    for wrap in payload.get("lecturesWrap", []) or []:
+    for wrap in wraps:
         year = wrap.get("year")
         semester = wrap.get("semester")
         if year is None or semester is None:
