@@ -126,6 +126,17 @@ class Article(MetaDataModel):
         related_name="article_set",
         db_index=True,
     )
+    related_course = models.ForeignKey(
+        verbose_name="관련 과목 게시판",
+        to="course.Course",
+        on_delete=models.SET_NULL,
+        related_name="article_set",
+        null=True,
+        blank=True,
+        default=None,
+        db_index=True,
+        help_text="과목별 게시판 글일 때 set. 일반 글은 null.",
+    )
     attachments = models.ManyToManyField(
         verbose_name="첨부 파일(들)",
         to="core.Attachment",
