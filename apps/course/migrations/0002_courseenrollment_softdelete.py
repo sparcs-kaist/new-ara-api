@@ -30,8 +30,15 @@ class Migration(migrations.Migration):
             model_name="courseenrollment",
             name="updated_at",
             field=models.DateTimeField(
-                auto_now=True, db_index=True, verbose_name="수정 시간"
+                # auto_now 는 save() 시점 갱신용. 마이그레이션 시점에 기존 row 를
+                # 채울 default 를 별도 명시 (Django 가 prompt 안 띄우게).
+                # preserve_default=False 로 모델 정의에는 default 가 새지 않게 한다.
+                auto_now=True,
+                db_index=True,
+                default=django.utils.timezone.now,
+                verbose_name="수정 시간",
             ),
+            preserve_default=False,
         ),
         migrations.AddField(
             model_name="courseenrollment",

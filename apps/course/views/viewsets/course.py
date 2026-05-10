@@ -15,12 +15,12 @@ from __future__ import annotations
 
 import logging
 
-from django.db.models import Count
+from django.db.models import Count, OuterRef, Subquery
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import decorators, mixins, permissions, response, viewsets
 
-from apps.course.models import Course
+from apps.course.models import Course, CourseEnrollment
 from apps.course.permissions import IsEnrolledInCourse
 from apps.course.serializers import CourseSerializer
 from apps.otl.sync import OtlSyncError, sync_user_courses
@@ -43,11 +43,26 @@ class CourseViewSet(
     pagination_class = None  # 한 학기 과목 수가 적어 페이지네이션 불필요
 
     def get_queryset(self):
-        # 본인이 enroll 된 과목만. enrollment_count 는 `n명` 표시용 annotate.
+        # 본인의 active enrollment 가 있는 과목만 노출. drop (soft-delete) 된 건 제외.
+        # CourseEnrollment.objects 는 MetaDataManager 라 active 만 자동 필터.
         user = self.request.user
+        active_course_ids = (
+            CourseEnrollment.objects.filter(user=user).values("course_id")
+        )
+
+        # 'N명' 표시용 active 수강 인원. 같은 MetaDataManager 사용해 drop 제외.
+        # Subquery 로 outer course 와 분리해 user-filter JOIN 에 영향 받지 않게 한다.
+        active_count_sq = Subquery(
+            CourseEnrollment.objects
+            .filter(course=OuterRef("pk"))
+            .values("course")
+            .annotate(c=Count("id"))
+            .values("c")[:1]
+        )
+
         qs = (
-            Course.objects.filter(enrollments__user=user)
-            .annotate(enrollment_count=Count("enrollments", distinct=True))
+            Course.objects.filter(id__in=Subquery(active_course_ids))
+            .annotate(enrollment_count=active_count_sq)
             .prefetch_related("professors")
         )
 
