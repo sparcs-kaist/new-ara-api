@@ -23,10 +23,17 @@ def _best_articles(period, request) -> dict:
     except AssertionError:
         raise ValueError(f"Wrong period: {period}")
 
+    # 과목게시판 글은 enrolled 사용자만 봐야 하므로 메인 home 의 best 에서 제외.
+    # _get_best 는 Redis vote/hit 로 top 5 를 뽑는데, 과목글 vote 도 같은 키에
+    # 들어가서 BestArticle 에 섞일 수 있다. 표시 단계에서 안전망으로 필터.
     return BestArticleListActionSerializer(
         instance=[
             best_article.article
-            for best_article in BestArticle.objects.filter(period=period, latest=True)
+            for best_article in BestArticle.objects.filter(
+                period=period,
+                latest=True,
+                article__related_course__isnull=True,
+            )
             .select_related("article")
             .reverse()
         ],
