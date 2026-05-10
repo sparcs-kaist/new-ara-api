@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "apps.kaist",
     "apps.one_app",
     "apps.meal",
+    "apps.course",
 ]
 
 MIDDLEWARE = [
