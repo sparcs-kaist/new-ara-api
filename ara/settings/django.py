@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "apps.one_app",
     "apps.meal",
     "apps.course",
+    "apps.otl",
 ]
 
 MIDDLEWARE = [
@@ -150,3 +151,6 @@ CORS_ALLOW_CREDENTIALS = True
 
 #one_app jwt secret
 ONE_APP_JWT_SECRET = env("ONE_APP_JWT_SECRET")
+
+# OTL backend (apps/otl)
+OTL_API_BASE_URL = env("OTL_API_BASE_URL")

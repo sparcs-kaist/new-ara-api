@@ -2,6 +2,7 @@ import socket
 from datetime import datetime, timezone
 
 from ara.settings import INSTALLED_APPS, LOGGING, MIDDLEWARE
+from ara.settings import OTL_API_BASE_URL as _OTL_BASE_URL_FROM_ENV
 
 from ..djangorestframework import REST_FRAMEWORK
 
@@ -56,3 +57,6 @@ REPORT_THRESHOLD = 4
 SCHOOL_RESPONSE_VOTE_THRESHOLD = 3
 ANSWER_PERIOD = 14
 MIN_TIME = datetime.min.replace(tzinfo=timezone.utc)
+
+# env 가 명시적으로 set 됐으면 그걸 우선, 아니면 dev 기본 OTL endpoint
+OTL_API_BASE_URL = _OTL_BASE_URL_FROM_ENV or "https://api.otl.dev.sparcs.org"
