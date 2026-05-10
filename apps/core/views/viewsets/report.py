@@ -6,7 +6,10 @@ from rest_framework.response import Response
 from apps.core.models import Article, ArticleReadLog, Comment, Report
 from apps.core.permissions.report import ReportPermission
 from apps.core.serializers.report import ReportCreateActionSerializer, ReportSerializer
-from apps.course.access import can_act_on_comment, can_read_article
+from apps.course.access import (
+    deny_unenrolled_comment_access,
+    deny_unenrolled_course_access,
+)
 from ara.classes.viewset import ActionAPIViewSet
 from ara.settings import env
 
@@ -114,8 +117,8 @@ class ReportViewSet(
                     },
                     status=status.HTTP_403_FORBIDDEN,
                 )
-            # 과목글이면 enrollment 검사 (defense in depth)
-            if not can_read_article(request.user, parent_article):
+            # 과목글이면 비-수강자 차단 (defense in depth). 일반글은 변화 없음.
+            if deny_unenrolled_course_access(request.user, parent_article):
                 return Response(
                     {"message": gettext("해당 게시판에 접근할 권한이 없습니다.")},
                     status=status.HTTP_403_FORBIDDEN,
@@ -135,7 +138,7 @@ class ReportViewSet(
                     },
                     status=status.HTTP_403_FORBIDDEN,
                 )
-            if not can_act_on_comment(request.user, parent_comment):
+            if deny_unenrolled_comment_access(request.user, parent_comment):
                 return Response(
                     {"message": gettext("해당 게시판에 접근할 권한이 없습니다.")},
                     status=status.HTTP_403_FORBIDDEN,

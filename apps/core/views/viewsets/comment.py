@@ -13,7 +13,10 @@ from apps.core.filters.comment import CommentFilter
 from apps.core.models import Article, Comment, CommentDeleteLog, UserProfile, Vote
 from apps.core.models.board import NameType
 from apps.core.permissions.comment import CommentPermission
-from apps.course.access import can_act_on_comment, can_comment_on_article
+from apps.course.access import (
+    can_comment_on_article,
+    deny_unenrolled_comment_access,
+)
 from apps.core.serializers.comment import (
     CommentCreateActionSerializer,
     CommentSerializer,
@@ -155,13 +158,13 @@ class CommentViewSet(
         return super().perform_destroy(instance)
 
     def _guard_course_comment_access(self, request, comment):
-        """과목글 댓글이면 enrollment 검사. 통과 못하면 403 Response 반환."""
-        if can_act_on_comment(request.user, comment):
-            return None
-        return response.Response(
-            {"message": gettext("해당 게시판에 접근할 권한이 없습니다.")},
-            status=status.HTTP_403_FORBIDDEN,
-        )
+        """과목글 댓글에 비-수강자 차단. 일반글 댓글은 통과 (기존 동작 보존)."""
+        if deny_unenrolled_comment_access(request.user, comment):
+            return response.Response(
+                {"message": gettext("해당 게시판에 접근할 권한이 없습니다.")},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return None
 
     @decorators.action(detail=True, methods=["post"])
     def vote_cancel(self, request, *args, **kwargs):

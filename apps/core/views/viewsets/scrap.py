@@ -1,4 +1,3 @@
-from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext
 from rest_framework import mixins, response, status
 
@@ -6,7 +5,7 @@ from apps.core.documents import ArticleDocument
 from apps.core.models import Article, ArticleReadLog, Scrap
 from apps.core.permissions.scrap import ScrapPermission
 from apps.core.serializers.scrap import ScrapCreateActionSerializer, ScrapSerializer
-from apps.course.access import can_read_article
+from apps.course.access import deny_unenrolled_course_access
 from ara.classes.viewset import ActionAPIViewSet
 
 
@@ -52,11 +51,15 @@ class ScrapViewSet(
         return queryset
 
     def create(self, request, *args, **kwargs):
-        # 과목글 scrap 시 enrollment 가 없으면 403 (defense in depth: id 추측/유출 방지)
+        # 과목글 scrap 은 비-수강자 차단 (defense in depth: id 추측/유출 방지).
+        # 일반글은 기존 동작 그대로 (auth-only). 글 자체가 없는 케이스는
+        # serializer 가 400 으로 처리하도록 위임 (filter().first() 사용).
         parent_article_id = request.data.get("parent_article")
         if parent_article_id:
-            article = get_object_or_404(Article, pk=parent_article_id)
-            if not can_read_article(request.user, article):
+            article = Article.objects.filter(pk=parent_article_id).first()
+            if article is not None and deny_unenrolled_course_access(
+                request.user, article
+            ):
                 return response.Response(
                     {"message": gettext("해당 게시판에 접근할 권한이 없습니다.")},
                     status=status.HTTP_403_FORBIDDEN,
