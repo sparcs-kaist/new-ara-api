@@ -63,6 +63,7 @@ def _get_best(days, period):
 
     return BestArticle.objects.bulk_create(articles)
 
+# Deprecated: beat schedule 제거됨. portal 부담 때문에 비활성화 (재설계 전까지 사용 금지).
 @celery_app.task
 def sync_portal_view_counts():
     PortalCrawlWorker.sync_portal_view_count()
