@@ -115,7 +115,10 @@ class CourseViewSet(
             sync_user_courses(request.user, force=force)
         except OtlSyncError as e:
             # OTL 다운/장애여도 stale enrollment 로 계속 응답 (UX 우선).
-            log.warning("OTL sync failed for user %s, falling back: %r", request.user.id, e)
+            log.warning(
+                "OTL sync failed for user %s, serving stale enrollment: %r",
+                request.user.id, e, exc_info=True,
+            )
 
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset, many=True)
