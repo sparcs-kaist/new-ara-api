@@ -23,7 +23,7 @@ from rest_framework import decorators, mixins, permissions, response, viewsets
 from apps.course.models import Course, CourseEnrollment
 from apps.course.permissions import IsEnrolledInCourse
 from apps.course.serializers import CourseSerializer
-from apps.otl.sync import OtlSyncError, sync_user_courses
+from apps.otl.sync import OtlSyncError, current_term, sync_user_courses
 
 log = logging.getLogger(__name__)
 
@@ -78,31 +78,31 @@ class CourseViewSet(
     @extend_schema(
         summary="본인 수강 과목 목록 조회 (필요시 OTL sync)",
         description=(
-            "현재 로그인한 사용자의 수강 과목들을 반환한다. 마지막 OTL sync "
-            "후 24시간이 지났으면 OTL 에 호출해서 enrollment 를 갱신한다 "
-            "(드랍한 과목은 빠지고 새로 신청한 과목은 추가됨). `?refresh=true` "
-            "로 강제 sync 가능."
+            "(year, semester) 단위로 OTL my-timetable 호출해 해당 학기 enrollment 만 "
+            "갱신한다. year/semester 미지정 시 현재 학기 기본값. 과거 학기는 한 번 "
+            "sync 된 뒤로 영구 캐시 (강의 내역은 종강 후 변하지 않음). 현재 학기는 24h TTL. "
+            "`?refresh=true` 로 강제 sync 가능."
         ),
         parameters=[
             OpenApiParameter(
                 name="refresh",
                 type=OpenApiTypes.BOOL,
                 location=OpenApiParameter.QUERY,
-                description="true 로 주면 24h 캐시 무시하고 강제 OTL sync.",
+                description="true 로 주면 캐시 무시하고 강제 OTL sync.",
                 required=False,
             ),
             OpenApiParameter(
                 name="year",
                 type=OpenApiTypes.INT,
                 location=OpenApiParameter.QUERY,
-                description="개설 연도 필터 (예: 2026)",
+                description="개설 연도 (생략 시 현재 학기).",
                 required=False,
             ),
             OpenApiParameter(
                 name="semester",
                 type=OpenApiTypes.INT,
                 location=OpenApiParameter.QUERY,
-                description="학기 (1=봄, 2=여름, 3=가을, 4=겨울)",
+                description="학기 (1=봄, 2=여름, 3=가을, 4=겨울). 생략 시 현재 학기.",
                 required=False,
             ),
         ],
@@ -111,13 +111,19 @@ class CourseViewSet(
     @decorators.action(detail=False, methods=["get"], url_path="me")
     def me(self, request):
         force = request.query_params.get("refresh", "").lower() in ("1", "true", "yes")
+        cy, cs = current_term()
         try:
-            sync_user_courses(request.user, force=force)
+            year = int(request.query_params.get("year", cy))
+            semester = int(request.query_params.get("semester", cs))
+        except (TypeError, ValueError):
+            year, semester = cy, cs
+        try:
+            sync_user_courses(request.user, year, semester, force=force)
         except OtlSyncError as e:
             # OTL 다운/장애여도 stale enrollment 로 계속 응답 (UX 우선).
             log.warning(
-                "OTL sync failed for user %s, serving stale enrollment: %r",
-                request.user.id, e, exc_info=True,
+                "OTL sync failed for user %s (%s, %s), serving stale enrollment: %r",
+                request.user.id, year, semester, e, exc_info=True,
             )
 
         queryset = self.filter_queryset(self.get_queryset())

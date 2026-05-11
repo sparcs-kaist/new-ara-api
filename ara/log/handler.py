@@ -13,11 +13,11 @@ from ara.log.log_object import ErrorLogObject
 class LogMiddlewareHandler(logging.Handler):
     @staticmethod
     def message_from_record(record):
-        if (
-            isinstance(record.msg, dict)
-            or isinstance(record.msg, str)
-            or isinstance(record.msg, int)
-        ):
+        if isinstance(record.msg, str):
+            # getMessage() 가 args 를 %s 치환해줘야 디버깅 가능 — 안 그러면
+            # "user=%s force=%s" 같은 raw 템플릿이 그대로 박힌다.
+            message = {"raw": record.getMessage()}
+        elif isinstance(record.msg, (dict, int)):
             message = {"raw": record.msg}
         elif isinstance(record.msg, Exception):
             message = ErrorLogObject.format_exception(record.msg)
