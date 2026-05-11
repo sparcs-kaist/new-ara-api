@@ -2,7 +2,8 @@
 
 호출 시점: 유저가 `/api/courses/me/?year=&semester=` 호출 시 (lazy, per-term).
 - (year, semester) 단위 sync. my-timetable 한 번이면 끝.
-- 캐시: 과거 학기는 ∞ (한 번 sync 되면 변할 일 없음). 현재/미래 학기는 24h.
+- 캐시: current 와 직전 학기까지는 24h TTL, current-2 학기부터는 ∞ 캐시.
+  KAIST 학사일정 / 계절학기 (2, 4) 경계가 들쭉날쭉이라 한 학기 margin.
 - 응답 = 진실의 source. 응답에 없는 enrollment 는 해당 (year, semester) 안에서만 soft-delete.
 - OTL 다운: OtlSyncError 발생, 호출자가 stale fallback.
 """
@@ -30,20 +31,35 @@ class OtlSyncError(Exception):
 
 
 def current_term() -> Tuple[int, int]:
-    """오늘 날짜 기준 (year, semester). KAIST 학사 기준 단순화."""
+    """오늘 날짜 기준 (year, semester) heuristic — query 미지정 시 default 용.
+
+    개강일이 들쭉날쭉하고 계절학기 (semester 2, 4) 가 끼어서 월별 boundary
+    가 정확하지 않다. 정학기 (1=spring, 3=fall) 중 가까운 쪽 하나로만 단순화:
+    - 1-7월 → spring
+    - 8-12월 → fall
+    경계 오차는 is_past_term 의 1학기 margin 으로 흡수한다.
+    """
     now = timezone.now()
     y, m = now.year, now.month
-    if 3 <= m <= 6:
-        return (y, 1)  # spring
-    if 7 <= m <= 8:
-        return (y, 2)  # summer
-    if 9 <= m <= 12:
-        return (y, 3)  # fall
-    return (y - 1, 3)  # 1-2월: 가장 최근에 끝난 fall
+    if m <= 7:
+        return (y, 1)
+    return (y, 3)
+
+
+def _previous_term(year: int, semester: int) -> Tuple[int, int]:
+    if semester == 1:
+        return (year - 1, 4)
+    return (year, semester - 1)
 
 
 def is_past_term(year: int, semester: int) -> bool:
-    return (year, semester) < current_term()
+    """current-2 학기 이전이면 past (∞ 캐시). current 와 직전 학기는 24h TTL.
+
+    margin 을 두는 이유: current_term() heuristic 이 학기 경계에서 한 학기
+    어긋나도 잘못된 데이터가 영구 캐시로 박히지 않게 한다.
+    """
+    cy, cs = current_term()
+    return (year, semester) < _previous_term(cy, cs)
 
 
 def _term_enrollment_qs(user, year: int, semester: int):
