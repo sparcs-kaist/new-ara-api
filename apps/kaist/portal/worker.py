@@ -203,6 +203,7 @@ class Worker:
             ]
         )
 
+    # Deprecated: 매 tick 마다 3일치 post 전체에 대해 portal GET 을 날리는 부담 때문에 스케줄에서 제거됨.
     @staticmethod
     def sync_portal_view_count() -> None:
 
