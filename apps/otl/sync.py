@@ -2,7 +2,7 @@
 
 호출 시점: 유저가 `/api/courses/me/` 부를 때 (lazy, on-demand).
 - 24시간 캐시: 가장 최근 enrollment.last_seen_in_otl_at 가 24h 안이면 skip.
-- 응답 = 진실의 source. 응답에 없는 enrollment 는 hard-delete (드랍 1일 내 반영).
+- 응답 = 진실의 source. 응답에 없는 enrollment 는 soft-delete (드랍 1일 내 반영).
 - 끝난 학기 takenLecture 는 OTL 이 보관하므로 자동으로 영구 보존됨.
 - OTL 다운: OtlSyncError 발생, 호출자가 stale fallback.
 """
@@ -48,11 +48,15 @@ def sync_user_courses(user, *, force: bool = False) -> None:
 
     force=False 이고 24h 안에 sync 한 적 있으면 OTL 호출 없이 바로 return.
     """
+    log.info("sync_user_courses start: user=%s force=%s", user.id, force)
+
     if not force and is_user_enrollment_fresh(user):
+        log.info("sync_user_courses skip: user=%s cache fresh (<24h)", user.id)
         return
 
     profile = user.profile
     if not profile.uid:
+        log.warning("sync_user_courses abort: user=%s missing sparcs uid", user.id)
         raise OtlSyncError(f"user {user.id} has no sparcs uid")
 
     try:
@@ -61,32 +65,47 @@ def sync_user_courses(user, *, force: bool = False) -> None:
     except OtlAuthError as e:
         # uid 매핑이 깨진 경우 — 캐시된 otl_user_id 가 남아있다면 한 번 재시도
         if profile.otl_user_id is not None:
-            log.warning("OTL auth failed with cached user_id; refetching info: %r", e)
+            log.warning(
+                "OTL auth failed with cached user_id (user=%s otl_user_id=%s); "
+                "clearing cache and retrying: %r",
+                user.id, profile.otl_user_id, e,
+            )
             profile.otl_user_id = None
             profile.save(update_fields=["otl_user_id"])
             otl_user_id = _ensure_otl_user_id(profile)
             payload = client.get_user_lectures(profile.uid, otl_user_id)
         else:
+            log.warning("OTL auth rejected (user=%s): %r", user.id, e)
             raise OtlSyncError(f"OTL auth rejected: {e}") from e
     except OtlApiError as e:
+        log.warning("OTL fetch failed (user=%s): %r", user.id, e)
         raise OtlSyncError(f"OTL fetch failed: {e}") from e
 
     new_course_ids = _apply_sync_payload(user, payload)
+    log.info(
+        "sync_user_courses applied: user=%s new_courses=%d",
+        user.id, len(new_course_ids),
+    )
 
     # 학점/학과는 takenLectures 응답에 없어 별도 호출 필요. 새로 생긴 Course 만 1회.
     if new_course_ids:
         _enrich_new_courses(profile.uid, new_course_ids)
 
+    log.info("sync_user_courses done: user=%s", user.id)
+
 
 def _ensure_otl_user_id(profile) -> int:
     if profile.otl_user_id:
+        log.info("OTL user_id cached: uid=%s otl_user_id=%s", profile.uid, profile.otl_user_id)
         return profile.otl_user_id
+    log.info("OTL user_id miss; fetching /info: uid=%s", profile.uid)
     info = client.get_user_info(profile.uid)
     otl_uid = info.get("id") if info else None
     if not isinstance(otl_uid, int):
         raise OtlSyncError(f"OTL /info missing numeric id: {info!r}")
     profile.otl_user_id = otl_uid
     profile.save(update_fields=["otl_user_id"])
+    log.info("OTL user_id resolved: uid=%s otl_user_id=%s", profile.uid, otl_uid)
     return otl_uid
 
 
@@ -105,6 +124,28 @@ def _apply_sync_payload(user, payload: dict) -> list[int]:
     wraps = payload.get("lecturesWrap")
     if not isinstance(wraps, list):
         raise OtlSyncError(f"OTL lecturesWrap is not a list: {type(wraps).__name__}")
+
+    # 빈 wrap 가드: 200 OK + lecturesWrap=[] 자체는 신택스상 유효하지만,
+    # 기존 enrollment 가 있는 사용자가 갑자기 빈 응답을 받으면 OTL 내부에서
+    # 부분 장애가 발생해 빈 list 로 fallthrough 했을 가능성이 높다. 진짜
+    # drop-all 이면 한 학기 wrap 은 남아있어야 자연스러움. 이 케이스는 wipe
+    # 하지 말고 OtlSyncError 로 끊어 stale fallback 시킨다.
+    if not wraps:
+        existing_count = CourseEnrollment.objects.filter(user=user).count()
+        if existing_count > 0:
+            log.warning(
+                "OTL returned empty lecturesWrap but user=%s has %d existing "
+                "enrollments — refusing to wipe (suspect OTL upstream failure)",
+                user.id, existing_count,
+            )
+            raise OtlSyncError(
+                f"OTL returned empty lecturesWrap for user with {existing_count} "
+                f"existing enrollments"
+            )
+        log.info(
+            "OTL returned empty lecturesWrap (user=%s, no existing enrollments — no-op)",
+            user.id,
+        )
 
     now = timezone.now()
     grouped: dict[tuple, list[dict]] = defaultdict(list)
@@ -126,6 +167,11 @@ def _apply_sync_payload(user, payload: dict) -> list[int]:
                 "lectureId": lec["lectureId"],
                 "prof_ids": [p["id"] for p in profs],
             })
+
+    log.info(
+        "OTL payload parsed: user=%s wraps=%d courses_grouped=%d professors=%d",
+        user.id, len(wraps), len(grouped), len(prof_pool),
+    )
 
     new_course_ids: list[int] = []
     course_ids: list[int] = []
@@ -171,17 +217,26 @@ def _apply_sync_payload(user, payload: dict) -> list[int]:
                 user=user, course_id__in=course_ids
             ).update(last_seen_in_otl_at=now)
 
-        # 응답에 안 보이는 enrollment 는 hard-delete (드랍 처리)
-        CourseEnrollment.objects.filter(user=user).exclude(
+        # 응답에 안 보이는 enrollment 는 soft-delete (드랍 처리, MetaDataModel)
+        stale = CourseEnrollment.objects.filter(user=user).exclude(
             course_id__in=course_ids
-        ).delete()
+        )
+        stale_count = stale.count()
+        if stale_count:
+            stale.delete()
 
+    log.info(
+        "OTL sync persisted: user=%s courses_total=%d new=%d enrollments_dropped=%d",
+        user.id, len(course_ids), len(new_course_ids), stale_count,
+    )
     return new_course_ids
 
 
 def _enrich_new_courses(uid: str, course_ids: Iterable[int]) -> None:
     """학점/학과 정보 채우기 (best-effort, 실패해도 무시)."""
-    courses = Course.objects.filter(id__in=list(course_ids)).only(
+    course_ids = list(course_ids)
+    log.info("OTL course-detail enrich: uid=%s count=%d", uid, len(course_ids))
+    courses = Course.objects.filter(id__in=course_ids).only(
         "id", "otl_course_id"
     )
     for course in courses:

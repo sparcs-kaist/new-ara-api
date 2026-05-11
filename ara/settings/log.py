@@ -48,5 +48,15 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
+        "apps.otl": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "apps.course": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
 }

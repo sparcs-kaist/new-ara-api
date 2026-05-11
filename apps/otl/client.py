@@ -42,12 +42,25 @@ def _request(method: str, path: str, uid: str, **kwargs: Any) -> Any:
     headers = kwargs.pop("headers", {}) or {}
     headers["Authorization"] = f"Bearer {_sign_jwt(uid)}"
 
+    log.info("OTL request: %s %s uid=%s", method, path, uid)
+    started = time.monotonic()
     try:
         resp = requests.request(
             method, url, headers=headers, timeout=REQUEST_TIMEOUT, **kwargs
         )
     except requests.RequestException as e:
+        elapsed_ms = int((time.monotonic() - started) * 1000)
+        log.warning(
+            "OTL request network-failed: %s %s uid=%s elapsed_ms=%d err=%r",
+            method, path, uid, elapsed_ms, e,
+        )
         raise OtlApiError(f"OTL request to {path} failed: {e!r}") from e
+
+    elapsed_ms = int((time.monotonic() - started) * 1000)
+    log.info(
+        "OTL response: %s %s status=%d bytes=%d elapsed_ms=%d",
+        method, path, resp.status_code, len(resp.content or b""), elapsed_ms,
+    )
 
     if resp.status_code in (401, 403):
         raise OtlAuthError(
