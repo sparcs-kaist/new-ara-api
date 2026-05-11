@@ -78,22 +78,22 @@ def _request(method: str, path: str, uid: str, **kwargs: Any) -> Any:
         raise OtlApiError(f"OTL response not JSON at {path}: {e!r}") from e
 
 
-def get_user_info(uid: str) -> dict:
-    """GET <base>/v2/users/info — {id, name, mail, studentNumber, ...}.
+def get_my_timetable(uid: str, year: int, semester: int) -> dict:
+    """GET <base>/v2/timetables/my-timetable?year=&semester=.
+
+    JWT 의 uid claim 으로 본인 timetable 을 한 번에 받는다. 응답은
+    {"lectures": [{id, courseId, code, name, credit, department:{id,name},
+    professors:[{id,name}], ...}]} 형태로 credit/department/professor 까지
+    포함하므로 별도 enrich 호출 불필요.
 
     base 는 환경별로 다름:
     - prod: https://otl.sparcs.org/api  (path-prefix /api)
     - dev:  https://api.otl.dev.sparcs.org  (subdomain)
     둘 다 path 는 /v2/... 로 통일.
     """
-    return _request("GET", "/v2/users/info", uid)
-
-
-def get_user_lectures(uid: str, otl_user_id: int) -> dict:
-    """GET <base>/v2/users/<otl_user_id>/lectures — LecturesResponse."""
-    return _request("GET", f"/v2/users/{otl_user_id}/lectures", uid)
-
-
-def get_course_detail(uid: str, otl_course_id: int) -> dict:
-    """GET <base>/v2/courses/<id> — Detail (credit, department, ...)."""
-    return _request("GET", f"/v2/courses/{otl_course_id}", uid)
+    return _request(
+        "GET",
+        "/v2/timetables/my-timetable",
+        uid,
+        params={"year": year, "semester": semester},
+    )
