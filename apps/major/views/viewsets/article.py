@@ -1,7 +1,7 @@
 """특정 Major 안의 Article CRUD.
 
 URL: /api/majors/<major_id>/articles/[<pk>/]
-권한: Read : Anyone / Write : IsAuthenticated + ReadAuthWriteOwnMajor (major_id 로 major 게시판 소유권 확인)
+권한: IsSameMajor (sso std_dept_id 가 major 와 일치해야 read/write 가능)
 모든 글은 익명, parent_board 는 dummy "major-articles-internal" 로 강제.
 """
 
@@ -14,7 +14,7 @@ from rest_framework import permissions, response, status, viewsets
 from apps.core.models import Article
 from apps.major.board import get_major_board_id
 from apps.major.models import Major
-from apps.major.permissions import ReadAuthWriteOwnMajor
+from apps.major.permissions import IsSameMajor
 from apps.major.serializers import (
     MajorArticleCreateSerializer,
     MajorArticleListSerializer,
@@ -31,7 +31,7 @@ from apps.major.serializers import (
     destroy=extend_schema(tags=["major"]),
 )
 class MajorArticleViewSet(viewsets.ModelViewSet):
-    permission_classes = (permissions.IsAuthenticated, ReadAuthWriteOwnMajor)
+    permission_classes = (permissions.IsAuthenticated, IsSameMajor)
     serializer_class = MajorArticleSerializer
 
     def get_serializer_class(self):

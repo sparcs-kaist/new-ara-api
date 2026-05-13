@@ -39,6 +39,10 @@ class ArticleAccessPermission(permissions.BasePermission):
     message = "해당 게시물에 대한 접근 권한이 없습니다."
 
     def has_object_permission(self, request, view, obj: Article):
-        from apps.course.access import can_read_article
+        from apps.course.access import can_read_article as course_can_read
+        from apps.major.access import can_read_article as major_can_read
+        from apps.major.access import is_major_article
 
-        return can_read_article(request.user, obj)
+        if is_major_article(obj):
+            return major_can_read(request.user, obj)
+        return course_can_read(request.user, obj)

@@ -51,17 +51,18 @@ from ara.settings import SCHOOL_RESPONSE_VOTE_THRESHOLD
 class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     queryset = Article.objects.all()
 
-    # 과목글 (related_course != None) 은 default 로 모든 액션에서 제외해
-    # 메인 피드/검색/retrieve/update/destroy 가 모두 404 로 응답하도록 한다.
-    # vote_* 만 enrollment 체크를 거쳐 통과시키기 위해 화이트리스트.
-    _COURSE_ARTICLE_ALLOWED_ACTIONS = frozenset(
+    # 과목/학과 글 (related_course / related_major != None) 은 default 로
+    # 모든 액션에서 제외해 메인 피드/검색/retrieve/update/destroy 가 모두
+    # 404 로 응답하도록 한다. vote_* 만 enrollment / same-major 체크를
+    # 거쳐 통과시키기 위해 화이트리스트.
+    _SCOPED_ARTICLE_ALLOWED_ACTIONS = frozenset(
         {"vote_positive", "vote_negative", "vote_cancel"}
     )
 
     def get_queryset(self):
         qs = super().get_queryset()
-        if getattr(self, "action", None) not in self._COURSE_ARTICLE_ALLOWED_ACTIONS:
-            qs = qs.filter(related_course__isnull=True)
+        if getattr(self, "action", None) not in self._SCOPED_ARTICLE_ALLOWED_ACTIONS:
+            qs = qs.filter(related_course__isnull=True, related_major__isnull=True)
         return qs
 
     filterset_class = ArticleFilter
@@ -519,11 +520,12 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             timezone.now().date(), datetime.time.min, datetime.timezone.utc
         )
         # get the articles that are created_at within a week and order by hit_count
-        # 과목게시판 글은 메인 top 에서 제외
+        # 과목/학과게시판 글은 메인 top 에서 제외
         top_articles = (
             Article.objects.filter(
                 created_at__gte=current_date - datetime.timedelta(days=7),
                 related_course__isnull=True,
+                related_major__isnull=True,
             )
             .order_by("-hit_count", "-pk")
             .prefetch_related("article_metadata_set")  # prefetch 추가
