@@ -1,3 +1,4 @@
+import logging
 import time
 from collections import defaultdict
 
@@ -8,6 +9,8 @@ from apps.core.management.scripts.meal_crawler import crawl_daily_meal
 
 from ara import celery_app, redis
 from datetime import datetime, timedelta
+
+log = logging.getLogger(__name__)
 
 
 
@@ -81,6 +84,25 @@ def save_weekly_best():
 @celery_app.task
 def send_email_for_reply_reminder():
     send_email()
+
+@celery_app.task
+def send_push_to_user(user_id: int, title: str, body: str, data: dict | None = None):
+    # push 실패는 비치명적 — 예외를 swallow 해서 retry 폭탄을 막는다.
+    try:
+        from apps.core.push import send_to_user_sync
+        send_to_user_sync(user_id=user_id, title=title, body=body, data=data)
+    except Exception:
+        log.exception("send_push_to_user failed (user_id=%s)", user_id)
+
+
+@celery_app.task
+def send_push_to_users(user_ids: list, title: str, body: str, data: dict | None = None):
+    try:
+        from apps.core.push import send_to_users_sync
+        send_to_users_sync(user_ids=user_ids, title=title, body=body, data=data)
+    except Exception:
+        log.exception("send_push_to_users failed (n=%d)", len(user_ids or []))
+
 
 @celery_app.task
 def crawl_meal():
