@@ -52,14 +52,18 @@ class CourseArticleCreateSerializer(serializers.ModelSerializer):
         fields = ("title", "content", "content_text")
 
     def create(self, validated_data):
-        # 과목게시판 글은 익명 + 부모 board / related_course 강제 주입.
-        # 호출 viewset 에서 context["course"], context["board_id"] 주입.
+        # 과목게시판 글은 익명 + 부모 board 강제 주입.
+        # 게시판 묶음은 related_course_group (학기 무관), related_course 는 출처용.
+        # 호출 viewset 에서 context["course"], context["course_group"],
+        # context["board_id"] 주입.
         course = self.context["course"]
+        course_group = self.context["course_group"]
         board_id = self.context["board_id"]
         return Article.objects.create(
             **validated_data,
             parent_board_id=board_id,
             related_course=course,
+            related_course_group=course_group,
             name_type=NameType.ANONYMOUS.value,
             created_by=self.context["request"].user,
         )

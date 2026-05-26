@@ -135,7 +135,18 @@ class Article(MetaDataModel):
         blank=True,
         default=None,
         db_index=True,
-        help_text="과목별 게시판 글일 때 set. 일반 글은 null.",
+        help_text="글이 작성된 학기 Course (출처). 게시판 묶음은 related_course_group 기준.",
+    )
+    related_course_group = models.ForeignKey(
+        verbose_name="관련 과목 그룹 게시판",
+        to="course.CourseGroup",
+        on_delete=models.SET_NULL,
+        related_name="article_set",
+        null=True,
+        blank=True,
+        default=None,
+        db_index=True,
+        help_text="과목 게시판 글일 때 set. 학기 무관 누적 단위. 일반 글은 null.",
     )
 
     related_major = models.ForeignKey(

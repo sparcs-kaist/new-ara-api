@@ -1,7 +1,9 @@
-"""특정 Course 안의 Article CRUD.
+"""특정 Course 가 속한 그룹의 Article CRUD.
 
 URL: /api/courses/<course_id>/articles/[<pk>/]
-권한: IsEnrolledInCourse (course_id 로 enrollment 확인)
+게시판 단위는 course 가 아니라 그 course 의 CourseGroup — 학기가 달라도
+같은 수업이면 글이 누적된다. course_id 는 "어느 학기에서 들어왔나"의 진입점.
+권한: IsEnrolledInCourseGroup (그룹의 아무 학기라도 수강했으면 접근).
 모든 글은 익명, parent_board 는 dummy "course-articles-internal" 로 강제.
 """
 
@@ -14,7 +16,7 @@ from rest_framework import permissions, response, status, viewsets
 from apps.core.models import Article
 from apps.course.board import get_courses_board_id
 from apps.course.models import Course
-from apps.course.permissions import IsEnrolledInCourse
+from apps.course.permissions import IsEnrolledInCourseGroup
 from apps.course.serializers import (
     CourseArticleCreateSerializer,
     CourseArticleListSerializer,
@@ -31,7 +33,7 @@ from apps.course.serializers import (
     destroy=extend_schema(tags=["course"]),
 )
 class CourseArticleViewSet(viewsets.ModelViewSet):
-    permission_classes = (permissions.IsAuthenticated, IsEnrolledInCourse)
+    permission_classes = (permissions.IsAuthenticated, IsEnrolledInCourseGroup)
     serializer_class = CourseArticleSerializer
 
     def get_serializer_class(self):
@@ -43,18 +45,23 @@ class CourseArticleViewSet(viewsets.ModelViewSet):
             return CourseArticleUpdateSerializer
         return CourseArticleSerializer
 
+    def _get_course(self):
+        return get_object_or_404(Course, pk=self.kwargs["course_id"])
+
     def get_queryset(self):
-        course_id = self.kwargs["course_id"]
+        # 글 묶음은 course 가 아니라 그 course 의 group. 모든 학기 글이 누적된다.
+        course = self._get_course()
         return (
-            Article.objects.filter(related_course_id=course_id)
+            Article.objects.filter(related_course_group_id=course.group_id)
             .order_by("-created_at")
         )
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
-        course_id = self.kwargs.get("course_id")
-        if course_id is not None:
-            ctx["course"] = get_object_or_404(Course, pk=course_id)
+        if self.kwargs.get("course_id") is not None:
+            course = self._get_course()
+            ctx["course"] = course  # 출처 (related_course)
+            ctx["course_group"] = course.group  # 게시판 묶음 (related_course_group)
             ctx["board_id"] = get_courses_board_id()
         return ctx
 

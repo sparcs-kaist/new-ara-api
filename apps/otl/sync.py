@@ -17,7 +17,7 @@ from typing import Tuple
 from django.db import transaction
 from django.utils import timezone
 
-from apps.course.models import Course, CourseEnrollment, Professor
+from apps.course.models import Course, CourseEnrollment, CourseGroup, Professor
 from apps.otl import client
 from apps.otl.client import OtlApiError, OtlAuthError
 
@@ -192,6 +192,13 @@ def _apply_my_timetable(user, year: int, semester: int, payload: dict) -> None:
         for (code, prof_key), entries in grouped.items():
             first = entries[0]
             otl_lecture_ids = sorted({e["lectureId"] for e in entries})
+            # 학기/연도 무관 그룹. 같은 (code, prof_key) 면 다른 학기와 공유.
+            # 대표 title 은 최신 sync 값으로 갱신한다.
+            group, _ = CourseGroup.objects.update_or_create(
+                course_code=code,
+                professors_key=prof_key,
+                defaults={"title": first["name"]},
+            )
             course, created = Course.objects.update_or_create(
                 course_code=code,
                 year=year,
@@ -203,6 +210,7 @@ def _apply_my_timetable(user, year: int, semester: int, payload: dict) -> None:
                     "otl_lecture_ids": otl_lecture_ids,
                     "credit": first["credit"],
                     "department_name": first["department_name"],
+                    "group": group,
                 },
             )
             course.professors.set(first["prof_ids"])

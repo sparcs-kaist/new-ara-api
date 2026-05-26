@@ -22,6 +22,14 @@ class Course(models.Model):
         related_name="courses",
         verbose_name="담당 교수",
     )
+    # 학기/연도 무관하게 같은 수업을 묶는 상위 그룹. (course_code, professors_key)
+    # 가 같은 Course 들이 같은 group 을 공유한다. sync 가 get_or_create 로 채운다.
+    group = models.ForeignKey(
+        "course.CourseGroup",
+        on_delete=models.PROTECT,
+        related_name="courses",
+        verbose_name="과목 그룹",
+    )
     # 같은 (code, year, semester) 안에서 prof set 단위로 dedup 하기 위한 키.
     # 정렬된 professor.id 들을 "," 로 join 한 문자열.
     professors_key = models.CharField(max_length=128, verbose_name="교수 집합 키")
