@@ -19,16 +19,26 @@ def is_course_article(article) -> bool:
     return article is not None and article.related_course_id is not None
 
 
-def _is_enrolled(user, course_id: int) -> bool:
+def _is_enrolled_in_group(user, group_id) -> bool:
+    """그룹에 속한 아무 학기 Course 라도 수강했으면 True (과거 수강 포함).
+
+    읽기 경로(IsEnrolledInCourseGroup)와 동일하게 group 단위로 게이팅한다.
+    course 단위로 보면 A학기 수강자가 같은 그룹 B학기 글에 댓글·투표·스크랩·
+    신고를 못 하는 과도 차단이 생긴다.
+    """
     from apps.course.models import CourseEnrollment
 
-    return CourseEnrollment.objects.filter(user=user, course_id=course_id).exists()
+    if group_id is None:
+        return False
+    return CourseEnrollment.objects.filter(
+        user=user, course__group_id=group_id
+    ).exists()
 
 
 def can_read_article(user, article) -> bool:
     """과목글이면 enrollment, 아니면 parent_board.read_access_mask."""
     if is_course_article(article):
-        return _is_enrolled(user, article.related_course_id)
+        return _is_enrolled_in_group(user, article.related_course_group_id)
     return article.parent_board.group_has_access_permission(
         BoardAccessPermissionType.READ, user.profile.group
     )
@@ -37,7 +47,7 @@ def can_read_article(user, article) -> bool:
 def can_comment_on_article(user, article) -> bool:
     """과목글이면 enrollment, 아니면 parent_board.comment_access_mask."""
     if is_course_article(article):
-        return _is_enrolled(user, article.related_course_id)
+        return _is_enrolled_in_group(user, article.related_course_group_id)
     return article.parent_board.group_has_access_permission(
         BoardAccessPermissionType.COMMENT, user.profile.group
     )
@@ -51,7 +61,7 @@ def deny_unenrolled_course_access(user, article) -> bool:
     """
     if not is_course_article(article):
         return False
-    return not _is_enrolled(user, article.related_course_id)
+    return not _is_enrolled_in_group(user, article.related_course_group_id)
 
 
 def deny_unenrolled_comment_access(user, comment) -> bool:
