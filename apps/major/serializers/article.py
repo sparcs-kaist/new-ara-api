@@ -5,6 +5,7 @@
 모든 글은 익명 (name_type=ANONYMOUS) 강제.
 """
 
+from apps.user.serializers.user import PublicUserSerializer
 from rest_framework import serializers
 
 from apps.core.models import Article
@@ -13,6 +14,7 @@ from apps.core.models.board import NameType
 
 class MajorArticleListSerializer(serializers.ModelSerializer):
     """목록 응답: 본문 일부, 댓글 수, 투표 수 정도만."""
+    created_by = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Article
@@ -20,6 +22,7 @@ class MajorArticleListSerializer(serializers.ModelSerializer):
             "id",
             "title",
             "created_at",
+            "created_by",
             "comment_count",
             "positive_vote_count",
             "negative_vote_count",
@@ -27,8 +30,12 @@ class MajorArticleListSerializer(serializers.ModelSerializer):
         )
         read_only_fields = fields
 
+    def get_created_by(self, obj):
+        return PublicUserSerializer(obj.postprocessed_created_by).data
+
 
 class MajorArticleSerializer(serializers.ModelSerializer):
+    created_by = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = Article
         fields = (
@@ -37,6 +44,7 @@ class MajorArticleSerializer(serializers.ModelSerializer):
             "content",
             "content_text",
             "created_at",
+            "created_by",
             "content_updated_at",
             "comment_count",
             "positive_vote_count",
@@ -44,6 +52,8 @@ class MajorArticleSerializer(serializers.ModelSerializer):
             "hit_count",
         )
         read_only_fields = fields
+    def get_created_by(self, obj):
+        return PublicUserSerializer(obj.postprocessed_created_by).data
 
 
 class MajorArticleCreateSerializer(serializers.ModelSerializer):
@@ -60,7 +70,7 @@ class MajorArticleCreateSerializer(serializers.ModelSerializer):
             **validated_data,
             parent_board_id=board_id,
             related_major=major,
-            name_type=NameType.ANONYMOUS.value,
+            name_type=NameType.REGULAR.value,
             created_by=self.context["request"].user,
         )
 
