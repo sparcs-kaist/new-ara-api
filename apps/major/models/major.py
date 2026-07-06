@@ -9,6 +9,10 @@ class Major(models.Model):
     major_id = models.PositiveIntegerField(
         verbose_name="major_id"
     )
+
+    major_name = models.CharField(max_length=100, verbose_name="학과 이름", default="")
+    major_name_eng = models.CharField(max_length=100, verbose_name="학과 이름(영문)", null=True)
+    major_dept_location = models.CharField(max_length=100, verbose_name="학과 건물 위치", null=True)
     
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="생성 시간")
 
