@@ -50,9 +50,18 @@ class CourseGroupViewSet(
 
         # 본인이 enroll 된 Course 가 하나라도 속한 그룹만. courses 는 annotate 된
         # 쿼리셋으로 prefetch 해 serializer 가 N+1 없이 학기 목록을 만든다.
+        #
+        # enrollment 를 매니저(CourseEnrollment.objects) 경유로 먼저 필터해야
+        # soft-delete(드랍) 된 수강이 빠진다. courses__enrollments 스패닝 JOIN 은
+        # 관련 모델의 MetaDataManager 를 우회해 드랍한 수강도 매칭하므로 쓰지 않는다.
+        enrolled_group_ids = (
+            CourseEnrollment.objects
+            .filter(user=user)
+            .values("course__group_id")
+        )
         return (
             CourseGroup.objects
-            .filter(courses__enrollments__user=user)
+            .filter(id__in=enrolled_group_ids)
             .distinct()
             .prefetch_related(Prefetch("courses", queryset=courses_qs))
             .order_by("course_code")

@@ -1,19 +1,19 @@
 """특정 Major 안의 Article CRUD.
 
-URL: /api/majors/<major_id>/articles/[<pk>/]
-권한: IsSameMajor (sso std_dept_id 가 major 와 일치해야 read/write 가능)
-모든 글은 익명, parent_board 는 dummy "major-articles-internal" 로 강제.
+URL: /api/majors/<std_dept_id>/articles/[<pk>/]
+권한: IsSameMajor (sso std_dept_id 가 URL std_dept_id 와 일치해야 read/write 가능)
+글은 닉네임(REGULAR), parent_board 는 dummy "major-articles-internal" 로 강제.
+Major row 는 접근 시 SSO 정보로 lazy get_or_create 된다.
 """
 
 from __future__ import annotations
 
-from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import permissions, response, status, viewsets
 
 from apps.core.models import Article
+from apps.major.access import get_or_create_major_for_user
 from apps.major.board import get_major_board_id
-from apps.major.models import Major
 from apps.major.permissions import IsSameMajor
 from apps.major.serializers import (
     MajorArticleCreateSerializer,
@@ -44,17 +44,20 @@ class MajorArticleViewSet(viewsets.ModelViewSet):
         return MajorArticleSerializer
 
     def get_queryset(self):
-        major_id = self.kwargs["major_id"]
+        # related_major 는 Major(PK=std_dept_id) FK 이므로 related_major_id 가
+        # 곧 std_dept_id. URL 값으로 바로 필터한다.
+        std_dept_id = self.kwargs["std_dept_id"]
         return (
-            Article.objects.filter(related_major_id=major_id)
+            Article.objects.filter(related_major_id=std_dept_id)
             .order_by("-created_at")
         )
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
-        major_id = self.kwargs.get("major_id")
-        if major_id is not None:
-            ctx["major"] = get_object_or_404(Major, pk=major_id)
+        if self.kwargs.get("std_dept_id") is not None:
+            # 권한(IsSameMajor)이 URL std_dept_id == 유저 std_dept_id 를 보장.
+            # Major 가 없으면 SSO 정보로 이 자리에서 생성한다.
+            ctx["major"] = get_or_create_major_for_user(self.request.user)
             ctx["board_id"] = get_major_board_id()
         return ctx
 
@@ -63,10 +66,10 @@ class MajorArticleViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
 
     @extend_schema(
-        summary="학과 게시판 글 작성 (익명 강제)",
+        summary="학과 게시판 글 작성",
         description=(
-            "현재 사용자가 해당 학과여야 작성 가능 "
-            "name_type 은 항상 ANONYMOUS, parent_board 는 dummy major-articles "
+            "현재 사용자가 해당 학과여야 작성 가능. "
+            "name_type 은 닉네임(REGULAR), parent_board 는 dummy major-articles "
             "board 로 자동 set."
         ),
         request=MajorArticleCreateSerializer,

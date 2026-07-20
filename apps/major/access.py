@@ -9,7 +9,7 @@ course.access 와 같은 구조. 두 종류의 헬퍼:
 
 SSO 의 major 식별자는 `sso_user_info["kaist_v2_info"]` 안의
 `std_dept_id` 이며, kaist_v2_info 는 JSON 문자열로 저장되어 있어 파싱이
-필요하다. Major 모델의 `major_id` 가 이 값(정수형)과 매칭된다.
+필요하다. Major 모델의 PK(`std_dept_id`) 가 이 값(정수형)과 곧바로 일치한다.
 """
 
 
@@ -24,8 +24,11 @@ def is_major_article(article) -> bool:
     return article is not None and article.related_major_id is not None
 
 
-def user_major_id(user) -> int | None:
-    """SSO 의 std_dept_id 를 정수로 반환. 없거나 파싱 실패 시 None."""
+def user_major_info(user) -> dict | None:
+    """SSO kaist_v2_info 에서 학과 정보를 dict 로 추출. 실패 시 None.
+
+    반환: {"std_dept_id": int, "major_name": str, "major_name_eng": str | None}
+    """
     profile = getattr(user, "profile", None)
     if profile is None:
         return None
@@ -35,20 +38,66 @@ def user_major_id(user) -> int | None:
         return None
     try:
         info = json.loads(raw) if isinstance(raw, str) else raw
-        dept_id = info.get("std_dept_id")
-        return int(dept_id) if dept_id is not None else None
     except (ValueError, TypeError, json.JSONDecodeError):
         return None
 
+    std_dept_id = info.get("std_dept_id")
+    if std_dept_id is None:
+        return None
+    try:
+        std_dept_id = int(std_dept_id)
+    except (TypeError, ValueError):
+        return None
 
-def _is_same_major(user, major_pk: int) -> bool:
-    """user 가 해당 Major (PK) 와 같은 학과인가."""
+    return {
+        "std_dept_id": std_dept_id,
+        "major_name": info.get("std_dept_kor_nm") or "",
+        "major_name_eng": info.get("std_dept_eng_nm"),
+    }
+
+
+def user_major_id(user) -> int | None:
+    """SSO 의 std_dept_id 를 정수로 반환. 없거나 파싱 실패 시 None."""
+    info = user_major_info(user)
+    return info["std_dept_id"] if info else None
+
+
+def get_or_create_major_for_user(user):
+    """요청 유저의 SSO 정보로 자기 학과 Major row 를 lazy get_or_create.
+
+    Major 는 사전 시드하지 않는다. 권한(IsSameMajor)이 "URL 의 std_dept_id ==
+    유저 SSO 의 std_dept_id" 를 이미 보장하므로, 유저 SSO 의 학과명으로 채워도
+    URL 이 가리키는 학과와 항상 일치한다. board.py 의 get_major_board_id 와
+    같은 lazy 생성 패턴.
+    """
     from apps.major.models import Major
 
-    user_dept = user_major_id(user)
-    if user_dept is None:
+    info = user_major_info(user)
+    if info is None:
+        return None
+    major, _ = Major.objects.get_or_create(
+        std_dept_id=info["std_dept_id"],
+        defaults={
+            "major_name": info["major_name"],
+            "major_name_eng": info["major_name_eng"],
+        },
+    )
+    return major
+
+
+def _is_same_major(user, std_dept_id) -> bool:
+    """user 의 SSO std_dept_id 가 대상 학과(std_dept_id, = Major PK) 와 같은가.
+
+    Major row 존재 여부와 무관하게 SSO 값만 비교한다. row 는 실제 접근 시
+    viewset 에서 lazy 생성되므로, 여기서 존재를 요구하면 첫 접근이 막힌다.
+    """
+    user_dept_id = user_major_id(user)
+    if user_dept_id is None:
         return False
-    return Major.objects.filter(pk=major_pk, major_id=user_dept).exists()
+    try:
+        return int(std_dept_id) == user_dept_id
+    except (TypeError, ValueError):
+        return False
 
 
 def can_read_article(user, article) -> bool:

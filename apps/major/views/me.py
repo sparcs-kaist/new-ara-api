@@ -4,13 +4,22 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.user.models.user_profile import UserProfile
-from apps.user.serializers.user_profile import MyPageUserProfileSerializer
+from apps.major.access import user_major_info
 
 
 class MeView(APIView):
-    """
-    Get the SSO_user_info which contains the user's major. 
+    """현재 로그인 유저의 학과 정보를 반환.
+
+    SSO(kaist_v2_info) 원본 blob 대신 학과 식별자/이름만 추려서 내려준다.
+    여기서 주는 std_dept_id 를 그대로 /api/majors/<std_dept_id>/ URL 에
+    사용하면 된다.
+
+    응답 예:
+        {
+            "std_dept_id": 4581,
+            "major_name": "새내기과정학부",
+            "major_name_eng": "School of Freshman"
+        }
     """
 
     @method_decorator(ensure_csrf_cookie)
@@ -18,9 +27,12 @@ class MeView(APIView):
         if not request.user.is_authenticated:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        try:
-            profile = UserProfile.objects.get(user_id=request.user.id)
-        except UserProfile.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        info = user_major_info(request.user)
+        if info is None:
+            # 프로필이 없거나 SSO 에 학과 정보가 없는 경우.
+            return Response(
+                {"detail": "학과 정보를 확인할 수 없습니다."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        return Response(profile.sso_user_info, status=status.HTTP_200_OK)
+        return Response(info, status=status.HTTP_200_OK)

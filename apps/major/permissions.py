@@ -15,7 +15,7 @@ from apps.major.access import _is_same_major
 class IsSameMajor(permissions.BasePermission):
     """ViewSet 의 view-level + object-level 권한 체크.
 
-    - URL kwarg `major_id` (Major PK) 로부터 major 식별.
+    - URL kwarg `std_dept_id` (Major PK) 로부터 major 식별.
     - 인증 필수.
     - 학과별 게시판은 same-major 만 read/write 가능.
     """
@@ -26,19 +26,20 @@ class IsSameMajor(permissions.BasePermission):
         if not (request.user and request.user.is_authenticated):
             return False
 
-        major_pk = view.kwargs.get("major_id") or view.kwargs.get("pk")
-        if major_pk is None:
+        std_dept_id = view.kwargs.get("std_dept_id")
+        if std_dept_id is None:
             # list/me 등 major 가 특정되지 않는 액션은 viewset 의
             # get_queryset 이 필터링하므로 통과.
             return True
 
-        return _is_same_major(request.user, int(major_pk))
+        return _is_same_major(request.user, std_dept_id)
 
     def has_object_permission(self, request, view, obj) -> bool:
-        # obj 는 Major 또는 Article (related_major FK)
-        major_pk = getattr(obj, "id", None)
+        # obj 는 Article (related_major FK, = std_dept_id) 또는 Major (PK = std_dept_id).
         if hasattr(obj, "related_major_id"):
-            major_pk = obj.related_major_id
-        if major_pk is None:
+            std_dept_id = obj.related_major_id
+        else:
+            std_dept_id = getattr(obj, "pk", None)
+        if std_dept_id is None:
             return False
-        return _is_same_major(request.user, major_pk)
+        return _is_same_major(request.user, std_dept_id)
