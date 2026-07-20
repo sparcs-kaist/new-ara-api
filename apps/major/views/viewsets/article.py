@@ -8,12 +8,14 @@ Major row 는 접근 시 SSO 정보로 lazy get_or_create 된다.
 
 from __future__ import annotations
 
+from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import permissions, response, status, viewsets
 
 from apps.core.models import Article
-from apps.major.access import get_or_create_major_for_user
+from apps.major.access import get_or_create_major_for_user, user_major_id
 from apps.major.board import get_major_board_id
+from apps.major.models import Major
 from apps.major.permissions import IsSameMajor
 from apps.major.serializers import (
     MajorArticleCreateSerializer,
@@ -54,10 +56,15 @@ class MajorArticleViewSet(viewsets.ModelViewSet):
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
-        if self.kwargs.get("std_dept_id") is not None:
-            # 권한(IsSameMajor)이 URL std_dept_id == 유저 std_dept_id 를 보장.
-            # Major 가 없으면 SSO 정보로 이 자리에서 생성한다.
-            ctx["major"] = get_or_create_major_for_user(self.request.user)
+        std_dept_id = self.kwargs.get("std_dept_id")
+        if std_dept_id is not None:
+            user = self.request.user
+            if int(std_dept_id) == user_major_id(user):
+                # 내 SSO 학과: 없으면 SSO 정보로 lazy 생성 (첫 접근).
+                ctx["major"] = get_or_create_major_for_user(user)
+            else:
+                # add 한 타 학과: 이미 존재하는 row (읽기 전용). 생성하지 않는다.
+                ctx["major"] = get_object_or_404(Major, pk=std_dept_id)
             ctx["board_id"] = get_major_board_id()
         return ctx
 

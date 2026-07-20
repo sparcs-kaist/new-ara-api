@@ -1,7 +1,15 @@
-
-from .article import MajorArticleCreateSerializer, MajorArticleListSerializer, MajorArticleSerializer, MajorArticleUpdateSerializer
-
-all = (MajorArticleCreateSerializer,
+from .article import (
+    MajorArticleCreateSerializer,
     MajorArticleListSerializer,
     MajorArticleSerializer,
-    MajorArticleUpdateSerializer,)
+    MajorArticleUpdateSerializer,
+)
+from .major import MajorSerializer
+
+__all__ = (
+    "MajorArticleCreateSerializer",
+    "MajorArticleListSerializer",
+    "MajorArticleSerializer",
+    "MajorArticleUpdateSerializer",
+    "MajorSerializer",
+)

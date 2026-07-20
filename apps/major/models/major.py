@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 
@@ -20,6 +21,14 @@ class Major(models.Model):
     major_name = models.CharField(max_length=100, verbose_name="학과 이름", default="")
     major_name_eng = models.CharField(max_length=100, verbose_name="학과 이름(영문)", null=True)
     major_dept_location = models.CharField(max_length=100, verbose_name="학과 건물 위치", null=True)
+
+    # 이 학과 게시판을 '추가(add)'해서 읽는 유저들. 컬럼은 through(UserMajor)에.
+    readers = models.ManyToManyField(
+        to=settings.AUTH_USER_MODEL,
+        through="major.UserMajor",
+        related_name="added_majors",
+        verbose_name="추가한 유저들",
+    )
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="생성 시간")
 

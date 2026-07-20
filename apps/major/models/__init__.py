@@ -1,3 +1,7 @@
 from .major import Major
+from .user_major import UserMajor
 
-all = (Major)
+__all__ = (
+    "Major",
+    "UserMajor",
+)

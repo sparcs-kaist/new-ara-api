@@ -88,8 +88,9 @@ def get_or_create_major_for_user(user):
 def _is_same_major(user, std_dept_id) -> bool:
     """user 의 SSO std_dept_id 가 대상 학과(std_dept_id, = Major PK) 와 같은가.
 
-    Major row 존재 여부와 무관하게 SSO 값만 비교한다. row 는 실제 접근 시
-    viewset 에서 lazy 생성되므로, 여기서 존재를 요구하면 첫 접근이 막힌다.
+    쓰기(글/댓글/투표/스크랩/신고) 권한 판정에 쓴다. Major row 존재 여부와
+    무관하게 SSO 값만 비교한다. row 는 실제 접근 시 viewset 에서 lazy 생성되므로,
+    여기서 존재를 요구하면 첫 접근이 막힌다.
     """
     user_dept_id = user_major_id(user)
     if user_dept_id is None:
@@ -100,10 +101,35 @@ def _is_same_major(user, std_dept_id) -> bool:
         return False
 
 
+def user_added_major_ids(user) -> set[int]:
+    """user 가 add 해 둔 타 학과들의 std_dept_id(= Major PK) 집합."""
+    from apps.major.models import UserMajor
+
+    return set(
+        UserMajor.objects.filter(user=user).values_list("major_id", flat=True)
+    )
+
+
+def can_read_major(user, std_dept_id) -> bool:
+    """user 가 대상 학과 게시판을 '읽을' 수 있는가.
+
+    읽기 = 내 SSO 학과 OR 내가 add 한 학과. 쓰기와 달리 add 한 타 학과도 허용.
+    """
+    if _is_same_major(user, std_dept_id):
+        return True
+    try:
+        std = int(std_dept_id)
+    except (TypeError, ValueError):
+        return False
+    from apps.major.models import UserMajor
+
+    return UserMajor.objects.filter(user=user, major_id=std).exists()
+
+
 def can_read_article(user, article) -> bool:
-    """학과글이면 same-major, 아니면 parent_board.read_access_mask."""
+    """학과글이면 읽기 권한(내 학과 OR add 한 학과), 아니면 parent_board.read_access_mask."""
     if is_major_article(article):
-        return _is_same_major(user, article.related_major_id)
+        return can_read_major(user, article.related_major_id)
     return article.parent_board.group_has_access_permission(
         BoardAccessPermissionType.READ, user.profile.group
     )
