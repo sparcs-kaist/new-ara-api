@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import mixins, permissions, response, status, viewsets
@@ -31,7 +32,14 @@ class MajorViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = MajorSerializer
     pagination_class = None
-    queryset = Major.objects.all().order_by("std_dept_id")
+
+    def get_queryset(self):
+        # readers_count = 이 학과를 add 한 유저 수 (UserMajor row 수).
+        # M2M(readers) 대신 through 역참조로 세어 조인 하나로 끝낸다.
+        return (
+            Major.objects.annotate(readers_count=Count("user_additions"))
+            .order_by("std_dept_id")
+        )
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
@@ -42,14 +50,20 @@ class MajorViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     @extend_schema(tags=["major"], summary="내가 볼 수 있는 학과 게시판 목록 (내 학과 + 추가한 학과)")
     def my_major(self, request):
         user = request.user
-        # 내가 add 한 타 학과들 (UserMajor / readers M2M 경유).
-        majors = list(
-            Major.objects.filter(readers=user).order_by("std_dept_id")
-        )
-        # 내 SSO 학과도 포함 (add 없이도 항상 접근 가능). 없으면 lazy 생성 후 맨 앞에.
+        # 내 SSO 학과도 포함 (add 없이도 항상 접근 가능). 없으면 lazy 생성.
         home = get_or_create_major_for_user(user)
-        if home is not None and home not in majors:
-            majors.insert(0, home)
+
+        # filter(readers=user) 를 annotate 와 같이 쓰면 조인이 겹쳐 count 가
+        # 틀어지므로, id 집합을 먼저 뽑아 pk__in 으로 거른다.
+        ids = set(user_added_major_ids(user))
+        if home is not None:
+            ids.add(home.std_dept_id)
+
+        majors = list(self.get_queryset().filter(pk__in=ids))
+        # 내 학과를 맨 앞으로.
+        if home is not None:
+            majors.sort(key=lambda m: (m.std_dept_id != home.std_dept_id, m.std_dept_id))
+
         serializer = self.get_serializer(majors, many=True)
         return response.Response(serializer.data)
 

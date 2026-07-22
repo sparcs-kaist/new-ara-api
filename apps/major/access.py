@@ -71,6 +71,7 @@ def get_or_create_major_for_user(user):
     같은 lazy 생성 패턴.
     """
     from apps.major.models import Major
+    from apps.major.models.major import get_major_code
 
     info = user_major_info(user)
     if info is None:
@@ -80,6 +81,8 @@ def get_or_create_major_for_user(user):
         defaults={
             "major_name": info["major_name"],
             "major_name_eng": info["major_name_eng"],
+            # SSO 는 코드를 주지 않으므로 학과 이름으로 매핑표에서 찾아 채운다.
+            "major_code": get_major_code(info["major_name"]),
         },
     )
     return major
