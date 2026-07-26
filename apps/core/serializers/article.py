@@ -8,6 +8,10 @@ from rest_framework import exceptions, serializers
 from rest_framework.utils.serializer_helpers import ReturnDict
 from drf_spectacular.utils import extend_schema_field, OpenApiTypes  # 수정: OpenApiTypes 추가
 
+from apps.core.article_scope import (
+    exclude_scoped_articles,
+    scoped_article_sql_condition,
+)
 from apps.core.documents import ArticleDocument
 from apps.core.models import Article, ArticleHiddenReason, Block, Board, Comment, Scrap
 from apps.core.models.board import BoardAccessPermissionType, NameType
@@ -165,23 +169,27 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
     def filter_articles(obj, request):
         from_view = request.query_params.get("from_view")
 
+        # side-article 네비게이션은 일반 게시판 맥락에서만 동작한다. 모든 분기가
+        # 이 base 에서 출발해야 과목/학과 글이 앞/뒤 글로 섞여 들어오지 않는다.
+        base = exclude_scoped_articles(Article.objects.all())
+
         if from_view == "-portal":
-            return Article.objects.exclude(parent_board__slug="portal-notice")
+            return base.exclude(parent_board__slug="portal-notice")
 
         elif from_view == "user":
             created_by_id = request.query_params.get("created_by", request.user.id)
-            return Article.objects.filter(created_by_id=created_by_id)
+            return base.filter(created_by_id=created_by_id)
 
         elif from_view == "board":
             parent_board = obj.parent_board
-            return Article.objects.filter(parent_board=parent_board)
+            return base.filter(parent_board=parent_board)
 
         elif from_view == "topic":
             parent_topic = obj.parent_topic
-            return Article.objects.filter(parent_topic=parent_topic)
+            return base.filter(parent_topic=parent_topic)
 
         elif from_view == "scrap":
-            articles = Article.objects.filter(
+            articles = base.filter(
                 scrap_set__scrapped_by=request.user
             ).order_by("-scrap_set__created_at")
             if not articles.filter(id=obj.id).exists():
@@ -195,7 +203,7 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
                 timezone.now().date(), datetime.time.min, datetime.timezone.utc
             )
             # get the articles that are created_at within a week and order by hit_count
-            top_articles = Article.objects.filter(
+            top_articles = base.filter(
                 created_at__gte=current_date - datetime.timedelta(days=7)
             ).order_by("-hit_count", "-pk")
 
@@ -205,7 +213,7 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
                 )
             return top_articles
 
-        return Article.objects.all()
+        return base
 
     def get_side_articles(self, obj) -> dict:
         request = self.context["request"]
@@ -307,15 +315,24 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
         else:
             query_params = [request.user.id, obj.id, last_read_log_of_obj.created_at]
 
+        # read log 는 열람 당시 권한으로 생성된 기록이라, 수강 드랍이나 학과 변경
+        # 뒤에도 남는다. ORM 을 안 타는 경로이므로 scoped 글 제외를 SQL 에 직접 건다.
+        scoped_exclusion_sql = (
+            f"AND {scoped_article_sql_condition('`read_article`')}"
+        )
+
         before_query = f"""
         SELECT * FROM `core_article`
         JOIN (
             SELECT `core_articlereadlog`.`article_id`, MAX(`core_articlereadlog`.`created_at`) AS my_last_read_at
             FROM `core_articlereadlog`
+            JOIN `core_article` AS `read_article`
+                ON `read_article`.`id` = `core_articlereadlog`.`article_id`
             WHERE (
                 `core_articlereadlog`.`deleted_at` = '0001-01-01 00:00:00' AND
                 `core_articlereadlog`.`read_by_id` = %s AND
                 `core_articlereadlog`.`article_id` <> %s
+                {scoped_exclusion_sql}
                 {search_restriction_sql}
             )
             GROUP BY `core_articlereadlog`.`article_id`
@@ -330,10 +347,13 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
         JOIN (
             SELECT `core_articlereadlog`.`article_id`, MAX(`core_articlereadlog`.`created_at`) AS my_last_read_at
             FROM `core_articlereadlog`
+            JOIN `core_article` AS `read_article`
+                ON `read_article`.`id` = `core_articlereadlog`.`article_id`
             WHERE (
                 `core_articlereadlog`.`deleted_at` = '0001-01-01 00:00:00' AND
                 `core_articlereadlog`.`read_by_id` = %s AND
                 `core_articlereadlog`.`article_id` <> %s
+                {scoped_exclusion_sql}
                 {search_restriction_sql}
             )
             GROUP BY `core_articlereadlog`.`article_id`
@@ -474,6 +494,13 @@ class ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSeriali
         read_only=True,
     )
     title = serializers.SerializerMethodField(
+        read_only=True,
+    )
+    # Meta.exclude 를 재정의하면서 부모의 exclude 에 있던 "content" 가 빠져,
+    # 모델 필드가 마스킹 없이 그대로 나가고 있었다 (신고로 가려진 글·차단한
+    # 유저의 글 본문이 목록 응답에 노출). 상세(ArticleSerializer)와 동일하게
+    # BaseArticleSerializer.get_content 를 타도록 method field 로 선언한다.
+    content = serializers.SerializerMethodField(
         read_only=True,
     )
     created_by = serializers.SerializerMethodField(

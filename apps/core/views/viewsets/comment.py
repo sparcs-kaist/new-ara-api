@@ -22,7 +22,6 @@ from apps.major.access import (
     deny_non_same_major_comment_access,
     is_major_article,
 )
-from apps.course.access import is_course_article
 from apps.core.serializers.comment import (
     CommentCreateActionSerializer,
     CommentSerializer,
@@ -73,12 +72,11 @@ class CommentViewSet(
         # TODO: Use CommentPermission for permission checking logic
         # self.check_object_permissions(request, parent_article)
 
-        # 과목글이면 enrollment, 학과글이면 same-major, 아니면 board
-        # comment_access_mask 체크.
+        # 학과글이면 same-major 체크. 그 외는 course_can_comment 가
+        # 과목글이면 enrollment, 일반글이면 board comment_access_mask 로
+        # 알아서 갈라준다.
         if is_major_article(parent_article):
             allowed = major_can_comment(request.user, parent_article)
-        elif is_course_article(parent_article):
-            allowed = course_can_comment(request.user, parent_article)
         else:
             allowed = course_can_comment(request.user, parent_article)
         if allowed:
@@ -100,8 +98,6 @@ class CommentViewSet(
                 id=parent_comment_id
             )
             parent_article = parent_comment.parent_article
-
-        print(parent_article)
 
         created_by = self.request.user
         is_school_admin = (

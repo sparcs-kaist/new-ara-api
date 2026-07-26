@@ -51,11 +51,17 @@ class MajorArticleViewSet(viewsets.ModelViewSet):
         std_dept_id = self.kwargs["std_dept_id"]
         return (
             Article.objects.filter(related_major_id=std_dept_id)
+            # 마스킹 판정(hidden_reasons)과 작성자 표기가 매 row 마다
+            # parent_board / created_by.profile 을 보므로 같이 당겨온다.
+            .select_related("created_by__profile", "parent_board")
             .order_by("-created_at")
         )
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
+        # core 와 동일하게 ?override_hidden 으로 마스킹 해제를 요청할 수 있다.
+        # (해제 가능한 사유인지는 serializer 가 CAN_OVERRIDE_REASONS 로 판단)
+        ctx["override_hidden"] = "override_hidden" in self.request.query_params
         std_dept_id = self.kwargs.get("std_dept_id")
         if std_dept_id is not None:
             user = self.request.user
@@ -86,7 +92,11 @@ class MajorArticleViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         article = serializer.save()
-        out = MajorArticleSerializer(article).data
+        # 읽기 serializer 는 마스킹 판정에 context["request"] 를 쓰므로
+        # context 없이 만들면 KeyError 가 난다.
+        out = MajorArticleSerializer(
+            article, context=self.get_serializer_context()
+        ).data
         return response.Response(out, status=status.HTTP_201_CREATED)
 
     @extend_schema(summary="학과 게시판 글 상세")

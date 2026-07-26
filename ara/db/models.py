@@ -17,12 +17,16 @@ class MetaDataQuerySet(models.QuerySet):
     def hard_delete(self):
         return super().delete()
 
-    def bulk_create(self, objs, batch_size=None, ignore_conflicts=False):
+    def bulk_create(self, objs, batch_size=None, **kwargs):
+        # created_at 을 채우려고 감싼 래퍼이므로, 나머지 인자
+        # (ignore_conflicts / update_conflicts / unique_fields ...) 는 그대로
+        # super 에 넘긴다. 예전엔 ignore_conflicts 를 받기만 하고 버려서
+        # ON CONFLICT 절이 생성되지 않아 동시 insert 시 unique 위반이 났다.
         for obj in objs:
             if not hasattr(obj, "created_at"):
                 obj.created_at = timezone.now()
 
-        return super().bulk_create(objs, batch_size)
+        return super().bulk_create(objs, batch_size=batch_size, **kwargs)
 
 
 class MetaDataManager(models.Manager):

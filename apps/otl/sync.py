@@ -193,12 +193,27 @@ def _apply_my_timetable(user, year: int, semester: int, payload: dict) -> None:
             first = entries[0]
             otl_lecture_ids = sorted({e["lectureId"] for e in entries})
             # 학기/연도 무관 그룹. 같은 (code, prof_key) 면 다른 학기와 공유.
-            # 대표 title 은 최신 sync 값으로 갱신한다.
-            group, _ = CourseGroup.objects.update_or_create(
+            #
+            # 대표 title 은 "가장 최신 학기" 의 과목명이어야 한다. update_or_create
+            # 로 매번 덮으면 유저가 과거 학기를 sync 하는 순간 그룹 전체의 대표명이
+            # 옛 이름으로 회귀한다 (그룹은 공용 row 라 다른 유저에게도 보인다).
+            # 그래서 생성 시에만 채우고, 이후엔 title 출처 학기보다 뒤일 때만 갱신.
+            group, group_created = CourseGroup.objects.get_or_create(
                 course_code=code,
                 professors_key=prof_key,
-                defaults={"title": first["name"]},
+                defaults={
+                    "title": first["name"],
+                    "title_year": year,
+                    "title_semester": semester,
+                },
             )
+            if not group_created and (year, semester) > group.title_term():
+                group.title = first["name"]
+                group.title_year = year
+                group.title_semester = semester
+                group.save(
+                    update_fields=["title", "title_year", "title_semester"]
+                )
             course, created = Course.objects.update_or_create(
                 course_code=code,
                 year=year,

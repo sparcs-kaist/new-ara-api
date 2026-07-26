@@ -6,6 +6,7 @@ from elasticsearch_dsl import Q, analyzer, tokenizer
 from elasticsearch_dsl.analysis import token_filter
 from elasticsearch_dsl.query import Query
 
+from apps.core.article_scope import exclude_scoped_articles
 from apps.core.models import Article
 from apps.user.models import UserProfile
 
@@ -74,7 +75,11 @@ class ArticleDocument(Document):
         related_models = [settings.AUTH_USER_MODEL, UserProfile]
 
     def get_queryset(self):
-        return (
+        # 과목/학과 게시판 글은 색인 자체에서 뺀다. ES 안에는 Ara 의 권한 체계가
+        # 없으므로, 색인에 들어가는 순간 검색 경로·ES 직접 접근 모두에서 본문이
+        # 노출될 수 있다. 색인에 없으면 검색 관련 경로가 한 번에 정리된다.
+        # (과목/학과 게시판 내 검색이 필요해지면 별도 인덱스로 분리할 것)
+        return exclude_scoped_articles(
             super(ArticleDocument, self)
             .get_queryset()
             .prefetch_related("created_by")
@@ -107,7 +112,9 @@ class ArticleDocument(Document):
 
     @staticmethod
     def get_instances_from_related(related_instance):
+        # 유저/프로필이 바뀌면 그 유저의 글을 재색인하는 경로. 여기서도 scoped
+        # 글을 빼지 않으면 get_queryset 에서 제외한 글이 이 경로로 되살아난다.
         if isinstance(related_instance, apps.get_model(settings.AUTH_USER_MODEL)):
-            return related_instance.article_set.all()
+            return exclude_scoped_articles(related_instance.article_set.all())
         elif isinstance(related_instance, UserProfile):
-            return related_instance.user.article_set.all()
+            return exclude_scoped_articles(related_instance.user.article_set.all())

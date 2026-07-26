@@ -17,6 +17,10 @@ from rest_framework import (
 )
 from rest_framework.response import Response
 
+from apps.core.article_scope import (
+    exclude_scoped_articles,
+    scoped_article_sql_condition,
+)
 from apps.core.documents import ArticleDocument
 from apps.core.filters.article import ArticleFilter
 from apps.core.models import (
@@ -45,7 +49,7 @@ from apps.core.serializers.article import (
 )
 from ara import redis
 from ara.classes.viewset import ActionAPIViewSet
-from ara.settings import SCHOOL_RESPONSE_VOTE_THRESHOLD
+from ara.settings import MIN_TIME, SCHOOL_RESPONSE_VOTE_THRESHOLD
 
 
 class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
@@ -62,7 +66,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     def get_queryset(self):
         qs = super().get_queryset()
         if getattr(self, "action", None) not in self._SCOPED_ARTICLE_ALLOWED_ACTIONS:
-            qs = qs.filter(related_course__isnull=True, related_major__isnull=True)
+            qs = exclude_scoped_articles(qs)
         return qs
 
     filterset_class = ArticleFilter
@@ -307,7 +311,15 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         try:
             article = self.get_object()
         except Http404 as e:
-            if Article.objects.queryset_with_deleted.filter(id=kwargs["pk"]).exists():
+            # 410 은 "삭제된 글" 에만 준다. 존재 여부만 보고 410 을 주면
+            # 과목/학과글처럼 권한 때문에 404 가 난 경우까지 410 이 되어,
+            # 404(없음) / 410(있지만 못 봄) 차이로 글 존재를 열거할 수 있다.
+            is_deleted = (
+                Article.objects.queryset_with_deleted.filter(id=kwargs["pk"])
+                .exclude(deleted_at=MIN_TIME)
+                .exists()
+            )
+            if is_deleted:
                 return response.Response(status=status.HTTP_410_GONE)
             else:
                 raise e
@@ -466,11 +478,12 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 return self.paginator.get_paginated_response([])
 
         # Cardinality of this queryset is same with actual query
-        count_queryset = (
-            ArticleReadLog.objects.values("article_id")
-            .filter(read_by=request.user)
-            .distinct()
-        )
+        # 아래 raw 쿼리와 같은 조건(scoped 글 제외)을 걸어야 페이지 개수와 실제
+        # 목록이 어긋나지 않는다.
+        count_queryset = exclude_scoped_articles(
+            ArticleReadLog.objects.values("article_id").filter(read_by=request.user),
+            prefix="article",
+        ).distinct()
         if search_keyword:
             count_queryset = count_queryset.filter(article_id__in=id_set)
 
@@ -484,13 +497,19 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         if search_keyword:
             query_params.insert(1, id_set)
 
+        # read log 는 열람 당시 권한으로 남은 기록이라 수강 드랍·학과 변경 뒤에도
+        # 남는다. 서브쿼리 안(LIMIT 적용 전)에서 걸러야 페이지 크기가 맞는다.
+        scoped_exclusion_sql = f"AND {scoped_article_sql_condition('`read_article`')}"
+
         queryset = Article.objects.raw(
             f"""
             SELECT * FROM `core_article`
             JOIN (
                 SELECT `core_articlereadlog`.`article_id`, MAX(`core_articlereadlog`.`created_at`) AS my_last_read_at
                 FROM `core_articlereadlog`
-                WHERE (`core_articlereadlog`.`deleted_at` = '0001-01-01 00:00:00' AND `core_articlereadlog`.`read_by_id` = %s {search_restriction_sql})
+                JOIN `core_article` AS `read_article`
+                    ON `read_article`.`id` = `core_articlereadlog`.`article_id`
+                WHERE (`core_articlereadlog`.`deleted_at` = '0001-01-01 00:00:00' AND `core_articlereadlog`.`read_by_id` = %s {scoped_exclusion_sql} {search_restriction_sql})
                 GROUP BY `core_articlereadlog`.`article_id`
                 ORDER BY my_last_read_at desc
                 LIMIT %s OFFSET %s
@@ -522,10 +541,10 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         # get the articles that are created_at within a week and order by hit_count
         # 과목/학과게시판 글은 메인 top 에서 제외
         top_articles = (
-            Article.objects.filter(
-                created_at__gte=current_date - datetime.timedelta(days=7),
-                related_course__isnull=True,
-                related_major__isnull=True,
+            exclude_scoped_articles(
+                Article.objects.filter(
+                    created_at__gte=current_date - datetime.timedelta(days=7),
+                )
             )
             .order_by("-hit_count", "-pk")
             .prefetch_related("article_metadata_set")  # prefetch 추가

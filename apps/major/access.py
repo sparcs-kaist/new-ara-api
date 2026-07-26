@@ -37,8 +37,15 @@ def user_major_info(user) -> dict | None:
     if not raw:
         return None
     try:
+        # json.JSONDecodeError 는 ValueError 의 서브클래스라 따로 적지 않는다.
         info = json.loads(raw) if isinstance(raw, str) else raw
-    except (ValueError, TypeError, json.JSONDecodeError):
+    except (ValueError, TypeError):
+        return None
+
+    # 파싱 성공 != dict. '[]', 'null', '"foo"', '3' 도 모두 정상 파싱되므로
+    # 타입을 확인하지 않으면 아래 .get() 에서 AttributeError -> 500 이 난다.
+    # 이 함수는 학과게시판 모든 요청의 권한 판정 경로다.
+    if not isinstance(info, dict):
         return None
 
     std_dept_id = info.get("std_dept_id")
