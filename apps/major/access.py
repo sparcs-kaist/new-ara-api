@@ -70,7 +70,7 @@ def get_or_create_major_for_user(user):
     URL 이 가리키는 학과와 항상 일치한다. board.py 의 get_major_board_id 와
     같은 lazy 생성 패턴.
     """
-    from apps.major.models import Major
+    from apps.major.models import Major, UserMajor
     from apps.major.models.major import get_major_code
 
     info = user_major_info(user)
@@ -85,6 +85,9 @@ def get_or_create_major_for_user(user):
             "major_code": get_major_code(info["major_name"]),
         },
     )
+    # 홈 학과도 UserMajor 에 담아 '독자'로 집계한다 (readers_count 가 전체 독자
+    # 수가 되도록). UniqueConstraint(user, major) 로 멱등하다.
+    UserMajor.objects.get_or_create(user=user, major=major)
     return major
 
 

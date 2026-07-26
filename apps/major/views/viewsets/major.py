@@ -45,24 +45,24 @@ class MajorViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         ctx = super().get_serializer_context()
         # is_added 계산용. 목록 전체를 한 번의 쿼리로 (N+1 방지).
         ctx["added_major_ids"] = user_added_major_ids(self.request.user)
+        # is_mine 계산용 (홈 학과 vs 추가한 학과 구분).
+        ctx["my_std_dept_id"] = user_major_id(self.request.user)
         return ctx
 
     @extend_schema(tags=["major"], summary="내가 볼 수 있는 학과 게시판 목록 (내 학과 + 추가한 학과)")
     def my_major(self, request):
         user = request.user
-        # 내 SSO 학과도 포함 (add 없이도 항상 접근 가능). 없으면 lazy 생성.
+        # 홈 학과의 Major + UserMajor row 를 보장 (첫 접근이면 lazy 생성).
+        # 이후 홈 학과도 user_added_major_ids 에 포함된다.
         home = get_or_create_major_for_user(user)
+        home_id = home.std_dept_id if home is not None else None
 
-        # filter(readers=user) 를 annotate 와 같이 쓰면 조인이 겹쳐 count 가
-        # 틀어지므로, id 집합을 먼저 뽑아 pk__in 으로 거른다.
-        ids = set(user_added_major_ids(user))
-        if home is not None:
-            ids.add(home.std_dept_id)
-
+        # 내가 읽는 모든 학과(홈 포함)를 pk__in 으로 거른다. filter(readers=user)
+        # 를 annotate 와 같이 쓰면 조인이 겹쳐 readers_count 가 틀어지므로 회피.
+        ids = user_added_major_ids(user)
         majors = list(self.get_queryset().filter(pk__in=ids))
         # 내 학과를 맨 앞으로.
-        if home is not None:
-            majors.sort(key=lambda m: (m.std_dept_id != home.std_dept_id, m.std_dept_id))
+        majors.sort(key=lambda m: (m.std_dept_id != home_id, m.std_dept_id))
 
         serializer = self.get_serializer(majors, many=True)
         return response.Response(serializer.data)
@@ -83,6 +83,13 @@ class MajorViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 
     @extend_schema(tags=["major"], summary="추가한 학과 게시판 제거")
     def user_major_remove(self, request, std_dept_id=None):
+        # 내 SSO 학과는 항상 독자로 집계돼야 하므로 제거 불가 (제거해도 다음 접근
+        # 시 재생성되어 readers_count 만 어긋난다).
+        if std_dept_id is not None and int(std_dept_id) == user_major_id(request.user):
+            return response.Response(
+                {"detail": "본인 학과는 제거할 수 없습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         UserMajor.objects.filter(
             user=request.user, major_id=std_dept_id
         ).delete()
