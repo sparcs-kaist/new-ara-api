@@ -22,8 +22,8 @@ class Course(models.Model):
         related_name="courses",
         verbose_name="담당 교수",
     )
-    # 학기/연도 무관하게 같은 수업을 묶는 상위 그룹. (course_code, professors_key)
-    # 가 같은 Course 들이 같은 group 을 공유한다. sync 가 get_or_create 로 채운다.
+    # 학기/연도 무관하게 같은 수업을 묶는 상위 그룹. 기본은 (course_code,
+    # professors_key)이고 일부 과목은 관리자 CourseGroupingRule을 따른다.
     group = models.ForeignKey(
         "course.CourseGroup",
         on_delete=models.PROTECT,

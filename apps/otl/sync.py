@@ -17,6 +17,11 @@ from typing import Tuple
 from django.db import transaction
 from django.utils import timezone
 
+from apps.course.grouping import (
+    active_grouping_strategies,
+    grouping_key_for,
+    normalize_course_code,
+)
 from apps.course.models import Course, CourseEnrollment, CourseGroup, Professor
 from apps.otl import client
 from apps.otl.client import OtlApiError, OtlAuthError
@@ -184,6 +189,9 @@ def _apply_my_timetable(user, year: int, semester: int, payload: dict) -> None:
 
     course_ids: list[int] = []
     new_course_ids: list[int] = []
+    grouping_strategies = active_grouping_strategies(
+        code for code, _prof_key in grouped
+    )
 
     with transaction.atomic():
         for pid, name in prof_pool.items():
@@ -192,15 +200,18 @@ def _apply_my_timetable(user, year: int, semester: int, payload: dict) -> None:
         for (code, prof_key), entries in grouped.items():
             first = entries[0]
             otl_lecture_ids = sorted({e["lectureId"] for e in entries})
-            # 학기/연도 무관 그룹. 같은 (code, prof_key) 면 다른 학기와 공유.
+            # 학기/연도 무관 그룹. 기본은 같은 (code, prof_key)끼리 공유하고,
+            # 관리자가 COURSE_CODE 규칙을 켠 과목은 교수를 무시해 code만 공유한다.
             #
             # 대표 title 은 "가장 최신 학기" 의 과목명이어야 한다. update_or_create
             # 로 매번 덮으면 유저가 과거 학기를 sync 하는 순간 그룹 전체의 대표명이
             # 옛 이름으로 회귀한다 (그룹은 공용 row 라 다른 유저에게도 보인다).
             # 그래서 생성 시에만 채우고, 이후엔 title 출처 학기보다 뒤일 때만 갱신.
+            strategy = grouping_strategies.get(normalize_course_code(code))
+            group_key = grouping_key_for(prof_key, strategy)
             group, group_created = CourseGroup.objects.get_or_create(
                 course_code=code,
-                professors_key=prof_key,
+                professors_key=group_key,
                 defaults={
                     "title": first["name"],
                     "title_year": year,

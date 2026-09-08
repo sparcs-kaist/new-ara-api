@@ -47,12 +47,16 @@ class CourseGroupSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_professors(self, obj):
-        # 그룹 내 모든 Course 는 professors_key 가 같아 교수 집합이 동일.
-        # 대표로 첫 Course 의 교수를 노출 (prefetch 된 것 재사용).
+        # COURSE_CODE 예외 그룹은 학기마다 교수가 다를 수 있으므로 그룹에 속한
+        # 모든 Course의 교수를 중복 없이 합쳐서 노출한다 (prefetch 결과 재사용).
         courses = list(obj.courses.all())
-        if not courses:
-            return []
-        return ProfessorSerializer(courses[0].professors.all(), many=True).data
+        professors_by_id = {
+            professor.id: professor
+            for course in courses
+            for professor in course.professors.all()
+        }
+        professors = sorted(professors_by_id.values(), key=lambda professor: professor.id)
+        return ProfessorSerializer(professors, many=True).data
 
     def get_offered_terms(self, obj):
         return [
