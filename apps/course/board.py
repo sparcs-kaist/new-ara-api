@@ -38,7 +38,7 @@ def get_courses_board_id() -> int:
                 "read_access_mask": 0,
                 "write_access_mask": 0,
                 "comment_access_mask": 0,
-                "name_type": NameType.ANONYMOUS.value,
+                "name_type": (NameType.REGULAR | NameType.ANONYMOUS).value,
             },
         )
         _cached_board_id = board.id

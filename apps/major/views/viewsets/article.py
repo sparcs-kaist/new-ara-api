@@ -1,8 +1,9 @@
 """특정 Major 안의 Article CRUD.
 
 URL: /api/majors/<std_dept_id>/articles/[<pk>/]
-권한: IsSameMajor (sso std_dept_id 가 URL std_dept_id 와 일치해야 read/write 가능)
-글은 닉네임(REGULAR), parent_board 는 dummy "major-articles-internal" 로 강제.
+권한: 읽기는 SSO 학과 또는 즐겨찾기 학과, 쓰기는 SSO 학과만 가능하다.
+글 작성 시 익명 또는 닉네임을 선택하고, parent_board 는 dummy
+"major-articles-internal" 로 강제한다.
 Major row 는 접근 시 SSO 정보로 lazy get_or_create 된다.
 """
 
@@ -88,11 +89,12 @@ class MajorArticleViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
 
     @extend_schema(
-        summary="학과 게시판 글 작성",
+        summary="학과 게시판 글 작성 (익명/닉네임 선택)",
         description=(
             "현재 사용자가 해당 학과여야 작성 가능. "
-            "name_type 은 닉네임(REGULAR), parent_board 는 dummy major-articles "
-            "board 로 자동 set."
+            "name_type 은 ANONYMOUS 또는 REGULAR이며, 생략하면 기존 동작과 "
+            "같이 REGULAR로 저장. parent_board 는 dummy major-articles "
+            "board로 자동 set."
         ),
         request=MajorArticleCreateSerializer,
         responses={201: MajorArticleSerializer},

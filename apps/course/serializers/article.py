@@ -5,7 +5,7 @@
 그대로 탄다. 필드는 Meta.fields 로 과목게시판에 필요한 것만 좁힌다.
 (예전엔 평범한 ModelSerializer 라 title/content 를 마스킹 없이 그대로 노출했다.)
 
-모든 글은 익명 (name_type=ANONYMOUS) 강제.
+글 작성 시 익명(ANONYMOUS) 또는 닉네임(REGULAR)을 선택한다.
 """
 
 from rest_framework import serializers
@@ -31,6 +31,8 @@ class CourseArticleListSerializer(
             "id",
             "title",
             "created_at",
+            "created_by",
+            "name_type",
             "comment_count",
             "positive_vote_count",
             "negative_vote_count",
@@ -51,6 +53,8 @@ class CourseArticleSerializer(ScopedBoardHiddenInfoMixin, ArticleSerializer):
             "title",
             "content",
             "created_at",
+            "created_by",
+            "name_type",
             "content_updated_at",
             "comment_count",
             "positive_vote_count",
@@ -64,15 +68,23 @@ class CourseArticleSerializer(ScopedBoardHiddenInfoMixin, ArticleSerializer):
 
 
 class CourseArticleCreateSerializer(serializers.ModelSerializer):
+    name_type = serializers.ChoiceField(
+        choices=(NameType.ANONYMOUS.name, NameType.REGULAR.name),
+        default=NameType.ANONYMOUS.name,
+        write_only=True,
+        help_text="ANONYMOUS(익명) 또는 REGULAR(닉네임)",
+    )
+
     class Meta:
         model = Article
-        fields = ("title", "content", "content_text")
+        fields = ("title", "content", "content_text", "name_type")
 
     def create(self, validated_data):
-        # 과목게시판 글은 익명 + 부모 board 강제 주입.
+        # 과목게시판 글은 사용자가 익명/닉네임을 선택하고 부모 board 는 강제 주입.
         # 게시판 묶음은 related_course_group (학기 무관), related_course 는 출처용.
         # 호출 viewset 에서 context["course"], context["course_group"],
         # context["board_id"] 주입.
+        name_type = NameType[validated_data.pop("name_type")]
         course = self.context["course"]
         course_group = self.context["course_group"]
         board_id = self.context["board_id"]
@@ -81,7 +93,7 @@ class CourseArticleCreateSerializer(serializers.ModelSerializer):
             parent_board_id=board_id,
             related_course=course,
             related_course_group=course_group,
-            name_type=NameType.ANONYMOUS.value,
+            name_type=name_type.value,
             created_by=self.context["request"].user,
         )
 

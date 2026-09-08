@@ -5,7 +5,7 @@
 그대로 탄다. 필드는 Meta.fields 로 학과게시판에 필요한 것만 좁힌다.
 (예전엔 평범한 ModelSerializer 라 title/content 를 마스킹 없이 그대로 노출했다.)
 
-작성자 표기는 닉네임(REGULAR) — 익명 아님.
+글 작성 시 익명(ANONYMOUS) 또는 닉네임(REGULAR)을 선택한다.
 """
 
 from rest_framework import serializers
@@ -32,6 +32,7 @@ class MajorArticleListSerializer(
             "title",
             "created_at",
             "created_by",
+            "name_type",
             "comment_count",
             "positive_vote_count",
             "negative_vote_count",
@@ -53,6 +54,7 @@ class MajorArticleSerializer(ScopedBoardHiddenInfoMixin, ArticleSerializer):
             "content",
             "created_at",
             "created_by",
+            "name_type",
             "content_updated_at",
             "comment_count",
             "positive_vote_count",
@@ -66,20 +68,28 @@ class MajorArticleSerializer(ScopedBoardHiddenInfoMixin, ArticleSerializer):
 
 
 class MajorArticleCreateSerializer(serializers.ModelSerializer):
+    name_type = serializers.ChoiceField(
+        choices=(NameType.ANONYMOUS.name, NameType.REGULAR.name),
+        default=NameType.REGULAR.name,
+        write_only=True,
+        help_text="ANONYMOUS(익명) 또는 REGULAR(닉네임)",
+    )
+
     class Meta:
         model = Article
-        fields = ("title", "content", "content_text")
+        fields = ("title", "content", "content_text", "name_type")
 
     def create(self, validated_data):
-        # 학과게시판 글은 닉네임(REGULAR) + 부모 board / related_major 강제 주입.
+        # 학과게시판 글은 사용자가 익명/닉네임을 선택한다.
         # 호출 viewset 에서 context["major"], context["board_id"] 주입.
+        name_type = NameType[validated_data.pop("name_type")]
         major = self.context["major"]
         board_id = self.context["board_id"]
         return Article.objects.create(
             **validated_data,
             parent_board_id=board_id,
             related_major=major,
-            name_type=NameType.REGULAR.value,
+            name_type=name_type.value,
             created_by=self.context["request"].user,
         )
 

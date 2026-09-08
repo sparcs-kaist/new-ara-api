@@ -4,7 +4,8 @@ URL: /api/courses/<course_id>/articles/[<pk>/]
 게시판 단위는 course 가 아니라 그 course 의 CourseGroup — 학기가 달라도
 같은 수업이면 글이 누적된다. course_id 는 "어느 학기에서 들어왔나"의 진입점.
 권한: IsEnrolledInCourseGroup (그룹의 아무 학기라도 수강했으면 접근).
-모든 글은 익명, parent_board 는 dummy "course-articles-internal" 로 강제.
+글 작성 시 익명 또는 닉네임을 선택하고, parent_board 는 dummy
+"course-articles-internal" 로 강제한다.
 """
 
 from __future__ import annotations
@@ -55,8 +56,9 @@ class CourseArticleViewSet(viewsets.ModelViewSet):
             Article.objects.filter(related_course_group_id=course.group_id)
             # 마스킹 판정(hidden_reasons)이 매 row 마다 parent_board 와
             # created_by 를 보므로 같이 당겨온다.
-            .select_related("created_by__profile", "parent_board")
-            .order_by("-created_at")
+            .select_related("created_by__profile", "parent_board").order_by(
+                "-created_at"
+            )
         )
 
     def get_serializer_context(self):
@@ -76,11 +78,12 @@ class CourseArticleViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
 
     @extend_schema(
-        summary="과목 게시판 글 작성 (익명 강제)",
+        summary="과목 게시판 글 작성 (익명/닉네임 선택)",
         description=(
             "현재 사용자가 해당 과목에 enroll 되어 있어야 작성 가능. "
-            "name_type 은 항상 ANONYMOUS, parent_board 는 dummy course-articles "
-            "board 로 자동 set."
+            "name_type 은 ANONYMOUS 또는 REGULAR이며, 생략하면 기존 동작과 "
+            "같이 ANONYMOUS로 저장. parent_board 는 dummy course-articles "
+            "board로 자동 set."
         ),
         request=CourseArticleCreateSerializer,
         responses={201: CourseArticleSerializer},
@@ -113,11 +116,13 @@ class CourseArticleViewSet(viewsets.ModelViewSet):
         article = self.get_object()
         if article.created_by_id != self.request.user.id:
             from rest_framework.exceptions import PermissionDenied
+
             raise PermissionDenied("본인이 작성한 글만 수정할 수 있습니다.")
         serializer.save()
 
     def perform_destroy(self, instance):
         if instance.created_by_id != self.request.user.id:
             from rest_framework.exceptions import PermissionDenied
+
             raise PermissionDenied("본인이 작성한 글만 삭제할 수 있습니다.")
         super().perform_destroy(instance)
