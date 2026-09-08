@@ -35,6 +35,14 @@ from apps.major.serializers import (
 class MajorArticleViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticated, IsSameMajor)
     serializer_class = MajorArticleSerializer
+    # 실제 조회는 get_queryset() 이 담당한다. 여기 빈 queryset 을 두는 건
+    # 스키마 생성기가 URL kwargs 없이 get_queryset() 을 호출하다 KeyError 를
+    # 내는 것을 막기 위함.
+    queryset = Article.objects.none()
+    lookup_value_regex = "[0-9]+"
+    # ModelViewSet 은 PUT(update) 도 갖고 있지만 학과글은 부분 수정만 지원한다.
+    # 라우터에 맡기면 PUT 이 자동 노출되므로 여기서 막는다.
+    http_method_names = ["get", "post", "patch", "delete", "head", "options"]
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -53,8 +61,9 @@ class MajorArticleViewSet(viewsets.ModelViewSet):
             Article.objects.filter(related_major_id=std_dept_id)
             # 마스킹 판정(hidden_reasons)과 작성자 표기가 매 row 마다
             # parent_board / created_by.profile 을 보므로 같이 당겨온다.
-            .select_related("created_by__profile", "parent_board")
-            .order_by("-created_at")
+            .select_related("created_by__profile", "parent_board").order_by(
+                "-created_at"
+            )
         )
 
     def get_serializer_context(self):
@@ -116,11 +125,13 @@ class MajorArticleViewSet(viewsets.ModelViewSet):
         article = self.get_object()
         if article.created_by_id != self.request.user.id:
             from rest_framework.exceptions import PermissionDenied
+
             raise PermissionDenied("본인이 작성한 글만 수정할 수 있습니다.")
         serializer.save()
 
     def perform_destroy(self, instance):
         if instance.created_by_id != self.request.user.id:
             from rest_framework.exceptions import PermissionDenied
+
             raise PermissionDenied("본인이 작성한 글만 삭제할 수 있습니다.")
         super().perform_destroy(instance)

@@ -264,5 +264,3 @@ config.cnf
 docker-compose.yml
 secret.yaml
 ___*
-
-ara-dev-dump-20250705.sql

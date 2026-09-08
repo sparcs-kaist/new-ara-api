@@ -13,19 +13,19 @@ from apps.core.filters.comment import CommentFilter
 from apps.core.models import Article, Comment, CommentDeleteLog, UserProfile, Vote
 from apps.core.models.board import NameType
 from apps.core.permissions.comment import CommentPermission
-from apps.course.access import (
-    can_comment_on_article as course_can_comment,
-    deny_unenrolled_comment_access,
-)
-from apps.major.access import (
-    can_comment_on_article as major_can_comment,
-    deny_non_same_major_comment_access,
-    is_major_article,
-)
 from apps.core.serializers.comment import (
     CommentCreateActionSerializer,
     CommentSerializer,
     CommentUpdateActionSerializer,
+)
+from apps.course.access import (
+    can_comment_on_article,
+    deny_unenrolled_comment_access,
+)
+from apps.major.access import (
+    can_comment_on_major_article,
+    deny_non_same_major_comment_access,
+    is_major_article,
 )
 from ara.classes.viewset import ActionAPIViewSet
 
@@ -72,13 +72,13 @@ class CommentViewSet(
         # TODO: Use CommentPermission for permission checking logic
         # self.check_object_permissions(request, parent_article)
 
-        # 학과글이면 same-major 체크. 그 외는 course_can_comment 가
+        # 학과글이면 same-major 체크. 그 외는 can_comment_on_article 가
         # 과목글이면 enrollment, 일반글이면 board comment_access_mask 로
         # 알아서 갈라준다.
         if is_major_article(parent_article):
-            allowed = major_can_comment(request.user, parent_article)
+            allowed = can_comment_on_major_article(request.user, parent_article)
         else:
-            allowed = course_can_comment(request.user, parent_article)
+            allowed = can_comment_on_article(request.user, parent_article)
         if allowed:
             return super().create(request, *args, **kwargs)
         return response.Response(

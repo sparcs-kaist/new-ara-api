@@ -14,7 +14,14 @@ from __future__ import annotations
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from rest_framework import mixins, permissions, response, status, viewsets
+from rest_framework import (
+    decorators,
+    mixins,
+    permissions,
+    response,
+    status,
+    viewsets,
+)
 
 from apps.major.access import (
     get_or_create_major_for_user,
@@ -32,13 +39,16 @@ class MajorViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = MajorSerializer
     pagination_class = None
+    # Major 의 PK 가 곧 std_dept_id 라 URL 키워드도 같은 이름을 쓴다.
+    # 라우터가 이 값으로 detail route 를 만든다: /api/majors/<std_dept_id>/...
+    lookup_url_kwarg = "std_dept_id"
+    lookup_value_regex = "[0-9]+"
 
     def get_queryset(self):
         # readers_count = 이 학과를 add 한 유저 수 (UserMajor row 수).
         # M2M(readers) 대신 through 역참조로 세어 조인 하나로 끝낸다.
-        return (
-            Major.objects.annotate(readers_count=Count("user_additions"))
-            .order_by("std_dept_id")
+        return Major.objects.annotate(readers_count=Count("user_additions")).order_by(
+            "std_dept_id"
         )
 
     def get_serializer_context(self):
@@ -49,7 +59,11 @@ class MajorViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         ctx["my_std_dept_id"] = user_major_id(self.request.user)
         return ctx
 
-    @extend_schema(tags=["major"], summary="내가 볼 수 있는 학과 게시판 목록 (내 학과 + 추가한 학과)")
+    @extend_schema(
+        tags=["major"],
+        summary="내가 볼 수 있는 학과 게시판 목록 (내 학과 + 추가한 학과)",
+    )
+    @decorators.action(detail=False, methods=["get"], url_path="my-major")
     def my_major(self, request):
         user = request.user
         # 홈 학과의 Major + UserMajor row 를 보장 (첫 접근이면 lazy 생성).
@@ -68,6 +82,12 @@ class MajorViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         return response.Response(serializer.data)
 
     @extend_schema(tags=["major"], summary="타 학과 게시판 추가 (읽기용)")
+    @decorators.action(
+        detail=True,
+        methods=["post"],
+        url_path="user_major_add",
+        url_name="user-add",
+    )
     def user_major_add(self, request, std_dept_id=None):
         major = get_object_or_404(Major, pk=std_dept_id)
 
@@ -82,6 +102,12 @@ class MajorViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         return response.Response(status=status.HTTP_201_CREATED)
 
     @extend_schema(tags=["major"], summary="추가한 학과 게시판 제거")
+    @decorators.action(
+        detail=True,
+        methods=["post"],
+        url_path="user_major_remove",
+        url_name="user-remove",
+    )
     def user_major_remove(self, request, std_dept_id=None):
         # 내 SSO 학과는 항상 독자로 집계돼야 하므로 제거 불가 (제거해도 다음 접근
         # 시 재생성되어 readers_count 만 어긋난다).
@@ -90,7 +116,5 @@ class MajorViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
                 {"detail": "본인 학과는 제거할 수 없습니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        UserMajor.objects.filter(
-            user=request.user, major_id=std_dept_id
-        ).delete()
+        UserMajor.objects.filter(user=request.user, major_id=std_dept_id).delete()
         return response.Response(status=status.HTTP_204_NO_CONTENT)

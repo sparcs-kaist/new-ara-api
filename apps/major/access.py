@@ -12,12 +12,12 @@ SSO 의 major 식별자는 `sso_user_info["kaist_v2_info"]` 안의
 필요하다. Major 모델의 PK(`std_dept_id`) 가 이 값(정수형)과 곧바로 일치한다.
 """
 
-
 from __future__ import annotations
 
 import json
 
 from apps.core.models.board import BoardAccessPermissionType
+from apps.major.constants import get_major_code
 
 
 def is_major_article(article) -> bool:
@@ -78,7 +78,6 @@ def get_or_create_major_for_user(user):
     같은 lazy 생성 패턴.
     """
     from apps.major.models import Major, UserMajor
-    from apps.major.models.major import get_major_code
 
     info = user_major_info(user)
     if info is None:
@@ -118,9 +117,7 @@ def user_added_major_ids(user) -> set[int]:
     """user 가 add 해 둔 타 학과들의 std_dept_id(= Major PK) 집합."""
     from apps.major.models import UserMajor
 
-    return set(
-        UserMajor.objects.filter(user=user).values_list("major_id", flat=True)
-    )
+    return set(UserMajor.objects.filter(user=user).values_list("major_id", flat=True))
 
 
 def can_read_major(user, std_dept_id) -> bool:
@@ -139,7 +136,7 @@ def can_read_major(user, std_dept_id) -> bool:
     return UserMajor.objects.filter(user=user, major_id=std).exists()
 
 
-def can_read_article(user, article) -> bool:
+def can_read_major_article(user, article) -> bool:
     """학과글이면 읽기 권한(내 학과 OR add 한 학과), 아니면 parent_board.read_access_mask."""
     if is_major_article(article):
         return can_read_major(user, article.related_major_id)
@@ -148,7 +145,7 @@ def can_read_article(user, article) -> bool:
     )
 
 
-def can_comment_on_article(user, article) -> bool:
+def can_comment_on_major_article(user, article) -> bool:
     """학과글이면 same-major, 아니면 parent_board.comment_access_mask."""
     if is_major_article(article):
         return _is_same_major(user, article.related_major_id)
