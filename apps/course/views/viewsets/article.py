@@ -14,7 +14,7 @@ from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import permissions, response, status, viewsets
 
-from apps.core.models import Article
+from apps.core.models import Article, Comment, Vote
 from apps.course.board import get_courses_board_id
 from apps.course.models import Course
 from apps.course.permissions import IsEnrolledInCourseGroup
@@ -52,7 +52,7 @@ class CourseArticleViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         # 글 묶음은 course 가 아니라 그 course 의 group. 모든 학기 글이 누적된다.
         course = self._get_course()
-        return (
+        queryset = (
             Article.objects.filter(related_course_group_id=course.group_id)
             # 마스킹 판정(hidden_reasons)이 매 row 마다 parent_board 와
             # created_by 를 보므로 같이 당겨온다.
@@ -60,6 +60,12 @@ class CourseArticleViewSet(viewsets.ModelViewSet):
                 "-created_at"
             )
         )
+        if self.action == "retrieve":
+            queryset = queryset.prefetch_related(
+                Vote.prefetch_my_vote(self.request.user),
+                Comment.prefetch_for_article(self.request.user),
+            )
+        return queryset
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()

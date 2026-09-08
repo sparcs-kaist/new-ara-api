@@ -60,6 +60,8 @@ class CourseArticleSerializer(ScopedBoardHiddenInfoMixin, ArticleSerializer):
             "positive_vote_count",
             "negative_vote_count",
             "hit_count",
+            "my_vote",
+            "comments",
             "is_mine",
             "is_hidden",
             "why_hidden",

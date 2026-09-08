@@ -176,11 +176,12 @@ def deny_non_same_major_comment_access(user, comment) -> bool:
     return deny_non_same_major_access(user, parent)
 
 
-def deny_major_comment_vote_access(user, comment) -> bool:
-    """학과글 댓글을 읽을 수 없는 유저의 투표만 차단한다.
+def deny_unreadable_major_comment_access(user, comment) -> bool:
+    """학과글 댓글을 읽을 수 없는 유저의 접근을 차단한다.
 
     자기 SSO 학과뿐 아니라 UserMajor로 즐겨찾기한 학과도 읽기 권한이 있으므로
-    투표할 수 있다. 댓글 작성·신고 권한은 이 함수와 별도로 same-major를 유지한다.
+    댓글 조회·투표가 가능하다. 댓글 작성·수정·삭제·신고 권한은 이 함수와
+    별도로 same-major를 유지한다.
     """
     parent = _comment_parent_article(comment)
     if not is_major_article(parent):

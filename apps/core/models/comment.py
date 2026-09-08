@@ -40,7 +40,27 @@ class Comment(MetaDataModel):
     class Meta(MetaDataModel.Meta):
         verbose_name = "댓글"
         verbose_name_plural = "댓글 목록"
-    
+
+    @classmethod
+    def prefetch_for_article(cls, user) -> models.Prefetch:
+        """글 상세 응답용 댓글·대댓글과 현재 사용자의 투표를 한 번에 조회."""
+        from .vote import Vote
+
+        nested_comments = (
+            cls.objects.reverse()
+            .select_related("created_by", "created_by__profile")
+            .prefetch_related(Vote.prefetch_my_vote(user))
+        )
+        comments = (
+            cls.objects.reverse()
+            .select_related("created_by", "created_by__profile")
+            .prefetch_related(
+                Vote.prefetch_my_vote(user),
+                models.Prefetch("comment_set", queryset=nested_comments),
+            )
+        )
+        return models.Prefetch("comment_set", queryset=comments)
+
     type = models.CharField(
         max_length=20,
         choices=[(comment_type.value, comment_type.name) for comment_type in CommentType],

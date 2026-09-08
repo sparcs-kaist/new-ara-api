@@ -24,7 +24,7 @@ from apps.course.access import (
 )
 from apps.major.access import (
     can_comment_on_major_article,
-    deny_major_comment_vote_access,
+    deny_unreadable_major_comment_access,
     is_major_article,
 )
 from ara.classes.viewset import ActionAPIViewSet
@@ -177,7 +177,7 @@ class CommentViewSet(
                 {"message": gettext("해당 게시판에 접근할 권한이 없습니다.")},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        if deny_major_comment_vote_access(request.user, comment):
+        if deny_unreadable_major_comment_access(request.user, comment):
             return response.Response(
                 {"message": gettext("해당 게시판에 접근할 권한이 없습니다.")},
                 status=status.HTTP_403_FORBIDDEN,

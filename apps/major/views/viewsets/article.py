@@ -13,7 +13,7 @@ from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import permissions, response, status, viewsets
 
-from apps.core.models import Article
+from apps.core.models import Article, Comment, Vote
 from apps.major.access import get_or_create_major_for_user, user_major_id
 from apps.major.board import get_major_board_id
 from apps.major.models import Major
@@ -58,7 +58,7 @@ class MajorArticleViewSet(viewsets.ModelViewSet):
         # related_major 는 Major(PK=std_dept_id) FK 이므로 related_major_id 가
         # 곧 std_dept_id. URL 값으로 바로 필터한다.
         std_dept_id = self.kwargs["std_dept_id"]
-        return (
+        queryset = (
             Article.objects.filter(related_major_id=std_dept_id)
             # 마스킹 판정(hidden_reasons)과 작성자 표기가 매 row 마다
             # parent_board / created_by.profile 을 보므로 같이 당겨온다.
@@ -66,6 +66,12 @@ class MajorArticleViewSet(viewsets.ModelViewSet):
                 "-created_at"
             )
         )
+        if self.action == "retrieve":
+            queryset = queryset.prefetch_related(
+                Vote.prefetch_my_vote(self.request.user),
+                Comment.prefetch_for_article(self.request.user),
+            )
+        return queryset
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()

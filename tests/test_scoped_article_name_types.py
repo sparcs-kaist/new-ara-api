@@ -4,6 +4,7 @@ from unittest.mock import patch
 from django.test import SimpleTestCase
 
 from apps.core.models.board import NameType
+from apps.core.serializers.comment import CommentSerializer
 from apps.course.serializers.article import (
     CourseArticleCreateSerializer,
     CourseArticleListSerializer,
@@ -127,3 +128,27 @@ class ScopedArticleNameTypeSerializerTest(SimpleTestCase):
             fields = serializer_class().fields
             self.assertIn("name_type", fields)
             self.assertIn("created_by", fields)
+
+    def test_detail_serializers_expose_comments_and_my_vote(self):
+        for serializer_class in (
+            CourseArticleSerializer,
+            MajorArticleSerializer,
+        ):
+            fields = serializer_class().fields
+            self.assertIn("comments", fields)
+            self.assertIn("my_vote", fields)
+
+    def test_comment_my_vote_uses_current_user_from_prefetched_votes(self):
+        user = SimpleNamespace(id=1)
+        another_user_vote = SimpleNamespace(voted_by_id=2, is_positive=False)
+        my_vote = SimpleNamespace(voted_by_id=1, is_positive=True)
+        comment = SimpleNamespace(
+            _prefetched_objects_cache={
+                "vote_set": [another_user_vote, my_vote],
+            }
+        )
+        serializer = CommentSerializer(
+            context={"request": SimpleNamespace(user=user)},
+        )
+
+        self.assertTrue(serializer.get_my_vote(comment))
