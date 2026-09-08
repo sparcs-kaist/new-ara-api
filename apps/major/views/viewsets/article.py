@@ -85,7 +85,8 @@ class MajorArticleViewSet(viewsets.ModelViewSet):
                 # 내 SSO 학과: 없으면 SSO 정보로 lazy 생성 (첫 접근).
                 ctx["major"] = get_or_create_major_for_user(user)
             else:
-                # add 한 타 학과: 이미 존재하는 row (읽기 전용). 생성하지 않는다.
+                # 즐겨찾기한 타 학과: 이미 존재하는 row. 읽기와 글·댓글 투표는
+                # 가능하지만 글·댓글 작성/수정/삭제와 스크랩·신고는 불가하다.
                 ctx["major"] = get_object_or_404(Major, pk=std_dept_id)
             ctx["board_id"] = get_major_board_id()
         return ctx

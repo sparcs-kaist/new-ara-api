@@ -2,11 +2,12 @@
 
 - GET  /api/majors/                              : 존재하는 학과 게시판 전체 목록
 - GET  /api/majors/my-major/                     : 내가 추가한(add) 학과 게시판 목록
-- POST /api/majors/<std_dept_id>/user_major_add/    : 타 학과 게시판을 내 목록에 추가(읽기용)
+- POST /api/majors/<std_dept_id>/user_major_add/    : 타 학과 게시판을 내 목록에 추가(읽기·투표용)
 - POST /api/majors/<std_dept_id>/user_major_remove/ : 추가한 학과 게시판을 내 목록에서 제거
 
-추가한 학과는 '읽기 전용'으로 볼 수 있다 (쓰기는 여전히 SSO 학과만). 자기 SSO
-학과는 add 없이도 항상 접근되므로 add/remove 대상이 아니다.
+추가한 학과는 읽기와 글·댓글 투표가 가능하고, 글·댓글 작성/수정/삭제와
+스크랩·신고는 SSO 학과에서만 가능하다. 자기 SSO 학과는 add/remove 대상이
+아니지만 내부 readers_count와 my-major 조회를 위해 UserMajor row를 자동 생성한다.
 """
 
 from __future__ import annotations
@@ -45,7 +46,8 @@ class MajorViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     lookup_value_regex = "[0-9]+"
 
     def get_queryset(self):
-        # readers_count = 이 학과를 add 한 유저 수 (UserMajor row 수).
+        # readers_count = UserMajor row 수. 자동 등록된 홈 학과 사용자와 직접
+        # 즐겨찾기한 타 학과 사용자를 모두 포함한다.
         # M2M(readers) 대신 through 역참조로 세어 조인 하나로 끝낸다.
         return Major.objects.annotate(readers_count=Count("user_additions")).order_by(
             "std_dept_id"
@@ -53,7 +55,8 @@ class MajorViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
-        # is_added 계산용. 목록 전체를 한 번의 쿼리로 (N+1 방지).
+        # is_added 계산용. UserMajor에는 홈 학과 자동 row도 들어가므로 홈에서도
+        # true다. 목록 전체를 한 번의 쿼리로 가져와 N+1을 막는다.
         ctx["added_major_ids"] = user_added_major_ids(self.request.user)
         # is_mine 계산용 (홈 학과 vs 추가한 학과 구분).
         ctx["my_std_dept_id"] = user_major_id(self.request.user)
@@ -66,8 +69,8 @@ class MajorViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     @decorators.action(detail=False, methods=["get"], url_path="my-major")
     def my_major(self, request):
         user = request.user
-        # 홈 학과의 Major + UserMajor row 를 보장 (첫 접근이면 lazy 생성).
-        # 이후 홈 학과도 user_added_major_ids 에 포함된다.
+        # 홈 학과의 Major + 내부 구독용 UserMajor row를 보장한다. 사용자 관점의
+        # 즐겨찾기 추가가 아니라 readers_count/my-major를 위한 자동 등록이다.
         home = get_or_create_major_for_user(user)
         home_id = home.std_dept_id if home is not None else None
 
@@ -81,7 +84,7 @@ class MajorViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         serializer = self.get_serializer(majors, many=True)
         return response.Response(serializer.data)
 
-    @extend_schema(tags=["major"], summary="타 학과 게시판 추가 (읽기용)")
+    @extend_schema(tags=["major"], summary="타 학과 게시판 추가 (읽기·투표용)")
     @decorators.action(
         detail=True,
         methods=["post"],
@@ -91,7 +94,8 @@ class MajorViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     def user_major_add(self, request, std_dept_id=None):
         major = get_object_or_404(Major, pk=std_dept_id)
 
-        # 내 SSO 학과는 add 없이도 접근 가능 → 추가 대상 아님.
+        # 내 SSO 학과의 UserMajor row는 내부적으로 자동 생성되므로 사용자가
+        # 즐겨찾기로 다시 추가할 대상은 아니다.
         if major.std_dept_id == user_major_id(request.user):
             return response.Response(
                 {"detail": "본인 학과는 추가할 필요가 없습니다."},

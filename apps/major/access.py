@@ -91,8 +91,9 @@ def get_or_create_major_for_user(user):
             "major_code": get_major_code(info["major_name"]),
         },
     )
-    # 홈 학과도 UserMajor 에 담아 '독자'로 집계한다 (readers_count 가 전체 독자
-    # 수가 되도록). UniqueConstraint(user, major) 로 멱등하다.
+    # UserMajor는 사용자 관점에서는 타 학과 즐겨찾기지만, 내부적으로는 읽을 수
+    # 있는 학과 집합을 표현한다. 홈 학과도 자동 row로 담아 readers_count와
+    # my-major 조회에 함께 사용한다. UniqueConstraint(user, major)로 멱등하다.
     UserMajor.objects.get_or_create(user=user, major=major)
     return major
 
@@ -100,8 +101,9 @@ def get_or_create_major_for_user(user):
 def _is_same_major(user, std_dept_id) -> bool:
     """user 의 SSO std_dept_id 가 대상 학과(std_dept_id, = Major PK) 와 같은가.
 
-    쓰기(글/댓글/투표/스크랩/신고) 권한 판정에 쓴다. Major row 존재 여부와
-    무관하게 SSO 값만 비교한다. row 는 실제 접근 시 viewset 에서 lazy 생성되므로,
+    글·댓글 작성/수정/삭제와 스크랩·신고 권한 판정에 쓴다. 글·댓글 투표는 읽기
+    권한을 따라가므로 즐겨찾기 학과에서도 가능하다. Major row 존재 여부와
+    무관하게 SSO 값만 비교한다. row는 실제 접근 시 viewset에서 lazy 생성되므로,
     여기서 존재를 요구하면 첫 접근이 막힌다.
     """
     user_dept_id = user_major_id(user)
@@ -114,7 +116,7 @@ def _is_same_major(user, std_dept_id) -> bool:
 
 
 def user_added_major_ids(user) -> set[int]:
-    """user 가 add 해 둔 타 학과들의 std_dept_id(= Major PK) 집합."""
+    """UserMajor에 기록된 홈 학과와 즐겨찾기 학과의 Major PK 집합."""
     from apps.major.models import UserMajor
 
     return set(UserMajor.objects.filter(user=user).values_list("major_id", flat=True))

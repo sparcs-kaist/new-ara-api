@@ -30,7 +30,8 @@ class Major(models.Model):
         max_length=100, verbose_name="학과 건물 위치", null=True
     )
 
-    # 이 학과 게시판을 '추가(add)'해서 읽는 유저들. 컬럼은 through(UserMajor)에.
+    # 이 학과 게시판의 독자 집합. 사용자가 즐겨찾기한 타 학과뿐 아니라 최초
+    # 접근 시 자동 등록되는 자기 SSO 학과도 through(UserMajor)에 포함된다.
     readers = models.ManyToManyField(
         to=settings.AUTH_USER_MODEL,
         through="major.UserMajor",

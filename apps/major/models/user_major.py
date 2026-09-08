@@ -3,14 +3,17 @@ from django.db import models
 
 
 class UserMajor(models.Model):
-    """유저가 '추가(add)'한 타 학과 게시판 매핑 (독립 through 테이블).
+    """유저가 읽는 학과 게시판을 기록하는 독립 through 테이블.
 
-    유저는 자기 SSO 학과 외에도, 여기 추가한 학과 게시판을 '읽기 전용'으로
-    볼 수 있다. 쓰기(글/댓글/투표/스크랩/신고)는 여전히 자기 SSO 학과에서만
-    가능하다. 자기 SSO 학과는 add 없이도 항상 접근되므로 이 테이블엔 담기지
-    않고, '추가로 고른 타 학과'만 들어간다.
+    사용자 관점에서 add/remove 하는 타 학과 row 는 즐겨찾기다. 구현상으로는
+    readers_count와 my-major 조회를 단순하게 유지하기 위해 자기 SSO 학과도 최초
+    접근 시 자동으로 row를 만든다. 따라서 UserMajor row 자체만 보고 사용자가
+    직접 고른 즐겨찾기인지 자동 등록된 홈 학과인지 구분하면 안 되며, 구분할 때는
+    현재 SSO std_dept_id와 비교해야 한다.
 
-    단순 유저 선호 토글이라 soft-delete 를 쓰지 않는다 (remove = hard delete).
+    홈 학과와 즐겨찾기 학과 모두 읽기와 글·댓글 투표가 가능하다. 글·댓글 작성,
+    수정·삭제, 스크랩·신고는 홈 학과에서만 가능하다. 즐겨찾기 제거는 hard delete
+    이고, 홈 학과 row는 API에서 제거하지 못하게 막는다.
     """
 
     user = models.ForeignKey(
