@@ -24,7 +24,7 @@ from apps.course.access import (
 )
 from apps.major.access import (
     can_comment_on_major_article,
-    deny_non_same_major_comment_access,
+    deny_major_comment_vote_access,
     is_major_article,
 )
 from ara.classes.viewset import ActionAPIViewSet
@@ -166,8 +166,10 @@ class CommentViewSet(
 
         return super().perform_destroy(instance)
 
-    def _guard_course_comment_access(self, request, comment):
-        """과목글 댓글에 비-수강자, 학과글 댓글에 비-동일학과 차단.
+    def _guard_scoped_comment_vote_access(self, request, comment):
+        """과목글은 비수강자, 학과글은 읽기 권한 없는 유저의 투표를 차단.
+
+        즐겨찾기한 학과는 읽기 권한이 있으므로 글과 댓글 모두 투표할 수 있다.
         일반글 댓글은 통과 (기존 동작 보존).
         """
         if deny_unenrolled_comment_access(request.user, comment):
@@ -175,7 +177,7 @@ class CommentViewSet(
                 {"message": gettext("해당 게시판에 접근할 권한이 없습니다.")},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        if deny_non_same_major_comment_access(request.user, comment):
+        if deny_major_comment_vote_access(request.user, comment):
             return response.Response(
                 {"message": gettext("해당 게시판에 접근할 권한이 없습니다.")},
                 status=status.HTTP_403_FORBIDDEN,
@@ -186,7 +188,7 @@ class CommentViewSet(
     def vote_cancel(self, request, *args, **kwargs):
         comment = self.get_object()
 
-        denied = self._guard_course_comment_access(request, comment)
+        denied = self._guard_scoped_comment_vote_access(request, comment)
         if denied:
             return denied
 
@@ -213,7 +215,7 @@ class CommentViewSet(
     def vote_positive(self, request, *args, **kwargs):
         comment = self.get_object()
 
-        denied = self._guard_course_comment_access(request, comment)
+        denied = self._guard_scoped_comment_vote_access(request, comment)
         if denied:
             return denied
 
@@ -249,7 +251,7 @@ class CommentViewSet(
     def vote_negative(self, request, *args, **kwargs):
         comment = self.get_object()
 
-        denied = self._guard_course_comment_access(request, comment)
+        denied = self._guard_scoped_comment_vote_access(request, comment)
         if denied:
             return denied
 
