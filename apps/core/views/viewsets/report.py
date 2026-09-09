@@ -10,6 +10,10 @@ from apps.course.access import (
     deny_unenrolled_comment_access,
     deny_unenrolled_course_access,
 )
+from apps.major.access import (
+    deny_non_same_major_access,
+    deny_non_same_major_comment_access,
+)
 from ara.classes.viewset import ActionAPIViewSet
 from ara.settings import env
 
@@ -117,8 +121,13 @@ class ReportViewSet(
                     },
                     status=status.HTTP_403_FORBIDDEN,
                 )
-            # 과목글이면 비-수강자 차단 (defense in depth). 일반글은 변화 없음.
+            # Defense in depth: scoped article은 enrollment 또는 same-major를 검사한다.
             if deny_unenrolled_course_access(request.user, parent_article):
+                return Response(
+                    {"message": gettext("해당 게시판에 접근할 권한이 없습니다.")},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if deny_non_same_major_access(request.user, parent_article):
                 return Response(
                     {"message": gettext("해당 게시판에 접근할 권한이 없습니다.")},
                     status=status.HTTP_403_FORBIDDEN,
@@ -139,6 +148,11 @@ class ReportViewSet(
                     status=status.HTTP_403_FORBIDDEN,
                 )
             if deny_unenrolled_comment_access(request.user, parent_comment):
+                return Response(
+                    {"message": gettext("해당 게시판에 접근할 권한이 없습니다.")},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if deny_non_same_major_comment_access(request.user, parent_comment):
                 return Response(
                     {"message": gettext("해당 게시판에 접근할 권한이 없습니다.")},
                     status=status.HTTP_403_FORBIDDEN,

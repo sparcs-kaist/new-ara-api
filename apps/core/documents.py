@@ -6,6 +6,7 @@ from elasticsearch_dsl import Q, analyzer, tokenizer
 from elasticsearch_dsl.analysis import token_filter
 from elasticsearch_dsl.query import Query
 
+from apps.core.article_scope import exclude_scoped_articles
 from apps.core.models import Article
 from apps.user.models import UserProfile
 
@@ -74,7 +75,9 @@ class ArticleDocument(Document):
         related_models = [settings.AUTH_USER_MODEL, UserProfile]
 
     def get_queryset(self):
-        return (
+        # Elasticsearch에는 Ara permission이 없으므로 scoped article을 index에서 제외한다.
+        # Scoped board search가 필요해지면 별도 index로 분리한다.
+        return exclude_scoped_articles(
             super(ArticleDocument, self)
             .get_queryset()
             .prefetch_related("created_by")
@@ -107,7 +110,8 @@ class ArticleDocument(Document):
 
     @staticmethod
     def get_instances_from_related(related_instance):
+        # User/Profile 변경으로 reindex할 때도 scoped article을 제외한다.
         if isinstance(related_instance, apps.get_model(settings.AUTH_USER_MODEL)):
-            return related_instance.article_set.all()
+            return exclude_scoped_articles(related_instance.article_set.all())
         elif isinstance(related_instance, UserProfile):
-            return related_instance.user.article_set.all()
+            return exclude_scoped_articles(related_instance.user.article_set.all())

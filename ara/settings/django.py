@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "apps.meal",
     "apps.course",
     "apps.otl",
+    "apps.major",
 ]
 
 MIDDLEWARE = [

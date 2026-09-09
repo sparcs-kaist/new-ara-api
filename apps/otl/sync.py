@@ -17,7 +17,12 @@ from typing import Tuple
 from django.db import transaction
 from django.utils import timezone
 
-from apps.course.models import Course, CourseEnrollment, Professor
+from apps.course.grouping import (
+    active_grouping_strategies,
+    grouping_key_for,
+    normalize_course_code,
+)
+from apps.course.models import Course, CourseEnrollment, CourseGroup, Professor
 from apps.otl import client
 from apps.otl.client import OtlApiError, OtlAuthError
 
@@ -31,14 +36,8 @@ class OtlSyncError(Exception):
 
 
 def current_term() -> Tuple[int, int]:
-    """오늘 날짜 기준 (year, semester) heuristic — query 미지정 시 default 용.
-
-    개강일이 들쭉날쭉하고 계절학기 (semester 2, 4) 가 끼어서 월별 boundary
-    가 정확하지 않다. 정학기 (1=spring, 3=fall) 중 가까운 쪽 하나로만 단순화:
-    - 1-7월 → spring
-    - 8-12월 → fall
-    경계 오차는 is_past_term 의 1학기 margin 으로 흡수한다.
-    """
+    """현재 날짜로 regular term `(year, semester)`을 추정한다.
+    January–July는 spring, August–December는 fall로 처리한다."""
     now = timezone.now()
     y, m = now.year, now.month
     if m <= 7:
@@ -53,11 +52,8 @@ def _previous_term(year: int, semester: int) -> Tuple[int, int]:
 
 
 def is_past_term(year: int, semester: int) -> bool:
-    """current-2 학기 이전이면 past (∞ 캐시). current 와 직전 학기는 24h TTL.
-
-    margin 을 두는 이유: current_term() heuristic 이 학기 경계에서 한 학기
-    어긋나도 잘못된 데이터가 영구 캐시로 박히지 않게 한다.
-    """
+    """Current term의 previous term보다 오래된 term인지 확인한다.
+    이 margin은 term boundary 오차가 permanent cache로 남는 것을 방지한다."""
     cy, cs = current_term()
     return (year, semester) < _previous_term(cy, cs)
 
@@ -85,7 +81,7 @@ def is_term_cache_fresh(user, year: int, semester: int) -> bool:
 
 
 def sync_user_courses(user, year: int, semester: int, *, force: bool = False) -> None:
-    """OTL my-timetable 로 (year, semester) 의 enrollment 만 갱신."""
+    """OTL `my-timetable`에서 지정 term의 enrollment를 sync한다."""
     log.info(
         "sync_user_courses start: user=%s year=%s semester=%s force=%s",
         user.id, year, semester, force,
@@ -119,12 +115,8 @@ def sync_user_courses(user, year: int, semester: int, *, force: bool = False) ->
 
 
 def _apply_my_timetable(user, year: int, semester: int, payload: dict) -> None:
-    """my-timetable 응답을 받아 Course / Professor / Enrollment 갱신.
-
-    `lecture.code + 분반 (professors set)` 단위로 Course 한 row 유지.
-    같은 (year, semester, code, professors) 는 분반이 달라도 한 Course 로 합본 —
-    `otl_lecture_ids` 에 lectureId 들이 누적된다 (기존 정책 유지).
-    """
+    """`my-timetable` payload로 `Course`, `Professor`, `Enrollment`를 update한다.
+    같은 `(year, semester, code, professors)` lectures는 한 `Course` row로 merge한다."""
     if not isinstance(payload, dict) or "lectures" not in payload:
         raise OtlSyncError(
             f"OTL my-timetable missing 'lectures' key: keys="
@@ -136,8 +128,7 @@ def _apply_my_timetable(user, year: int, semester: int, payload: dict) -> None:
             f"OTL my-timetable 'lectures' not a list: {type(lectures).__name__}"
         )
 
-    # 빈 응답 가드: 200 + lectures=[] 자체는 신택스상 유효하지만, 이 (year, semester)
-    # 에 기존 enrollment 가 있는데 갑자기 빈 응답이면 OTL 부분 장애 가능성. wipe 안 함.
+    # Empty payload가 기존 enrollment를 삭제하지 않도록 partial outage를 guard한다.
     if not lectures:
         existing_count = _term_enrollment_qs(user, year, semester).count()
         if existing_count > 0:
@@ -184,6 +175,9 @@ def _apply_my_timetable(user, year: int, semester: int, payload: dict) -> None:
 
     course_ids: list[int] = []
     new_course_ids: list[int] = []
+    grouping_strategies = active_grouping_strategies(
+        code for code, _prof_key in grouped
+    )
 
     with transaction.atomic():
         for pid, name in prof_pool.items():
@@ -192,6 +186,26 @@ def _apply_my_timetable(user, year: int, semester: int, payload: dict) -> None:
         for (code, prof_key), entries in grouped.items():
             first = entries[0]
             otl_lecture_ids = sorted({e["lectureId"] for e in entries})
+            # Grouping strategy로 term-independent group을 선택하고 latest term title만 유지한다.
+            # Past-term sync가 shared group title을 rollback하지 않도록 newer term에서만 update한다.
+            strategy = grouping_strategies.get(normalize_course_code(code))
+            group_key = grouping_key_for(prof_key, strategy)
+            group, group_created = CourseGroup.objects.get_or_create(
+                course_code=code,
+                professors_key=group_key,
+                defaults={
+                    "title": first["name"],
+                    "title_year": year,
+                    "title_semester": semester,
+                },
+            )
+            if not group_created and (year, semester) > group.title_term():
+                group.title = first["name"]
+                group.title_year = year
+                group.title_semester = semester
+                group.save(
+                    update_fields=["title", "title_year", "title_semester"]
+                )
             course, created = Course.objects.update_or_create(
                 course_code=code,
                 year=year,
@@ -203,6 +217,7 @@ def _apply_my_timetable(user, year: int, semester: int, payload: dict) -> None:
                     "otl_lecture_ids": otl_lecture_ids,
                     "credit": first["credit"],
                     "department_name": first["department_name"],
+                    "group": group,
                 },
             )
             course.professors.set(first["prof_ids"])

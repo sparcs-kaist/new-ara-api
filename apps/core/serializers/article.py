@@ -8,6 +8,10 @@ from rest_framework import exceptions, serializers
 from rest_framework.utils.serializer_helpers import ReturnDict
 from drf_spectacular.utils import extend_schema_field, OpenApiTypes  # 수정: OpenApiTypes 추가
 
+from apps.core.article_scope import (
+    exclude_scoped_articles,
+    scoped_article_sql_condition,
+)
 from apps.core.documents import ArticleDocument
 from apps.core.models import Article, ArticleHiddenReason, Block, Board, Comment, Scrap
 from apps.core.models.board import BoardAccessPermissionType, NameType
@@ -165,23 +169,26 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
     def filter_articles(obj, request):
         from_view = request.query_params.get("from_view")
 
+        # Side-article navigation은 regular board 전용이며 모든 branch가 이 base를 사용한다.
+        base = exclude_scoped_articles(Article.objects.all())
+
         if from_view == "-portal":
-            return Article.objects.exclude(parent_board__slug="portal-notice")
+            return base.exclude(parent_board__slug="portal-notice")
 
         elif from_view == "user":
             created_by_id = request.query_params.get("created_by", request.user.id)
-            return Article.objects.filter(created_by_id=created_by_id)
+            return base.filter(created_by_id=created_by_id)
 
         elif from_view == "board":
             parent_board = obj.parent_board
-            return Article.objects.filter(parent_board=parent_board)
+            return base.filter(parent_board=parent_board)
 
         elif from_view == "topic":
             parent_topic = obj.parent_topic
-            return Article.objects.filter(parent_topic=parent_topic)
+            return base.filter(parent_topic=parent_topic)
 
         elif from_view == "scrap":
-            articles = Article.objects.filter(
+            articles = base.filter(
                 scrap_set__scrapped_by=request.user
             ).order_by("-scrap_set__created_at")
             if not articles.filter(id=obj.id).exists():
@@ -195,7 +202,7 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
                 timezone.now().date(), datetime.time.min, datetime.timezone.utc
             )
             # get the articles that are created_at within a week and order by hit_count
-            top_articles = Article.objects.filter(
+            top_articles = base.filter(
                 created_at__gte=current_date - datetime.timedelta(days=7)
             ).order_by("-hit_count", "-pk")
 
@@ -205,7 +212,7 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
                 )
             return top_articles
 
-        return Article.objects.all()
+        return base
 
     def get_side_articles(self, obj) -> dict:
         request = self.context["request"]
@@ -307,15 +314,23 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
         else:
             query_params = [request.user.id, obj.id, last_read_log_of_obj.created_at]
 
+        # Read log는 enrollment/major 변경 후에도 남으므로 raw SQL에서 scoped article을 제외한다.
+        scoped_exclusion_sql = (
+            f"AND {scoped_article_sql_condition('`read_article`')}"
+        )
+
         before_query = f"""
         SELECT * FROM `core_article`
         JOIN (
             SELECT `core_articlereadlog`.`article_id`, MAX(`core_articlereadlog`.`created_at`) AS my_last_read_at
             FROM `core_articlereadlog`
+            JOIN `core_article` AS `read_article`
+                ON `read_article`.`id` = `core_articlereadlog`.`article_id`
             WHERE (
                 `core_articlereadlog`.`deleted_at` = '0001-01-01 00:00:00' AND
                 `core_articlereadlog`.`read_by_id` = %s AND
                 `core_articlereadlog`.`article_id` <> %s
+                {scoped_exclusion_sql}
                 {search_restriction_sql}
             )
             GROUP BY `core_articlereadlog`.`article_id`
@@ -330,10 +345,13 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
         JOIN (
             SELECT `core_articlereadlog`.`article_id`, MAX(`core_articlereadlog`.`created_at`) AS my_last_read_at
             FROM `core_articlereadlog`
+            JOIN `core_article` AS `read_article`
+                ON `read_article`.`id` = `core_articlereadlog`.`article_id`
             WHERE (
                 `core_articlereadlog`.`deleted_at` = '0001-01-01 00:00:00' AND
                 `core_articlereadlog`.`read_by_id` = %s AND
                 `core_articlereadlog`.`article_id` <> %s
+                {scoped_exclusion_sql}
                 {search_restriction_sql}
             )
             GROUP BY `core_articlereadlog`.`article_id`
@@ -476,6 +494,11 @@ class ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSeriali
     title = serializers.SerializerMethodField(
         read_only=True,
     )
+    # `Meta.exclude` override로 우회되던 content masking을 detail serializer와 통일한다.
+    # Reported article과 blocked user의 content도 `get_content`를 거쳐 노출을 막는다.
+    content = serializers.SerializerMethodField(
+        read_only=True,
+    )
     created_by = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -568,9 +591,10 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
             "negative_vote_count",
             "created_by",
             "commented_at",
-            # 메인 article 엔드포인트로 과목게시판 글을 인젝션할 수 없게 강제. 과목 글
-            # 작성은 /api/courses/<id>/articles/ 만 사용해야 한다.
+            # Main article endpoint에서는 scoped article을 생성할 수 없다.
             "related_course",
+            "related_course_group",
+            "related_major",
         )
 
     def validate_parent_board(self, board: Board):
@@ -619,8 +643,10 @@ class ArticleUpdateActionSerializer(BaseArticleSerializer):
             "parent_topic",
             "parent_board",
             "commented_at",
-            # 일반 article PATCH 로 과목 소속을 옮겨다닐 수 없게 강제.
+            # 일반 article PATCH 로 scoped 게시판 소속을 만들거나 옮길 수 없게 강제.
             "related_course",
+            "related_course_group",
+            "related_major",
         )
 
     @transaction.atomic

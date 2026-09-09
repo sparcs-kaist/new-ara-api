@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import logging
 
-from django.db.models import Count, OuterRef, Subquery
+from django.db.models import Count, F, OuterRef, Subquery
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import decorators, mixins, permissions, response, viewsets
@@ -129,6 +129,22 @@ class CourseViewSet(
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset, many=True)
         return response.Response(serializer.data)
+
+    @extend_schema(
+        summary="본인 수강 학기 목록 조회",
+        responses=CourseSerializer(many=True),
+    )
+    @decorators.action(detail=False, methods=["get"], url_path="semester")
+    def semester(self, request):
+        # Active enrollments에서 distinct `(year, semester)` pairs만 반환한다.
+        terms = (
+            CourseEnrollment.objects
+            .filter(user=request.user)
+            .values(year=F("course__year"), semester=F("course__semester"))
+            .distinct()
+            .order_by("-year", "-semester")
+        )
+        return response.Response(list(terms))
 
     @extend_schema(
         summary="과목 게시판 카탈로그 (학기 필터 가능)",

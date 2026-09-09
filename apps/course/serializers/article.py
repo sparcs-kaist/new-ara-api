@@ -1,66 +1,99 @@
 """과목게시판용 Article serializer.
 
-기존 apps.core 의 Article serializer 와 분리해서 과목게시판 도메인의
-간소한 응답만 다룬다 (block/scrap/vote 등 일반 board 부가기능 제외).
-모든 글은 익명 (name_type=ANONYMOUS) 강제.
+읽기 serializer 는 core 의 ArticleSerializer / ArticleListActionSerializer 를
+상속해서 hidden(신고 누적) · block(차단 유저) · 성인/정치 글 마스킹 파이프라인을
+그대로 탄다. 필드는 Meta.fields 로 과목게시판에 필요한 것만 좁힌다.
+(예전엔 평범한 ModelSerializer 라 title/content 를 마스킹 없이 그대로 노출했다.)
+
+글 작성 시 익명(ANONYMOUS) 또는 닉네임(REGULAR)을 선택한다.
 """
 
 from rest_framework import serializers
 
 from apps.core.models import Article
 from apps.core.models.board import NameType
+from apps.core.serializers.article import (
+    ArticleListActionSerializer,
+    ArticleSerializer,
+)
+from apps.core.serializers.mixins.scoped_board import ScopedBoardHiddenInfoMixin
 
 
-class CourseArticleListSerializer(serializers.ModelSerializer):
-    """목록 응답: 본문 일부, 댓글 수, 투표 수 정도만."""
+class CourseArticleListSerializer(
+    ScopedBoardHiddenInfoMixin, ArticleListActionSerializer
+):
+    """목록 응답: 제목, 댓글 수, 투표 수 정도만."""
 
     class Meta:
+        # Parent `Meta.exclude`와 `fields` 충돌을 피하기 위해 새로 정의한다.
         model = Article
         fields = (
             "id",
             "title",
             "created_at",
+            "created_by",
+            "name_type",
             "comment_count",
             "positive_vote_count",
             "negative_vote_count",
             "hit_count",
+            "is_hidden",
+            "why_hidden",
+            "can_override_hidden",
         )
-        read_only_fields = fields
 
 
-class CourseArticleSerializer(serializers.ModelSerializer):
+class CourseArticleSerializer(ScopedBoardHiddenInfoMixin, ArticleSerializer):
+    """상세 응답. title/content 는 마스킹 대상이라 SerializerMethodField 로 내려간다."""
+
     class Meta:
         model = Article
         fields = (
             "id",
             "title",
             "content",
-            "content_text",
             "created_at",
+            "created_by",
+            "name_type",
             "content_updated_at",
             "comment_count",
             "positive_vote_count",
             "negative_vote_count",
             "hit_count",
+            "my_vote",
+            "comments",
+            "is_mine",
+            "is_hidden",
+            "why_hidden",
+            "can_override_hidden",
         )
-        read_only_fields = fields
 
 
 class CourseArticleCreateSerializer(serializers.ModelSerializer):
+    name_type = serializers.ChoiceField(
+        choices=(NameType.ANONYMOUS.name, NameType.REGULAR.name),
+        default=NameType.ANONYMOUS.name,
+        write_only=True,
+        help_text="ANONYMOUS(익명) 또는 REGULAR(닉네임)",
+    )
+
     class Meta:
         model = Article
-        fields = ("title", "content", "content_text")
+        fields = ("title", "content", "content_text", "name_type")
 
     def create(self, validated_data):
-        # 과목게시판 글은 익명 + 부모 board / related_course 강제 주입.
-        # 호출 viewset 에서 context["course"], context["board_id"] 주입.
+        # ViewSet context의 course, course_group, board ID로 scoped relations을 설정한다.
+        # `related_course`는 source term, `related_course_group`은 board scope다.
+        name_type = NameType[validated_data.pop("name_type")]
         course = self.context["course"]
+        course_group = self.context["course_group"]
         board_id = self.context["board_id"]
         return Article.objects.create(
             **validated_data,
             parent_board_id=board_id,
             related_course=course,
-            name_type=NameType.ANONYMOUS.value,
+            related_course_group=course_group,
+            name_type=name_type.value,
             created_by=self.context["request"].user,
         )
 

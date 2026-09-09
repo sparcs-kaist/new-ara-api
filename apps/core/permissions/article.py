@@ -19,6 +19,7 @@ class ArticleReadPermission(permissions.BasePermission):
             BoardAccessPermissionType.READ, request.user.profile.group
         )
 
+
 class ArticleModifyPermission(permissions.BasePermission):
     message = "게시글 수정은 작성자 본인만 가능합니다"
 
@@ -40,5 +41,8 @@ class ArticleAccessPermission(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj: Article):
         from apps.course.access import can_read_article
+        from apps.major.access import can_read_major_article, is_major_article
 
+        if is_major_article(obj):
+            return can_read_major_article(request.user, obj)
         return can_read_article(request.user, obj)

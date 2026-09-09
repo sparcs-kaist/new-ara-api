@@ -17,12 +17,14 @@ class MetaDataQuerySet(models.QuerySet):
     def hard_delete(self):
         return super().delete()
 
-    def bulk_create(self, objs, batch_size=None, ignore_conflicts=False):
+    def bulk_create(self, objs, batch_size=None, **kwargs):
+        # Wrapper는 `created_at`만 설정하고 conflict-related arguments는 그대로 전달한다.
+        # 이를 누락하면 concurrent insert에서 `ON CONFLICT`가 적용되지 않는다.
         for obj in objs:
             if not hasattr(obj, "created_at"):
                 obj.created_at = timezone.now()
 
-        return super().bulk_create(objs, batch_size)
+        return super().bulk_create(objs, batch_size=batch_size, **kwargs)
 
 
 class MetaDataManager(models.Manager):

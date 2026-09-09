@@ -119,6 +119,9 @@ class Article(MetaDataModel):
         db_index=True,
         default=None,
     )
+    # 일반글에서는 실제 소속 게시판이다. 과목·학과글도 이 필드가 NOT NULL이라
+    # 각각 숨겨진 내부 Board를 형식상 연결하지만, 실제 소속과 접근 권한은
+    # related_course_group / related_major 및 전용 permission에서 판단한다.
     parent_board = models.ForeignKey(
         verbose_name="게시판",
         to="core.Board",
@@ -135,8 +138,32 @@ class Article(MetaDataModel):
         blank=True,
         default=None,
         db_index=True,
-        help_text="과목별 게시판 글일 때 set. 일반 글은 null.",
+        help_text="글이 작성된 학기 Course (출처). 게시판 묶음은 related_course_group 기준.",
     )
+    related_course_group = models.ForeignKey(
+        verbose_name="관련 과목 그룹 게시판",
+        to="course.CourseGroup",
+        on_delete=models.SET_NULL,
+        related_name="article_set",
+        null=True,
+        blank=True,
+        default=None,
+        db_index=True,
+        help_text="과목 게시판 글일 때 set. 학기 무관 누적 단위. 일반 글은 null.",
+    )
+
+    related_major = models.ForeignKey(
+        verbose_name="관련 학과 게시판",
+        to="major.Major",
+        on_delete=models.SET_NULL,
+        related_name="article_set",
+        null=True,
+        blank=True,
+        default=None,
+        db_index=True,
+        help_text="학과별 게시판 글일 때 set. 일반 글은 null.",
+    )
+
     attachments = models.ManyToManyField(
         verbose_name="첨부 파일(들)",
         to="core.Attachment",
