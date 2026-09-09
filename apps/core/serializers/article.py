@@ -595,9 +595,11 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
             "negative_vote_count",
             "created_by",
             "commented_at",
-            # 메인 article 엔드포인트로 과목게시판 글을 인젝션할 수 없게 강제. 과목 글
-            # 작성은 /api/courses/<id>/articles/ 만 사용해야 한다.
+            # 메인 article 엔드포인트로 scoped 글을 인젝션할 수 없게 강제한다.
+            # 과목/학과 글 작성은 각각의 전용 엔드포인트만 사용해야 한다.
             "related_course",
+            "related_course_group",
+            "related_major",
         )
 
     def validate_parent_board(self, board: Board):
@@ -646,8 +648,10 @@ class ArticleUpdateActionSerializer(BaseArticleSerializer):
             "parent_topic",
             "parent_board",
             "commented_at",
-            # 일반 article PATCH 로 과목 소속을 옮겨다닐 수 없게 강제.
+            # 일반 article PATCH 로 scoped 게시판 소속을 만들거나 옮길 수 없게 강제.
             "related_course",
+            "related_course_group",
+            "related_major",
         )
 
     @transaction.atomic

@@ -24,7 +24,7 @@ def general_article_filter(prefix: str = "") -> dict:
     """
     lookup = f"{prefix}__" if prefix else ""
     return {
-        f"{lookup}related_course__isnull": True,
+        f"{lookup}related_course_group__isnull": True,
         f"{lookup}related_major__isnull": True,
     }
 
@@ -39,9 +39,10 @@ def scoped_article_sql_condition(table: str = "`core_article`") -> str:
 
     table 은 core_article 을 가리키는 테이블명 또는 별칭 (백틱 포함).
     """
-    # ORM 쪽 필터(related_course__isnull / related_major__isnull)와 같은 컬럼을
-    # 봐야 두 경로의 판정이 어긋나지 않는다.
+    # ORM 쪽 필터(related_course_group__isnull / related_major__isnull)와 같은
+    # 컬럼을 봐야 두 경로의 판정이 어긋나지 않는다. related_course는 글이 작성된
+    # 학기의 출처일 뿐이고, 과목 게시판 scope는 related_course_group이 결정한다.
     return (
-        f"{table}.`related_course_id` IS NULL "
+        f"{table}.`related_course_group_id` IS NULL "
         f"AND {table}.`related_major_id` IS NULL"
     )

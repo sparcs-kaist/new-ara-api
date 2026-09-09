@@ -16,7 +16,8 @@ from apps.core.models.board import BoardAccessPermissionType
 
 
 def is_course_article(article) -> bool:
-    return article is not None and article.related_course_id is not None
+    # related_course는 작성 학기 출처이고, 실제 누적 게시판 scope는 group이다.
+    return article is not None and article.related_course_group_id is not None
 
 
 def _is_enrolled_in_group(user, group_id) -> bool:

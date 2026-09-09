@@ -1,5 +1,9 @@
+from unittest.mock import call, patch
+
+from django.contrib.admin.sites import AdminSite
 from django.test import SimpleTestCase, TestCase
 
+from apps.course.admin import CourseGroupingRuleAdmin
 from apps.course.grouping import (
     COURSE_CODE_GROUP_KEY,
     grouping_key_for,
@@ -101,3 +105,21 @@ class RegroupExistingCoursesTest(TestCase):
         self.assertNotEqual(self.course_a.group_id, self.course_b.group_id)
         self.assertEqual(self.course_a.group.professors_key, "10")
         self.assertEqual(self.course_b.group.professors_key, "20")
+
+
+class CourseGroupingRuleAdminTest(TestCase):
+    def test_changing_course_code_regroups_old_and_new_codes(self):
+        rule = CourseGroupingRule.objects.create(
+            course_code="MAS101",
+            strategy=CourseGroupingRule.Strategy.COURSE_CODE,
+        )
+        rule.course_code = "EE209"
+        model_admin = CourseGroupingRuleAdmin(CourseGroupingRule, AdminSite())
+
+        with patch("apps.course.admin.regroup_existing_courses") as regroup:
+            model_admin.save_model(None, rule, None, change=True)
+
+        self.assertEqual(
+            regroup.call_args_list,
+            [call("MAS101"), call("EE209")],
+        )

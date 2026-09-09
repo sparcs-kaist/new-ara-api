@@ -55,7 +55,7 @@ from ara.settings import MIN_TIME, SCHOOL_RESPONSE_VOTE_THRESHOLD
 class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     queryset = Article.objects.all()
 
-    # 과목/학과 글 (related_course / related_major != None) 은 default 로
+    # 과목/학과 글 (related_course_group / related_major != None) 은 default 로
     # 모든 액션에서 제외해 메인 피드/검색/retrieve/update/destroy 가 모두
     # 404 로 응답하도록 한다. vote_* 만 enrollment / same-major 체크를
     # 거쳐 통과시키기 위해 화이트리스트.

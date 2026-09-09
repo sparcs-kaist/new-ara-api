@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.course.grouping import regroup_existing_courses
+from apps.course.grouping import normalize_course_code, regroup_existing_courses
 from apps.course.models import CourseGroup, CourseGroupingRule
 
 
@@ -17,7 +17,23 @@ class CourseGroupingRuleAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at", "updated_at")
 
     def save_model(self, request, obj, form, change):
+        previous_course_code = None
+        if change and obj.pk:
+            previous_course_code = (
+                CourseGroupingRule.objects.filter(pk=obj.pk)
+                .values_list("course_code", flat=True)
+                .first()
+            )
+
         super().save_model(request, obj, form, change)
+
+        if (
+            previous_course_code is not None
+            and normalize_course_code(previous_course_code) != obj.course_code
+        ):
+            # 규칙의 대상을 바꾸면 이전 과목에는 더 이상 규칙이 없으므로 기본
+            # 그룹 정책으로 되돌려야 한다.
+            regroup_existing_courses(previous_course_code)
         regroup_existing_courses(obj.course_code)
 
     def delete_model(self, request, obj):
