@@ -36,13 +36,10 @@ from apps.major.serializers import (
 class MajorArticleViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticated, IsSameMajor)
     serializer_class = MajorArticleSerializer
-    # 실제 조회는 get_queryset() 이 담당한다. 여기 빈 queryset 을 두는 건
-    # 스키마 생성기가 URL kwargs 없이 get_queryset() 을 호출하다 KeyError 를
-    # 내는 것을 막기 위함.
+    # Empty QuerySet은 schema generator가 URL kwargs 없이 조회할 때의 `KeyError`를 막는다.
     queryset = Article.objects.none()
     lookup_value_regex = "[0-9]+"
-    # ModelViewSet 은 PUT(update) 도 갖고 있지만 학과글은 부분 수정만 지원한다.
-    # 라우터에 맡기면 PUT 이 자동 노출되므로 여기서 막는다.
+    # `ModelViewSet`의 default PUT을 막고 partial update만 허용한다.
     http_method_names = ["get", "post", "patch", "delete", "head", "options"]
 
     def get_serializer_class(self):
@@ -55,13 +52,11 @@ class MajorArticleViewSet(viewsets.ModelViewSet):
         return MajorArticleSerializer
 
     def get_queryset(self):
-        # related_major 는 Major(PK=std_dept_id) FK 이므로 related_major_id 가
-        # 곧 std_dept_id. URL 값으로 바로 필터한다.
+        # `related_major_id`는 `Major` PK이므로 URL의 `std_dept_id`로 바로 filter한다.
         std_dept_id = self.kwargs["std_dept_id"]
         queryset = (
             Article.objects.filter(related_major_id=std_dept_id)
-            # 마스킹 판정(hidden_reasons)과 작성자 표기가 매 row 마다
-            # parent_board / created_by.profile 을 보므로 같이 당겨온다.
+            # Masking과 author rendering의 per-row query를 막기 위해 related objects를 join한다.
             .select_related("created_by__profile", "parent_board").order_by(
                 "-created_at"
             )
@@ -75,18 +70,16 @@ class MajorArticleViewSet(viewsets.ModelViewSet):
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
-        # core 와 동일하게 ?override_hidden 으로 마스킹 해제를 요청할 수 있다.
-        # (해제 가능한 사유인지는 serializer 가 CAN_OVERRIDE_REASONS 로 판단)
+        # Core와 같이 `override_hidden`을 지원하며 serializer가 override 가능 여부를 판단한다.
         ctx["override_hidden"] = "override_hidden" in self.request.query_params
         std_dept_id = self.kwargs.get("std_dept_id")
         if std_dept_id is not None:
             user = self.request.user
             if int(std_dept_id) == user_major_id(user):
-                # 내 SSO 학과: 없으면 SSO 정보로 lazy 생성 (첫 접근).
+                # SSO home major가 없으면 first access에서 lazy-create한다.
                 ctx["major"] = get_or_create_major_for_user(user)
             else:
-                # 즐겨찾기한 타 학과: 이미 존재하는 row. 읽기와 글·댓글 투표는
-                # 가능하지만 글·댓글 작성/수정/삭제와 스크랩·신고는 불가하다.
+                # Favorite major는 read/vote만 허용하며 existing row를 사용한다.
                 ctx["major"] = get_object_or_404(Major, pk=std_dept_id)
             ctx["board_id"] = get_major_board_id()
         return ctx
@@ -110,8 +103,7 @@ class MajorArticleViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         article = serializer.save()
-        # 읽기 serializer 는 마스킹 판정에 context["request"] 를 쓰므로
-        # context 없이 만들면 KeyError 가 난다.
+        # Read serializer의 masking logic에 필요한 request context를 전달한다.
         out = MajorArticleSerializer(
             article, context=self.get_serializer_context()
         ).data
@@ -130,7 +122,7 @@ class MajorArticleViewSet(viewsets.ModelViewSet):
         return super().destroy(request, *args, **kwargs)
 
     def perform_update(self, serializer):
-        # 작성자만 수정 허용
+        # Author만 update할 수 있다.
         article = self.get_object()
         if article.created_by_id != self.request.user.id:
             from rest_framework.exceptions import PermissionDenied

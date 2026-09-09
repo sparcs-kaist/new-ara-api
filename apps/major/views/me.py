@@ -29,7 +29,7 @@ class MeView(APIView):
 
         info = user_major_info(request.user)
         if info is None:
-            # 프로필이 없거나 SSO 에 학과 정보가 없는 경우.
+            # Profile 또는 SSO major info가 없으면 `404`를 반환한다.
             return Response(
                 {"detail": "학과 정보를 확인할 수 없습니다."},
                 status=status.HTTP_404_NOT_FOUND,

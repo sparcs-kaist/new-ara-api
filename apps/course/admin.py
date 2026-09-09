@@ -31,8 +31,7 @@ class CourseGroupingRuleAdmin(admin.ModelAdmin):
             previous_course_code is not None
             and normalize_course_code(previous_course_code) != obj.course_code
         ):
-            # 규칙의 대상을 바꾸면 이전 과목에는 더 이상 규칙이 없으므로 기본
-            # 그룹 정책으로 되돌려야 한다.
+            # Course code가 바뀌면 이전 code는 default grouping strategy로 되돌린다.
             regroup_existing_courses(previous_course_code)
         regroup_existing_courses(obj.course_code)
 

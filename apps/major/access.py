@@ -25,10 +25,8 @@ def is_major_article(article) -> bool:
 
 
 def user_major_info(user) -> dict | None:
-    """SSO kaist_v2_info 에서 학과 정보를 dict 로 추출. 실패 시 None.
-
-    반환: {"std_dept_id": int, "major_name": str, "major_name_eng": str | None}
-    """
+    """SSO `kaist_v2_info`를 major info dict로 parsing하며, 실패하면 `None`을 반환한다.
+    Return shape: `std_dept_id`, `major_name`, `major_name_eng`."""
     profile = getattr(user, "profile", None)
     if profile is None:
         return None
@@ -37,14 +35,12 @@ def user_major_info(user) -> dict | None:
     if not raw:
         return None
     try:
-        # json.JSONDecodeError 는 ValueError 의 서브클래스라 따로 적지 않는다.
+        # `JSONDecodeError`는 `ValueError` subclass이므로 별도로 처리하지 않는다.
         info = json.loads(raw) if isinstance(raw, str) else raw
     except (ValueError, TypeError):
         return None
 
-    # 파싱 성공 != dict. '[]', 'null', '"foo"', '3' 도 모두 정상 파싱되므로
-    # 타입을 확인하지 않으면 아래 .get() 에서 AttributeError -> 500 이 난다.
-    # 이 함수는 학과게시판 모든 요청의 권한 판정 경로다.
+    # Valid JSON이 항상 dict는 아니므로 type을 확인해 `.get()`의 `AttributeError`를 막는다.
     if not isinstance(info, dict):
         return None
 
@@ -64,19 +60,14 @@ def user_major_info(user) -> dict | None:
 
 
 def user_major_id(user) -> int | None:
-    """SSO 의 std_dept_id 를 정수로 반환. 없거나 파싱 실패 시 None."""
+    """SSO의 `std_dept_id`를 `int`로 반환하며, 없거나 parsing에 실패하면 `None`을 반환한다."""
     info = user_major_info(user)
     return info["std_dept_id"] if info else None
 
 
 def get_or_create_major_for_user(user):
-    """요청 유저의 SSO 정보로 자기 학과 Major row 를 lazy get_or_create.
-
-    Major 는 사전 시드하지 않는다. 권한(IsSameMajor)이 "URL 의 std_dept_id ==
-    유저 SSO 의 std_dept_id" 를 이미 보장하므로, 유저 SSO 의 학과명으로 채워도
-    URL 이 가리키는 학과와 항상 일치한다. board.py 의 get_major_board_id 와
-    같은 lazy 생성 패턴.
-    """
+    """User의 SSO info로 home `Major` row와 `UserMajor` relation을 lazy-create한다.
+    SSO major info가 없으면 `None`을 반환한다."""
     from apps.major.models import Major, UserMajor
 
     info = user_major_info(user)
@@ -87,25 +78,18 @@ def get_or_create_major_for_user(user):
         defaults={
             "major_name": info["major_name"],
             "major_name_eng": info["major_name_eng"],
-            # SSO 는 코드를 주지 않으므로 학과 이름으로 매핑표에서 찾아 채운다.
+            # SSO에 code가 없으므로 major name mapping을 사용한다.
             "major_code": get_major_code(info["major_name"]),
         },
     )
-    # UserMajor는 사용자 관점에서는 타 학과 즐겨찾기지만, 내부적으로는 읽을 수
-    # 있는 학과 집합을 표현한다. 홈 학과도 자동 row로 담아 readers_count와
-    # my-major 조회에 함께 사용한다. UniqueConstraint(user, major)로 멱등하다.
+    # `UserMajor`는 home/favorite majors의 readable set이며 unique constraint로 idempotent하다.
     UserMajor.objects.get_or_create(user=user, major=major)
     return major
 
 
 def _is_same_major(user, std_dept_id) -> bool:
-    """user 의 SSO std_dept_id 가 대상 학과(std_dept_id, = Major PK) 와 같은가.
-
-    글·댓글 작성/수정/삭제와 스크랩·신고 권한 판정에 쓴다. 글·댓글 투표는 읽기
-    권한을 따라가므로 즐겨찾기 학과에서도 가능하다. Major row 존재 여부와
-    무관하게 SSO 값만 비교한다. row는 실제 접근 시 viewset에서 lazy 생성되므로,
-    여기서 존재를 요구하면 첫 접근이 막힌다.
-    """
+    """User의 SSO `std_dept_id`와 target `Major` PK가 같은지 확인한다.
+    `Major` row 존재 여부와 무관하게 SSO value만 비교한다."""
     user_dept_id = user_major_id(user)
     if user_dept_id is None:
         return False
@@ -116,17 +100,14 @@ def _is_same_major(user, std_dept_id) -> bool:
 
 
 def user_added_major_ids(user) -> set[int]:
-    """UserMajor에 기록된 홈 학과와 즐겨찾기 학과의 Major PK 집합."""
+    """`UserMajor`에 저장된 home/favorite `Major` PK set을 반환한다."""
     from apps.major.models import UserMajor
 
     return set(UserMajor.objects.filter(user=user).values_list("major_id", flat=True))
 
 
 def can_read_major(user, std_dept_id) -> bool:
-    """user 가 대상 학과 게시판을 '읽을' 수 있는가.
-
-    읽기 = 내 SSO 학과 OR 내가 add 한 학과. 쓰기와 달리 add 한 타 학과도 허용.
-    """
+    """User가 home major 또는 favorite major를 읽을 수 있는지 확인한다."""
     if _is_same_major(user, std_dept_id):
         return True
     try:
@@ -139,7 +120,7 @@ def can_read_major(user, std_dept_id) -> bool:
 
 
 def can_read_major_article(user, article) -> bool:
-    """학과글이면 읽기 권한(내 학과 OR add 한 학과), 아니면 parent_board.read_access_mask."""
+    """Major article은 major read permission, 그 외에는 `read_access_mask`로 검사한다."""
     if is_major_article(article):
         return can_read_major(user, article.related_major_id)
     return article.parent_board.group_has_access_permission(
@@ -148,7 +129,7 @@ def can_read_major_article(user, article) -> bool:
 
 
 def can_comment_on_major_article(user, article) -> bool:
-    """학과글이면 same-major, 아니면 parent_board.comment_access_mask."""
+    """Major article은 same-major, 그 외에는 `comment_access_mask`로 검사한다."""
     if is_major_article(article):
         return _is_same_major(user, article.related_major_id)
     return article.parent_board.group_has_access_permission(
@@ -157,7 +138,7 @@ def can_comment_on_major_article(user, article) -> bool:
 
 
 def deny_non_same_major_access(user, article) -> bool:
-    """학과글이고 다른 학과면 True (차단). 일반글은 False (통과)."""
+    """다른 major의 article에 접근할 때만 `True`를 반환한다."""
     if not is_major_article(article):
         return False
     return not _is_same_major(user, article.related_major_id)
@@ -171,7 +152,7 @@ def _comment_parent_article(comment):
 
 
 def deny_non_same_major_comment_access(user, comment) -> bool:
-    """학과글에 달린 댓글에 다른 학과 유저가 행위하려 하면 True (차단)."""
+    """다른 major article의 comment에 접근할 때만 `True`를 반환한다."""
     parent = _comment_parent_article(comment)
     if parent is None:
         return False
@@ -179,12 +160,8 @@ def deny_non_same_major_comment_access(user, comment) -> bool:
 
 
 def deny_unreadable_major_comment_access(user, comment) -> bool:
-    """학과글 댓글을 읽을 수 없는 유저의 접근을 차단한다.
-
-    자기 SSO 학과뿐 아니라 UserMajor로 즐겨찾기한 학과도 읽기 권한이 있으므로
-    댓글 조회·투표가 가능하다. 댓글 작성·수정·삭제·신고 권한은 이 함수와
-    별도로 same-major를 유지한다.
-    """
+    """Major article의 comment에 read permission이 없으면 `True`를 반환한다.
+    Home major와 `UserMajor`에 등록된 favorite major에는 read access를 허용한다."""
     parent = _comment_parent_article(comment)
     if not is_major_article(parent):
         return False

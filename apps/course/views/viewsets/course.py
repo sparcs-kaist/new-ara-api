@@ -136,8 +136,7 @@ class CourseViewSet(
     )
     @decorators.action(detail=False, methods=["get"], url_path="semester")
     def semester(self, request):
-        # 본인이 수강한 과목들의 (연도, 학기) 쌍만 중복 없이 추출.
-        # active enrollment 만 (MetaDataManager) → drop 한 학기는 제외.
+        # Active enrollments에서 distinct `(year, semester)` pairs만 반환한다.
         terms = (
             CourseEnrollment.objects
             .filter(user=request.user)

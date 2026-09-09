@@ -169,8 +169,7 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
     def filter_articles(obj, request):
         from_view = request.query_params.get("from_view")
 
-        # side-article 네비게이션은 일반 게시판 맥락에서만 동작한다. 모든 분기가
-        # 이 base 에서 출발해야 과목/학과 글이 앞/뒤 글로 섞여 들어오지 않는다.
+        # Side-article navigation은 regular board 전용이며 모든 branch가 이 base를 사용한다.
         base = exclude_scoped_articles(Article.objects.all())
 
         if from_view == "-portal":
@@ -315,8 +314,7 @@ class ArticleSerializer(HiddenSerializerFieldMixin, BaseArticleSerializer):
         else:
             query_params = [request.user.id, obj.id, last_read_log_of_obj.created_at]
 
-        # read log 는 열람 당시 권한으로 생성된 기록이라, 수강 드랍이나 학과 변경
-        # 뒤에도 남는다. ORM 을 안 타는 경로이므로 scoped 글 제외를 SQL 에 직접 건다.
+        # Read log는 enrollment/major 변경 후에도 남으므로 raw SQL에서 scoped article을 제외한다.
         scoped_exclusion_sql = (
             f"AND {scoped_article_sql_condition('`read_article`')}"
         )
@@ -496,10 +494,8 @@ class ArticleListActionSerializer(HiddenSerializerFieldMixin, BaseArticleSeriali
     title = serializers.SerializerMethodField(
         read_only=True,
     )
-    # Meta.exclude 를 재정의하면서 부모의 exclude 에 있던 "content" 가 빠져,
-    # 모델 필드가 마스킹 없이 그대로 나가고 있었다 (신고로 가려진 글·차단한
-    # 유저의 글 본문이 목록 응답에 노출). 상세(ArticleSerializer)와 동일하게
-    # BaseArticleSerializer.get_content 를 타도록 method field 로 선언한다.
+    # `Meta.exclude` override로 우회되던 content masking을 detail serializer와 통일한다.
+    # Reported article과 blocked user의 content도 `get_content`를 거쳐 노출을 막는다.
     content = serializers.SerializerMethodField(
         read_only=True,
     )
@@ -595,8 +591,7 @@ class ArticleCreateActionSerializer(BaseArticleSerializer):
             "negative_vote_count",
             "created_by",
             "commented_at",
-            # 메인 article 엔드포인트로 scoped 글을 인젝션할 수 없게 강제한다.
-            # 과목/학과 글 작성은 각각의 전용 엔드포인트만 사용해야 한다.
+            # Main article endpoint에서는 scoped article을 생성할 수 없다.
             "related_course",
             "related_course_group",
             "related_major",

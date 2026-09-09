@@ -18,7 +18,7 @@ _lock = threading.Lock()
 
 
 def get_major_board_id() -> int:
-    """첫 호출 시 board 생성 + id 캐시. 이후엔 in-memory 반환."""
+    """첫 호출에서 internal board를 생성하고 ID를 in-memory cache에 저장한다."""
     global _cached_board_id
     if _cached_board_id is not None:
         return _cached_board_id

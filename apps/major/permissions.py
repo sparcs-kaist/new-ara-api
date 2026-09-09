@@ -26,7 +26,7 @@ class IsSameMajor(permissions.BasePermission):
 
     @staticmethod
     def _check(request, std_dept_id) -> bool:
-        # 읽기는 add 한 타 학과도 허용, 쓰기는 본인 SSO 학과만.
+        # Read는 favorite major까지, write는 SSO home major에만 허용한다.
         if request.method in permissions.SAFE_METHODS:
             return can_read_major(request.user, std_dept_id)
         return _is_same_major(request.user, std_dept_id)
@@ -37,14 +37,13 @@ class IsSameMajor(permissions.BasePermission):
 
         std_dept_id = view.kwargs.get("std_dept_id")
         if std_dept_id is None:
-            # list/me 등 major 가 특정되지 않는 액션은 viewset 의
-            # get_queryset 이 필터링하므로 통과.
+            # Major가 없는 list/me actions는 ViewSet의 `get_queryset`에서 filter한다.
             return True
 
         return self._check(request, std_dept_id)
 
     def has_object_permission(self, request, view, obj) -> bool:
-        # obj 는 Article (related_major FK, = std_dept_id) 또는 Major (PK = std_dept_id).
+        # `obj`는 `Article.related_major` 또는 `Major` instance다.
         if hasattr(obj, "related_major_id"):
             std_dept_id = obj.related_major_id
         else:

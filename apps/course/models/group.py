@@ -28,7 +28,7 @@ class CourseGroup(models.Model):
     )
 
     def title_term(self) -> tuple[int, int]:
-        """title 출처 학기를 비교 가능한 튜플로. 미기록이면 (0, 0) 취급."""
+        """Title source term을 comparable tuple로 반환하며, 없으면 `(0, 0)`을 반환한다."""
         return (self.title_year or 0, self.title_semester or 0)
 
     class Meta:

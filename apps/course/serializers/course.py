@@ -47,8 +47,7 @@ class CourseGroupSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_professors(self, obj):
-        # COURSE_CODE 예외 그룹은 학기마다 교수가 다를 수 있으므로 그룹에 속한
-        # 모든 Course의 교수를 중복 없이 합쳐서 노출한다 (prefetch 결과 재사용).
+        # `COURSE_CODE` group은 모든 Course의 professors를 prefetch 결과에서 deduplicate한다.
         courses = list(obj.courses.all())
         professors_by_id = {
             professor.id: professor

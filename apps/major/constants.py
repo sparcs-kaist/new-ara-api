@@ -36,7 +36,7 @@ MAJOR_CODE_BY_NAME: dict[str, str] = {
 
 
 def get_major_code(major_name: str | None) -> str:
-    """학과 이름으로 코드를 찾는다. 모르는 학과면 빈 문자열."""
+    """Major name에 대응하는 code를 반환하며, mapping이 없으면 빈 string을 반환한다."""
     if not major_name:
         return ""
     return MAJOR_CODE_BY_NAME.get(major_name.strip(), "")

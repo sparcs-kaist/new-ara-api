@@ -21,14 +21,14 @@ def grouping_key_for(
     professors_key: str,
     strategy: str | None = None,
 ) -> str:
-    """관리자 전략을 실제 CourseGroup 식별 키로 변환."""
+    """Admin strategy에 해당하는 `CourseGroup` key를 반환한다."""
     if strategy == CourseGroupingRule.Strategy.COURSE_CODE:
         return COURSE_CODE_GROUP_KEY
     return professors_key
 
 
 def active_grouping_strategies(course_codes: Iterable[str]) -> dict[str, str]:
-    """OTL payload의 과목들에 적용할 활성 규칙을 한 번의 쿼리로 조회."""
+    """OTL payload의 course codes에 적용할 active strategies를 한 query로 조회한다."""
     normalized_codes = {normalize_course_code(code) for code in course_codes}
     return {
         normalize_course_code(rule.course_code): rule.strategy
@@ -41,12 +41,8 @@ def active_grouping_strategies(course_codes: Iterable[str]) -> dict[str, str]:
 
 @transaction.atomic
 def regroup_existing_courses(course_code: str) -> None:
-    """규칙 변경 직후 기존 Course와 Article을 새 그룹 정책에 맞춰 재연결.
-
-    Article은 작성 당시 진입점인 related_course를 보존하므로, 그 Course가 새로
-    선택한 group으로 related_course_group을 함께 옮길 수 있다. 사용되지 않게 된
-    CourseGroup은 이력과 안전한 롤백을 위해 삭제하지 않는다.
-    """
+    """기존 `Course`와 `Article`을 현재 grouping strategy에 맞게 relink한다.
+    사용하지 않는 `CourseGroup`은 history와 rollback을 위해 유지한다."""
     from apps.core.models import Article
     from apps.course.models import Course, CourseGroup
 

@@ -33,7 +33,7 @@ class CourseGroupViewSet(
     def get_queryset(self):
         user = self.request.user
 
-        # 그룹 안 각 Course 의 active 수강 인원. CourseViewSet 과 동일 패턴.
+        # 각 Course의 active enrollment count를 annotate한다.
         enrollment_count_subquery = Subquery(
             CourseEnrollment.objects
             .filter(course=OuterRef("pk"))
@@ -48,12 +48,8 @@ class CourseGroupViewSet(
             .order_by("-year", "-semester")
         )
 
-        # 본인이 enroll 된 Course 가 하나라도 속한 그룹만. courses 는 annotate 된
-        # 쿼리셋으로 prefetch 해 serializer 가 N+1 없이 학기 목록을 만든다.
-        #
-        # enrollment 를 매니저(CourseEnrollment.objects) 경유로 먼저 필터해야
-        # soft-delete(드랍) 된 수강이 빠진다. courses__enrollments 스패닝 JOIN 은
-        # 관련 모델의 MetaDataManager 를 우회해 드랍한 수강도 매칭하므로 쓰지 않는다.
+        # Active enrollment의 group만 조회하고 annotated courses를 prefetch해 N+1을 막는다.
+        # `CourseEnrollment.objects`를 사용해 soft-deleted enrollment를 제외한다.
         enrolled_group_ids = (
             CourseEnrollment.objects
             .filter(user=user)

@@ -72,9 +72,7 @@ class CommentViewSet(
         # TODO: Use CommentPermission for permission checking logic
         # self.check_object_permissions(request, parent_article)
 
-        # 학과글이면 same-major 체크. 그 외는 can_comment_on_article 가
-        # 과목글이면 enrollment, 일반글이면 board comment_access_mask 로
-        # 알아서 갈라준다.
+        # Major article은 same-major, 나머지는 enrollment 또는 board mask로 검사한다.
         if is_major_article(parent_article):
             allowed = can_comment_on_major_article(request.user, parent_article)
         else:
@@ -167,11 +165,8 @@ class CommentViewSet(
         return super().perform_destroy(instance)
 
     def _guard_scoped_comment_vote_access(self, request, comment):
-        """과목글은 비수강자, 학과글은 읽기 권한 없는 유저의 투표를 차단.
-
-        즐겨찾기한 학과는 읽기 권한이 있으므로 글과 댓글 모두 투표할 수 있다.
-        일반글 댓글은 통과 (기존 동작 보존).
-        """
+        """Course article은 enrollment, major article은 read permission으로 vote를 제한한다.
+        Favorite major와 regular article에는 기존 vote policy를 적용한다."""
         if deny_unenrolled_comment_access(request.user, comment):
             return response.Response(
                 {"message": gettext("해당 게시판에 접근할 권한이 없습니다.")},

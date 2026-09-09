@@ -50,12 +50,11 @@ class CourseArticleViewSet(viewsets.ModelViewSet):
         return get_object_or_404(Course, pk=self.kwargs["course_id"])
 
     def get_queryset(self):
-        # 글 묶음은 course 가 아니라 그 course 의 group. 모든 학기 글이 누적된다.
+        # Article scope는 Course가 아닌 group이므로 모든 term의 article이 누적된다.
         course = self._get_course()
         queryset = (
             Article.objects.filter(related_course_group_id=course.group_id)
-            # 마스킹 판정(hidden_reasons)이 매 row 마다 parent_board 와
-            # created_by 를 보므로 같이 당겨온다.
+            # Content masking의 per-row query를 막기 위해 board와 author를 join한다.
             .select_related("created_by__profile", "parent_board").order_by(
                 "-created_at"
             )
@@ -69,8 +68,7 @@ class CourseArticleViewSet(viewsets.ModelViewSet):
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
-        # core 와 동일하게 ?override_hidden 으로 마스킹 해제를 요청할 수 있다.
-        # (해제 가능한 사유인지는 serializer 가 CAN_OVERRIDE_REASONS 로 판단)
+        # Core와 같이 `override_hidden`을 지원하며 serializer가 override 가능 여부를 판단한다.
         ctx["override_hidden"] = "override_hidden" in self.request.query_params
         if self.kwargs.get("course_id") is not None:
             course = self._get_course()
@@ -98,8 +96,7 @@ class CourseArticleViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         article = serializer.save()
-        # 읽기 serializer 는 마스킹 판정에 context["request"] 를 쓰므로
-        # context 없이 만들면 KeyError 가 난다.
+        # Read serializer의 masking logic에 필요한 request context를 전달한다.
         out = CourseArticleSerializer(
             article, context=self.get_serializer_context()
         ).data

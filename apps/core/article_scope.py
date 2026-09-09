@@ -17,11 +17,8 @@ from __future__ import annotations
 
 
 def general_article_filter(prefix: str = "") -> dict:
-    """scoped 글 제외 필터를 lookup dict 로 반환.
-
-    prefix 는 Article 을 가리키는 관계 경로. Article 쿼리셋이면 "" (기본),
-    ArticleReadLog/BestArticle 처럼 Article 을 FK 로 가진 모델이면 "article".
-    """
+    """scoped article을 제외하는 lookup dict를 반환한다.
+    `prefix`는 `Article` relation path이며 FK model에서는 `"article"`을 사용한다."""
     lookup = f"{prefix}__" if prefix else ""
     return {
         f"{lookup}related_course_group__isnull": True,
@@ -30,18 +27,15 @@ def general_article_filter(prefix: str = "") -> dict:
 
 
 def exclude_scoped_articles(queryset, prefix: str = ""):
-    """queryset 에서 과목/학과 게시판 글을 제외한다."""
+    """QuerySet에서 course/major article을 제외한다."""
     return queryset.filter(**general_article_filter(prefix))
 
 
 def scoped_article_sql_condition(table: str = "`core_article`") -> str:
-    """raw SQL 용 조건. WHERE / AND 뒤에 그대로 붙인다.
-
-    table 은 core_article 을 가리키는 테이블명 또는 별칭 (백틱 포함).
-    """
-    # ORM 쪽 필터(related_course_group__isnull / related_major__isnull)와 같은
-    # 컬럼을 봐야 두 경로의 판정이 어긋나지 않는다. related_course는 글이 작성된
-    # 학기의 출처일 뿐이고, 과목 게시판 scope는 related_course_group이 결정한다.
+    """`WHERE`/`AND` 뒤에 붙일 scoped article 제외 raw SQL condition을 반환한다.
+    `table`은 `core_article`의 table name 또는 alias다."""
+    # ORM filter와 같은 columns를 사용한다. `related_course`는 source term이며
+    # course board scope는 `related_course_group`이 결정한다.
     return (
         f"{table}.`related_course_group_id` IS NULL "
         f"AND {table}.`related_major_id` IS NULL"

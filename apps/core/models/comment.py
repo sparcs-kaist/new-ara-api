@@ -43,7 +43,7 @@ class Comment(MetaDataModel):
 
     @classmethod
     def prefetch_for_article(cls, user) -> models.Prefetch:
-        """글 상세 응답용 댓글·대댓글과 현재 사용자의 투표를 한 번에 조회."""
+        """Article detail에 필요한 comments, replies와 현재 user의 vote를 prefetch한다."""
         from .vote import Vote
 
         nested_comments = (

@@ -75,10 +75,8 @@ class ArticleDocument(Document):
         related_models = [settings.AUTH_USER_MODEL, UserProfile]
 
     def get_queryset(self):
-        # 과목/학과 게시판 글은 색인 자체에서 뺀다. ES 안에는 Ara 의 권한 체계가
-        # 없으므로, 색인에 들어가는 순간 검색 경로·ES 직접 접근 모두에서 본문이
-        # 노출될 수 있다. 색인에 없으면 검색 관련 경로가 한 번에 정리된다.
-        # (과목/학과 게시판 내 검색이 필요해지면 별도 인덱스로 분리할 것)
+        # Elasticsearch에는 Ara permission이 없으므로 scoped article을 index에서 제외한다.
+        # Scoped board search가 필요해지면 별도 index로 분리한다.
         return exclude_scoped_articles(
             super(ArticleDocument, self)
             .get_queryset()
@@ -112,8 +110,7 @@ class ArticleDocument(Document):
 
     @staticmethod
     def get_instances_from_related(related_instance):
-        # 유저/프로필이 바뀌면 그 유저의 글을 재색인하는 경로. 여기서도 scoped
-        # 글을 빼지 않으면 get_queryset 에서 제외한 글이 이 경로로 되살아난다.
+        # User/Profile 변경으로 reindex할 때도 scoped article을 제외한다.
         if isinstance(related_instance, apps.get_model(settings.AUTH_USER_MODEL)):
             return exclude_scoped_articles(related_instance.article_set.all())
         elif isinstance(related_instance, UserProfile):

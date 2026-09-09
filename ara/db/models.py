@@ -18,10 +18,8 @@ class MetaDataQuerySet(models.QuerySet):
         return super().delete()
 
     def bulk_create(self, objs, batch_size=None, **kwargs):
-        # created_at 을 채우려고 감싼 래퍼이므로, 나머지 인자
-        # (ignore_conflicts / update_conflicts / unique_fields ...) 는 그대로
-        # super 에 넘긴다. 예전엔 ignore_conflicts 를 받기만 하고 버려서
-        # ON CONFLICT 절이 생성되지 않아 동시 insert 시 unique 위반이 났다.
+        # Wrapper는 `created_at`만 설정하고 conflict-related arguments는 그대로 전달한다.
+        # 이를 누락하면 concurrent insert에서 `ON CONFLICT`가 적용되지 않는다.
         for obj in objs:
             if not hasattr(obj, "created_at"):
                 obj.created_at = timezone.now()

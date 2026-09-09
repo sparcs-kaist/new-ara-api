@@ -52,10 +52,8 @@ class ScrapViewSet(
         return queryset
 
     def create(self, request, *args, **kwargs):
-        # 과목글 scrap 은 비-수강자, 학과글 scrap 은 비-동일학과 차단
-        # (defense in depth: id 추측/유출 방지). 일반글은 기존 동작 그대로
-        # (auth-only). 글 자체가 없는 케이스는 serializer 가 400 으로
-        # 처리하도록 위임 (filter().first() 사용).
+        # Defense in depth: scoped article은 enrollment 또는 same-major를 검사한다.
+        # Missing article validation은 serializer에 위임해 기존 `400` response를 유지한다.
         parent_article_id = request.data.get("parent_article")
         if parent_article_id:
             article = Article.objects.filter(pk=parent_article_id).first()

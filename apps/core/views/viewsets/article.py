@@ -55,10 +55,7 @@ from ara.settings import MIN_TIME, SCHOOL_RESPONSE_VOTE_THRESHOLD
 class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     queryset = Article.objects.all()
 
-    # 과목/학과 글 (related_course_group / related_major != None) 은 default 로
-    # 모든 액션에서 제외해 메인 피드/검색/retrieve/update/destroy 가 모두
-    # 404 로 응답하도록 한다. vote_* 만 enrollment / same-major 체크를
-    # 거쳐 통과시키기 위해 화이트리스트.
+    # Main actions에서는 scoped article을 제외하고, 별도 permission을 검사하는 vote actions만 허용한다.
     _SCOPED_ARTICLE_ALLOWED_ACTIONS = frozenset(
         {"vote_positive", "vote_negative", "vote_cancel"}
     )
@@ -311,9 +308,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         try:
             article = self.get_object()
         except Http404 as e:
-            # 410 은 "삭제된 글" 에만 준다. 존재 여부만 보고 410 을 주면
-            # 과목/학과글처럼 권한 때문에 404 가 난 경우까지 410 이 되어,
-            # 404(없음) / 410(있지만 못 봄) 차이로 글 존재를 열거할 수 있다.
+            # `410`은 deleted article에만 사용해 `404`와의 차이로 hidden ID가 노출되지 않게 한다.
             is_deleted = (
                 Article.objects.queryset_with_deleted.filter(id=kwargs["pk"])
                 .exclude(deleted_at=MIN_TIME)
@@ -478,8 +473,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 return self.paginator.get_paginated_response([])
 
         # Cardinality of this queryset is same with actual query
-        # 아래 raw 쿼리와 같은 조건(scoped 글 제외)을 걸어야 페이지 개수와 실제
-        # 목록이 어긋나지 않는다.
+        # Page count와 raw SQL 결과가 일치하도록 같은 scoped article filter를 적용한다.
         count_queryset = exclude_scoped_articles(
             ArticleReadLog.objects.values("article_id").filter(read_by=request.user),
             prefix="article",
@@ -497,8 +491,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         if search_keyword:
             query_params.insert(1, id_set)
 
-        # read log 는 열람 당시 권한으로 남은 기록이라 수강 드랍·학과 변경 뒤에도
-        # 남는다. 서브쿼리 안(LIMIT 적용 전)에서 걸러야 페이지 크기가 맞는다.
+        # Read log는 permission 변경 후에도 남으므로 `LIMIT` 전 subquery에서 filter한다.
         scoped_exclusion_sql = f"AND {scoped_article_sql_condition('`read_article`')}"
 
         queryset = Article.objects.raw(
@@ -539,7 +532,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             timezone.now().date(), datetime.time.min, datetime.timezone.utc
         )
         # get the articles that are created_at within a week and order by hit_count
-        # 과목/학과게시판 글은 메인 top 에서 제외
+        # Main top articles에서 scoped article을 제외한다.
         top_articles = (
             exclude_scoped_articles(
                 Article.objects.filter(

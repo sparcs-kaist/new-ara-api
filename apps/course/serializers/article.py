@@ -25,7 +25,7 @@ class CourseArticleListSerializer(
     """목록 응답: 제목, 댓글 수, 투표 수 정도만."""
 
     class Meta:
-        # 부모 Meta 를 상속하면 exclude 가 따라와 fields 와 충돌하므로 새로 정의한다.
+        # Parent `Meta.exclude`와 `fields` 충돌을 피하기 위해 새로 정의한다.
         model = Article
         fields = (
             "id",
@@ -82,10 +82,8 @@ class CourseArticleCreateSerializer(serializers.ModelSerializer):
         fields = ("title", "content", "content_text", "name_type")
 
     def create(self, validated_data):
-        # 과목게시판 글은 사용자가 익명/닉네임을 선택하고 부모 board 는 강제 주입.
-        # 게시판 묶음은 related_course_group (학기 무관), related_course 는 출처용.
-        # 호출 viewset 에서 context["course"], context["course_group"],
-        # context["board_id"] 주입.
+        # ViewSet context의 course, course_group, board ID로 scoped relations을 설정한다.
+        # `related_course`는 source term, `related_course_group`은 board scope다.
         name_type = NameType[validated_data.pop("name_type")]
         course = self.context["course"]
         course_group = self.context["course_group"]
