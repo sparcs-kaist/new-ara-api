@@ -119,6 +119,9 @@ class Article(MetaDataModel):
         db_index=True,
         default=None,
     )
+    # 일반글에서는 실제 소속 게시판이다. 과목·학과글도 이 필드가 NOT NULL이라
+    # 각각 숨겨진 내부 Board를 형식상 연결하지만, 실제 소속과 접근 권한은
+    # related_course_group / related_major 및 전용 permission에서 판단한다.
     parent_board = models.ForeignKey(
         verbose_name="게시판",
         to="core.Board",
