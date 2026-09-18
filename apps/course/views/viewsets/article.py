@@ -14,7 +14,7 @@ from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import permissions, response, status, viewsets
 
-from apps.core.models import Article, Comment, Vote
+from apps.core.models import Article, ArticleReadLog, Comment, Vote
 from apps.course.board import get_courses_board_id
 from apps.course.models import Course
 from apps.course.permissions import IsEnrolledInCourseGroup
@@ -104,7 +104,10 @@ class CourseArticleViewSet(viewsets.ModelViewSet):
 
     @extend_schema(summary="과목 게시판 글 상세")
     def retrieve(self, request, *args, **kwargs):
-        return super().retrieve(request, *args, **kwargs)
+        article = self.get_object()
+        ArticleReadLog.objects.create(read_by=request.user, article=article)
+        article.update_hit_count()
+        return response.Response(self.get_serializer(article).data)
 
     @extend_schema(summary="과목 게시판 글 수정")
     def partial_update(self, request, *args, **kwargs):
