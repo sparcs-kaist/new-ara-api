@@ -16,9 +16,13 @@ class CommentPermission(permissions.IsAuthenticated):
 
         if request.method in permissions.SAFE_METHODS:
             # 학과글 댓글 읽기는 본인 SSO 학과뿐 아니라 즐겨찾기 학과도 허용한다.
-            return not deny_unreadable_major_comment_access(request.user, obj)
+            return request.user.is_staff or not deny_unreadable_major_comment_access(
+                request.user, obj
+            )
 
         # 댓글 수정·삭제는 기존 정책대로 SSO 동일 학과의 작성자(또는 staff)만.
-        if deny_non_same_major_comment_access(request.user, obj):
+        if not request.user.is_staff and deny_non_same_major_comment_access(
+            request.user, obj
+        ):
             return False
         return request.user.is_staff or request.user == obj.created_by
