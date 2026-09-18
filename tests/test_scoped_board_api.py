@@ -6,6 +6,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from apps.core.models import Article, ArticleHiddenReason, Board, Scrap
 from apps.core.models.board import NameType
 from apps.course.models import Course, CourseEnrollment, CourseGroup
 from apps.major.models import Major, UserMajor
@@ -129,6 +130,14 @@ class TestScopedBoardAPI(TestCase):
             "parent_comment": None,
         }
 
+    @staticmethod
+    def _report_payload(article_id, suffix=""):
+        return {
+            "parent_article": article_id,
+            "type": "others",
+            "content": f"scoped report {suffix}",
+        }
+
     def _major_articles_url(self, major_id=None):
         return reverse(
             "major:major-article-list",
@@ -174,6 +183,43 @@ class TestScopedBoardAPI(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
         return response
+
+    def _create_course_article(
+        self, user, course, name_type=NameType.REGULAR, suffix=""
+    ):
+        response = self._request(
+            user,
+            "post",
+            self._course_articles_url(course),
+            self._article_payload(name_type, suffix),
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        return response
+
+    def _scrap(self, user, article_id):
+        return self._request(
+            user,
+            "post",
+            reverse("core:scrap-list"),
+            {"parent_article": article_id},
+        )
+
+    def _report(self, user, article_id, suffix=""):
+        return self._request(
+            user,
+            "post",
+            reverse("core:report-list"),
+            self._report_payload(article_id, suffix),
+        )
+
+    def _scrapped_parent_article(self, user, article_id):
+        response = self._request(user, "get", reverse("core:scrap-list"))
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        return next(
+            item["parent_article"]
+            for item in response.data["results"]
+            if item["parent_article"]["id"] == article_id
+        )
 
     def _create_comment(self, user, article_id, suffix=""):
         response = self._request(
@@ -387,3 +433,119 @@ class TestScopedBoardAPI(TestCase):
             if item["id"] == comment.data["id"]
         )
         self.assertIs(nested_comment["my_vote"], True)
+
+    def test_scrap_and_report_are_limited_to_home_major_and_enrolled_group(self):
+        major_article_id = self._create_major_article(
+            self.major_author, suffix="scrap-report"
+        ).data["id"]
+        course_article_id = self._create_course_article(
+            self.major_author, self.spring_course, suffix="scrap-report"
+        ).data["id"]
+
+        # 본인 SSO 학과, 같은 CourseGroup 수강.
+        for user, article_id in (
+            (self.major_peer, major_article_id),
+            (self.favorite_user, course_article_id),
+        ):
+            scrap = self._scrap(user, article_id)
+            report = self._report(user, article_id, "allowed")
+            self.assertEqual(scrap.status_code, status.HTTP_201_CREATED, scrap.data)
+            self.assertEqual(report.status_code, status.HTTP_201_CREATED, report.data)
+
+        # 추가한 타 학과, 미수강.
+        for user, article_id in (
+            (self.favorite_user, major_article_id),
+            (self.outsider, major_article_id),
+            (self.major_peer, course_article_id),
+            (self.outsider, course_article_id),
+        ):
+            scrap = self._scrap(user, article_id)
+            report = self._report(user, article_id, "denied")
+            self.assertEqual(scrap.status_code, status.HTTP_403_FORBIDDEN, scrap.data)
+            self.assertEqual(report.status_code, status.HTTP_403_FORBIDDEN, report.data)
+
+        self.assertEqual(
+            Scrap.objects.filter(
+                parent_article_id__in=(major_article_id, course_article_id)
+            ).count(),
+            2,
+        )
+
+    def test_scrap_list_unmasks_scoped_articles_for_users_with_access(self):
+        major_article_id = self._create_major_article(
+            self.major_author, suffix="scrap-list-major"
+        ).data["id"]
+        course_article_id = self._create_course_article(
+            self.major_author, self.spring_course, suffix="scrap-list-course"
+        ).data["id"]
+
+        for user, article_id in (
+            (self.major_peer, major_article_id),
+            (self.favorite_user, course_article_id),
+        ):
+            created = self._scrap(user, article_id)
+            self.assertEqual(
+                created.status_code, status.HTTP_201_CREATED, created.data
+            )
+
+            listed = self._scrapped_parent_article(user, article_id)
+            self.assertIsNotNone(listed["title"])
+            self.assertIsNotNone(listed["content"])
+            self.assertIs(listed["is_hidden"], False)
+            self.assertEqual(listed["why_hidden"], [])
+
+    def test_scrap_list_keeps_masking_scoped_articles_without_access(self):
+        major_article_id = self._create_major_article(
+            self.major_author, suffix="masked-major"
+        ).data["id"]
+        course_article_id = self._create_course_article(
+            self.major_author, self.spring_course, suffix="masked-course"
+        ).data["id"]
+
+        # 생성 가드를 우회해 이미 스크랩된 상태를 만든다. 접근권이 없으면
+        # 목록에서는 계속 마스킹돼야 한다.
+        Scrap.objects.create(
+            parent_article_id=major_article_id, scrapped_by=self.favorite_user
+        )
+        Scrap.objects.create(
+            parent_article_id=course_article_id, scrapped_by=self.major_peer
+        )
+
+        for user, article_id in (
+            (self.favorite_user, major_article_id),
+            (self.major_peer, course_article_id),
+        ):
+            listed = self._scrapped_parent_article(user, article_id)
+            self.assertIsNone(listed["title"])
+            self.assertIsNone(listed["content"])
+            self.assertIs(listed["is_hidden"], True)
+            self.assertIn(
+                ArticleHiddenReason.ACCESS_DENIED_CONTENT.value, listed["why_hidden"]
+            )
+
+    def test_scrap_list_keeps_masking_general_board_article_without_read_access(self):
+        private_board = Board.objects.create(
+            slug="scoped-private-board",
+            ko_name="비공개 게시판",
+            en_name="Private Board",
+            read_access_mask=0,
+        )
+        private_article = Article.objects.create(
+            title="비공개 글",
+            content="비공개 내용",
+            content_text="비공개 텍스트",
+            name_type=NameType.REGULAR,
+            created_by=self.major_author,
+            parent_board=private_board,
+        )
+        Scrap.objects.create(
+            parent_article=private_article, scrapped_by=self.major_peer
+        )
+
+        listed = self._scrapped_parent_article(self.major_peer, private_article.id)
+        self.assertIsNone(listed["title"])
+        self.assertIsNone(listed["content"])
+        self.assertIs(listed["is_hidden"], True)
+        self.assertIn(
+            ArticleHiddenReason.ACCESS_DENIED_CONTENT.value, listed["why_hidden"]
+        )
