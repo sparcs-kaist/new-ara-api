@@ -4,13 +4,14 @@ from .article import (
     CourseArticleSerializer,
     CourseArticleUpdateSerializer,
 )
-from .course import CourseSerializer, ProfessorSerializer
+from .course import CourseGroupSerializer, CourseSerializer, ProfessorSerializer
 
 __all__ = (
     "CourseArticleCreateSerializer",
     "CourseArticleListSerializer",
     "CourseArticleSerializer",
     "CourseArticleUpdateSerializer",
+    "CourseGroupSerializer",
     "CourseSerializer",
     "ProfessorSerializer",
 )

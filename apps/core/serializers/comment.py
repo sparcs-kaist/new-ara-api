@@ -19,14 +19,24 @@ class BaseCommentSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
         model = Comment
         exclude = ("attachment",)
 
-    @staticmethod
-    def get_my_vote(obj) -> bool | None:
-        if not obj.vote_set.exists():
-            return None
+    def get_my_vote(self, obj) -> bool | None:
+        request = self.context["request"]
+        prefetched_votes = getattr(obj, "_prefetched_objects_cache", {}).get(
+            "vote_set"
+        )
+        if prefetched_votes is not None:
+            my_vote = next(
+                (
+                    vote
+                    for vote in prefetched_votes
+                    if vote.voted_by_id == request.user.id
+                ),
+                None,
+            )
+        else:
+            my_vote = obj.vote_set.filter(voted_by=request.user).first()
 
-        my_vote = obj.vote_set.all()[0]
-
-        return my_vote.is_positive
+        return my_vote.is_positive if my_vote is not None else None
 
     def get_content(self, obj) -> str | None:
         if self.visible_verdict(obj):
