@@ -17,8 +17,20 @@ import logging
 
 from django.db.models import Count, F, OuterRef, Subquery
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
-from rest_framework import decorators, mixins, permissions, response, viewsets
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    extend_schema,
+    extend_schema_view,
+    inline_serializer,
+)
+from rest_framework import (
+    decorators,
+    mixins,
+    permissions,
+    response,
+    serializers,
+    viewsets,
+)
 
 from apps.course.models import Course, CourseEnrollment
 from apps.course.permissions import IsEnrolledInCourse
@@ -132,7 +144,14 @@ class CourseViewSet(
 
     @extend_schema(
         summary="본인 수강 학기 목록 조회",
-        responses=CourseSerializer(many=True),
+        responses=inline_serializer(
+            name="CourseSemester",
+            fields={
+                "year": serializers.IntegerField(),
+                "semester": serializers.IntegerField(),
+            },
+            many=True,
+        ),
     )
     @decorators.action(detail=False, methods=["get"], url_path="semester")
     def semester(self, request):
