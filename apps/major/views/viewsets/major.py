@@ -31,6 +31,7 @@ from apps.major.access import (
 )
 from apps.major.models import Major, UserMajor
 from apps.major.serializers import MajorSerializer
+from apps.user.models import UserProfile
 
 
 @extend_schema_view(
@@ -87,6 +88,16 @@ class MajorViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     )
     def user_major_add(self, request, std_dept_id=None):
         major = get_object_or_404(Major, pk=std_dept_id)
+
+        # `UserMajor` row 자체가 학과글 읽기·투표 권한이므로 학과 정보가 없는 그룹은 막는다.
+        if request.user.profile.group in (
+            UserProfile.UserGroup.UNAUTHORIZED,
+            UserProfile.UserGroup.EXTERNAL_ORG,
+        ):
+            return response.Response(
+                {"detail": "학과 게시판을 추가할 수 없는 계정입니다."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         # SSO home major는 자동 등록되므로 favorite으로 추가할 수 없다.
         if major.std_dept_id == user_major_id(request.user):
