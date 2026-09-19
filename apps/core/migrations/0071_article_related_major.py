@@ -6,24 +6,93 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
+    atomic = False
+
     dependencies = [
         ("core", "0070_article_related_course"),
+        ("course", "0005_course_group_non_null"),
         ("major", "__first__"),
     ]
 
     operations = [
-        migrations.AddField(
-            model_name="article",
-            name="related_major",
-            field=models.ForeignKey(
-                blank=True,
-                default=None,
-                help_text="학과별 게시판 글일 때 set. 일반 글은 null.",
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="article_set",
-                to="major.major",
-                verbose_name="관련 학과 게시판",
-            ),
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunSQL(
+                    sql=[
+                        "ALTER TABLE core_article "
+                        "ADD COLUMN related_major_id int unsigned NULL, "
+                        "ADD COLUMN related_course_group_id bigint NULL, "
+                        "ALGORITHM=INSTANT;",
+                    ],
+                    reverse_sql=[
+                        "ALTER TABLE core_article "
+                        "DROP COLUMN related_major_id, "
+                        "DROP COLUMN related_course_group_id;",
+                    ],
+                ),
+                migrations.RunSQL(
+                    sql=[
+                        "SET SESSION foreign_key_checks = 0;",
+                        "ALTER TABLE core_article "
+                        "ADD CONSTRAINT core_article_related_major_id_fk "
+                        "FOREIGN KEY (related_major_id) "
+                        "REFERENCES major_major(std_dept_id), "
+                        "ADD CONSTRAINT core_article_related_course_group_id_fk "
+                        "FOREIGN KEY (related_course_group_id) "
+                        "REFERENCES course_coursegroup(id), "
+                        "ALGORITHM=INPLACE, LOCK=NONE;",
+                        "SET SESSION foreign_key_checks = 1;",
+                    ],
+                    reverse_sql=[
+                        "ALTER TABLE core_article "
+                        "DROP FOREIGN KEY core_article_related_major_id_fk, "
+                        "DROP FOREIGN KEY core_article_related_course_group_id_fk;",
+                    ],
+                ),
+            ],
+            state_operations=[
+                migrations.AddField(
+                    model_name="article",
+                    name="related_major",
+                    field=models.ForeignKey(
+                        blank=True,
+                        default=None,
+                        help_text="학과별 게시판 글일 때 set. 일반 글은 null.",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="article_set",
+                        to="major.major",
+                        verbose_name="관련 학과 게시판",
+                    ),
+                ),
+                migrations.AddField(
+                    model_name="article",
+                    name="related_course_group",
+                    field=models.ForeignKey(
+                        blank=True,
+                        default=None,
+                        help_text="과목 게시판 글일 때 set. 학기 무관 누적 단위. 일반 글은 null.",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="article_set",
+                        to="course.coursegroup",
+                        verbose_name="관련 과목 그룹 게시판",
+                    ),
+                ),
+                migrations.AlterField(
+                    model_name="article",
+                    name="related_course",
+                    field=models.ForeignKey(
+                        blank=True,
+                        default=None,
+                        help_text="글이 작성된 학기 Course (출처). 게시판 묶음은 related_course_group 기준.",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="article_set",
+                        to="course.course",
+                        verbose_name="관련 과목 게시판",
+                    ),
+                ),
+            ],
         ),
     ]
