@@ -1,7 +1,10 @@
 from enum import Enum
 import datetime
+import os
+from urllib.parse import urlparse
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, models, transaction
 from django.utils import timezone
 
