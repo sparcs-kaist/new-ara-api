@@ -92,7 +92,9 @@ def send_to_user_sync(
 ) -> None:
     from apps.user.models import FCMToken
     tokens = list(
-        FCMToken.objects.filter(user_id=user_id).values_list("token", flat=True)
+        FCMToken.objects.filter(user_id=user_id, user__is_active=True).values_list(
+            "token", flat=True
+        )
     )
     _send_to_tokens(tokens, title, body, data or {})
 
@@ -102,19 +104,15 @@ def send_to_users_sync(
 ) -> None:
     from apps.user.models import FCMToken
     tokens = list(
-        FCMToken.objects.filter(user_id__in=user_ids).values_list("token", flat=True)
+        FCMToken.objects.filter(
+            user_id__in=user_ids, user__is_active=True
+        ).values_list("token", flat=True)
     )
     _send_to_tokens(tokens, title, body, data or {})
 
 
-# FCM 멀티캐스트 한 요청당 토큰 상한
-_FCM_MULTICAST_LIMIT = 500
-
-_INVALID_TOKEN_ERROR_CODES = frozenset({
-    "registration-token-not-registered",
-    "invalid-registration-token",
-    "invalid-argument",
-})
+# send_each_for_multicast 는 토큰 하나당 스레드/HTTP 요청 하나를 쓴다
+_FCM_MULTICAST_LIMIT = 50
 
 
 def _send_to_tokens(
@@ -147,16 +145,12 @@ def _send_to_tokens(
             if resp.success:
                 continue
             err = resp.exception
-            code = getattr(err, "code", "") if err is not None else ""
-            if code in _INVALID_TOKEN_ERROR_CODES:
+            # UnregisteredError 만 토큰 자체가 죽은 경우다. SENDER_ID_MISMATCH 는
+            # 서버 설정 오류일 수 있어 지우면 전체 토큰이 날아간다.
+            if isinstance(err, messaging.UnregisteredError):
                 invalid_tokens.append(token)
             else:
-                log.warning(
-                    "FCM send failed token=%s… code=%s err=%r",
-                    token[:12],
-                    code,
-                    err,
-                )
+                log.warning("FCM send failed token=%s… err=%r", token[:12], err)
 
     if invalid_tokens:
         from apps.user.models import FCMToken
