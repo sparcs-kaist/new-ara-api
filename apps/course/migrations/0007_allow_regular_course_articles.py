@@ -22,7 +22,7 @@ def restore_anonymous_only(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("core", "0073_backfill_article_course_group"),
+        ("core", "0072_backfill_article_course_group"),
         ("course", "0006_coursegroup_title_term"),
     ]
 
