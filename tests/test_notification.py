@@ -1,7 +1,8 @@
 import pytest
+from django.test import override_settings
 
 from apps.core.models import Article, Board, Comment, Notification, NotificationReadLog
-from tests.conftest import RequestSetting, TestCase
+from tests.conftest import RequestSetting, TestCase, Utils
 
 
 @pytest.fixture(scope="class")
@@ -68,6 +69,32 @@ class TestNotification(TestCase, RequestSetting):
         assert Notification.objects.filter(related_comment=self.comment).count() == 1
 
         assert notifications.data.get("num_items") == 1
+
+    @override_settings(FCM_ENABLED=True)
+    def test_push_enqueued_once_per_user(self):
+        user3 = Utils.create_user(
+            username="User3", email="user3@sparcs.org", nickname="User3"
+        )
+
+        with self.captureOnCommitCallbacks(execute=False) as callbacks:
+            Comment.objects.create(
+                content="대댓글입니다.", created_by=user3, parent_comment=self.comment
+            )
+
+        # 글쓴이(user)와 부모 댓글 작성자(user2)가 서로 다르므로 push 2개
+        assert len(callbacks) == 2
+
+        self_comment = Comment.objects.create(
+            content="자답입니다.", created_by=self.user, parent_article=self.article
+        )
+
+        with self.captureOnCommitCallbacks(execute=False) as callbacks:
+            Comment.objects.create(
+                content="대댓글입니다.", created_by=user3, parent_comment=self_comment
+            )
+
+        # 글쓴이와 부모 댓글 작성자가 같은 user 이므로 push 1개
+        assert len(callbacks) == 1
 
 
 @pytest.mark.usefixtures(
