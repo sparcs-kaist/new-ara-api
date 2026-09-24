@@ -13,6 +13,7 @@ FCM payload data 컨벤션 (frontend 와 약속):
 - `type`: "article" | "comment" | "chat"
 - `target_id`: 관련 엔티티 id (article_id / comment_id / chat_room_id)
 - `article_id`: type=="comment" 일 때만, 부모 article id
+- `route`: 앱이 여는 웹뷰 경로 ("/web_view/Chat/<room_id>" | "/web_view/Post/<article_id>")
 """
 
 from __future__ import annotations
@@ -74,14 +75,17 @@ def _build_data(notification: "Notification") -> dict:
     if notification.related_chat_room_id:
         data["type"] = "chat"
         data["target_id"] = str(notification.related_chat_room_id)
+        data["route"] = f"/web_view/Chat/{notification.related_chat_room_id}"
     elif notification.related_comment_id:
         data["type"] = "comment"
         data["target_id"] = str(notification.related_comment_id)
         if notification.related_article_id:
             data["article_id"] = str(notification.related_article_id)
+            data["route"] = f"/web_view/Post/{notification.related_article_id}"
     elif notification.related_article_id:
         data["type"] = "article"
         data["target_id"] = str(notification.related_article_id)
+        data["route"] = f"/web_view/Post/{notification.related_article_id}"
     return data
 
 
