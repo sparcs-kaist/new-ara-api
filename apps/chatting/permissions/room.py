@@ -1,5 +1,6 @@
 from rest_framework import permissions
 from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole
+from apps.chatting.models.room import ChatRoomType
 
 
 #채팅방 생성 : 모든 로그인한 User (IsAuthenticated)
@@ -45,7 +46,9 @@ class RoomLeavePermission(permissions.BasePermission):
             user=request.user
         ).first()
 
-        return membership and membership.role != ChatUserRole.OWNER.value
+        return membership and not (
+            membership.role == ChatUserRole.OWNER.value and room.room_type == ChatRoomType.OPEN_CHAT.value
+        )
     
 #채팅방 차단 : BLOCKER, BLOCKED, OWNER일 경우 불가능
 class RoomBlockPermission(permissions.BasePermission):

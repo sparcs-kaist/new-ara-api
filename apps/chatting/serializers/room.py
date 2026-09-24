@@ -69,6 +69,17 @@ class ChatRoomCreateSerializer(serializers.ModelSerializer):
         
         return attrs
     
+class ChatRoomUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChatRoom
+        fields = ['room_title', 'picture']
+
+class ChatMemberTargetSerializer(serializers.Serializer):
+    anon_number = serializers.IntegerField(min_value=0)
+
+class ChatMemberRoleSerializer(ChatMemberTargetSerializer):
+    role = serializers.ChoiceField(choices=[ChatUserRole.ADMIN.value, ChatUserRole.PARTICIPANT.value])
+
 class ChatRoomSerializer(serializers.ModelSerializer):
     """
     채팅방 정보 조회용 Serializer
