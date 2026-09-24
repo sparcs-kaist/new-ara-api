@@ -12,7 +12,7 @@ from drf_spectacular.utils import (
 )
 
 from ara.classes.viewset import ActionAPIViewSet
-from apps.chatting.models.message import ChatMessage, USER_SENDABLE_MESSAGE_TYPES
+from apps.chatting.models.message import ChatMessage, ChatMessageType, DELETABLE_MESSAGE_TYPES
 from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole
 from apps.chatting.serializers.message import (
     attachment_related_names,
@@ -97,10 +97,16 @@ class ChatMessageViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         메시지 삭제
         """
         instance = self.get_object()
-        # 투표/정산/배달 메시지는 연결된 데이터가 있으므로 여기서 지우지 않는다
-        if instance.message_type not in USER_SENDABLE_MESSAGE_TYPES:
+        # 배달 주문 / 도착 / 안내 메시지는 지우지 않는다 (주문은 주문 취소로)
+        if instance.message_type not in DELETABLE_MESSAGE_TYPES:
             return response.Response(
                 {"detail": "이 메시지는 삭제할 수 없습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if instance.message_type == ChatMessageType.PAYMENT_REQUEST.value and \
+                instance.payment_request.targets.filter(paid_at__isnull=False).exists():
+            return response.Response(
+                {"detail": "이미 송금한 사람이 있어 지울 수 없습니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         instance.delete()  # 소프트 삭제가 아니라면 일반 delete()

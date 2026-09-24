@@ -63,5 +63,10 @@ class ChatPaymentRequestCreateSerializer(serializers.Serializer):
         return value
 
 
+class ChatPaymentRequestUpdateSerializer(serializers.Serializer):
+    bank_name = serializers.CharField(max_length=30, required=False)
+    account_number = serializers.CharField(max_length=30, required=False)
+
+
 class ChatPaymentPaidSerializer(serializers.Serializer):
     paid = serializers.BooleanField()

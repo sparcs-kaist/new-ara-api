@@ -44,8 +44,10 @@ class DeliveryOrder(MetaDataModel):
     def is_canceled(self) -> bool:
         return self.canceled_at is not None
 
+    @staticmethod
+    def make_summary(menu_name: str, price: int) -> str:
+        return f"{menu_name} · {price:,}원" if menu_name else f"{price:,}원"
+
     @property
     def summary(self) -> str:
-        if self.menu_name:
-            return f"{self.menu_name} · {self.price:,}원"
-        return f"{self.price:,}원"
+        return self.make_summary(self.menu_name, self.price)

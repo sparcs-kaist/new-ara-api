@@ -64,7 +64,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         return response.Response(status=status.HTTP_204_NO_CONTENT)
 
     def get_queryset(self):
-        qs = ChatRoom.objects.all()
+        qs = ChatRoom.objects.select_related('delivery_party')
         if self.request.method == "GET":
             qs = qs.filter(
                 membership_info_set__user=self.request.user,

@@ -44,7 +44,7 @@ class DeliveryPartyDetailSerializer(DeliveryPartyListSerializer):
     orders = serializers.SerializerMethodField()
     is_member = serializers.SerializerMethodField()
     is_host = serializers.SerializerMethodField()
-    payment_request = serializers.PrimaryKeyRelatedField(read_only=True)
+    payment_request = serializers.SerializerMethodField()
 
     class Meta(DeliveryPartyListSerializer.Meta):
         fields = DeliveryPartyListSerializer.Meta.fields + [
@@ -84,6 +84,10 @@ class DeliveryPartyDetailSerializer(DeliveryPartyListSerializer):
         orders = obj.active_orders().select_related("message__chat_room")
         return DeliveryOrderSerializer(orders, many=True, context=self.context).data
 
+    def get_payment_request(self, obj):
+        request = obj.current_payment_request
+        return request.id if request else None
+
     def get_is_member(self, obj):
         viewer = self.get_viewer()
         return bool(viewer and obj.get_membership(viewer))
@@ -105,6 +109,22 @@ class DeliveryPartyCreateSerializer(serializers.Serializer):
     # 방장 자신의 주문
     price = serializers.IntegerField(min_value=1)
     menu_name = serializers.CharField(max_length=100, required=False, allow_blank=True, default="")
+
+
+class DeliveryPartyUpdateSerializer(serializers.Serializer):
+    memo = serializers.CharField(required=False, allow_blank=True)
+    order_link = serializers.URLField(max_length=500, required=False, allow_blank=True)
+    place_detail = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    max_participants = serializers.IntegerField(min_value=2, required=False, allow_null=True)
+
+
+class DeliveryOrderUpdateSerializer(serializers.Serializer):
+    price = serializers.IntegerField(min_value=1, required=False)
+    menu_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
+
+
+class DeliveryKickSerializer(serializers.Serializer):
+    anon_number = serializers.IntegerField(min_value=1)
 
 
 class DeliveryOrderCreateSerializer(serializers.Serializer):

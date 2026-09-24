@@ -16,13 +16,13 @@ class ChatMessageType(str, Enum):
     IMAGE = "IMAGE"
     FILE = "FILE"
     EMOTICON = "EMOTICON"
-    VOTE = "VOTE" # 투표 (ChatVote)
-    PAYMENT_REQUEST = "PAYMENT_REQUEST" # 정산 요청 (ChatPaymentRequest)
-    DELIVERY_ORDER = "DELIVERY_ORDER" # 배달 주문 (delivery.DeliveryOrder, 함께 배달 방 전용)
-    DELIVERY_ARRIVAL = "DELIVERY_ARRIVAL" # 배달 도착 알림 (함께 배달 방 전용)
-    SYSTEM = "SYSTEM" # 서버가 보내는 안내 메시지 (작성자 없음)
+    VOTE = "VOTE" # 투표
+    PAYMENT_REQUEST = "PAYMENT_REQUEST" # 정산 요청
+    DELIVERY_ORDER = "DELIVERY_ORDER" # 배달 주문 (배달방 전용)
+    DELIVERY_ARRIVAL = "DELIVERY_ARRIVAL" # 배달 도착 (배달방 전용)
+    SYSTEM = "SYSTEM" # 서버 안내 (작성자 없음)
 
-# 일반 메시지 API 로 보낼 수 있는 타입. 나머지는 투표/정산/배달 전용 API 에서 만든다
+# 일반 메시지 API 로 보낼 수 있는 타입
 USER_SENDABLE_MESSAGE_TYPES = {
     ChatMessageType.TEXT.value,
     ChatMessageType.IMAGE.value,
@@ -30,13 +30,17 @@ USER_SENDABLE_MESSAGE_TYPES = {
     ChatMessageType.EMOTICON.value,
 }
 
-# 함께 배달 방에서만 쓸 수 있는 타입
+# 보낸 사람이 지울 수 있는 타입 (배달 주문은 주문 취소로)
+DELETABLE_MESSAGE_TYPES = USER_SENDABLE_MESSAGE_TYPES | {
+    ChatMessageType.VOTE.value,
+    ChatMessageType.PAYMENT_REQUEST.value,
+}
+
 DELIVERY_ONLY_MESSAGE_TYPES = {
     ChatMessageType.DELIVERY_ORDER.value,
     ChatMessageType.DELIVERY_ARRIVAL.value,
 }
 
-# 메시지 보관 기간 (이후 ExpiredChatMessage 로 옮겨진다)
 MESSAGE_LIFETIME = timedelta(days=30)
 
 class ChatMessage(MetaDataModel):
@@ -49,8 +53,7 @@ class ChatMessage(MetaDataModel):
         blank = False,
         null = False,
     )
-    # 메시지 내용 * 메시지 형식에 따라 프론트에서 다르게 parsing
-    # 각 Message Type 별 형식은 document/content_format.md에 정의되어 있음.
+    # 메시지 내용 (투표/정산/배달은 미리보기 문구, 데이터는 연결된 테이블)
     message_content : str = models.TextField(
         verbose_name= "메시지 본문",
         blank = False,

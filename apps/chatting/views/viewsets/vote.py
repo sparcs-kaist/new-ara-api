@@ -4,6 +4,7 @@ from rest_framework import exceptions, mixins, permissions, response, status
 from rest_framework.decorators import action
 
 from ara.classes.viewset import ActionAPIViewSet
+from ara.settings import MIN_TIME
 from apps.chatting.models.membership_room import ChatRoomMemberShip
 from apps.chatting.models.vote import ChatVote
 from apps.chatting.realtime import broadcast_message_created, broadcast_room_update
@@ -22,12 +23,9 @@ def get_membership_or_403(chat_room, user):
 
 
 class ChatVoteViewSet(mixins.RetrieveModelMixin, ActionAPIViewSet):
-    """
-    POST /api/chat/vote/             투표 만들기 (VOTE 메시지와 함께 생성)
-    GET  /api/chat/vote/<id>/        투표 현황
-    PUT  /api/chat/vote/<id>/ballot/ 내 선택 전체 교체 (빈 리스트면 취소)
-    """
-    queryset = ChatVote.objects.select_related("message__chat_room").prefetch_related("options__ballots")
+    queryset = ChatVote.objects.filter(
+        message__deleted_at=MIN_TIME,
+    ).select_related("message__chat_room").prefetch_related("options__ballots")
     serializer_class = ChatVoteSerializer
     permission_classes = (permissions.IsAuthenticated,)
 

@@ -113,11 +113,9 @@ class TestChatVote(TestCase, RequestSetting):
         })
         assert res.status_code == 400
 
-    def test_vote_message_cannot_be_edited_or_deleted(self):
+    def test_vote_message_cannot_be_edited(self):
         vote = ChatVote.objects.get(pk=self.create_vote().data["id"])
         res = self.http_request(self.user, "put", f"chat/message/{vote.message_id}", {"message_content": "수정"})
-        assert res.status_code == 400
-        res = self.http_request(self.user, "delete", f"chat/message/{vote.message_id}")
         assert res.status_code == 400
 
 
@@ -211,3 +209,31 @@ class TestChatAccess(TestCase, RequestSetting):
         res = self.http_request(self.user4, "patch", f"chat/room/{self.room.id}/block", {"unblock": True})
         assert res.status_code == 400
         assert not ChatRoomMemberShip.objects.filter(chat_room=self.room, user=self.user4).exists()
+
+
+@pytest.mark.usefixtures(
+    "set_user_client", "set_user_client2", "set_user_client3", "set_user_client4", "set_group_room"
+)
+class TestStructuredMessageEdit(TestCase, RequestSetting):
+    def test_vote_can_be_deleted_by_author(self):
+        res = self.http_request(self.user, "post", "chat/vote", {
+            "chat_room": self.room.id, "title": "t", "options": ["a", "b"],
+        })
+        vote_id, message_id = res.data["id"], res.data["message_id"]
+        assert self.http_request(self.user2, "delete", f"chat/message/{message_id}").status_code == 403
+        assert self.http_request(self.user, "delete", f"chat/message/{message_id}").status_code == 200
+        assert self.http_request(self.user, "get", f"chat/vote/{vote_id}").status_code == 404
+
+    def test_payment_account_edit_before_anyone_paid(self):
+        res = self.http_request(self.user, "post", "chat/payment", {
+            "chat_room": self.room.id, "bank_name": "국민", "account_number": "1",
+            "targets": [{"user": self.user2.id, "amount": 1000}],
+        })
+        payment_id = res.data["id"]
+        res = self.http_request(self.user, "patch", f"chat/payment/{payment_id}", {"account_number": "2"})
+        assert res.status_code == 200
+        assert res.data["account_number"] == "2"
+        assert self.http_request(self.user2, "patch", f"chat/payment/{payment_id}", {"account_number": "3"}).status_code == 403
+
+        self.http_request(self.user2, "patch", f"chat/payment/{payment_id}/paid", {"paid": True})
+        assert self.http_request(self.user, "patch", f"chat/payment/{payment_id}", {"account_number": "4"}).status_code == 400

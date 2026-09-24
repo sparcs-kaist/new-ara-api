@@ -12,15 +12,19 @@ from apps.delivery.models import (
     DeliveryActionError,
     DeliveryOrder,
     DeliveryParty,
+    DeliveryPenalty,
     DeliveryStatus,
 )
 from apps.delivery.serializers.delivery import (
     DeliveryExtendSerializer,
+    DeliveryKickSerializer,
     DeliveryOrderCreateSerializer,
     DeliveryOrderSerializer,
+    DeliveryOrderUpdateSerializer,
     DeliveryPartyCreateSerializer,
     DeliveryPartyDetailSerializer,
     DeliveryPartyListSerializer,
+    DeliveryPartyUpdateSerializer,
     DeliveryPaymentRequestSerializer,
 )
 
@@ -51,27 +55,16 @@ def run_action(fn, *args, **kwargs):
     ),
 )
 class DeliveryPartyViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, ActionAPIViewSet):
-    """
-    GET    /api/delivery/                          목록
-    POST   /api/delivery/                          방 만들기 (방장 주문 포함)
-    GET    /api/delivery/<id>/                     상세
-    POST   /api/delivery/<id>/join/                참여
-    POST   /api/delivery/<id>/leave/               나가기
-    POST   /api/delivery/<id>/orders/              주문 넣기
-    DELETE /api/delivery/<id>/orders/<order_id>/   주문 취소
-    POST   /api/delivery/<id>/confirm/             (방장) 주문 확정
-    POST   /api/delivery/<id>/extend/              (방장) 모집 연장
-    POST   /api/delivery/<id>/cancel/              (방장) 모집 취소
-    POST   /api/delivery/<id>/arrive/              (방장) 배달 도착 알림
-    POST   /api/delivery/<id>/payment-request/     (방장) 정산 요청 (금액 자동 계산)
-    """
     serializer_class = DeliveryPartyDetailSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
     action_serializer_class = {
         "list": DeliveryPartyListSerializer,
         "create": DeliveryPartyCreateSerializer,
+        "partial_update": DeliveryPartyUpdateSerializer,
         "orders": DeliveryOrderCreateSerializer,
+        "order_detail": DeliveryOrderUpdateSerializer,
+        "kick": DeliveryKickSerializer,
         "extend": DeliveryExtendSerializer,
         "payment_request": DeliveryPaymentRequestSerializer,
     }
@@ -126,6 +119,19 @@ class DeliveryPartyViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, Act
         party = run_action(DeliveryParty.open, request.user, **self.validated_input(request))
         return self.detail_response(party, status.HTTP_201_CREATED)
 
+    # (방장) 메모, 함께주문 링크, 상세 위치, 최대 인원 수정
+    @extend_schema(request=DeliveryPartyUpdateSerializer, responses={200: DeliveryPartyDetailSerializer})
+    def partial_update(self, request, pk=None):
+        party = self.get_object()
+        run_action(party.update_info, request.user, **self.validated_input(request))
+        return self.detail_response(party)
+
+    # 내 패널티. 방 개설 버튼을 미리 막을 때 쓴다
+    @extend_schema(responses={200: OpenApiTypes.OBJECT})
+    @action(detail=False, methods=["get"])
+    def penalty(self, request):
+        return response.Response({"until": DeliveryPenalty.active_until(request.user)})
+
     @extend_schema(request=None, responses={200: DeliveryPartyDetailSerializer})
     @action(detail=True, methods=["post"])
     def join(self, request, pk=None):
@@ -150,15 +156,28 @@ class DeliveryPartyViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, Act
             status=status.HTTP_201_CREATED,
         )
 
-    @extend_schema(request=None, responses={204: None})
-    @action(detail=True, methods=["delete"], url_path=r"orders/(?P<order_id>\d+)")
-    def cancel_order(self, request, pk=None, order_id=None):
+    # PATCH : 내 주문 수정 / DELETE : 내 주문 취소
+    @extend_schema(request=DeliveryOrderUpdateSerializer, responses={200: DeliveryOrderSerializer, 204: None})
+    @action(detail=True, methods=["patch", "delete"], url_path=r"orders/(?P<order_id>\d+)")
+    def order_detail(self, request, pk=None, order_id=None):
         party = self.get_object()
         order = DeliveryOrder.objects.filter(pk=order_id, party=party).first()
         if order is None:
             raise exceptions.NotFound("주문을 찾을 수 없어요.")
-        run_action(party.cancel_order, order, request.user)
-        return response.Response(status=status.HTTP_204_NO_CONTENT)
+
+        if request.method == "DELETE":
+            run_action(party.cancel_order, order, request.user)
+            return response.Response(status=status.HTTP_204_NO_CONTENT)
+
+        order = run_action(party.edit_order, order, request.user, **self.validated_input(request))
+        return response.Response(DeliveryOrderSerializer(order, context=self.get_serializer_context()).data)
+
+    @extend_schema(request=DeliveryKickSerializer, responses={200: DeliveryPartyDetailSerializer})
+    @action(detail=True, methods=["post"])
+    def kick(self, request, pk=None):
+        party = self.get_object()
+        run_action(party.kick, request.user, self.validated_input(request)["anon_number"])
+        return self.detail_response(party)
 
     @extend_schema(request=None, responses={200: DeliveryPartyDetailSerializer})
     @action(detail=True, methods=["post"])

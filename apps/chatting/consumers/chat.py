@@ -9,6 +9,7 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         await self.accept()
         self.room_name = None
+        self.room_id = None
         self.identity = None
 
     async def disconnect(self, close_code):
@@ -20,8 +21,7 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
     def _group(self, room_id: int) -> str:
         return room_group_name(room_id)
 
-    # 방 멤버(차단 관계 제외)면 방에 알릴 내 정보, 아니면 None
-    # 익명 방에서는 user id 대신 방 안의 이름만 보낸다
+    # 방 멤버(차단 관계 제외)면 방에 알릴 내 정보. 익명 방이면 user id 대신 이름만
     @database_sync_to_async
     def get_member_identity(self, room_id):
         from apps.chatting.models import ChatRoomMemberShip, ChatUserRole
@@ -107,6 +107,7 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
         if self.room_name:
             await self.channel_layer.group_discard(self.room_name, self.channel_name)
         self.room_name = self._group(room_id)
+        self.room_id = room_id
         self.identity = identity
         await self.channel_layer.group_add(self.room_name, self.channel_name)
 
@@ -136,6 +137,7 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
             }
         )
         self.room_name = None
+        self.room_id = None
         self.identity = None
 
     async def broadcast_update(self, payload: dict | None = None):
@@ -223,6 +225,16 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
             'type': 'message_deleted',
             'message_id': event.get('message_id'),
         }))
+
+    # 나간 / 내보내진 멤버면 방 구독을 끊는다
+    async def member_removed(self, event):
+        if not self.identity or self.identity["sender"]["anon_number"] != event.get("anon_number"):
+            return
+        await self.channel_layer.group_discard(self.room_name, self.channel_name)
+        await self.send(text_data=json.dumps({'type': 'removed', 'room_id': self.room_id}))
+        self.room_name = None
+        self.room_id = None
+        self.identity = None
 
     async def room_update(self, event):
         await self.send(text_data=json.dumps({

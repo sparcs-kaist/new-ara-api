@@ -290,3 +290,75 @@ class TestDelivery(TestCase, RequestSetting):
         self.http_request(self.user, "post", f"delivery/{party.id}/confirm")
         # 받을 돈이 없으니 정산 없이 나갈 수 있다
         assert self.http_request(self.user, "post", f"delivery/{party.id}/leave").status_code == 204
+
+    # ---------- 수정 / 내보내기 / 기타 ----------
+
+    def test_edit_order_updates_card(self):
+        party = self.open_party()
+        order = self.join_and_order(party, self.user2, 5000, "순대")
+        res = self.http_request(self.user2, "patch", f"delivery/{party.id}/orders/{order['id']}", {"price": 5500})
+        assert res.status_code == 200
+        assert res.data["price"] == 5500
+        assert ChatMessage.objects.get(pk=order["message_id"]).message_content == "[주문] 순대 · 5,500원"
+        # 남의 주문은 못 고친다
+        res = self.http_request(self.user, "patch", f"delivery/{party.id}/orders/{order['id']}", {"price": 1})
+        assert res.status_code == 403
+
+    def test_host_updates_info(self):
+        party = self.open_party()
+        self.join_and_order(party, self.user2, 5000)
+        res = self.http_request(self.user, "patch", f"delivery/{party.id}", {"order_link": "https://baemin.com/g/1", "memo": "1층"})
+        assert res.status_code == 200
+        assert res.data["order_link"] == "https://baemin.com/g/1"
+        assert party.chat_room.message_set.filter(message_content="방장이 함께주문 링크를 올렸어요.").exists()
+        # 지금 인원(2명)보다 적게는 안 된다
+        res = self.http_request(self.user, "patch", f"delivery/{party.id}", {"max_participants": 1})
+        assert res.status_code == 400
+        assert self.http_request(self.user2, "patch", f"delivery/{party.id}", {"memo": "x"}).status_code == 403
+
+    def test_kick_cancels_orders_and_blocks_rejoin(self):
+        party = self.open_party()
+        self.join_and_order(party, self.user2, 5000)
+        res = self.http_request(self.user, "post", f"delivery/{party.id}/kick", {"anon_number": 1})
+        assert res.status_code == 200
+        assert res.data["total_amount"] == 8000
+        assert party.get_membership(self.user2) is None
+        res = self.http_request(self.user2, "post", f"delivery/{party.id}/join")
+        assert res.status_code == 403
+
+    def test_penalty_api(self):
+        assert self.http_request(self.user, "get", "delivery/penalty").data["until"] is None
+        party = self.open_party()
+        self.join_and_order(party, self.user2, 5000)
+        self.http_request(self.user, "post", f"delivery/{party.id}/cancel")
+        assert self.http_request(self.user, "get", "delivery/penalty").data["until"] is not None
+
+    def test_leave_unlocks_after_24h(self):
+        party = self.open_party(min_order_amount=10000)
+        self.join_and_order(party, self.user2, 5000)
+        self.http_request(self.user, "post", f"delivery/{party.id}/confirm")
+        assert self.http_request(self.user2, "post", f"delivery/{party.id}/leave").status_code == 400
+        DeliveryParty.objects.filter(pk=party.pk).update(ordered_at=timezone.now() - timedelta(hours=25))
+        assert self.http_request(self.user2, "post", f"delivery/{party.id}/leave").status_code == 204
+
+    def test_delete_payment_request_and_request_again(self):
+        party = self.open_party(min_order_amount=10000)
+        self.join_and_order(party, self.user2, 5000)
+        self.http_request(self.user, "post", f"delivery/{party.id}/confirm")
+        body = {"bank_name": "토스뱅크", "account_number": "1000-1", "delivery_fee": 0}
+        first = self.http_request(self.user, "post", f"delivery/{party.id}/payment-request", body).data
+
+        # 잘못 보냈으면 지우고 다시 보낸다
+        assert self.http_request(self.user, "delete", f"chat/message/{first['message_id']}").status_code == 200
+        second = self.http_request(self.user, "post", f"delivery/{party.id}/payment-request", body)
+        assert second.status_code == 201
+
+        # 송금한 사람이 생기면 지울 수 없다
+        self.http_request(self.user2, "patch", f"chat/payment/{second.data['id']}/paid", {"paid": True})
+        assert self.http_request(self.user, "delete", f"chat/message/{second.data['message_id']}").status_code == 400
+
+    def test_chat_room_has_delivery_party_id(self):
+        party = self.open_party()
+        res = self.http_request(self.user, "get", "chat/room")
+        room = next(r for r in res.data["results"] if r["id"] == party.chat_room_id)
+        assert room["delivery_party"] == party.id

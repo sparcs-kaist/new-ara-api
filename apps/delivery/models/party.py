@@ -22,7 +22,11 @@ from apps.chatting.models import (
     ChatUserRole,
 )
 from apps.chatting.models.room import ChatNameType
-from apps.chatting.realtime import broadcast_message_created, broadcast_room_update
+from apps.chatting.realtime import (
+    broadcast_member_removed,
+    broadcast_message_created,
+    broadcast_room_update,
+)
 from apps.delivery.models.order import DeliveryOrder
 from apps.delivery.models.penalty import DeliveryPenalty
 
@@ -46,6 +50,9 @@ class DeliveryCancelReason(str, Enum):
 # 방 개설 / 연장 시간 (분). 이 범위의 아무 정수
 MIN_RECRUIT_MINUTES = 5
 MAX_RECRUIT_MINUTES = 60
+
+# 확정 후 이 시간이 지나면 정산이 안 끝나도 나갈 수 있다 (방장 잠수 대비)
+LEAVE_UNLOCK_AFTER = timedelta(hours=24)
 
 OPEN_STATUSES = (DeliveryStatus.RECRUITING.value, DeliveryStatus.WAITING_DECISION.value)
 FINISHED_STATUSES = (DeliveryStatus.SETTLED.value, DeliveryStatus.CANCELED.value)
@@ -178,6 +185,18 @@ class DeliveryParty(MetaDataModel):
     def get_membership(self, user):
         return ChatRoomMemberShip.objects.filter(chat_room_id=self.chat_room_id, user=user).first()
 
+    # 정산 메시지를 지우면 None (다시 요청할 수 있다)
+    @property
+    def current_payment_request(self):
+        request = self.payment_request
+        if request is None or request.message.deleted_at != MIN_TIME:
+            return None
+        return request
+
+    @property
+    def is_leave_unlocked(self) -> bool:
+        return bool(self.ordered_at and timezone.now() >= self.ordered_at + LEAVE_UNLOCK_AFTER)
+
     # ---------- 방 만들기 ----------
 
     @classmethod
@@ -240,6 +259,8 @@ class DeliveryParty(MetaDataModel):
             chat_room_id=self.chat_room_id,
             user=user,
         ).order_by("-id").first()
+        if membership and membership.role == ChatUserRole.BLOCKED.value:
+            raise DeliveryActionError("방장이 내보낸 방이라 다시 들어갈 수 없어요.", forbidden=True)
         if membership:
             membership.deleted_at = MIN_TIME
             membership.role = ChatUserRole.PARTICIPANT.value
@@ -262,7 +283,7 @@ class DeliveryParty(MetaDataModel):
         if membership is None:
             raise DeliveryActionError("참여 중인 방이 아니에요.")
 
-        if self.status not in FINISHED_STATUSES:
+        if self.status not in FINISHED_STATUSES and not self.is_leave_unlocked:
             has_orders = self.active_orders().filter(user=user).exists()
             if user.id == self.host_id:
                 if self.status in OPEN_STATUSES:
@@ -279,6 +300,59 @@ class DeliveryParty(MetaDataModel):
         membership.delete()
         if self.status not in FINISHED_STATUSES:
             self.send_system_message(f"{name}님이 나갔어요.")
+        broadcast_member_removed(self.chat_room_id, membership.anon_number)
+        self.broadcast_update()
+
+    @transaction.atomic
+    def kick(self, user, anon_number: int):
+        self.lock_row()
+        self.check_host(user)
+        target = ChatRoomMemberShip.objects.filter(
+            chat_room_id=self.chat_room_id, anon_number=anon_number,
+        ).first()
+        if target is None:
+            raise DeliveryActionError("방에 없는 참여자예요.")
+        if target.user_id == self.host_id:
+            raise DeliveryActionError("방장은 내보낼 수 없어요.")
+
+        orders = list(self.active_orders().filter(user_id=target.user_id))
+        if orders and self.status not in OPEN_STATUSES:
+            raise DeliveryActionError("주문을 확정한 뒤에는 주문한 사람을 내보낼 수 없어요.")
+
+        now = timezone.now()
+        for order in orders:
+            order.canceled_at = now
+            order.save()
+            broadcast_room_update(self.chat_room_id, "messages", "updated", order.message_id)
+
+        name = target.get_display_name()
+        # BLOCKED 로 남겨서 다시 참여하지 못하게 한다
+        target.role = ChatUserRole.BLOCKED.value
+        target.delete()
+
+        self.send_system_message(f"방장이 {name}님을 내보냈어요.")
+        broadcast_member_removed(self.chat_room_id, anon_number)
+        self.broadcast_update()
+
+    # 방장이 고칠 수 있는 정보 (모집 중일 때만)
+    @transaction.atomic
+    def update_info(self, user, **fields):
+        self.lock_row()
+        self.check_host(user)
+        if self.status not in OPEN_STATUSES:
+            raise DeliveryActionError("모집 중일 때만 방 정보를 고칠 수 있어요.")
+
+        max_participants = fields.get("max_participants")
+        if max_participants is not None and max_participants < self.get_participant_count():
+            raise DeliveryActionError("지금 인원보다 적게 정할 수 없어요.")
+
+        link_added = bool(fields.get("order_link")) and fields["order_link"] != self.order_link
+        for name, value in fields.items():
+            setattr(self, name, value)
+        self.save()
+
+        if link_added:
+            self.send_system_message("방장이 함께주문 링크를 올렸어요.")
         self.broadcast_update()
 
     # ---------- 주문 ----------
@@ -310,13 +384,33 @@ class DeliveryParty(MetaDataModel):
         broadcast_room_update(self.chat_room_id, "messages", "updated", order.message_id)
         self.broadcast_update()
 
+    @transaction.atomic
+    def edit_order(self, order, user, **fields):
+        self.lock_row()
+        if order.party_id != self.id or order.user_id != user.id:
+            raise DeliveryActionError("내 주문만 고칠 수 있어요.", forbidden=True)
+        if order.is_canceled:
+            raise DeliveryActionError("취소된 주문이에요.")
+        if self.status not in OPEN_STATUSES:
+            raise DeliveryActionError("주문이 확정돼서 고칠 수 없어요.")
+
+        for name, value in fields.items():
+            setattr(order, name, value)
+        order.save()
+        # 채팅방 주문 카드 미리보기도 같이 바꾼다
+        order.message.message_content = f"[주문] {order.summary}"
+        order.message.save()
+
+        broadcast_room_update(self.chat_room_id, "messages", "updated", order.message_id)
+        self.broadcast_update()
+        return order
+
     def add_order(self, user, *, price, menu_name=""):
-        order_preview = f"{menu_name} · {price:,}원" if menu_name else f"{price:,}원"
         message = ChatMessage.create(
             chat_room=self.chat_room,
             created_by=user,
             message_type=ChatMessageType.DELIVERY_ORDER.value,
-            message_content=f"[주문] {order_preview}",
+            message_content=f"[주문] {DeliveryOrder.make_summary(menu_name, price)}",
         )
         order = DeliveryOrder.objects.create(
             message=message,
@@ -413,8 +507,8 @@ class DeliveryParty(MetaDataModel):
         self.check_host(user)
         if self.status not in (DeliveryStatus.ORDERED.value, DeliveryStatus.ARRIVED.value):
             raise DeliveryActionError("주문을 확정한 뒤에 정산을 요청할 수 있어요.")
-        if self.payment_request_id:
-            raise DeliveryActionError("이미 정산을 요청했어요.")
+        if self.current_payment_request:
+            raise DeliveryActionError("이미 정산을 요청했어요. 잘못 보냈다면 정산 메시지를 지우고 다시 보내주세요.")
 
         subtotals = defaultdict(int)
         users = {}
@@ -449,7 +543,8 @@ class DeliveryParty(MetaDataModel):
         self.lock_row()
         if self.status not in (DeliveryStatus.ORDERED.value, DeliveryStatus.ARRIVED.value):
             return
-        if self.payment_request is None or not self.payment_request.is_settled:
+        request = self.current_payment_request
+        if request is None or not request.is_settled:
             return
 
         self.status = DeliveryStatus.SETTLED.value
@@ -528,9 +623,10 @@ class DeliveryParty(MetaDataModel):
             raise DeliveryActionError("방장만 할 수 있어요.", forbidden=True)
 
     def has_paid(self, user) -> bool:
-        if self.payment_request is None:
+        request = self.current_payment_request
+        if request is None:
             return False
-        return self.payment_request.targets.filter(user=user, paid_at__isnull=False).exists()
+        return request.targets.filter(user=user, paid_at__isnull=False).exists()
 
     def mark_canceled(self, reason: DeliveryCancelReason):
         self.status = DeliveryStatus.CANCELED.value

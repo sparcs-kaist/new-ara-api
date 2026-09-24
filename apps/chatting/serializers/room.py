@@ -74,14 +74,20 @@ class ChatRoomSerializer(serializers.ModelSerializer):
     채팅방 정보 조회용 Serializer
     """
     recent_message = MessageSerializer(read_only=True)
+    # 배달방이면 배달방 id, 아니면 null
+    delivery_party = serializers.SerializerMethodField()
 
     class Meta:
         model = ChatRoom
         fields = [
             'id', 'room_title', 'room_type', 'chat_name_type',
-            'picture', 'recent_message_at', 'recent_message', 'created_at'
+            'picture', 'recent_message_at', 'recent_message', 'delivery_party', 'created_at'
         ]
         read_only_fields = ['recent_message_at', 'recent_message', 'created_at']
+
+    def get_delivery_party(self, obj):
+        party = getattr(obj, "delivery_party", None)
+        return party.id if party else None
 
 class ChatRoomByIdSerializer(serializers.Serializer):
     """

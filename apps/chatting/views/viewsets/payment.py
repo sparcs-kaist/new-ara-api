@@ -3,6 +3,7 @@ from rest_framework import exceptions, mixins, permissions, response, status
 from rest_framework.decorators import action
 
 from ara.classes.viewset import ActionAPIViewSet
+from ara.settings import MIN_TIME
 from apps.chatting.models.membership_room import ChatRoomMemberShip
 from apps.chatting.models.payment import ChatPaymentRequest
 from apps.chatting.models.room import ChatRoomType
@@ -11,24 +12,22 @@ from apps.chatting.serializers.payment import (
     ChatPaymentPaidSerializer,
     ChatPaymentRequestCreateSerializer,
     ChatPaymentRequestSerializer,
+    ChatPaymentRequestUpdateSerializer,
 )
 from apps.chatting.views.viewsets.vote import get_membership_or_403
 
 
 class ChatPaymentViewSet(mixins.RetrieveModelMixin, ActionAPIViewSet):
-    """
-    POST  /api/chat/payment/            정산 요청 만들기 (PAYMENT_REQUEST 메시지와 함께 생성)
-    GET   /api/chat/payment/<id>/       정산 현황
-    PATCH /api/chat/payment/<id>/paid/  내 송금 완료 / 취소 ({"paid": true | false})
-    (배달방 정산은 금액을 자동으로 채워주는 배달 API 사용)
-    """
-    queryset = ChatPaymentRequest.objects.select_related("message__chat_room").prefetch_related("targets")
+    queryset = ChatPaymentRequest.objects.filter(
+        message__deleted_at=MIN_TIME,
+    ).select_related("message__chat_room").prefetch_related("targets")
     serializer_class = ChatPaymentRequestSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
     action_serializer_class = {
         "create": ChatPaymentRequestCreateSerializer,
         "paid": ChatPaymentPaidSerializer,
+        "partial_update": ChatPaymentRequestUpdateSerializer,
     }
 
     def get_object(self):
@@ -70,6 +69,24 @@ class ChatPaymentViewSet(mixins.RetrieveModelMixin, ActionAPIViewSet):
         )
         broadcast_message_created(payment_request.message)
         return self.payment_response(payment_request, status.HTTP_201_CREATED)
+
+    # (요청자) 은행 / 계좌번호 수정. 아무도 송금하기 전에만
+    @extend_schema(request=ChatPaymentRequestUpdateSerializer, responses={200: ChatPaymentRequestSerializer})
+    def partial_update(self, request, pk=None):
+        payment_request = self.get_object()
+        if payment_request.message.created_by_id != request.user.id:
+            raise exceptions.PermissionDenied("정산을 요청한 사람만 고칠 수 있습니다.")
+        if payment_request.targets.filter(paid_at__isnull=False).exists():
+            raise exceptions.ValidationError({"detail": "이미 송금한 사람이 있어 고칠 수 없습니다."})
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        for name, value in serializer.validated_data.items():
+            setattr(payment_request, name, value)
+        payment_request.save()
+
+        broadcast_room_update(payment_request.message.chat_room_id, "payment", "updated", payment_request.id)
+        return self.payment_response(payment_request)
 
     @extend_schema(request=ChatPaymentPaidSerializer, responses={200: ChatPaymentRequestSerializer})
     @action(detail=True, methods=["patch"])
