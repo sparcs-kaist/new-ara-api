@@ -45,6 +45,9 @@ SCHEDULERS = {
     "SEND_EMAIL_FOR_REPLY_REMINDER": create_scheduler_config(
         "SEND_EMAIL_FOR_REPLY_REMINDER", crontab=crontab(hour=7, minute=0)
     ),  # 매일 오전 7시
+    "SWEEP_DELIVERY_DEADLINES": create_scheduler_config(
+        "SWEEP_DELIVERY_DEADLINES", crontab=crontab(minute="*")
+    ),  # 매분 - 함께 배달 모집 마감 / 방장 결정 시간 초과 처리
     "CRAWL_MEAL": create_scheduler_config(
         "CRAWL_MEAL", crontab=crontab(minute="*/3")  # 매 3분 마다 - dev 서버 테스트 용도, 실제로는 hour=0, minute=10
     ),

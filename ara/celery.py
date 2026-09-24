@@ -48,6 +48,11 @@ app.conf.beat_schedule = {
         "schedule": settings.SCHEDULERS["SEND_EMAIL_FOR_REPLY_REMINDER"]["CRONTAB"],
         "args": [],
     },
+    "sweep_delivery_deadlines": {
+        "task": "apps.core.management.tasks.sweep_delivery_deadlines",
+        "schedule": settings.SCHEDULERS["SWEEP_DELIVERY_DEADLINES"]["CRONTAB"],
+        "args": [],
+    },
     "crawl_meal": {
         "task": "apps.core.management.tasks.crawl_meal",
         "schedule": settings.SCHEDULERS["CRAWL_MEAL"]["CRONTAB"],
