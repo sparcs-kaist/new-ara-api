@@ -2,8 +2,6 @@ from datetime import datetime, timezone as dt_timezone
 
 import requests
 from pytz import timezone as pytz_timezone
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 
 from apps.kaist.models import Post
 from apps.kaist.portal.post_response import PostResponse, RecentPostListResponse, RecentPostItem
@@ -21,66 +19,17 @@ class DeletedPostException(Exception):
     """
     ...
 
-class PortalUnreachableException(Exception):
-    """
-    Portal 서버에 TCP/TLS 연결이 안 될 때 (ConnectTimeout, ConnectionError 등).
-    session reset 후에도 안 풀리면 발생. 일시적 네트워크/portal-side issue 로 보고
-    celery 다음 cycle 에서 재시도해야 한다.
-    """
-    ...
-
-
-def _build_session() -> requests.Session:
-    # connect/read 단계 모두 재시도. celery worker에서 stale keepalive 소켓으로
-    # ConnectTimeout 이 누적되는 것을 막기 위해 backoff retry 와 풀 사이즈를 명시한다.
-    retry = Retry(
-        total=3,
-        connect=3,
-        read=2,
-        backoff_factor=1.0,
-        status_forcelist=(500, 502, 503, 504),
-        allowed_methods=("GET",),
-        raise_on_status=False,
-    )
-    adapter = HTTPAdapter(
-        max_retries=retry,
-        pool_connections=20,
-        pool_maxsize=20,
-    )
-    session = requests.Session()
-    session.mount("https://", adapter)
-    session.mount("http://", adapter)
-    session.cookies.set(Crawler.SESSION_KEY, PORTAL_JSESSIONID)
-    return session
-
 
 class Crawler:
     SESSION_KEY = "JSESSIONID"
     SESSION_REDIS_KEY = "crawler:jsessionid"
 
-    # (connect_timeout, read_timeout) - 무제한 block 방지
-    REQUEST_TIMEOUT = (5, 30)
+    REQUEST_TIMEOUT = (5, 30)  # (connect, read) — 무한 block 방지
 
-    _session = None  # lazy init via _get_session()
+    _session = requests.Session()
+    _session.cookies.set(SESSION_KEY, PORTAL_JSESSIONID)
 
     _KST = pytz_timezone("Asia/Seoul")
-
-    @classmethod
-    def _get_session(cls) -> requests.Session:
-        if cls._session is None:
-            cls._session = _build_session()
-        return cls._session
-
-    @classmethod
-    def reset_session(cls) -> None:
-        """stale connection pool 을 폐기하고 새로운 session 으로 교체."""
-        old = cls._session
-        cls._session = _build_session()
-        if old is not None:
-            try:
-                old.close()
-            except Exception:
-                pass
 
     @classmethod
     def _parse_datetime_string(cls, datetime_str: str) -> datetime:
@@ -89,7 +38,7 @@ class Crawler:
             .astimezone(cls._KST)
             .astimezone(dt_timezone.utc)
         )
-    
+
     @classmethod
     def _is_deleted_post(cls, html_txt: str) -> bool:
         if not html_txt:
@@ -97,13 +46,14 @@ class Crawler:
         # 삭제 판단의 기준이 되는 text
         mask_txt = ["서비스 이용에 불편을 드려 죄송합니다.", ]
         return any(txt in html_txt for txt in mask_txt)
-    
+
     #post 사이의 링크가 끊긴 경우를 위해 현재를 기준으로 가장 최근 post id를 가져옵니다.
     @classmethod
     def _get_recent_post_id(cls) -> int:
         try:
-            response = cls._request_get(
-                "https://portal.kaist.ac.kr/wz/api/board/recents/"
+            response = cls._session.get(
+                "https://portal.kaist.ac.kr/wz/api/board/recents/",
+                timeout=cls.REQUEST_TIMEOUT,
             )
             payload = response.json()  # 제공된 응답은 유효 JSON
             items = payload["data"]
@@ -115,28 +65,6 @@ class Crawler:
         #응답이 html인 경우 (권한 없음 페이지) session expired
         except Exception:
             raise SessionExpiredException
-
-    @classmethod
-    def _request_get(cls, url: str) -> requests.Response:
-        """
-        timeout/retry 가 적용된 GET 요청. ConnectTimeout 등 연결 단계 실패 시
-        session 을 재생성해 한 번 더 재시도한다 (stale keepalive 회복용).
-        두 번째 시도도 실패하면 PortalUnreachableException 으로 변환해
-        worker 가 soft-fail 처리할 수 있게 한다.
-        """
-        try:
-            return cls._get_session().get(url, timeout=cls.REQUEST_TIMEOUT)
-        except (requests.ConnectionError, requests.Timeout) as e:
-            log.warning(
-                f"KAIST Portal Crawler :: connection error on {url} ({e!r}); resetting session"
-            )
-            cls.reset_session()
-            try:
-                return cls._get_session().get(url, timeout=cls.REQUEST_TIMEOUT)
-            except (requests.ConnectionError, requests.Timeout) as e2:
-                raise PortalUnreachableException(
-                    f"Portal unreachable after session reset: {url} ({e2!r})"
-                ) from e2
 
     @classmethod
     def _parse_response(cls, res: PostResponse) -> Post:
@@ -184,14 +112,15 @@ class Crawler:
         retry_count = 1
 
         while retry_count >= 0:
-            response = cls._request_get(
-                f"https://portal.kaist.ac.kr/wz/api/board/recents/{post_id}"
+            response = cls._session.get(
+                f"https://portal.kaist.ac.kr/wz/api/board/recents/{post_id}",
+                timeout=cls.REQUEST_TIMEOUT,
             )
 
             if cls._has_fetched_successfully(response):
                 post = cls._parse_response(response.json())
                 return post
-            
+
             if cls._is_deleted_post(response.text):
                 raise DeletedPostException(f"Post {post_id} has been deleted")
 
@@ -204,13 +133,14 @@ class Crawler:
     @classmethod
     def get_view_count(cls, post_id : int) -> int | None:
 
-        response = cls._request_get(
-            f"https://portal.kaist.ac.kr/wz/api/board/recents/{post_id}"
+        response = cls._session.get(
+            f"https://portal.kaist.ac.kr/wz/api/board/recents/{post_id}",
+            timeout=cls.REQUEST_TIMEOUT,
         )
         if cls._has_fetched_successfully(response):
             post = cls._parse_response(response.json())
             return post.view_count
-            
+
         else:
             return None
 
@@ -241,4 +171,4 @@ class Crawler:
             log.info(
                 f"KAIST Portal Crawler :: JSESSIONID updated to ({new_session_id})"
             )
-            cls._get_session().cookies.set(cls.SESSION_KEY, new_session_id)
+            cls._session.cookies.set(cls.SESSION_KEY, new_session_id)

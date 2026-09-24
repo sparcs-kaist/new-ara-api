@@ -91,8 +91,8 @@ _COURSE_HEADER_RX = re.compile(
 )
 # 메뉴 + 알러지 (괄호 표기): "김치찌개(1,2,5)"
 _MENU_PAREN_RX = re.compile(r"^(.+?)\(([\d,\s]*)\)\s*$")
-# 메뉴 + 알러지 (점 표기, 서맛골): "김치찌개 1.2.5", "김치찌개 1" 도 허용
-_MENU_DOT_RX = re.compile(r"^(.+?)\s*(\d+(?:\.\d+)*)\s*$")
+# 알러지 표기만 단독으로 있는 라인 (긴 메뉴명 뒤 줄바꿈된 경우): "(1,2,5,6,9,10,13,15)"
+_ALLERGEN_ONLY_RX = re.compile(r"^\(\s*[\d,\s]+\s*\)\s*$")
 
 
 # ---------- 공통 유틸 ----------
@@ -159,19 +159,6 @@ def _parse_menu_paren(text: str) -> MenuItemType:
     return [name, allergens]
 
 
-def _parse_menu_dot(text: str) -> MenuItemType:
-    """'김치찌개 1.2.5' 형식 (서맛골) 의 메뉴 라인을 파싱."""
-    m = _MENU_DOT_RX.match(text)
-    if m:
-        name = m.group(1).strip()
-        try:
-            allergens = [int(x) for x in m.group(2).split(".") if x]
-        except ValueError:
-            return [name, []]
-        return [name, allergens]
-    return [text, []]
-
-
 def _merge_split_price_lines(items: List[str]) -> List[str]:
     """교수회관: 코스명 다음 줄에 가격 '(5,500원)' 이 따로 옴 -> 한 줄로 합침."""
     result: List[str] = []
@@ -179,8 +166,21 @@ def _merge_split_price_lines(items: List[str]) -> List[str]:
         s = raw.strip()
         if not s:
             continue
-        # 직전 라인이 코스 헤더가 아니고, 현재 라인이 가격 표기로만 이루어진 경우 합침
         if "원" in s and result and _parse_course_header(result[-1]) is None:
+            result[-1] = result[-1] + s
+        else:
+            result.append(s)
+    return result
+
+
+def _merge_split_allergen_lines(items: List[str]) -> List[str]:
+    """긴 메뉴명 뒤 알러지 '(1,2,5)' 가 다음 줄로 줄바꿈된 경우 -> 한 줄로 합침."""
+    result: List[str] = []
+    for raw in items:
+        s = raw.strip()
+        if not s:
+            continue
+        if _ALLERGEN_ONLY_RX.match(s) and result and _parse_course_header(result[-1]) is None:
             result[-1] = result[-1] + s
         else:
             result.append(s)
@@ -217,26 +217,29 @@ def _generic_course_parser(
 
 
 def _parser_fclt(menu_list: List[str], time: int) -> CourseDataType:
-    """카이마루: '코스명(5,500원)' / '메뉴(1,2,5)'"""
-    return _generic_course_parser(menu_list, parse_menu=_parse_menu_paren)
+    """카이마루: '코스명(5,500원)' / '메뉴(1,2,5)'. 긴 메뉴명 뒤 알러지가 줄바꿈되는 케이스 처리."""
+    merged = _merge_split_allergen_lines(menu_list)
+    return _generic_course_parser(merged, parse_menu=_parse_menu_paren)
 
 
 def _parser_emp(menu_list: List[str], time: int) -> CourseDataType:
     """교수회관: 카이마루와 동일하나 '코스명' 과 '(5,500원)' 이 다른 라인에 들어옴."""
     merged = _merge_split_price_lines(menu_list)
+    merged = _merge_split_allergen_lines(merged)
     return _generic_course_parser(merged, parse_menu=_parse_menu_paren)
 
 
 def _parser_west(menu_list: List[str], time: int) -> CourseDataType:
     """서맛골: 코스 헤더가 없을 수도 있고, 끼니별로 default 코스명/가격이 정해져 있다.
     - 조식 3,700원 / 중식 5,000원 / 석식 5,000원
-    - 일품(별도 가격) 은 본문에 '[5,000원]' 형태로 등장
-    - 메뉴 알러지 표기는 '김치찌개 1.2.5' 점 구분 형식
+    - 일품(별도 가격) 은 본문에 '[6,500원]' 형태로 등장
+    - 메뉴 알러지는 paren 표기 '시래기들깨국 (5,6)' / '이면(1,5,6)'
     - 조식 마지막 줄에 '천원의 아침밥' 이 붙으면 default 가 (천원의 아침밥, 1000) 로 바뀜
     """
     DEFAULT = {0: ("조식", 3700), 1: ("중식", 5000), 2: ("석식", 5000)}
 
     cleaned = _clean_lines(menu_list)
+    cleaned = _merge_split_allergen_lines(cleaned)
     if not cleaned:
         return {}
     if any(_is_end_marker(l) for l in cleaned[:1]):
@@ -257,7 +260,7 @@ def _parser_west(menu_list: List[str], time: int) -> CourseDataType:
             current = header
             courses.setdefault(current, [])
             continue
-        courses[current].append(_parse_menu_dot(line))
+        courses[current].append(_parse_menu_paren(line))
 
     if not courses[default_course]:
         del courses[default_course]

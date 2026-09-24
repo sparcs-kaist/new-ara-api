@@ -33,9 +33,6 @@ SCHEDULERS = {
     "CRAWL_PORTAL": create_scheduler_config(
         "CRAWL_PORTAL", crontab=crontab(minute="*/10"),
     ),  # 매 0분 (1시간마다)
-    "SYNC_PORTAL_VIEW_COUNTS": create_scheduler_config(
-        "SYNC_PORTAL_VIEW_COUNTS", crontab=crontab(minute="*/10"), #dev 용으로 10분, 기능 개발 이후 1시간으로 변경
-    ),
     "SAVE_DAILY_BEST": create_scheduler_config(
         "SAVE_DAILY_BEST", crontab=crontab(minute=0)
     ),

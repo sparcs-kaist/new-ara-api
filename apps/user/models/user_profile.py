@@ -48,6 +48,14 @@ class UserProfile(MetaDataModel):
         max_length=30,
         verbose_name="Sparcs SSO uid",
     )
+    otl_user_id = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        default=None,
+        editable=False,
+        verbose_name="OTL user.id (cache)",
+        help_text="OTL /api/v2/users/info 에서 받은 numeric id. /lectures path 호출에 필요.",
+    )
     sid = models.CharField(
         null=True,
         default=None,
