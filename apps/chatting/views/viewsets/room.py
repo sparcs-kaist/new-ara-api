@@ -13,7 +13,7 @@ from django.db.models.functions import Greatest, Coalesce
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
 from ara.classes.viewset import ActionAPIViewSet
-from apps.chatting.models.room import ChatRoom
+from apps.chatting.models.room import ChatRoom, ChatRoomType, ChatNameType
 from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole
 from apps.chatting.serializers.room import  ChatRoomCreateSerializer, ChatRoomSerializer, ChatRoomDetailSerializer
 from apps.chatting.permissions.room import RoomReadPermission, RoomBlockPermission, RoomDeletePermission, RoomLeavePermission
@@ -50,6 +50,11 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
     def destroy(self, request, *args, **kwargs):
         room = self.get_object()
+        if room.room_type == ChatRoomType.DELIVERY.value:
+            return response.Response(
+                {"detail": "함께 배달 방은 모집 취소로 닫아주세요."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # 부속 데이터 먼저 정리
         ChatRoomMemberShip.objects.filter(chat_room=room).delete() #User의 Membership 삭제
@@ -98,16 +103,21 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         room_data = ChatRoomSerializer(room, context={'request': request}).data
         
         # members 데이터를 membership 정보와 함께 구성
+        # 익명 방에서는 유저 정보 대신 방 안의 이름(방장, 익명1 ...)만 내려준다
+        is_anonymous = room.chat_name_type == ChatNameType.ANONYMOUS.value
         members_data = []
         for membership in memberships:
             members_data.append({
-                'user': PublicUserSerializer(membership.user).data,
+                'user': None if is_anonymous else PublicUserSerializer(membership.user).data,
+                'display_name': membership.get_display_name(),
+                'anon_number': membership.anon_number,
+                'is_mine': membership.user_id == request.user.id,
                 'role': membership.role,
                 'last_seen_at': membership.last_seen_at
             })
 
         recent_message = room.message_set.order_by('-created_at').first()
-        recent_message_data = MessageSerializer(recent_message).data if recent_message else None
+        recent_message_data = MessageSerializer(recent_message, context={'request': request}).data if recent_message else None
 
         return response.Response({
             "room": room_data,
@@ -119,6 +129,12 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     @action(detail=True, methods=["post"])
     def leave(self, request, pk=None):
         room = self.get_object()
+        # 주문 상태에 따라 나갈 수 있는지가 달라지므로 배달 API 에서 처리한다
+        if room.room_type == ChatRoomType.DELIVERY.value:
+            return response.Response(
+                {"detail": "함께 배달 방은 배달 나가기 API 를 사용해주세요."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         membership = ChatRoomMemberShip.objects.filter(chat_room=room, user=request.user).first()
         if membership:
             membership.delete()
@@ -145,9 +161,22 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     @action(detail=True, methods=["patch"])
     def block(self, request, pk=None):
         room = self.get_object()
+        # 배달방 멤버십은 배달 API 에서만 바꾼다 (주문 / 정산 규칙 우회 방지)
+        if room.room_type == ChatRoomType.DELIVERY.value:
+            return response.Response(
+                {"detail": "함께 배달 방은 차단할 수 없습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         
         # 명시적으로 "unblock"이 true일 때만 차단 해제, 그 외에는 항상 차단
         unblock = request.data.get("unblock", False)
+
+        # 참여하지 않은 방에 "차단 해제"로 들어가는 것 방지
+        if unblock and not ChatRoomMemberShip.objects.filter(chat_room=room, user=request.user).exists():
+            return response.Response(
+                {"detail": "참여하거나 차단한 채팅방이 아닙니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         
         membership, created = ChatRoomMemberShip.objects.get_or_create(
             chat_room=room, 
@@ -164,6 +193,11 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     @action(detail=True, methods=["patch"])
     def unblock(self, request, pk=None):
         room = self.get_object()
+        if room.room_type == ChatRoomType.DELIVERY.value:
+            return response.Response(
+                {"detail": "함께 배달 방은 차단할 수 없습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         membership = ChatRoomMemberShip.objects.filter(chat_room=room, user=request.user).first()
         if membership and membership.role == ChatUserRole.BLOCKER.value:
             # 차단 해제시 바로 참여자로 변경하면, 차단이 초대를 우회할 수 있으므로 방에서 나간것 처리 = 삭제

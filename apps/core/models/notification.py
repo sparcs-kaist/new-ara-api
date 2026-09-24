@@ -15,7 +15,7 @@ from ara.db.models import MetaDataModel
 
 from apps.chatting.models.room import ChatRoom
 from apps.chatting.models.message import ChatMessage
-from apps.chatting.models.membership_room import ChatRoomMemberShip
+from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole
 
 from django.db import transaction
 from django.contrib.auth import get_user_model
@@ -167,13 +167,37 @@ class Notification(MetaDataModel):
     @transaction.atomic
     def notify_message(cls, message : ChatMessage):
         from apps.core.models import NotificationReadLog
+        from apps.chatting.models.message import ChatMessageType
+
+        # 안내 메시지(참여/퇴장 등)는 알림을 보내지 않는다.
+        # 꼭 알려야 하는 안내(마감, 취소 등)는 보내는 쪽에서 notify_chat_room_event 를 직접 부른다.
+        if message.message_type == ChatMessageType.SYSTEM.value:
+            return
+
+        # 배달 도착은 "읽지 않은 알림이 있으면 건너뛰기" 없이 모두에게 보낸다
+        if message.message_type == ChatMessageType.DELIVERY_ARRIVAL.value:
+            room = message.chat_room
+            cls.notify_chat_room_event(
+                chat_room=room,
+                title="🛵 배달이 도착했어요",
+                content=f"{room.room_title} 배달이 도착했어요. 받으러 가주세요!",
+                user_ids=room.membership_info_set.exclude(
+                    user_id=message.created_by_id,
+                ).exclude(
+                    role__in=[ChatUserRole.BLOCKED.value, ChatUserRole.BLOCKER.value],
+                ).values_list("user_id", flat=True),
+            )
+            return
 
         # 채팅방 알림을 만드는 logic flow :
         # 1. message가 보내진 채팅방 찾기
         _messaged_room : ChatRoom = message.chat_room
 
         # 2. 채팅방에 있는 User들 의 Membership 찾기
-        _memberships : list[ChatRoomMemberShip] = ChatRoomMemberShip.objects.filter(chat_room=_messaged_room)
+        # 방을 차단했거나 차단당한 사람은 제외
+        _memberships : list[ChatRoomMemberShip] = ChatRoomMemberShip.objects.filter(chat_room=_messaged_room).exclude(
+            role__in=[ChatUserRole.BLOCKED.value, ChatUserRole.BLOCKER.value],
+        )
 
         # 3. Membership 에서, 메시지 작성자와, read_at 이 message_create 시점 이전인지 찾기
         _unread_memberships = [
@@ -218,3 +242,26 @@ class Notification(MetaDataModel):
         # FCM push: 한 번에 모든 수신자 토큰을 multicast
         if recipient_ids:
             enqueue_push_for_notification_to_users(notification, recipient_ids)
+
+    # 채팅방에서 꼭 알려야 하는 일 (배달 마감/취소/도착 등).
+    # 일반 메시지 알림과 달리 중복 알림을 건너뛰지 않고 user_ids 모두에게 보낸다.
+    @classmethod
+    @transaction.atomic
+    def notify_chat_room_event(cls, chat_room : ChatRoom, title : str, content : str, user_ids):
+        from apps.core.models import NotificationReadLog
+
+        user_ids = list(user_ids)
+        if not user_ids:
+            return
+
+        notification = cls.objects.create(
+            type="chat_message",
+            title=title,
+            content=content,
+            related_chat_room=chat_room,
+        )
+        NotificationReadLog.objects.bulk_create([
+            NotificationReadLog(read_by_id=user_id, notification=notification)
+            for user_id in user_ids
+        ])
+        enqueue_push_for_notification_to_users(notification, user_ids)

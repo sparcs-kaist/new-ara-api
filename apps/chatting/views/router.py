@@ -31,3 +31,16 @@ router.register(
     basename="chat_dm"
 )
 
+# 투표 관련 ViewSet
+router.register(
+    prefix=r"chat/vote",
+    viewset=viewsets.ChatVoteViewSet,
+    basename="chat_vote"
+)
+
+# 정산(송금 요청) 관련 ViewSet
+router.register(
+    prefix=r"chat/payment",
+    viewset=viewsets.ChatPaymentViewSet,
+    basename="chat_payment"
+)

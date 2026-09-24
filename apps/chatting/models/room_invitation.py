@@ -13,7 +13,6 @@ class ChatInvitedUserRole(str, Enum):
     OWNER = "OWNER"              # 소유자 - 채팅방 최고 관리자 처음에는 생성자.
     ADMIN = "ADMIN"              # 관리자 - 채팅방 관리 권한을 가진 사람
     PARTICIPANT = "PARTICIPANT"   # 참여자 - 채팅에 참여할 수 있는 사람
-    OBSERVER = "OBSERVER"        # 관전자 - 채팅을 볼 수만 있는 사람
 
 class ChatRoomInvitation(MetaDataModel):
     # 초대받은 채팅방

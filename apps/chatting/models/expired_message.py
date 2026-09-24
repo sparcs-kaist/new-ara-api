@@ -5,12 +5,7 @@ from django.conf import settings
 from django.db import IntegrityError, models, transaction
 from ara.db.models import MetaDataModel
 from apps.chatting.models.room import ChatRoom
-
-class ChatMessageType(str, Enum):
-    TEXT = "TEXT"
-    IMAGE = "IMAGE"
-    FILE = "FILE"
-    EMOTICON = "EMOTICON"
+from apps.chatting.models.message import ChatMessageType
 
 #ChatMessage 모델과 동일하게 쓰이나, 쿼리 성능 향상을 위해 만료된 메세지를 백업용으로만 쓴다.
 class ExpiredChatMessage(MetaDataModel):

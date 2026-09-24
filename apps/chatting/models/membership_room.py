@@ -3,9 +3,9 @@ import datetime
 
 from django.conf import settings
 from django.db import IntegrityError, models, transaction
-from django.db.models import Q
+from django.db.models import Max, Q
 from ara.db.models import MetaDataModel
-from apps.chatting.models.room import ChatRoom, ChatRoomType
+from apps.chatting.models.room import ChatRoom, ChatRoomType, ChatNameType
 from apps.chatting.models.message import ChatMessage
 
 # 각각의 채팅방에서 사용자의 역할
@@ -13,7 +13,6 @@ class ChatUserRole(str, Enum):
     OWNER = "OWNER"              # 소유자 - 채팅방 최고 관리자 처음에는 생성자.
     ADMIN = "ADMIN"              # 관리자 - 채팅방 관리 권한을 가진 사람
     PARTICIPANT = "PARTICIPANT"   # 참여자 - 채팅에 참여할 수 있는 사람
-    OBSERVER = "OBSERVER"        # 관전자 - 채팅을 볼 수만 있는 사람
     BLOCKED = "BLOCKED"          # 차단됨 - 채팅방에서 차단된 사람
     BLOCKER = "BLOCKER"         # 채팅방을 차단한 사람 (초대 거부)
 
@@ -64,9 +63,66 @@ class ChatRoomMemberShip(MetaDataModel):
         blank = False,
         null = True,
     )
+    # 방 안에서 구분되는 익명 번호 (방장 0, 익명1, 익명2 ...). 다시 들어와도 유지
+    anon_number = models.PositiveIntegerField(
+        verbose_name = "익명 번호",
+        null = True,
+        blank = True,
+        default = None,
+    )
 
     # created_at : 채팅방에 참여시
     # deleted_at : 채팅방에서 나갔을 때 (완전히 다시 참여할 수 없는 것은 아니므로 soft delete를 이용!)
+
+    def save(self, *args, **kwargs):
+        if self.anon_number is None:
+            self.anon_number = self.pick_anon_number()
+        super().save(*args, **kwargs)
+
+    def pick_anon_number(self) -> int:
+        room_memberships = ChatRoomMemberShip.objects.queryset_with_deleted.filter(
+            chat_room_id=self.chat_room_id,
+        ).exclude(pk=self.pk)
+
+        # 예전에 있던 유저면 그때 번호
+        previous = room_memberships.filter(
+            user_id=self.user_id,
+            anon_number__isnull=False,
+        ).values_list("anon_number", flat=True).first()
+        if previous is not None:
+            return previous
+
+        if self.role == ChatUserRole.OWNER.value:
+            return 0
+
+        last = room_memberships.aggregate(last=Max("anon_number"))["last"]
+        return (last or 0) + 1
+
+    # 방의 이름 표시 방식(chat_name_type)이 적용된 이름
+    def get_display_name(self) -> str:
+        name_type = self.chat_room.chat_name_type
+
+        if name_type == ChatNameType.ANONYMOUS.value:
+            if self.role == ChatUserRole.OWNER.value:
+                return "방장"
+            return f"익명{self.anon_number}"
+
+        profile = getattr(self.user, "profile", None)
+        if profile is None:
+            return self.user.username
+        if name_type == ChatNameType.REAL_NAME.value:
+            return profile.realname
+        return profile.nickname
+
+    # 차단 관계가 아닌 멤버십. 없으면 None
+    @classmethod
+    def get_active(cls, chat_room, user):
+        return cls.objects.filter(
+            chat_room=chat_room,
+            user=user,
+        ).exclude(
+            role__in=[ChatUserRole.BLOCKED.value, ChatUserRole.BLOCKER.value],
+        ).first()
 
     @classmethod
     def is_dm_exist(cls, user1, user2) -> bool:
@@ -161,5 +217,5 @@ class ChatRoomMemberShip(MetaDataModel):
     def get_blocked_group_room_list(cls, user) -> list:
         return ChatRoom.objects.filter(
             Q(membership_info_set__user=user) & Q(membership_info_set__role=ChatUserRole.BLOCKER.value),
-            room_type=ChatRoomType.GROUP.value
+            room_type__in=[ChatRoomType.GROUP_DM.value, ChatRoomType.OPEN_CHAT.value],
         )

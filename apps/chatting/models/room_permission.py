@@ -5,15 +5,6 @@ from django.db import IntegrityError, models, transaction
 from ara.db.models import MetaDataModel
 from apps.chatting.models.room import ChatRoom
 
-# 각각의 채팅방에서 사용자의 역할
-class ChatUserRole(str, Enum):
-    OWNER = "OWNER"              # 소유자 - 채팅방 최고 관리자 처음에는 생성자.
-    ADMIN = "ADMIN"              # 관리자 - 채팅방 관리 권한을 가진 사람
-    PARTICIPANT = "PARTICIPANT"   # 참여자 - 채팅에 참여할 수 있는 사람
-    OBSERVER = "OBSERVER"        # 관전자 - 채팅을 볼 수만 있는 사람
-    BLOCKED = "BLOCKED"          # 차단됨 - 채팅방에서 차단된 사람
-    BLOCKER = "BLOCKER"         # 채팅방을 차단한 사람 (초대 거부)
-
 #User의 Type 별 권한 설정 테이블
 class ChatRoomPermission(MetaDataModel):
     # permission이 적용될 채팅방 / 채팅방 하나당 하나의 Permission 존재 (1:1 realationship))

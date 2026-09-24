@@ -1,18 +1,43 @@
 from enum import Enum
-import datetime
+from datetime import timedelta
+from urllib.parse import urlparse
+import os
 
 from django.conf import settings
-from django.db import IntegrityError, models, transaction
+from django.core.exceptions import ValidationError
+from django.db import models, transaction
 from django.utils import timezone
 
 from ara.db.models import MetaDataModel
-from apps.chatting.models.room import ChatRoom
+from apps.chatting.models.room import ChatRoomType
 
 class ChatMessageType(str, Enum):
     TEXT = "TEXT"
     IMAGE = "IMAGE"
     FILE = "FILE"
     EMOTICON = "EMOTICON"
+    VOTE = "VOTE" # 투표 (ChatVote)
+    PAYMENT_REQUEST = "PAYMENT_REQUEST" # 정산 요청 (ChatPaymentRequest)
+    DELIVERY_ORDER = "DELIVERY_ORDER" # 배달 주문 (delivery.DeliveryOrder, 함께 배달 방 전용)
+    DELIVERY_ARRIVAL = "DELIVERY_ARRIVAL" # 배달 도착 알림 (함께 배달 방 전용)
+    SYSTEM = "SYSTEM" # 서버가 보내는 안내 메시지 (작성자 없음)
+
+# 일반 메시지 API 로 보낼 수 있는 타입. 나머지는 투표/정산/배달 전용 API 에서 만든다
+USER_SENDABLE_MESSAGE_TYPES = {
+    ChatMessageType.TEXT.value,
+    ChatMessageType.IMAGE.value,
+    ChatMessageType.FILE.value,
+    ChatMessageType.EMOTICON.value,
+}
+
+# 함께 배달 방에서만 쓸 수 있는 타입
+DELIVERY_ONLY_MESSAGE_TYPES = {
+    ChatMessageType.DELIVERY_ORDER.value,
+    ChatMessageType.DELIVERY_ARRIVAL.value,
+}
+
+# 메시지 보관 기간 (이후 ExpiredChatMessage 로 옮겨진다)
+MESSAGE_LIFETIME = timedelta(days=30)
 
 class ChatMessage(MetaDataModel):
     # 메시지의 종류
@@ -25,6 +50,7 @@ class ChatMessage(MetaDataModel):
         null = False,
     )
     # 메시지 내용 * 메시지 형식에 따라 프론트에서 다르게 parsing
+    # 각 Message Type 별 형식은 document/content_format.md에 정의되어 있음.
     message_content : str = models.TextField(
         verbose_name= "메시지 본문",
         blank = False,
@@ -39,13 +65,15 @@ class ChatMessage(MetaDataModel):
         related_name="message_set",
         db_index=True,
     )
-    # 메시지 보낸 유저
+    # 메시지 보낸 유저 (SYSTEM 메시지는 작성자가 없다)
     created_by = models.ForeignKey(
         verbose_name="메시지 작성자",
         to=settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="message_set",
         db_index=True,
+        null=True,
+        blank=True,
     )
     #메시지 만료 시점
     expired_at = models.DateTimeField(
@@ -59,6 +87,16 @@ class ChatMessage(MetaDataModel):
     def clean(self):
         super().clean()
 
+        if self.message_type in DELIVERY_ONLY_MESSAGE_TYPES and \
+                self.chat_room.room_type != ChatRoomType.DELIVERY.value:
+            raise ValidationError({"message_type": "함께 배달 방에서만 보낼 수 있는 메시지입니다."})
+
+        if self.message_type == ChatMessageType.SYSTEM.value and self.created_by_id is not None:
+            raise ValidationError({"created_by": "SYSTEM 메시지는 작성자가 없어야 합니다."})
+
+        if self.message_type != ChatMessageType.SYSTEM.value and self.created_by_id is None:
+            raise ValidationError({"created_by": "메시지 작성자가 필요합니다."})
+
         if self.message_type in [ChatMessageType.IMAGE.value, ChatMessageType.FILE.value]:
             # URL에 쿼리스트링이 있을 수 있으므로 path만 추출
             parsed_url = urlparse(self.message_content)
@@ -67,13 +105,13 @@ class ChatMessage(MetaDataModel):
 
             allowed_image_exts = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
             allowed_file_exts = allowed_image_exts | {
-                '.pdf', '.doc', '.docx', '.xls', '.xlsx', 
+                '.pdf', '.doc', '.docx', '.xls', '.xlsx',
                 '.ppt', '.pptx', '.zip', '.tar', '.gz', '.mp4', '.mp3'
             }
 
             if self.message_type == ChatMessageType.IMAGE.value and ext not in allowed_image_exts:
                 raise ValidationError({"message_content": f"허용되지 않은 이미지 확장자입니다: {ext or '확장자 없음'}"})
-            
+
             if self.message_type == ChatMessageType.FILE.value and ext not in allowed_file_exts:
                 raise ValidationError({"message_content": f"허용되지 않은 파일 확장자입니다: {ext or '확장자 없음'}"})
 
@@ -89,6 +127,8 @@ class ChatMessage(MetaDataModel):
         if not chat_room:
             raise ValueError("chat_room is missing.")
 
+        kwargs.setdefault('expired_at', timezone.now() + MESSAGE_LIFETIME)
+
         # 메시지 생성
         instance = cls(**kwargs)
         instance.full_clean() #full clean 호출시 clean()도 호출됨
@@ -101,3 +141,12 @@ class ChatMessage(MetaDataModel):
 
         return instance
 
+    # 서버 안내 메시지 (예: "익명2님이 참여했어요")
+    @classmethod
+    def create_system(cls, chat_room, content: str):
+        return cls.create(
+            chat_room=chat_room,
+            message_type=ChatMessageType.SYSTEM.value,
+            message_content=content,
+            created_by=None,
+        )

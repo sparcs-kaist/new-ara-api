@@ -51,6 +51,11 @@ class ChatRoomCreateSerializer(serializers.ModelSerializer):
     
     def validate(self, attrs):
         # 추가 유효성 검사 (예: 타입에 따른 필수 필드 등)
+        if attrs.get('room_type') == ChatRoomType.DELIVERY.value:
+            raise serializers.ValidationError(
+                "함께 배달 방은 이 엔드포인트로 생성할 수 없습니다. 'delivery'를 이용하세요."
+            )
+
         if attrs.get('room_type') == ChatRoomType.DM.value:
             # DM은 별도 엔드포인트에서 처리한다고 했으므로 에러 발생
             raise serializers.ValidationError(
@@ -104,8 +109,12 @@ class ChatRoomByIdSerializer(serializers.Serializer):
 class ChatRoomMemberWithLastSeenSerializer(serializers.Serializer):
     """
     채팅방 멤버 정보와 마지막 접속 시간을 포함하는 Serializer
+    (익명 방에서는 user 가 null 이고 display_name 만 내려간다)
     """
-    user = PublicUserSerializer()
+    user = PublicUserSerializer(allow_null=True)
+    display_name = serializers.CharField()
+    anon_number = serializers.IntegerField(allow_null=True)
+    is_mine = serializers.BooleanField()
     role = serializers.CharField()
     last_seen_at = serializers.DateTimeField(allow_null=True)
 
