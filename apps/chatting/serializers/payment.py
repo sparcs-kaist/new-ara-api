@@ -21,7 +21,7 @@ class ChatPaymentRequestSerializer(serializers.ModelSerializer):
         model = ChatPaymentRequest
         fields = [
             'id', 'message_id', 'chat_room', 'requester', 'bank_name', 'account_number',
-            'targets', 'total_amount', 'is_settled', 'created_at',
+            'targets', 'total_amount', 'is_settled', 'canceled_at', 'created_at',
         ]
 
     def get_requester(self, obj):
@@ -45,9 +45,16 @@ class ChatPaymentRequestSerializer(serializers.ModelSerializer):
         return all(target.paid_at is not None for target in obj.targets.all())
 
 
+# 익명 방에서는 유저 id 를 모르므로 anon_number 로도 대상을 지정할 수 있다 (둘 중 하나)
 class ChatPaymentTargetInputSerializer(serializers.Serializer):
-    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False)
+    anon_number = serializers.IntegerField(min_value=0, required=False)
     amount = serializers.IntegerField(min_value=1)
+
+    def validate(self, attrs):
+        if ("user" in attrs) == ("anon_number" in attrs):
+            raise serializers.ValidationError("user 와 anon_number 중 하나만 보내주세요.")
+        return attrs
 
 
 class ChatPaymentRequestCreateSerializer(serializers.Serializer):
@@ -56,16 +63,6 @@ class ChatPaymentRequestCreateSerializer(serializers.Serializer):
     account_number = serializers.CharField(max_length=30)
     targets = ChatPaymentTargetInputSerializer(many=True, allow_empty=False)
 
-    def validate_targets(self, value):
-        user_ids = [target["user"].id for target in value]
-        if len(set(user_ids)) != len(user_ids):
-            raise serializers.ValidationError("같은 대상자가 두 번 들어있습니다.")
-        return value
-
-
-class ChatPaymentRequestUpdateSerializer(serializers.Serializer):
-    bank_name = serializers.CharField(max_length=30, required=False)
-    account_number = serializers.CharField(max_length=30, required=False)
 
 
 class ChatPaymentPaidSerializer(serializers.Serializer):

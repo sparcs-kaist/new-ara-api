@@ -231,16 +231,44 @@ class TestStructuredMessageEdit(TestCase, RequestSetting):
         assert self.http_request(self.user, "delete", f"chat/message/{message_id}").status_code == 200
         assert self.http_request(self.user, "get", f"chat/vote/{vote_id}").status_code == 404
 
-    def test_payment_account_edit_before_anyone_paid(self):
-        res = self.http_request(self.user, "post", "chat/payment", {
+    def create_payment(self):
+        return self.http_request(self.user, "post", "chat/payment", {
             "chat_room": self.room.id, "bank_name": "국민", "account_number": "1",
-            "targets": [{"user": self.user2.id, "amount": 1000}],
+            "targets": [{"user": self.user2.id, "amount": 1000}, {"anon_number": 2, "amount": 2000}],
         })
-        payment_id = res.data["id"]
-        res = self.http_request(self.user, "patch", f"chat/payment/{payment_id}", {"account_number": "2"})
-        assert res.status_code == 200
-        assert res.data["account_number"] == "2"
-        assert self.http_request(self.user2, "patch", f"chat/payment/{payment_id}", {"account_number": "3"}).status_code == 403
 
+    def test_payment_target_by_anon_number(self):
+        res = self.create_payment()
+        assert res.status_code == 201
+        assert {t["user"]["anon_number"]: t["amount"] for t in res.data["targets"]} == {1: 1000, 2: 2000}
+
+    def test_payment_cannot_be_edited(self):
+        payment_id = self.create_payment().data["id"]
+        res = self.http_request(self.user, "patch", f"chat/payment/{payment_id}", {"account_number": "2"})
+        assert res.status_code == 405
+
+    def test_cancel_keeps_card_and_blocks_paid(self):
+        res = self.create_payment()
+        payment_id, message_id = res.data["id"], res.data["message_id"]
         self.http_request(self.user2, "patch", f"chat/payment/{payment_id}/paid", {"paid": True})
-        assert self.http_request(self.user, "patch", f"chat/payment/{payment_id}", {"account_number": "4"}).status_code == 400
+
+        # 요청자만 취소한다
+        assert self.http_request(self.user2, "post", f"chat/payment/{payment_id}/cancel").status_code == 403
+        res = self.http_request(self.user, "post", f"chat/payment/{payment_id}/cancel")
+        assert res.status_code == 200
+        assert res.data["canceled_at"] is not None
+        # 누가 송금했는지는 남는다
+        assert any(t["paid_at"] for t in res.data["targets"])
+
+        # 카드는 메시지 목록에 남는다
+        res = self.http_request(self.user2, "get", "chat/message", querystring=f"chat_room={self.room.id}")
+        assert any(m["id"] == message_id for m in res.data["results"])
+        # 취소된 정산은 송금 완료를 못 누른다
+        assert self.http_request(self.user3, "patch", f"chat/payment/{payment_id}/paid", {"paid": True}).status_code == 400
+
+    def test_payment_can_be_deleted_even_after_paid(self):
+        res = self.create_payment()
+        self.http_request(self.user2, "patch", f"chat/payment/{res.data['id']}/paid", {"paid": True})
+        assert self.http_request(self.user, "delete", f"chat/message/{res.data['message_id']}").status_code == 200
+        res = self.http_request(self.user2, "get", "chat/message", querystring=f"chat_room={self.room.id}")
+        assert res.data["results"] == []

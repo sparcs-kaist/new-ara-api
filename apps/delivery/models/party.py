@@ -181,13 +181,18 @@ class DeliveryParty(MetaDataModel):
     def get_membership(self, user):
         return ChatRoomMemberShip.objects.filter(chat_room_id=self.chat_room_id, user=user).first()
 
-    # 정산 메시지를 지우면 None (다시 요청할 수 있다)
+    # 방에 올라온 정산 중 취소 / 삭제되지 않은 것 (배달 정산 + 일반 정산)
+    def active_payment_requests(self):
+        return ChatPaymentRequest.active().filter(message__chat_room_id=self.chat_room_id)
+
+    # 배달 정산은 직전 배달 정산이 취소 / 삭제됐고, 거기서 아무도 송금하지 않았을 때만 다시 보낸다
+    # (누가 이미 보냈으면 두 번 청구되지 않도록 필요한 사람에게 일반 정산으로)
     @property
-    def current_payment_request(self):
-        request = self.payment_request
-        if request is None or request.message.deleted_at != MIN_TIME:
-            return None
-        return request
+    def can_request_payment(self) -> bool:
+        if self.status not in (DeliveryStatus.ORDERED.value, DeliveryStatus.ARRIVED.value):
+            return False
+        last = self.payment_request
+        return last is None or (not last.is_active and not last.has_paid_target())
 
     @property
     def is_leave_unlocked(self) -> bool:
@@ -496,8 +501,11 @@ class DeliveryParty(MetaDataModel):
         self.check_host(user)
         if self.status not in (DeliveryStatus.ORDERED.value, DeliveryStatus.ARRIVED.value):
             raise DeliveryActionError("주문을 확정한 뒤에 정산을 요청할 수 있어요.")
-        if self.current_payment_request:
-            raise DeliveryActionError("이미 정산을 요청했어요. 잘못 보냈다면 정산 메시지를 지우고 다시 보내주세요.")
+        last = self.payment_request
+        if last is not None and last.is_active:
+            raise DeliveryActionError("이미 정산을 요청했어요. 잘못 보냈다면 정산을 취소하고 다시 보내주세요.")
+        if last is not None and last.has_paid_target():
+            raise DeliveryActionError("이미 송금한 사람이 있어요. 필요한 사람에게 일반 정산을 보내주세요.")
 
         subtotals = defaultdict(int)
         users = {}
@@ -526,14 +534,15 @@ class DeliveryParty(MetaDataModel):
         self.broadcast_update()
         return self.payment_request
 
-    # 정산 대상자가 모두 송금 완료를 누르면 호출된다 (signals 참고)
+    # 송금 완료 / 정산 취소 / 정산 삭제 때 호출된다 (signals 참고)
+    # 방에 살아 있는 정산이 하나 이상 있고, 모두 송금 완료면 정산 완료
     @transaction.atomic
     def settle_if_paid(self):
         self.lock_row()
         if self.status not in (DeliveryStatus.ORDERED.value, DeliveryStatus.ARRIVED.value):
             return
-        request = self.current_payment_request
-        if request is None or not request.is_settled:
+        requests = self.active_payment_requests()
+        if not requests.exists() or requests.filter(targets__paid_at__isnull=True).exists():
             return
 
         self.status = DeliveryStatus.SETTLED.value
@@ -609,11 +618,12 @@ class DeliveryParty(MetaDataModel):
         if user.id != self.host_id:
             raise DeliveryActionError("방장만 할 수 있어요.", forbidden=True)
 
+    # 정산이 올라왔고, 그중 내가 아직 안 보낸 게 없으면 내 몫은 끝
     def has_paid(self, user) -> bool:
-        request = self.current_payment_request
-        if request is None:
-            return False
-        return request.targets.filter(user=user, paid_at__isnull=False).exists()
+        requests = self.active_payment_requests()
+        return requests.exists() and not requests.filter(
+            targets__user=user, targets__paid_at__isnull=True,
+        ).exists()
 
     def mark_canceled(self, reason: DeliveryCancelReason):
         self.status = DeliveryStatus.CANCELED.value

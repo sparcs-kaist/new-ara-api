@@ -341,21 +341,52 @@ class TestDelivery(TestCase, RequestSetting):
         DeliveryParty.objects.filter(pk=party.pk).update(ordered_at=timezone.now() - timedelta(hours=25))
         assert self.http_request(self.user2, "post", f"delivery/{party.id}/leave").status_code == 204
 
-    def test_delete_payment_request_and_request_again(self):
+    def confirmed_party_with_two_orders(self):
+        # 방장(8000) / 익명1 user2(5000) / 익명2 user3(3000)
         party = self.open_party(min_order_amount=10000)
         self.join_and_order(party, self.user2, 5000)
+        self.join_and_order(party, self.user3, 3000)
         self.http_request(self.user, "post", f"delivery/{party.id}/confirm")
+        return party
+
+    def request_delivery_payment(self, party):
         body = {"bank_name": "토스뱅크", "account_number": "1000-1", "delivery_fee": 0}
-        first = self.http_request(self.user, "post", f"delivery/{party.id}/payment-request", body).data
+        return self.http_request(self.user, "post", f"delivery/{party.id}/payment-request", body)
 
-        # 잘못 보냈으면 지우고 다시 보낸다
-        assert self.http_request(self.user, "delete", f"chat/message/{first['message_id']}").status_code == 200
-        second = self.http_request(self.user, "post", f"delivery/{party.id}/payment-request", body)
-        assert second.status_code == 201
+    def test_resend_delivery_payment_when_nobody_paid(self):
+        party = self.confirmed_party_with_two_orders()
+        first = self.request_delivery_payment(party).data
+        # 살아 있는 동안은 다시 못 보낸다
+        assert self.request_delivery_payment(party).status_code == 400
 
-        # 송금한 사람이 생기면 지울 수 없다
-        self.http_request(self.user2, "patch", f"chat/payment/{second.data['id']}/paid", {"paid": True})
-        assert self.http_request(self.user, "delete", f"chat/message/{second.data['message_id']}").status_code == 400
+        self.http_request(self.user, "post", f"chat/payment/{first['id']}/cancel")
+        assert self.http_request(self.user, "get", f"delivery/{party.id}").data["can_request_payment"] is True
+        assert self.request_delivery_payment(party).status_code == 201
+
+    def test_scenario_fix_one_amount_with_general_payment(self):
+        # 갑(방장)이 배달 정산 → 병(user3)이 송금 → 을(user2) 금액이 틀려서 취소 → 을에게만 일반 정산
+        party = self.confirmed_party_with_two_orders()
+        first = self.request_delivery_payment(party).data
+        self.http_request(self.user3, "patch", f"chat/payment/{first['id']}/paid", {"paid": True})
+        self.http_request(self.user, "post", f"chat/payment/{first['id']}/cancel")
+
+        # 누가 이미 송금했으니 배달 정산은 다시 못 보낸다
+        assert self.http_request(self.user, "get", f"delivery/{party.id}").data["can_request_payment"] is False
+        assert self.request_delivery_payment(party).status_code == 400
+
+        res = self.http_request(self.user, "post", "chat/payment", {
+            "chat_room": party.chat_room_id, "bank_name": "토스뱅크", "account_number": "1000-1",
+            "targets": [{"anon_number": 1, "amount": 4500}],
+        })
+        assert res.status_code == 201
+
+        # 병은 남은 정산이 없으니 나갈 수 있고, 을은 보내야 나갈 수 있다
+        assert self.http_request(self.user3, "post", f"delivery/{party.id}/leave").status_code == 204
+        assert self.http_request(self.user2, "post", f"delivery/{party.id}/leave").status_code == 400
+
+        self.http_request(self.user2, "patch", f"chat/payment/{res.data['id']}/paid", {"paid": True})
+        party.refresh_from_db()
+        assert party.status == "SETTLED"
 
     def test_chat_room_has_delivery_party_id(self):
         party = self.open_party()

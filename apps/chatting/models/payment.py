@@ -3,10 +3,12 @@ from django.db import models, transaction
 from django.utils import timezone
 
 from ara.db.models import MetaDataModel
+from ara.settings import MIN_TIME
 from apps.chatting.models.message import ChatMessage, ChatMessageType
 
 # 송금(정산) 요청 (PAYMENT_REQUEST 메시지 하나에 요청 하나)
-# 대상자마다 금액이 다를 수 있고, 각자 "송금 완료"를 누른다
+# 대상자마다 금액이 다를 수 있고, 각자 "송금 완료"를 누른다. 고칠 수 없고 틀리면 취소 / 삭제 후 다시 보낸다
+# 취소: 카드가 "취소된 정산"으로 남는다. 삭제: 메시지가 지워져 보이지 않는다 (잘못된 정보 가리기)
 class ChatPaymentRequest(MetaDataModel):
     message = models.OneToOneField(
         verbose_name = "정산 요청 메시지",
@@ -24,11 +26,35 @@ class ChatPaymentRequest(MetaDataModel):
         max_length = 30,
     )
 
+    canceled_at = models.DateTimeField(
+        verbose_name = "취소 시각",
+        null = True,
+        blank = True,
+        default = None,
+    )
+
+    # 취소되지도 삭제되지도 않은 정산
+    @classmethod
+    def active(cls):
+        return cls.objects.filter(canceled_at__isnull=True, message__deleted_at=MIN_TIME)
+
+    @property
+    def is_active(self) -> bool:
+        return self.canceled_at is None and self.message.deleted_at == MIN_TIME
+
     def lock_row(self):
         list(ChatPaymentRequest.objects.select_for_update().filter(pk=self.pk).values_list("pk", flat=True))
 
     def has_paid_target(self) -> bool:
         return self.targets.filter(paid_at__isnull=False).exists()
+
+    @transaction.atomic
+    def cancel(self):
+        self.lock_row()
+        self.refresh_from_db()
+        if self.canceled_at is None:
+            self.canceled_at = timezone.now()
+            self.save()
 
     @property
     def is_settled(self) -> bool:

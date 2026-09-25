@@ -40,12 +40,13 @@ class DeliveryPartyDetailSerializer(DeliveryPartyListSerializer):
     is_member = serializers.SerializerMethodField()
     is_host = serializers.SerializerMethodField()
     payment_request = serializers.SerializerMethodField()
+    can_request_payment = serializers.SerializerMethodField()
 
     class Meta(DeliveryPartyListSerializer.Meta):
         fields = DeliveryPartyListSerializer.Meta.fields + [
             'memo', 'order_link', 'recruit_minutes', 'decision_deadline_at', 'cancel_reason',
             'ordered_at', 'arrived_at', 'settled_at',
-            'host_orders', 'members', 'orders', 'is_member', 'is_host', 'payment_request',
+            'host_orders', 'members', 'orders', 'is_member', 'is_host', 'payment_request', 'can_request_payment',
         ]
 
     def get_viewer(self):
@@ -80,8 +81,11 @@ class DeliveryPartyDetailSerializer(DeliveryPartyListSerializer):
         return DeliveryOrderSerializer(orders, many=True, context=self.context).data
 
     def get_payment_request(self, obj):
-        request = obj.current_payment_request
-        return request.id if request else None
+        request = obj.payment_request
+        return request.id if request and request.is_active else None
+
+    def get_can_request_payment(self, obj):
+        return obj.can_request_payment
 
     def get_is_member(self, obj):
         viewer = self.get_viewer()
