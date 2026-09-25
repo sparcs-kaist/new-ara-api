@@ -44,6 +44,12 @@ DELIVERY_ONLY_MESSAGE_TYPES = {
 MESSAGE_LIFETIME = timedelta(days=30)
 
 class ChatMessage(MetaDataModel):
+    class Meta(MetaDataModel.Meta):
+        # 방의 메시지를 최신순으로 읽는 쿼리 (chat_room = ? AND deleted_at = ? ORDER BY id DESC)
+        indexes = [
+            models.Index(fields=["chat_room", "deleted_at", "id"], name="chat_msg_room_deleted_id"),
+        ]
+
     # 메시지의 종류
     message_type : ChatMessageType = models.CharField(
         max_length = 20,
