@@ -15,17 +15,9 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 
 from ara.classes.viewset import ActionAPIViewSet
 from apps.chatting.models.room import ChatRoom, ChatRoomType, ChatNameType
-from apps.chatting.models.membership_room import ChatRoomActionError, ChatRoomMemberShip, ChatUserRole
-from apps.chatting.models.message import ChatMessage
-from apps.chatting.realtime import broadcast_member_removed, broadcast_message_created, broadcast_room_update
-from apps.chatting.serializers.room import (
-    ChatMemberRoleSerializer,
-    ChatMemberTargetSerializer,
-    ChatRoomCreateSerializer,
-    ChatRoomDetailSerializer,
-    ChatRoomSerializer,
-    ChatRoomUpdateSerializer,
-)
+from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole
+from apps.chatting.realtime import broadcast_member_removed, broadcast_room_update
+from apps.chatting.serializers.room import  ChatRoomCreateSerializer, ChatRoomSerializer, ChatRoomDetailSerializer, ChatRoomUpdateSerializer
 from apps.chatting.permissions.room import RoomReadPermission, RoomBlockPermission, RoomDeletePermission, RoomLeavePermission
 from apps.user.serializers.user import PublicUserSerializer
 from apps.chatting.serializers.message import MessageSerializer
@@ -50,9 +42,6 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         "blocked": (permissions.IsAuthenticated,),
         "retrieve": (permissions.IsAuthenticated,),
         "partial_update": (permissions.IsAuthenticated,),
-        "owner": (permissions.IsAuthenticated,),
-        "role": (permissions.IsAuthenticated,),
-        "kick": (permissions.IsAuthenticated,),
     }
 
     action_serializer_class = {
@@ -60,22 +49,29 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         "list": ChatRoomSerializer,
         "blocked_list": ChatRoomSerializer,
         "partial_update": ChatRoomUpdateSerializer,
-        "owner": ChatMemberTargetSerializer,
-        "role": ChatMemberRoleSerializer,
-        "kick": ChatMemberTargetSerializer,
     }
+
+    # PATCH chat/room/<id> : 방 이름 / 사진 바꾸기 (방 멤버. DM 과 배달방은 제외)
+    def update(self, request, *args, **kwargs):
+        if not kwargs.get("partial"):
+            raise exceptions.MethodNotAllowed("PUT")
+        room = self.get_object()
+        if ChatRoomMemberShip.get_active(room, request.user) is None:
+            raise exceptions.PermissionDenied("채팅방 참여자가 아닙니다.")
+        if room.room_type in [ChatRoomType.DM.value, ChatRoomType.DELIVERY.value]:
+            raise exceptions.ValidationError({"detail": "이 채팅방은 이름과 사진을 바꿀 수 없습니다."})
+
+        serializer = ChatRoomUpdateSerializer(room, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        broadcast_room_update(room.id, "room", "updated", room.id)
+        return response.Response(ChatRoomSerializer(room, context={'request': request}).data)
 
     def destroy(self, request, *args, **kwargs):
         room = self.get_object()
         if room.room_type == ChatRoomType.DELIVERY.value:
             return response.Response(
                 {"detail": "함께 배달 방은 모집 취소로 닫아주세요."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        # 단톡방 / DM 은 모두 같은 멤버라 방을 없앨 수 없다 (나가기만)
-        if room.room_type != ChatRoomType.OPEN_CHAT.value:
-            return response.Response(
-                {"detail": "오픈채팅방만 삭제할 수 있습니다. 나가기를 이용해주세요."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -160,10 +156,8 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             )
         membership = ChatRoomMemberShip.objects.filter(chat_room=room, user=request.user).first()
         if membership:
-            name = membership.get_display_name()
             membership.delete()
-            if room.room_type != ChatRoomType.DM.value:
-                self.announce(room, f"{name}님이 나갔어요.")
+            # 나간 사람의 소켓을 방에서 뺀다
             broadcast_member_removed(room.id, membership.anon_number)
         return response.Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -236,93 +230,3 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         blocked_rooms = ChatRoomMemberShip.get_blocked_room_list(request.user)
         serializer = self.get_serializer(blocked_rooms, many=True)
         return response.Response(serializer.data)
-
-    # ---------- 방 관리 ----------
-
-    def get_my_membership(self, room):
-        membership = ChatRoomMemberShip.get_active(room, self.request.user)
-        if membership is None:
-            raise exceptions.PermissionDenied("채팅방 참여자가 아닙니다.")
-        return membership
-
-    def get_target(self, room, anon_number):
-        return ChatRoomMemberShip.objects.filter(chat_room=room, anon_number=anon_number).first()
-
-    def validated_input(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        return serializer.validated_data
-
-    def run_action(self, fn, *args):
-        try:
-            return fn(*args)
-        except ChatRoomActionError as e:
-            if e.forbidden:
-                raise exceptions.PermissionDenied(e.message)
-            raise exceptions.ValidationError({"detail": e.message})
-
-    def announce(self, room, content):
-        message = ChatMessage.create_system(room, content)
-        broadcast_message_created(message)
-        broadcast_room_update(room.id, "room", "updated", room.id)
-
-    def update(self, request, *args, **kwargs):
-        if not kwargs.get("partial"):
-            raise exceptions.MethodNotAllowed("PUT")
-        room = self.get_object()
-        membership = self.get_my_membership(room)
-
-        # 단톡방은 누구나, 오픈채팅은 방장 / 관리자만. DM 과 배달방은 이름이 정해져 있다
-        if room.room_type not in [ChatRoomType.GROUP_DM.value, ChatRoomType.OPEN_CHAT.value]:
-            raise exceptions.ValidationError({"detail": "이 채팅방은 이름과 사진을 바꿀 수 없습니다."})
-        if room.room_type == ChatRoomType.OPEN_CHAT.value and \
-                membership.role not in [ChatUserRole.OWNER.value, ChatUserRole.ADMIN.value]:
-            raise exceptions.PermissionDenied("방장이나 관리자만 바꿀 수 있습니다.")
-
-        serializer = ChatRoomUpdateSerializer(room, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-        if "room_title" in serializer.validated_data:
-            self.announce(room, f"{membership.get_display_name()}님이 채팅방 이름을 '{room.room_title}'(으)로 바꿨어요.")
-        else:
-            broadcast_room_update(room.id, "room", "updated", room.id)
-        return response.Response(ChatRoomSerializer(room, context={'request': request}).data)
-
-    # (오픈채팅 방장) 방장 넘기기
-    @extend_schema(request=ChatMemberTargetSerializer, responses={200: None})
-    @action(detail=True, methods=["post"])
-    def owner(self, request, pk=None):
-        room = self.get_object()
-        me = self.get_my_membership(room)
-        target = self.get_target(room, self.validated_input(request)["anon_number"])
-        self.run_action(me.transfer_owner, target)
-        self.announce(room, f"{target.get_display_name()}님이 새 방장이 됐어요.")
-        return response.Response(status=status.HTTP_200_OK)
-
-    # (오픈채팅 방장) 관리자 지정 / 해제
-    @extend_schema(request=ChatMemberRoleSerializer, responses={200: None})
-    @action(detail=True, methods=["patch"])
-    def role(self, request, pk=None):
-        room = self.get_object()
-        me = self.get_my_membership(room)
-        data = self.validated_input(request)
-        target = self.get_target(room, data["anon_number"])
-        self.run_action(me.set_role, target, data["role"])
-        word = "관리자가 됐어요" if data["role"] == ChatUserRole.ADMIN.value else "관리자에서 해제됐어요"
-        self.announce(room, f"{target.get_display_name()}님이 {word}.")
-        return response.Response(status=status.HTTP_200_OK)
-
-    # (오픈채팅 방장 / 관리자) 내보내기
-    @extend_schema(request=ChatMemberTargetSerializer, responses={200: None})
-    @action(detail=True, methods=["post"])
-    def kick(self, request, pk=None):
-        room = self.get_object()
-        me = self.get_my_membership(room)
-        anon_number = self.validated_input(request)["anon_number"]
-        target = self.get_target(room, anon_number)
-        name = target.get_display_name() if target else ""
-        self.run_action(me.kick, target)
-        self.announce(room, f"{me.get_display_name()}님이 {name}님을 내보냈어요.")
-        broadcast_member_removed(room.id, anon_number)
-        return response.Response(status=status.HTTP_200_OK)

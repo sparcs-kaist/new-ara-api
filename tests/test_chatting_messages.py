@@ -205,6 +205,13 @@ class TestChatAccess(TestCase, RequestSetting):
         res = self.http_request(self.user2, "get", "chat/message")
         assert len(res.data["results"]) == 1
 
+    def test_member_can_rename_room(self):
+        res = self.http_request(self.user2, "patch", f"chat/room/{self.room.id}", {"room_title": "새 이름"})
+        assert res.status_code == 200
+        assert res.data["room_title"] == "새 이름"
+        res = self.http_request(self.user4, "patch", f"chat/room/{self.room.id}", {"room_title": "x"})
+        assert res.status_code == 403
+
     def test_cannot_join_room_by_unblock(self):
         res = self.http_request(self.user4, "patch", f"chat/room/{self.room.id}/block", {"unblock": True})
         assert res.status_code == 400

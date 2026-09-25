@@ -16,13 +16,6 @@ class ChatUserRole(str, Enum):
     BLOCKED = "BLOCKED"          # 차단됨 - 채팅방에서 차단된 사람
     BLOCKER = "BLOCKER"         # 채팅방을 차단한 사람 (초대 거부)
 
-class ChatRoomActionError(Exception):
-    """채팅방 규칙상 할 수 없는 요청. 뷰에서 400 (forbidden 이면 403)"""
-    def __init__(self, message: str, forbidden: bool = False):
-        super().__init__(message)
-        self.message = message
-        self.forbidden = forbidden
-
 # 각각의 유저가 참여하고 있는 채팅방 정보
 class ChatRoomMemberShip(MetaDataModel):
     # User object
@@ -133,58 +126,6 @@ class ChatRoomMemberShip(MetaDataModel):
         ).exclude(
             role__in=[ChatUserRole.BLOCKED.value, ChatUserRole.BLOCKER.value],
         ).first()
-
-    # ---------- 오픈채팅 관리 (단톡방은 모두 같은 멤버라 방장 / 관리자 권한이 없다) ----------
-
-    def check_open_chat(self):
-        if self.chat_room.room_type != ChatRoomType.OPEN_CHAT.value:
-            raise ChatRoomActionError("오픈채팅방에서만 할 수 있어요.")
-
-    def check_target(self, target):
-        if target is None or target.role in [ChatUserRole.BLOCKED.value, ChatUserRole.BLOCKER.value]:
-            raise ChatRoomActionError("방에 없는 멤버예요.")
-        if target.pk == self.pk:
-            raise ChatRoomActionError("자기 자신에게는 할 수 없어요.")
-
-    @transaction.atomic
-    def transfer_owner(self, target):
-        self.check_open_chat()
-        if self.role != ChatUserRole.OWNER.value:
-            raise ChatRoomActionError("방장만 할 수 있어요.", forbidden=True)
-        self.check_target(target)
-
-        target.role = ChatUserRole.OWNER.value
-        target.save()
-        # 익명 방에서 "익명0" 으로 보이지 않게 새 번호를 받는다
-        self.role = ChatUserRole.PARTICIPANT.value
-        self.anon_number = None
-        self.save()
-
-    @transaction.atomic
-    def set_role(self, target, role: str):
-        self.check_open_chat()
-        if self.role != ChatUserRole.OWNER.value:
-            raise ChatRoomActionError("방장만 할 수 있어요.", forbidden=True)
-        self.check_target(target)
-        if role not in [ChatUserRole.ADMIN.value, ChatUserRole.PARTICIPANT.value]:
-            raise ChatRoomActionError("관리자 또는 참여자로만 바꿀 수 있어요.")
-
-        target.role = role
-        target.save()
-
-    # 내보낸 멤버는 BLOCKED 로 남겨서 초대로도 다시 들어오지 못하게 한다
-    @transaction.atomic
-    def kick(self, target):
-        self.check_open_chat()
-        if self.role not in [ChatUserRole.OWNER.value, ChatUserRole.ADMIN.value]:
-            raise ChatRoomActionError("방장이나 관리자만 할 수 있어요.", forbidden=True)
-        self.check_target(target)
-        if target.role == ChatUserRole.OWNER.value or \
-                (target.role == ChatUserRole.ADMIN.value and self.role != ChatUserRole.OWNER.value):
-            raise ChatRoomActionError("내보낼 수 없는 멤버예요.", forbidden=True)
-
-        target.role = ChatUserRole.BLOCKED.value
-        target.delete()
 
     @classmethod
     def is_dm_exist(cls, user1, user2) -> bool:

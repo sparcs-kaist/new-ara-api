@@ -78,11 +78,6 @@ class ChatRoomInvitation(MetaDataModel):
         #Block 당한 채팅방인 경우
         if self.invited_room.membership_info_set.filter(user=self.invitation_to, role = ChatUserRole.BLOCKED).exists():
             raise IntegrityError("차단된 채팅방입니다.")
-        # 내보내진 채팅방인 경우 (나간 멤버십에 BLOCKED 로 남아 있다)
-        if ChatRoomMemberShip.objects.queryset_with_deleted.filter(
-            chat_room=self.invited_room, user=self.invitation_to, role=ChatUserRole.BLOCKED.value,
-        ).exists():
-            raise IntegrityError("내보내진 채팅방입니다.")
         # 이미 참여한 채팅방인 경우
         if self.invited_room.membership_info_set.filter(user=self.invitation_to).exists():
             raise IntegrityError("이미 참여한 채팅방입니다.")
