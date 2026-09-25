@@ -30,7 +30,6 @@ class TestChatReport(TestCase, RequestSetting):
         report = Report.objects.get(pk=res.data["id"])
         assert report.target_type == "chat_member"
         assert report.reported_user == self.user
-        assert report.anon_number == 0
         assert report.reporter_email == self.user2.email
         assert report.reported_email == self.user.email
         # 관리자에게 메일이 간다
@@ -49,8 +48,34 @@ class TestChatReport(TestCase, RequestSetting):
         res = self.http_request(self.user2, "get", "reports")
         assert res.status_code == 200
         item = res.data["results"][0]
-        for key in ("reported_user", "reporter_email", "reported_email"):
+        for key in ("reported_user", "reporter_email", "reported_email", "handled_by", "status_changed_at"):
             assert key not in item
+        # 내 신고의 처리 상태는 보인다
+        assert item["status"] == "PENDING"
+
+    def test_admin_status_actions(self):
+        from django.contrib.admin.sites import site
+        from django.test import RequestFactory
+
+        report_id = self.report(self.user2, {"chat_room": self.room.id, "anon_number": 0}).data["id"]
+        request = RequestFactory().post("/")
+        request.user = self.user3
+        site._registry[Report].mark_done(request, Report.objects.filter(pk=report_id))
+
+        report = Report.objects.get(pk=report_id)
+        assert report.status == "DONE"
+        assert report.handled_by == self.user3
+        assert report.status_changed_at is not None
+
+    def test_cooldown_is_seven_days(self):
+        from datetime import timedelta
+        from django.utils import timezone
+
+        report_id = self.report(self.user2, {"chat_room": self.room.id, "anon_number": 0}).data["id"]
+        Report.objects.filter(pk=report_id).update(created_at=timezone.now() - timedelta(days=6))
+        assert self.report(self.user2, {"chat_room": self.room.id, "anon_number": 0}).status_code == 400
+        Report.objects.filter(pk=report_id).update(created_at=timezone.now() - timedelta(days=8))
+        assert self.report(self.user2, {"chat_room": self.room.id, "anon_number": 0}).status_code == 201
 
     def test_rules(self):
         # 방 밖 사람은 신고할 수 없다
@@ -62,7 +87,7 @@ class TestChatReport(TestCase, RequestSetting):
         # 안내 메시지는 신고할 수 없다
         system = self.room.message_set.filter(message_type="SYSTEM").first()
         assert self.report(self.user2, {"chat_message": system.id}).status_code == 400
-        # 24시간 안에 같은 사람을 다시 신고
+        # 7일 안에 같은 사람을 다시 신고
         assert self.report(self.user2, {"chat_room": self.room.id, "anon_number": 0}).status_code == 201
         res = self.report(self.user2, {"chat_room": self.room.id, "anon_number": 0})
         assert res.status_code == 400

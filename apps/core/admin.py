@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils import timezone
 from django.utils.translation import gettext
 
 from apps.core.models import (
@@ -248,16 +249,42 @@ class ReportAdmin(MetaDataModelAdmin):
         "parent_article",
         "parent_comment",
         "chat_room",
-        "anon_number",
         "reported_by",
+        "reported_user",
         "reporter_email",
         "reported_email",
         "target_preview",
         "type",
         "content",
+        "status",
+        "handled_by",
+        "status_changed_at",
     )
+    list_filter = ("status", "type")
     search_fields = ("reporter_email", "reported_email", "content")
-    list_select_related = ("parent_article", "parent_comment", "chat_room", "chat_message", "reported_by")
+    list_select_related = (
+        "parent_article", "parent_comment", "chat_room", "chat_message", "reported_by", "reported_user", "handled_by",
+    )
+    readonly_fields = ("handled_by", "status_changed_at")
+    actions = ("mark_in_progress", "mark_done")
+
+    def set_status(self, request, queryset, status):
+        queryset.update(status=status, handled_by=request.user, status_changed_at=timezone.now())
+
+    @admin.action(description="선택한 신고를 처리 중으로")
+    def mark_in_progress(self, request, queryset):
+        self.set_status(request, queryset, Report.STATUS_IN_PROGRESS)
+
+    @admin.action(description="선택한 신고를 처리 완료로")
+    def mark_done(self, request, queryset):
+        self.set_status(request, queryset, Report.STATUS_DONE)
+
+    # 상세 화면에서 상태를 바꿔도 처리자 / 시각을 남긴다
+    def save_model(self, request, obj, form, change):
+        if change and "status" in form.changed_data:
+            obj.handled_by = request.user
+            obj.status_changed_at = timezone.now()
+        super().save_model(request, obj, form, change)
 
     @admin.display(description="대상")
     def target_preview(self, obj):

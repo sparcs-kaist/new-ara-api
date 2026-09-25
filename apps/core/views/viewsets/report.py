@@ -111,7 +111,7 @@ class ReportViewSet(
         message = (
             f"채팅방 {report.chat_room_id} ({report.chat_room.room_title})에서 다음과 같은 신고가 접수되었습니다:\n"
             f"신고자: {report.reported_by_id}:: {report.reported_by.profile} ({report.reporter_email})\n"
-            f"피신고자: {report.reported_user_id}:: 익명 번호 {report.anon_number} ({report.reported_email})\n"
+            f"피신고자: {report.reported_user_id}:: {report.reported_user.profile} ({report.reported_email})\n"
             f"신고 유형: {report.type}\n"
             f"신고 사유: {report.content}\n"
             f"메시지: {report.chat_message.message_content if report.chat_message else 'None'}\n"

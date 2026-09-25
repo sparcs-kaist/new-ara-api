@@ -10,7 +10,7 @@ from apps.core.models.report import Report
 User = get_user_model()
 
 # 같은 사람을 같은 방에서 다시 신고할 수 있기까지
-REPORT_COOLDOWN = timedelta(hours=24)
+REPORT_COOLDOWN = timedelta(days=7)
 CHAT_REPORT_KEYS = ("chat_message", "chat_room")
 
 
@@ -72,7 +72,6 @@ def create_chat_report(reporter, data) -> Report:
         reported_user=target.user,
         chat_room=chat_room,
         chat_message=message,
-        anon_number=target.anon_number,
         type=data["type"],
         content=data["content"],
         reporter_email=reporter.email or "",

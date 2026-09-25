@@ -64,19 +64,13 @@ class Report(MetaDataModel):
         related_name="report_set",
         verbose_name="신고된 채팅 메시지",
     )
-    anon_number = models.PositiveIntegerField(
-        default=None,
-        null=True,
-        blank=True,
-        verbose_name="피신고자 익명 번호",
-    )
     reported_by = models.ForeignKey(
         on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
         related_name="report_set",
         verbose_name="신고자",
     )
-    # 게시글 / 댓글은 작성자, 채팅은 대상 멤버
+    # 게시글 / 댓글은 작성자, 채팅은 대상 멤버 (익명 번호는 화면용이라 저장하지 않고 유저로 푼다)
     reported_user = models.ForeignKey(
         on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
@@ -108,6 +102,40 @@ class Report(MetaDataModel):
     content = models.TextField(
         blank=True,
         verbose_name="내용",
+    )
+
+    # 관리자 처리 상태
+    STATUS_PENDING = "PENDING"  # 접수
+    STATUS_IN_PROGRESS = "IN_PROGRESS"  # 처리 중
+    STATUS_DONE = "DONE"  # 처리 완료
+
+    STATUS_CHOICES = (
+        (STATUS_PENDING, "접수"),
+        (STATUS_IN_PROGRESS, "처리 중"),
+        (STATUS_DONE, "처리 완료"),
+    )
+
+    status = models.CharField(
+        choices=STATUS_CHOICES,
+        max_length=20,
+        default=STATUS_PENDING,
+        db_index=True,
+        verbose_name="처리 상태",
+    )
+    status_changed_at = models.DateTimeField(
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name="상태 변경 시각",
+    )
+    handled_by = models.ForeignKey(
+        on_delete=models.SET_NULL,
+        to=settings.AUTH_USER_MODEL,
+        default=None,
+        null=True,
+        blank=True,
+        related_name="handled_report_set",
+        verbose_name="처리자",
     )
 
     def save(
