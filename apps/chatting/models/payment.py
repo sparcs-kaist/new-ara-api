@@ -61,9 +61,10 @@ class ChatPaymentRequest(MetaDataModel):
         return not self.targets.filter(paid_at__isnull=True).exists()
 
     # targets : [(user, amount), ...]
+    # breakdown : {user_id: (주문 금액, 배송비 몫)} 배달 정산일 때만
     @classmethod
     @transaction.atomic
-    def create_with_message(cls, chat_room, created_by, bank_name: str, account_number: str, targets):
+    def create_with_message(cls, chat_room, created_by, bank_name: str, account_number: str, targets, breakdown=None):
         total = sum(amount for _, amount in targets)
         message = ChatMessage.create(
             chat_room=chat_room,
@@ -77,8 +78,15 @@ class ChatPaymentRequest(MetaDataModel):
             bank_name=bank_name,
             account_number=account_number,
         )
+        breakdown = breakdown or {}
         ChatPaymentTarget.objects.bulk_create([
-            ChatPaymentTarget(request=payment_request, user=user, amount=amount)
+            ChatPaymentTarget(
+                request=payment_request,
+                user=user,
+                amount=amount,
+                order_amount=breakdown.get(user.id, (None, None))[0],
+                delivery_fee_share=breakdown.get(user.id, (None, None))[1],
+            )
             for user, amount in targets
         ])
         return payment_request
@@ -99,6 +107,19 @@ class ChatPaymentTarget(MetaDataModel):
     )
     amount = models.PositiveIntegerField(
         verbose_name = "송금할 금액",
+    )
+    # 배달 정산의 금액 내역. 일반 정산은 null
+    order_amount = models.PositiveIntegerField(
+        verbose_name = "주문 금액",
+        null = True,
+        blank = True,
+        default = None,
+    )
+    delivery_fee_share = models.PositiveIntegerField(
+        verbose_name = "배송비 몫",
+        null = True,
+        blank = True,
+        default = None,
     )
     paid_at = models.DateTimeField(
         verbose_name = "송금 완료 시각",

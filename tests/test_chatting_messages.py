@@ -241,6 +241,8 @@ class TestStructuredMessageEdit(TestCase, RequestSetting):
         res = self.create_payment()
         assert res.status_code == 201
         assert {t["user"]["anon_number"]: t["amount"] for t in res.data["targets"]} == {1: 1000, 2: 2000}
+        # 일반 정산은 금액 내역이 없다
+        assert all(t["order_amount"] is None and t["delivery_fee_share"] is None for t in res.data["targets"])
 
     def test_payment_cannot_be_edited(self):
         payment_id = self.create_payment().data["id"]

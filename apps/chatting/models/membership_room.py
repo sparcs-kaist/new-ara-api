@@ -76,7 +76,12 @@ class ChatRoomMemberShip(MetaDataModel):
 
     def save(self, *args, **kwargs):
         if self.anon_number is None:
-            self.anon_number = self.pick_anon_number()
+            # 같은 방에 동시에 들어와도 번호가 겹치지 않게 방을 잠그고 번호를 정한다
+            with transaction.atomic():
+                list(ChatRoom.objects.select_for_update().filter(pk=self.chat_room_id).values_list("pk", flat=True))
+                self.anon_number = self.pick_anon_number()
+                super().save(*args, **kwargs)
+            return
         super().save(*args, **kwargs)
 
     def pick_anon_number(self) -> int:

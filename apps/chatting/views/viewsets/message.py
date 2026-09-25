@@ -81,7 +81,8 @@ class ChatMessageViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             'chat_room', 'created_by__profile', *attachment_related_names(),
         ).prefetch_related(
             'vote__options__ballots', 'payment_request__targets',
-        )
+        # 채팅방 FK 인덱스 (chat_room, id) 를 그대로 타도록 id 로 정렬
+        ).order_by('-id')
         room_id = self.request.query_params.get('chat_room')
         if room_id:
             queryset = queryset.filter(chat_room_id=room_id)
