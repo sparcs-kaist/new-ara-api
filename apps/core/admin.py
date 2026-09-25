@@ -244,12 +244,30 @@ class BestSearchAdmin(MetaDataModelAdmin):
 @admin.register(Report)
 class ReportAdmin(MetaDataModelAdmin):
     list_display = (
+        "target_type",
         "parent_article",
         "parent_comment",
+        "chat_room",
+        "anon_number",
         "reported_by",
+        "reporter_email",
+        "reported_email",
+        "target_preview",
         "type",
         "content",
     )
+    search_fields = ("reporter_email", "reported_email", "content")
+    list_select_related = ("parent_article", "parent_comment", "chat_room", "chat_message", "reported_by")
+
+    @admin.display(description="대상")
+    def target_preview(self, obj):
+        if obj.parent_article:
+            return obj.parent_article.title[:50]
+        if obj.parent_comment:
+            return obj.parent_comment.content[:50]
+        if obj.chat_message:
+            return obj.chat_message.message_content[:50]
+        return ""
 
 
 @admin.register(CommunicationArticle)

@@ -1,6 +1,8 @@
 import pytest
+from django.core import mail
 
-from apps.chatting.models import ChatMessage, ChatReport
+from apps.chatting.models import ChatMessage
+from apps.core.models import Report
 from apps.delivery.models import DeliveryParty
 from tests.conftest import RequestSetting, TestCase
 
@@ -17,25 +19,38 @@ class TestChatReport(TestCase, RequestSetting):
         self.room = self.party.chat_room
 
     def report(self, user, body):
-        return self.http_request(user, "post", "chat/report", {"type": "insult", "content": "욕했어요", **body})
+        return self.http_request(user, "post", "reports", {"type": "insult", "content": "욕했어요", **body})
 
-    def test_report_by_anon_number_hides_reporter(self):
+    def test_report_member_by_anon_number(self):
         res = self.report(self.user2, {"chat_room": self.room.id, "anon_number": 0})
         assert res.status_code == 201
         # 응답에는 신고 id 만 있다
         assert set(res.data) == {"id"}
 
-        report = ChatReport.objects.get(pk=res.data["id"])
+        report = Report.objects.get(pk=res.data["id"])
+        assert report.target_type == "chat_member"
         assert report.reported_user == self.user
-        assert report.reported_anon_number == 0
+        assert report.anon_number == 0
         assert report.reporter_email == self.user2.email
         assert report.reported_email == self.user.email
+        # 관리자에게 메일이 간다
+        assert len(mail.outbox) == 1
 
     def test_report_message(self):
         message = ChatMessage.create(chat_room=self.room, created_by=self.user, message_type="TEXT", message_content="x")
-        res = self.report(self.user2, {"message": message.id})
+        res = self.report(self.user2, {"chat_message": message.id})
         assert res.status_code == 201
-        assert ChatReport.objects.get(pk=res.data["id"]).message == message
+        report = Report.objects.get(pk=res.data["id"])
+        assert report.target_type == "chat_message"
+        assert report.chat_message == message
+
+    def test_my_report_list_hides_emails(self):
+        self.report(self.user2, {"chat_room": self.room.id, "anon_number": 0})
+        res = self.http_request(self.user2, "get", "reports")
+        assert res.status_code == 200
+        item = res.data["results"][0]
+        for key in ("reported_user", "reporter_email", "reported_email"):
+            assert key not in item
 
     def test_rules(self):
         # 방 밖 사람은 신고할 수 없다
@@ -46,7 +61,7 @@ class TestChatReport(TestCase, RequestSetting):
         assert self.report(self.user2, {"chat_room": self.room.id, "anon_number": 9}).status_code == 400
         # 안내 메시지는 신고할 수 없다
         system = self.room.message_set.filter(message_type="SYSTEM").first()
-        assert self.report(self.user2, {"message": system.id}).status_code == 400
+        assert self.report(self.user2, {"chat_message": system.id}).status_code == 400
         # 24시간 안에 같은 사람을 다시 신고
         assert self.report(self.user2, {"chat_room": self.room.id, "anon_number": 0}).status_code == 201
         res = self.report(self.user2, {"chat_room": self.room.id, "anon_number": 0})

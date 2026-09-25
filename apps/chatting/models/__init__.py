@@ -7,6 +7,5 @@ from .room_permission import ChatRoomPermission
 
 from .vote import ChatVote, ChatVoteOption, ChatVoteBallot
 from .payment import ChatPaymentRequest, ChatPaymentTarget
-from .report import ChatReport
 
 from .signals import *

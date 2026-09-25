@@ -45,11 +45,59 @@ class Report(MetaDataModel):
         related_name="report_set",
         verbose_name="신고된 댓글",
     )
+    # 채팅 신고 (메시지 또는 방 멤버). 채팅 신고면 chat_room 이 항상 있다
+    chat_room = models.ForeignKey(
+        on_delete=models.CASCADE,
+        to="chatting.ChatRoom",
+        default=None,
+        null=True,
+        blank=True,
+        related_name="report_set",
+        verbose_name="신고된 채팅방",
+    )
+    chat_message = models.ForeignKey(
+        on_delete=models.SET_NULL,
+        to="chatting.ChatMessage",
+        default=None,
+        null=True,
+        blank=True,
+        related_name="report_set",
+        verbose_name="신고된 채팅 메시지",
+    )
+    anon_number = models.PositiveIntegerField(
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name="피신고자 익명 번호",
+    )
     reported_by = models.ForeignKey(
         on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
         related_name="report_set",
         verbose_name="신고자",
+    )
+    # 게시글 / 댓글은 작성자, 채팅은 대상 멤버
+    reported_user = models.ForeignKey(
+        on_delete=models.CASCADE,
+        to=settings.AUTH_USER_MODEL,
+        default=None,
+        null=True,
+        blank=True,
+        related_name="received_report_set",
+        verbose_name="피신고자",
+    )
+    # 관리자가 admin 에서 바로 보도록 신고 시점의 이메일을 남긴다 (API 로는 내려주지 않는다)
+    reporter_email = models.CharField(
+        max_length=254,
+        blank=True,
+        default="",
+        verbose_name="신고자 이메일",
+    )
+    reported_email = models.CharField(
+        max_length=254,
+        blank=True,
+        default="",
+        verbose_name="피신고자 이메일",
     )
     type = models.CharField(
         choices=TYPE_CHOICES,
@@ -65,13 +113,16 @@ class Report(MetaDataModel):
     def save(
         self, force_insert=False, force_update=False, using=None, update_fields=None
     ):
-        try:
-            assert (self.parent_article is None) != (self.parent_comment is None)
-
-        except AssertionError:
+        if self.chat_room_id is not None:
+            valid = self.parent_article is None and self.parent_comment is None
+        else:
+            valid = (self.parent_article is None) != (self.parent_comment is None)
+        if not valid:
             raise IntegrityError(
-                "self.parent_article and self.parent_comment should exist exclusively."
+                "a report needs exactly one target: parent_article, parent_comment, or chat_room."
             )
+        if self.reported_user_id is None and self.chat_room_id is None:
+            self.reported_user_id = self.parent.created_by_id
 
         super(Report, self).save(
             force_insert=force_insert,
@@ -79,6 +130,15 @@ class Report(MetaDataModel):
             using=using,
             update_fields=update_fields,
         )
+
+    # article | comment | chat_message | chat_member
+    @property
+    def target_type(self) -> str:
+        if self.parent_article_id:
+            return "article"
+        if self.parent_comment_id:
+            return "comment"
+        return "chat_message" if self.chat_message_id else "chat_member"
 
     @cached_property
     def parent(self):
