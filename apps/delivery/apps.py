@@ -12,7 +12,6 @@ class DeliveryConfig(AppConfig):
         from apps.delivery.serializers.delivery import DeliveryOrderSerializer
         from apps.delivery import signals  # noqa: F401
 
-        # DELIVERY_ORDER 메시지에 주문 정보를 붙여서 내려준다
         register_message_attachment(
             ChatMessageType.DELIVERY_ORDER.value, "delivery_order", DeliveryOrderSerializer,
         )

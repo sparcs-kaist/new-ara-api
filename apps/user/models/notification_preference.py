@@ -37,7 +37,6 @@ class UserNotificationPreference(MetaDataModel):
     def get_for(cls, user):
         return cls.objects.filter(user=user).first() or cls(user=user)
 
-    # user_ids 중 kind 푸시를 받을 유저만
     @classmethod
     def filter_push_targets(cls, user_ids, kind: str) -> list[int]:
         assert kind in PUSH_KINDS, kind

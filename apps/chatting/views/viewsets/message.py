@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import (
     permissions,
     response,
@@ -103,11 +104,13 @@ class ChatMessageViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 {"detail": "이 메시지는 삭제할 수 없습니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        if instance.message_type == ChatMessageType.PAYMENT_REQUEST.value and \
-                instance.payment_request.targets.filter(paid_at__isnull=False).exists():
-            return response.Response(
-                {"detail": "이미 송금한 사람이 있어 지울 수 없습니다."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        instance.delete()  # 소프트 삭제가 아니라면 일반 delete()
+        with transaction.atomic():
+            if instance.message_type == ChatMessageType.PAYMENT_REQUEST.value:
+                instance.payment_request.lock_row()
+                if instance.payment_request.has_paid_target():
+                    return response.Response(
+                        {"detail": "이미 송금한 사람이 있어 지울 수 없습니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+            instance.delete()  # 소프트 삭제가 아니라면 일반 delete()
         return response.Response({"message": "메시지가 삭제되었습니다."}, status=status.HTTP_200_OK)

@@ -36,7 +36,6 @@ class DeliveryPenalty(MetaDataModel):
         duration = REPEAT_PENALTY if is_repeat else FIRST_PENALTY
         return cls.objects.create(user_id=user_id, party=party, until=now + duration)
 
-    # 지금 패널티 중이면 해제 시각, 아니면 None
     @classmethod
     def active_until(cls, user):
         return cls.objects.filter(

@@ -20,7 +20,8 @@ from apps.chatting.realtime import broadcast_member_removed, broadcast_room_upda
 from apps.chatting.serializers.room import  ChatRoomCreateSerializer, ChatRoomSerializer, ChatRoomDetailSerializer, ChatRoomUpdateSerializer
 from apps.chatting.permissions.room import RoomReadPermission, RoomBlockPermission, RoomDeletePermission, RoomLeavePermission
 from apps.user.serializers.user import PublicUserSerializer
-from apps.chatting.serializers.message import MessageSerializer
+from apps.chatting.serializers.message import MessageSerializer, attachment_related_names
+from apps.chatting.serializers.member import prefill_member_directory
 from ara.settings import MIN_TIME
 
 # 방 정보 수정은 PATCH 만 (PUT 비활성화)
@@ -67,6 +68,18 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         broadcast_room_update(room.id, "room", "updated", room.id)
         return response.Response(ChatRoomSerializer(room, context={'request': request}).data)
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        rooms = page if page is not None else list(queryset)
+
+        context = self.get_serializer_context()
+        prefill_member_directory(context, [room.id for room in rooms])
+        serializer = ChatRoomSerializer(rooms, many=True, context=context)
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+        return response.Response(serializer.data)
+
     def destroy(self, request, *args, **kwargs):
         room = self.get_object()
         if room.room_type == ChatRoomType.DELIVERY.value:
@@ -83,7 +96,15 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         return response.Response(status=status.HTTP_204_NO_CONTENT)
 
     def get_queryset(self):
-        qs = ChatRoom.objects.select_related('delivery_party')
+        qs = ChatRoom.objects.select_related(
+            'delivery_party',
+            'recent_message__chat_room',
+            'recent_message__created_by__profile',
+            *[f'recent_message__{name}' for name in attachment_related_names()],
+        ).prefetch_related(
+            'recent_message__vote__options__ballots',
+            'recent_message__payment_request__targets',
+        )
         if self.request.method == "GET":
             qs = qs.filter(
                 membership_info_set__user=self.request.user,
@@ -109,7 +130,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         room = self.get_object()
 
         # 참여자 목록 가져오기
-        memberships = ChatRoomMemberShip.objects.filter(chat_room=room)
+        memberships = ChatRoomMemberShip.objects.filter(chat_room=room).select_related('user__profile', 'chat_room')
         users = [membership.user for membership in memberships]
 
         # 본인이 참여한 채팅방이 아니면 403 반환

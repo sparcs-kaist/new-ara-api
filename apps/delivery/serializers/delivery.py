@@ -6,7 +6,6 @@ from apps.delivery.models import DeliveryOrder, DeliveryParty, MAX_RECRUIT_MINUT
 
 
 class DeliveryOrderSerializer(serializers.ModelSerializer):
-    """배달 주문 (DELIVERY_ORDER 메시지 attachment 로도 쓰인다)"""
     message_id = serializers.IntegerField(read_only=True)
     orderer = serializers.SerializerMethodField()
     is_canceled = serializers.BooleanField(read_only=True)
@@ -20,7 +19,6 @@ class DeliveryOrderSerializer(serializers.ModelSerializer):
 
 
 class DeliveryPartyListSerializer(serializers.ModelSerializer):
-    """목록 카드: 식당, 장소, 모인 금액 / 최소 금액, 인원, 마감 시각"""
     total_amount = serializers.IntegerField(read_only=True)
     participant_count = serializers.IntegerField(read_only=True)
 
@@ -35,10 +33,7 @@ class DeliveryPartyListSerializer(serializers.ModelSerializer):
 
 
 class DeliveryPartyDetailSerializer(DeliveryPartyListSerializer):
-    """
-    상세: 목록 정보 + 방장 메모, 참여자, 방장 메뉴
-    orders(전체 주문)는 참여자에게만 보여준다
-    """
+    # orders(전체 주문)는 참여자에게만
     host_orders = serializers.SerializerMethodField()
     members = serializers.SerializerMethodField()
     orders = serializers.SerializerMethodField()
@@ -140,5 +135,4 @@ class DeliveryExtendSerializer(serializers.Serializer):
 class DeliveryPaymentRequestSerializer(serializers.Serializer):
     bank_name = serializers.CharField(max_length=30)
     account_number = serializers.CharField(max_length=30)
-    # 주문한 사람 수로 나눠서 각자 금액에 더한다
     delivery_fee = serializers.IntegerField(min_value=0, required=False, default=0)

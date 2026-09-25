@@ -36,7 +36,6 @@ class DeliveryRuleViolation(exceptions.APIException):
 
 
 def run_action(fn, *args, **kwargs):
-    """DeliveryActionError -> 400 / 403 ({"detail": "문구"})"""
     try:
         return fn(*args, **kwargs)
     except DeliveryActionError as e:
@@ -119,14 +118,12 @@ class DeliveryPartyViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, Act
         party = run_action(DeliveryParty.open, request.user, **self.validated_input(request))
         return self.detail_response(party, status.HTTP_201_CREATED)
 
-    # (방장) 메모, 함께주문 링크, 상세 위치, 최대 인원 수정
     @extend_schema(request=DeliveryPartyUpdateSerializer, responses={200: DeliveryPartyDetailSerializer})
     def partial_update(self, request, pk=None):
         party = self.get_object()
         run_action(party.update_info, request.user, **self.validated_input(request))
         return self.detail_response(party)
 
-    # 내 패널티. 방 개설 버튼을 미리 막을 때 쓴다
     @extend_schema(responses={200: OpenApiTypes.OBJECT})
     @action(detail=False, methods=["get"])
     def penalty(self, request):
@@ -156,7 +153,6 @@ class DeliveryPartyViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, Act
             status=status.HTTP_201_CREATED,
         )
 
-    # PATCH : 내 주문 수정 / DELETE : 내 주문 취소
     @extend_schema(request=DeliveryOrderUpdateSerializer, responses={200: DeliveryOrderSerializer, 204: None})
     @action(detail=True, methods=["patch", "delete"], url_path=r"orders/(?P<order_id>\d+)")
     def order_detail(self, request, pk=None, order_id=None):

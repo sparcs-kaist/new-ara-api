@@ -24,6 +24,12 @@ class ChatPaymentRequest(MetaDataModel):
         max_length = 30,
     )
 
+    def lock_row(self):
+        list(ChatPaymentRequest.objects.select_for_update().filter(pk=self.pk).values_list("pk", flat=True))
+
+    def has_paid_target(self) -> bool:
+        return self.targets.filter(paid_at__isnull=False).exists()
+
     @property
     def is_settled(self) -> bool:
         return not self.targets.filter(paid_at__isnull=True).exists()
@@ -68,7 +74,6 @@ class ChatPaymentTarget(MetaDataModel):
     amount = models.PositiveIntegerField(
         verbose_name = "송금할 금액",
     )
-    # null 이면 아직 안 보냄
     paid_at = models.DateTimeField(
         verbose_name = "송금 완료 시각",
         null = True,

@@ -51,6 +51,7 @@ class ChatVote(MetaDataModel):
     # 유저의 선택을 option_ids 로 통째로 바꾼다. 빈 리스트면 투표 취소
     @transaction.atomic
     def cast(self, user, option_ids: list[int]) -> None:
+        list(ChatVote.objects.select_for_update().filter(pk=self.pk).values_list("pk", flat=True))
         option_ids = set(option_ids)
 
         if self.max_choices is not None and len(option_ids) > self.max_choices:

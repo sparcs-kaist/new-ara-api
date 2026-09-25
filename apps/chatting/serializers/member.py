@@ -17,6 +17,18 @@ def member_directory(serializer, chat_room) -> dict:
     return cache[chat_room.id]
 
 
+# 여러 방을 한 번에 그릴 때(채팅방 목록) 방마다 조회하지 않도록 미리 채운다
+def prefill_member_directory(context: dict, room_ids) -> None:
+    cache = context.setdefault("member_directory", {})
+    for room_id in room_ids:
+        cache.setdefault(room_id, {})
+    memberships = ChatRoomMemberShip.objects.queryset_with_deleted.filter(
+        chat_room_id__in=list(room_ids),
+    ).select_related("user__profile", "chat_room").order_by("id")
+    for membership in memberships:
+        cache[membership.chat_room_id][membership.user_id] = membership
+
+
 def member_summary(serializer, chat_room, user_id) -> dict | None:
     """방 안에서 보여줄 유저 정보"""
     if user_id is None:

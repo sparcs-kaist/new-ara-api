@@ -53,3 +53,25 @@ class TestNotificationPreference(TestCase):
         assert push.call_args.args[1] == [self.user2.id]
         # 알림함에는 남는다
         assert NotificationReadLog.objects.filter(read_by=self.user3).exists()
+
+
+@pytest.mark.usefixtures("set_user_client", "set_user_client2")
+class TestChatPushDedup(TestCase):
+    def test_skip_while_unread_and_resume_after_reading(self):
+        from django.utils import timezone
+
+        room = ChatRoom.objects.create(room_title="방", room_type=ChatRoomType.GROUP_DM.value)
+        for user in (self.user, self.user2):
+            ChatRoomMemberShip.objects.create(chat_room=room, user=user, role=ChatUserRole.PARTICIPANT.value)
+
+        def send():
+            with patch(PUSH) as push:
+                ChatMessage.create(chat_room=room, created_by=self.user, message_type="TEXT", message_content="x")
+            return push.call_args.args[1] if push.called else []
+
+        assert send() == [self.user2.id]
+        # 안 읽은 알림이 있으면 건너뛴다
+        assert send() == []
+        # 방을 다시 열면 다음 메시지부터 다시 보낸다
+        ChatRoomMemberShip.objects.filter(chat_room=room, user=self.user2).update(last_seen_at=timezone.now())
+        assert send() == [self.user2.id]

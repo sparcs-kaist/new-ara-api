@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from django.db import models
+from django.db.models import Max
 from django.utils.functional import cached_property
 
 from apps.core.models import Article, Block, Comment
@@ -206,10 +207,10 @@ class Notification(MetaDataModel):
             role__in=[ChatUserRole.BLOCKED.value, ChatUserRole.BLOCKER.value],
         )
 
-        # 3. Membership 에서, 메시지 작성자와, read_at 이 message_create 시점 이전인지 찾기
+        # 3. 메시지 작성자가 아니고, 메시지 이후로 방을 안 본 멤버
         _unread_memberships = [
             membership for membership in _memberships
-            if membership.user != message.created_by and (
+            if membership.user_id != message.created_by_id and (
                 membership.last_seen_at is None or membership.last_seen_at < message.created_at
             )
         ]
@@ -222,29 +223,33 @@ class Notification(MetaDataModel):
             related_chat_room=_messaged_room,
         )
 
-        def notify_chat_room_message(_notify_to : User):
-            NotificationReadLog.objects.create(
-                read_by=_notify_to,
-                notification=notification
+        # 4. 이미 읽지 않은 알림이 있는지 확인 (멤버마다 조회하지 않고 한 번에)
+        # 알림 읽음은 알림 목록에서만 해제되므로, 방을 다시 연 뒤(last_seen_at)
+        # 생긴 알림만 본다. 아니면 첫 알림 이후 영영 막힌다.
+        latest_unread = dict(NotificationReadLog.objects.filter(
+            read_by_id__in=[membership.user_id for membership in _unread_memberships],
+            notification__related_chat_room=_messaged_room,
+            is_read=False,
+        ).exclude(
+            notification=notification,
+        ).values("read_by_id").annotate(
+            latest=Max("notification__created_at"),
+        ).values_list("read_by_id", "latest"))
+
+        recipient_ids: list[int] = [
+            membership.user_id for membership in _unread_memberships
+            if not (
+                membership.last_seen_at is not None
+                and latest_unread.get(membership.user_id) is not None
+                and latest_unread[membership.user_id] >= membership.last_seen_at
             )
+        ]
 
-        recipient_ids: list[int] = []
-        # 과정이 느리니까 message create 에서 async로 돌리기.
-        for membership in _unread_memberships:
-            # 4. 이미 읽지 않은 알림이 있는지 확인
-            # 알림 읽음은 알림 목록에서만 해제되므로, 방을 다시 연 뒤(last_seen_at)
-            # 생긴 알림만 본다. 아니면 첫 알림 이후 영영 막힌다.
-            if membership.last_seen_at is not None and NotificationReadLog.objects.filter(
-                read_by=membership.user,
-                notification__related_chat_room=_messaged_room,
-                notification__created_at__gte=membership.last_seen_at,
-                is_read=False
-            ).exists():
-                continue
-
-            # 5. 대상 User에게 알림 보내기
-            notify_chat_room_message(membership.user)
-            recipient_ids.append(membership.user_id)
+        # 5. 대상 User에게 알림 보내기
+        NotificationReadLog.objects.bulk_create([
+            NotificationReadLog(read_by_id=user_id, notification=notification)
+            for user_id in recipient_ids
+        ])
 
         # FCM push: 한 번에 모든 수신자 토큰을 multicast (채팅 알림을 끈 사람 제외)
         recipient_ids = UserNotificationPreference.filter_push_targets(recipient_ids, "chat_message")

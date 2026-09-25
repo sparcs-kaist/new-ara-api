@@ -47,7 +47,6 @@ class DeliveryCancelReason(str, Enum):
     HOST = "HOST" # 방장이 취소
     NO_DECISION = "NO_DECISION" # 마감 후 방장이 정하지 않아 자동 취소
 
-# 방 개설 / 연장 시간 (분). 이 범위의 아무 정수
 MIN_RECRUIT_MINUTES = 5
 MAX_RECRUIT_MINUTES = 60
 
@@ -84,7 +83,6 @@ class DeliveryParty(MetaDataModel):
         verbose_name = "식당",
         max_length = 100,
     )
-    # 배달 받을 건물 (예: "희망관 (W4)") 과 상세 위치 (예: "1층 로비")
     place_name = models.CharField(
         verbose_name = "배달 받을 장소",
         max_length = 100,
@@ -125,7 +123,6 @@ class DeliveryParty(MetaDataModel):
         blank = True,
         default = "",
     )
-    # 배민 함께주문 링크 (선택)
     order_link = models.URLField(
         verbose_name = "함께주문 링크",
         max_length = 500,
@@ -161,7 +158,6 @@ class DeliveryParty(MetaDataModel):
         default = None,
     )
 
-    # ---------- 조회 ----------
 
     @property
     def is_recruiting(self) -> bool:
@@ -197,7 +193,6 @@ class DeliveryParty(MetaDataModel):
     def is_leave_unlocked(self) -> bool:
         return bool(self.ordered_at and timezone.now() >= self.ordered_at + LEAVE_UNLOCK_AFTER)
 
-    # ---------- 방 만들기 ----------
 
     @classmethod
     @transaction.atomic
@@ -238,11 +233,9 @@ class DeliveryParty(MetaDataModel):
             memo=memo,
             order_link=order_link,
         )
-        # 방장도 자기 주문을 넣고 시작한다
         party.add_order(host, price=price, menu_name=menu_name)
         return party
 
-    # ---------- 참여자 ----------
 
     @transaction.atomic
     def join(self, user):
@@ -334,7 +327,6 @@ class DeliveryParty(MetaDataModel):
         broadcast_member_removed(self.chat_room_id, anon_number)
         self.broadcast_update()
 
-    # 방장이 고칠 수 있는 정보 (모집 중일 때만)
     @transaction.atomic
     def update_info(self, user, **fields):
         self.lock_row()
@@ -355,7 +347,6 @@ class DeliveryParty(MetaDataModel):
             self.send_system_message("방장이 함께주문 링크를 올렸어요.")
         self.broadcast_update()
 
-    # ---------- 주문 ----------
 
     @transaction.atomic
     def place_order(self, user, *, price, menu_name=""):
@@ -397,7 +388,6 @@ class DeliveryParty(MetaDataModel):
         for name, value in fields.items():
             setattr(order, name, value)
         order.save()
-        # 채팅방 주문 카드 미리보기도 같이 바꾼다
         order.message.message_content = f"[주문] {order.summary}"
         order.message.save()
 
@@ -423,7 +413,6 @@ class DeliveryParty(MetaDataModel):
         self.broadcast_update()
         return order
 
-    # ---------- 방장 ----------
 
     @transaction.atomic
     def confirm_order(self, user):
@@ -553,7 +542,7 @@ class DeliveryParty(MetaDataModel):
         self.send_system_message("정산이 끝났어요. 이제 방을 나갈 수 있어요.")
         self.broadcast_update()
 
-    # ---------- 마감 처리 (celery 에서 1분마다) ----------
+    # celery 에서 1분마다
 
     @classmethod
     def sweep_deadlines(cls):
@@ -611,10 +600,8 @@ class DeliveryParty(MetaDataModel):
             DeliveryPenalty.give(self.host_id, self)
         self.broadcast_update()
 
-    # ---------- 공통 ----------
 
     def lock_row(self):
-        # 동시에 들어온 요청(정원, 상태 변경)을 한 줄로 세운다
         list(DeliveryParty.objects.select_for_update().filter(pk=self.pk).values_list("pk", flat=True))
         self.refresh_from_db()
 

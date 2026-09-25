@@ -1,6 +1,7 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework import exceptions, mixins, permissions, response, status
 from rest_framework.decorators import action
+from django.db import transaction
 
 from ara.classes.viewset import ActionAPIViewSet
 from ara.settings import MIN_TIME
@@ -72,15 +73,17 @@ class ChatPaymentViewSet(mixins.RetrieveModelMixin, ActionAPIViewSet):
 
     # (요청자) 은행 / 계좌번호 수정. 아무도 송금하기 전에만
     @extend_schema(request=ChatPaymentRequestUpdateSerializer, responses={200: ChatPaymentRequestSerializer})
+    @transaction.atomic
     def partial_update(self, request, pk=None):
         payment_request = self.get_object()
         if payment_request.message.created_by_id != request.user.id:
             raise exceptions.PermissionDenied("정산을 요청한 사람만 고칠 수 있습니다.")
-        if payment_request.targets.filter(paid_at__isnull=False).exists():
-            raise exceptions.ValidationError({"detail": "이미 송금한 사람이 있어 고칠 수 없습니다."})
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        payment_request.lock_row()
+        if payment_request.has_paid_target():
+            raise exceptions.ValidationError({"detail": "이미 송금한 사람이 있어 고칠 수 없습니다."})
         for name, value in serializer.validated_data.items():
             setattr(payment_request, name, value)
         payment_request.save()
@@ -90,11 +93,13 @@ class ChatPaymentViewSet(mixins.RetrieveModelMixin, ActionAPIViewSet):
 
     @extend_schema(request=ChatPaymentPaidSerializer, responses={200: ChatPaymentRequestSerializer})
     @action(detail=True, methods=["patch"])
+    @transaction.atomic
     def paid(self, request, pk=None):
         payment_request = self.get_object()
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        payment_request.lock_row()
         target = payment_request.targets.filter(user=request.user).first()
         if target is None:
             raise exceptions.PermissionDenied("정산 대상자가 아닙니다.")

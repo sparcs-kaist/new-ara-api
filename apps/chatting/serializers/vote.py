@@ -68,7 +68,6 @@ class ChatVoteCreateSerializer(serializers.Serializer):
         min_length=2,
         max_length=20,
     )
-    # 1 이면 단일 선택, null 이면 제한 없음
     max_choices = serializers.IntegerField(min_value=1, allow_null=True, required=False, default=1)
 
     def validate_options(self, value):

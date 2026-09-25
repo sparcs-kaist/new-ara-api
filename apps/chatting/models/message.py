@@ -140,7 +140,7 @@ class ChatMessage(MetaDataModel):
         # 방의 최근 메시지 정보 업데이트
         chat_room.recent_message = instance
         chat_room.recent_message_at = timezone.now()
-        chat_room.save()
+        chat_room.save(update_fields=["recent_message", "recent_message_at", "updated_at"])
 
         return instance
 
