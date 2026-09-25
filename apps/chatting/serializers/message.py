@@ -4,8 +4,7 @@ from apps.chatting.models.room import ChatRoom
 from apps.chatting.serializers.member import member_summary, is_anonymous_room
 from apps.user.serializers.user import PublicUserSerializer
 
-# 타입별로 메시지에 붙는 데이터 (투표, 정산 등). {message_type: (related_name, serializer_class)}
-# 다른 앱(배달 등)은 register_message_attachment 로 등록한다
+# {message_type: (related_name, serializer_class)}. 다른 앱은 register_message_attachment 로 등록한다
 MESSAGE_ATTACHMENTS = {}
 
 def register_message_attachment(message_type: str, related_name: str, serializer_class) -> None:
@@ -107,7 +106,7 @@ class MessageDeleteResponseSerializer(serializers.Serializer):
     message = serializers.CharField(help_text="삭제 결과 메시지")
 
 
-# 채팅 앱 자체 타입 등록 (배달 타입은 apps.delivery 에서 등록)
+# 배달 타입은 apps.delivery 에서 등록
 from apps.chatting.serializers.vote import ChatVoteSerializer
 from apps.chatting.serializers.payment import ChatPaymentRequestSerializer
 

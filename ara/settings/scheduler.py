@@ -44,14 +44,13 @@ SCHEDULERS = {
     ),  # 매일 오전 7시
     "SWEEP_DELIVERY_DEADLINES": create_scheduler_config(
         "SWEEP_DELIVERY_DEADLINES", crontab=crontab(minute="*")
-    ),  # 매분 - 함께 배달 모집 마감 / 방장 결정 시간 초과 처리
+    ),  # 매분
     "CRAWL_MEAL": create_scheduler_config(
         "CRAWL_MEAL", crontab=crontab(hour=5, minute=0)
     ),  # 매일 오전 5시
 }
 
-# 푸시 / 배달 마감은 크롤링 같은 무거운 작업 뒤에서 기다리지 않도록 urgent 큐로 보낸다
-# (urgent 큐만 처리하는 worker 는 .docker/supervisor-celery-worker.conf)
+# 푸시 / 배달 마감이 크롤링 뒤에서 기다리지 않도록 (worker 는 supervisor-celery-worker.conf)
 CELERY_TASK_ROUTES = {
     "apps.core.management.tasks.send_push_to_user": {"queue": "urgent"},
     "apps.core.management.tasks.send_push_to_users": {"queue": "urgent"},

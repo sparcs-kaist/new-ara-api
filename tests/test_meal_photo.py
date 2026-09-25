@@ -46,7 +46,6 @@ class TestMenuPhoto(TestCase):
         assert res.data["is_official"] is False
         assert res.data["is_mine"] is True
 
-        # 로그인 안 해도 볼 수 있다
         res = self.list_photos()
         assert res.status_code == 200
         assert len(res.data["results"]) == 1

@@ -9,7 +9,6 @@ User = get_user_model()
 
 
 class ChatPaymentRequestSerializer(serializers.ModelSerializer):
-    """정산 요청 조회용 (메시지 attachment 로도 쓰임)"""
     message_id = serializers.IntegerField(read_only=True)
     chat_room = serializers.IntegerField(source="message.chat_room_id", read_only=True)
     requester = serializers.SerializerMethodField()
@@ -47,7 +46,7 @@ class ChatPaymentRequestSerializer(serializers.ModelSerializer):
         return all(target.paid_at is not None for target in obj.targets.all())
 
 
-# 익명 방에서는 유저 id 를 모르므로 anon_number 로도 대상을 지정할 수 있다 (둘 중 하나)
+# 익명 방은 유저 id 를 모르므로 anon_number 로도 지정한다
 class ChatPaymentTargetInputSerializer(serializers.Serializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False)
     anon_number = serializers.IntegerField(min_value=0, required=False)

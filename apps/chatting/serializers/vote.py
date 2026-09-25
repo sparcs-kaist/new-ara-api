@@ -6,7 +6,7 @@ from apps.chatting.serializers.member import member_summary
 
 
 class ChatVoteSerializer(serializers.ModelSerializer):
-    """투표 조회용 (메시지 attachment 로도 쓰임). can_see_* 가 False 면 해당 값은 null"""
+    # can_see_* 가 False 면 값은 null
     message_id = serializers.IntegerField(read_only=True)
     chat_room = serializers.IntegerField(source="message.chat_room_id", read_only=True)
     options = serializers.SerializerMethodField()
@@ -86,5 +86,4 @@ class ChatVoteCreateSerializer(serializers.Serializer):
 
 
 class ChatVoteCastSerializer(serializers.Serializer):
-    # 내 선택 전체. 빈 리스트면 투표 취소
     option_ids = serializers.ListField(child=serializers.IntegerField(), allow_empty=True)

@@ -1,4 +1,4 @@
-# 서버 -> 채팅방 소켓 알림. 보는 사람마다 다른 값이 있어 id 만 보내고, 클라이언트가 다시 조회한다
+# 보는 사람마다 값이 달라 id 만 보내고, 클라이언트가 다시 조회한다
 import logging
 
 from asgiref.sync import async_to_sync
@@ -38,6 +38,5 @@ def broadcast_message_created(message) -> None:
     broadcast_room_update(message.chat_room_id, "messages", "created", message.id)
 
 
-# 나가거나 내보내진 멤버의 소켓을 방에서 뺀다
 def broadcast_member_removed(room_id: int, anon_number: int) -> None:
     send_to_room(room_id, {"type": "member_removed", "anon_number": anon_number})

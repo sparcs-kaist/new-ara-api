@@ -33,7 +33,6 @@ class DeliveryPartyListSerializer(serializers.ModelSerializer):
 
 
 class DeliveryPartyDetailSerializer(DeliveryPartyListSerializer):
-    # orders(전체 주문)는 참여자에게만
     host_orders = serializers.SerializerMethodField()
     members = serializers.SerializerMethodField()
     orders = serializers.SerializerMethodField()
@@ -128,7 +127,6 @@ class DeliveryKickSerializer(serializers.Serializer):
 
 class DeliveryOrderCreateSerializer(serializers.Serializer):
     price = serializers.IntegerField(min_value=1)
-    # 배민 함께주문을 쓰면 비워도 된다
     menu_name = serializers.CharField(max_length=100, required=False, allow_blank=True, default="")
 
 

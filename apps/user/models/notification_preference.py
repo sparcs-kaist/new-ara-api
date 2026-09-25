@@ -3,12 +3,11 @@ from django.db import models
 
 from ara.db.models import MetaDataModel
 
-# 푸시 알림 주제. 필드 이름과 같다
+# 필드 이름과 같다
 PUSH_KINDS = ("article_commented", "comment_commented", "chat_message", "delivery")
 
 
-# 주제별 푸시 알림 설정. 끄면 푸시만 안 가고 알림함에는 남는다
-# 저장한 적 없는 유저는 모두 켜짐으로 본다
+# 끄면 푸시만 안 가고 알림함에는 남는다. 저장한 적 없는 유저는 모두 켜짐
 class UserNotificationPreference(MetaDataModel):
     user = models.OneToOneField(
         verbose_name = "유저",

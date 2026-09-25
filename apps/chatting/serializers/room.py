@@ -79,7 +79,6 @@ class ChatRoomSerializer(serializers.ModelSerializer):
     채팅방 정보 조회용 Serializer
     """
     recent_message = MessageSerializer(read_only=True)
-    # 배달방이면 배달방 id, 아니면 null
     delivery_party = serializers.SerializerMethodField()
 
     class Meta:

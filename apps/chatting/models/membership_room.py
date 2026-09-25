@@ -63,7 +63,7 @@ class ChatRoomMemberShip(MetaDataModel):
         blank = False,
         null = True,
     )
-    # 방 안에서 구분되는 익명 번호 (방장 0, 익명1, 익명2 ...). 다시 들어와도 유지
+    # 방장 0, 나머지 1부터. 다시 들어와도 유지
     anon_number = models.PositiveIntegerField(
         verbose_name = "익명 번호",
         null = True,
@@ -89,7 +89,6 @@ class ChatRoomMemberShip(MetaDataModel):
             chat_room_id=self.chat_room_id,
         ).exclude(pk=self.pk)
 
-        # 예전에 있던 유저면 그때 번호
         previous = room_memberships.filter(
             user_id=self.user_id,
             anon_number__isnull=False,
@@ -103,7 +102,6 @@ class ChatRoomMemberShip(MetaDataModel):
         last = room_memberships.aggregate(last=Max("anon_number"))["last"]
         return (last or 0) + 1
 
-    # 방의 이름 표시 방식(chat_name_type)이 적용된 이름
     def get_display_name(self) -> str:
         name_type = self.chat_room.chat_name_type
 
@@ -122,7 +120,6 @@ class ChatRoomMemberShip(MetaDataModel):
             return profile.realname
         return profile.nickname
 
-    # 차단 관계가 아닌 멤버십. 없으면 None
     @classmethod
     def get_active(cls, chat_room, user):
         return cls.objects.filter(

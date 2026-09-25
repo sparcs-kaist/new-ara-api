@@ -6,9 +6,7 @@ from ara.db.models import MetaDataModel
 from ara.settings import MIN_TIME
 from apps.chatting.models.message import ChatMessage, ChatMessageType
 
-# 송금(정산) 요청 (PAYMENT_REQUEST 메시지 하나에 요청 하나)
-# 대상자마다 금액이 다를 수 있고, 각자 "송금 완료"를 누른다. 고칠 수 없고 틀리면 취소 / 삭제 후 다시 보낸다
-# 취소: 카드가 "취소된 정산"으로 남는다. 삭제: 메시지가 지워져 보이지 않는다 (잘못된 정보 가리기)
+# 고치지 않는다. 틀리면 취소(카드는 남음) 또는 삭제(가림) 후 다시 보낸다
 class ChatPaymentRequest(MetaDataModel):
     message = models.OneToOneField(
         verbose_name = "정산 요청 메시지",
@@ -33,7 +31,6 @@ class ChatPaymentRequest(MetaDataModel):
         default = None,
     )
 
-    # 취소되지도 삭제되지도 않은 정산
     @classmethod
     def active(cls):
         return cls.objects.filter(canceled_at__isnull=True, message__deleted_at=MIN_TIME)
@@ -56,12 +53,7 @@ class ChatPaymentRequest(MetaDataModel):
             self.canceled_at = timezone.now()
             self.save()
 
-    @property
-    def is_settled(self) -> bool:
-        return not self.targets.filter(paid_at__isnull=True).exists()
-
-    # targets : [(user, amount), ...]
-    # breakdown : {user_id: (주문 금액, 배송비 몫)} 배달 정산일 때만
+    # breakdown : {user_id: (주문 금액, 배송비 몫)}, 배달 정산만
     @classmethod
     @transaction.atomic
     def create_with_message(cls, chat_room, created_by, bank_name: str, account_number: str, targets, breakdown=None):

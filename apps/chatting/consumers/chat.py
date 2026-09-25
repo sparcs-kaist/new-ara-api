@@ -21,7 +21,7 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
     def _group(self, room_id: int) -> str:
         return room_group_name(room_id)
 
-    # 방 멤버(차단 관계 제외)면 방에 알릴 내 정보. 익명 방이면 user id 대신 이름만
+    # 익명 방이면 user id 를 내보내지 않는다
     @database_sync_to_async
     def get_member_identity(self, room_id):
         from apps.chatting.models import ChatRoomMemberShip, ChatUserRole
@@ -189,7 +189,6 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
         )
 
     # 그룹에서 이벤트 받는 핸들러들
-    # user : 익명 방이면 null / sender : 방 안에서 보이는 이름
     async def user_join(self, event):
         await self.send(text_data=json.dumps({
             'type': 'user_join',
@@ -226,7 +225,6 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
             'message_id': event.get('message_id'),
         }))
 
-    # 나간 / 내보내진 멤버면 방 구독을 끊는다
     async def member_removed(self, event):
         if not self.identity or self.identity["sender"]["anon_number"] != event.get("anon_number"):
             return

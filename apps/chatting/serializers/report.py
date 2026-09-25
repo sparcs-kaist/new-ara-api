@@ -9,13 +9,11 @@ from apps.core.models.report import Report
 
 User = get_user_model()
 
-# 같은 사람을 같은 방에서 다시 신고할 수 있기까지
 REPORT_COOLDOWN = timedelta(days=7)
 CHAT_REPORT_KEYS = ("chat_message", "chat_room")
 
 
-# POST /api/reports/ 의 채팅 신고 입력
-# 대상은 셋 중 하나: 메시지 / 방 + 익명 번호 (익명 방) / 방 + 유저 id (일반 방)
+# 대상은 메시지 / 방 + 익명 번호 / 방 + 유저 id 중 하나
 class ChatReportCreateSerializer(serializers.Serializer):
     chat_message = serializers.PrimaryKeyRelatedField(queryset=ChatMessage.objects.all(), required=False)
     chat_room = serializers.PrimaryKeyRelatedField(queryset=ChatRoom.objects.all(), required=False)

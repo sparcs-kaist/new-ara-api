@@ -8,15 +8,13 @@ from apps.meal.models.cafeteria_menu import MealType
 
 
 class MenuPhotoSource(str, Enum):
-    USER = "USER" # 사용자가 올림
-    INSTAGRAM = "INSTAGRAM" # 자동 수집 (나중에)
+    USER = "USER"
+    INSTAGRAM = "INSTAGRAM"
 
-# 한 사람이 한 끼니(식당·날짜·끼니)에 올릴 수 있는 사진 수
 MAX_PHOTOS_PER_MEAL = 3
 
 
-# 끼니별 메뉴 사진. 리뷰처럼 누구나 올리고 한 줄 후기를 붙일 수 있다
-# 입주업체 직원(STORE_EMPLOYEE)이 올린 사진은 공식 사진으로 보여준다
+# 입주업체 직원(STORE_EMPLOYEE)이 올린 사진은 공식 사진
 class MenuPhoto(MetaDataModel):
     restaurant = models.ForeignKey(
         verbose_name = "식당",
