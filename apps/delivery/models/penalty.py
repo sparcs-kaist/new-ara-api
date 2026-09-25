@@ -37,8 +37,13 @@ class DeliveryPenalty(MetaDataModel):
         return cls.objects.create(user_id=user_id, party=party, until=now + duration)
 
     @classmethod
-    def active_until(cls, user):
+    def get_active(cls, user):
         return cls.objects.filter(
             user=user,
             until__gt=timezone.now(),
-        ).order_by("-until").values_list("until", flat=True).first()
+        ).select_related("party").order_by("-until").first()
+
+    @classmethod
+    def active_until(cls, user):
+        penalty = cls.get_active(user)
+        return penalty.until if penalty else None

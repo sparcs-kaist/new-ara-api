@@ -334,7 +334,10 @@ class TestDelivery(TestCase, RequestSetting):
         party = self.open_party()
         self.join_and_order(party, self.user2, 5000)
         self.http_request(self.user, "post", f"delivery/{party.id}/cancel")
-        assert self.http_request(self.user, "get", "delivery/penalty").data["until"] is not None
+        res = self.http_request(self.user, "get", "delivery/penalty")
+        assert res.data["until"] is not None
+        assert res.data["reason"] == "HOST"
+        assert res.data["duration_hours"] == 3
 
     def test_leave_unlocks_after_24h(self):
         party = self.open_party(min_order_amount=10000)
