@@ -31,10 +31,18 @@ class ReportSerializer(BaseReportSerializer):
         read_only=True,
     )
 
+    class Meta(BaseReportSerializer.Meta):
+        fields = None
+        exclude = ("reported_user", "reporter_email", "reported_email", "handled_by", "status_changed_at")
+
 
 class ReportCreateActionSerializer(BaseReportSerializer):
     class Meta(BaseReportSerializer.Meta):
-        read_only_fields = ("reported_by",)
+        read_only_fields = (
+            "reported_by", "reported_user", "reporter_email", "reported_email",
+            "chat_room", "chat_message",
+            "status", "status_changed_at", "handled_by",
+        )
 
     def create(self, validated_data):
         try:

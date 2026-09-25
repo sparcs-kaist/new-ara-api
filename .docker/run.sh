@@ -32,6 +32,7 @@ elif [ "$1" = "dx" ]; then
 else
     python3 manage.py collectstatic --noinput
     python3 manage.py migrate --no-input
+    python3 manage.py disable_stale_periodic_tasks
     python3 manage.py compilemessages -l en -l ko
     ln -s /newara/www/.docker/supervisor-app.conf /etc/supervisor/conf.d/ || true
     exec supervisord -n

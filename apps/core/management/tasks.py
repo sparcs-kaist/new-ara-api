@@ -110,15 +110,17 @@ def sweep_delivery_deadlines():
     DeliveryParty.sweep_deadlines()
 
 
+MEAL_CRAWL_DAYS = 3
+
+
 @celery_app.task
 def crawl_meal():
-    #현재 날짜로 부터 앞으로 일주일간 식단 크롤링
+    #현재 날짜로 부터 MEAL_CRAWL_DAYS 일치 식단 크롤링 (매일 새벽에 돌기 때문에 며칠치면 충분하다)
     # 현재 날짜를 가져오기
     current_date = datetime.now()
 
-    # 앞 뒤 7일간의 날짜 리스트 생성
-    # 이전 날짜 7일에 경우 학식이 변경된 경우를 아직 처리하지 못 해서 보류. 미래 7일만 가져온다.
-    dates = [(current_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(0, 7)]
+    # 이전 날짜의 경우 학식이 변경된 경우를 아직 처리하지 못 해서 보류. 미래 날짜만 가져온다.
+    dates = [(current_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(0, MEAL_CRAWL_DAYS)]
     for date in dates:
         #식단 크롤링
         crawl_daily_meal(date)
