@@ -257,6 +257,9 @@ class TestDelivery(TestCase, RequestSetting):
         assert res.status_code == 201, res.data
         amounts = {t["user"]["display_name"]: t["amount"] for t in res.data["targets"]}
         assert amounts == {"익명1": 7000, "익명2": 4000}
+        # 카드에 "주문 6,000원 + 배송비 1,000원" 처럼 내역을 보여줄 수 있다
+        breakdown = {t["user"]["display_name"]: (t["order_amount"], t["delivery_fee_share"]) for t in res.data["targets"]}
+        assert breakdown == {"익명1": (6000, 1000), "익명2": (3000, 1000)}
 
         # 정산 전에는 주문한 사람이 못 나감
         assert self.http_request(self.user3, "post", f"delivery/{party.id}/leave").status_code == 400

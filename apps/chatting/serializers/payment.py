@@ -33,6 +33,8 @@ class ChatPaymentRequestSerializer(serializers.ModelSerializer):
             {
                 "user": member_summary(self, chat_room, target.user_id),
                 "amount": target.amount,
+                "order_amount": target.order_amount,
+                "delivery_fee_share": target.delivery_fee_share,
                 "paid_at": target.paid_at,
             }
             for target in obj.targets.all()

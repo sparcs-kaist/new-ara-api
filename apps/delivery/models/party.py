@@ -528,6 +528,7 @@ class DeliveryParty(MetaDataModel):
             bank_name=bank_name,
             account_number=account_number,
             targets=targets,
+            breakdown={user_id: (subtotal, fee_share) for user_id, subtotal in subtotals.items()},
         )
         self.save()
         broadcast_message_created(self.payment_request.message)
