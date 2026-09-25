@@ -44,3 +44,10 @@ router.register(
     viewset=viewsets.ChatPaymentViewSet,
     basename="chat_payment"
 )
+
+# 채팅 신고
+router.register(
+    prefix=r"chat/report",
+    viewset=viewsets.ChatReportViewSet,
+    basename="chat_report"
+)

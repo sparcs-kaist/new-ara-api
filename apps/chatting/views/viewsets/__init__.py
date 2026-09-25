@@ -4,3 +4,4 @@ from .dm import DMViewSet
 from .message import ChatMessageViewSet
 from .vote import ChatVoteViewSet
 from .payment import ChatPaymentViewSet
+from .report import ChatReportViewSet
