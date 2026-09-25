@@ -127,7 +127,15 @@ class DeliveryPartyViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, Act
     @extend_schema(responses={200: OpenApiTypes.OBJECT})
     @action(detail=False, methods=["get"])
     def penalty(self, request):
-        return response.Response({"until": DeliveryPenalty.active_until(request.user)})
+        penalty = DeliveryPenalty.get_active(request.user)
+        if penalty is None:
+            return response.Response({"until": None, "reason": None, "duration_hours": None})
+        # reason 은 패널티를 받은 배달방의 취소 사유 (HOST: 주문 후 방장 취소 / NO_DECISION: 확정 안 해서 자동 취소)
+        return response.Response({
+            "until": penalty.until,
+            "reason": penalty.party.cancel_reason,
+            "duration_hours": round((penalty.until - penalty.created_at).total_seconds() / 3600),
+        })
 
     @extend_schema(request=None, responses={200: DeliveryPartyDetailSerializer})
     @action(detail=True, methods=["post"])
