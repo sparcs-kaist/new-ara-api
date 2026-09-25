@@ -145,7 +145,7 @@ def _send_to_tokens(
         try:
             response = messaging.send_each_for_multicast(message)
         except FirebaseError as e:
-            log.warning("FCM 묶음 발송 실패 (토큰 %d개): %r", len(chunk), e)
+            log.warning("FCM multicast failed for chunk of %d: %r", len(chunk), e)
             continue
 
         for token, resp in zip(chunk, response.responses):
@@ -157,9 +157,9 @@ def _send_to_tokens(
             if isinstance(err, messaging.UnregisteredError):
                 invalid_tokens.append(token)
             else:
-                log.warning("FCM 발송 실패 token=%s… err=%r", token[:12], err)
+                log.warning("FCM send failed token=%s… err=%r", token[:12], err)
 
     if invalid_tokens:
         from apps.user.models import FCMToken
         deleted, _ = FCMToken.objects.filter(token__in=invalid_tokens).delete()
-        log.info("만료된 FCM 토큰 %d개 삭제", deleted)
+        log.info("FCM cleaned up %d invalid tokens", deleted)

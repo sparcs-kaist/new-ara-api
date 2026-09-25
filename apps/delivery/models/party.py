@@ -567,12 +567,12 @@ class DeliveryParty(MetaDataModel):
             try:
                 cls.objects.get(pk=pk).close_recruiting()
             except Exception:
-                log.exception("배달방 모집 마감 처리 실패 party=%s", pk)
+                log.exception("delivery close_recruiting failed party=%s", pk)
         for pk in list(due_decision):
             try:
                 cls.objects.get(pk=pk).expire_decision()
             except Exception:
-                log.exception("배달방 결정 시간 초과 처리 실패 party=%s", pk)
+                log.exception("delivery expire_decision failed party=%s", pk)
 
     @transaction.atomic
     def close_recruiting(self):

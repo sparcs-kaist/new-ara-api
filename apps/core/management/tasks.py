@@ -92,7 +92,7 @@ def send_push_to_user(user_id: int, title: str, body: str, data: dict | None = N
         from apps.core.push import send_to_user_sync
         send_to_user_sync(user_id=user_id, title=title, body=body, data=data)
     except Exception:
-        log.exception("푸시 발송 실패 (user_id=%s)", user_id)
+        log.exception("send_push_to_user failed (user_id=%s)", user_id)
 
 
 @celery_app.task
@@ -101,7 +101,7 @@ def send_push_to_users(user_ids: list, title: str, body: str, data: dict | None 
         from apps.core.push import send_to_users_sync
         send_to_users_sync(user_ids=user_ids, title=title, body=body, data=data)
     except Exception:
-        log.exception("여러 명 푸시 발송 실패 (대상 %d명)", len(user_ids or []))
+        log.exception("send_push_to_users failed (n=%d)", len(user_ids or []))
 
 
 @celery_app.task

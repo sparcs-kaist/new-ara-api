@@ -21,7 +21,7 @@ def send_to_room(room_id: int, event: dict) -> None:
         try:
             async_to_sync(get_channel_layer().group_send)(room_group_name(room_id), event)
         except Exception:
-            log.exception("채팅방 소켓 알림 실패 room=%s type=%s", room_id, event.get("type"))
+            log.exception("chat broadcast failed room=%s type=%s", room_id, event.get("type"))
 
     # 커밋 전에 보내면 다시 조회했을 때 데이터가 없다
     transaction.on_commit(send)

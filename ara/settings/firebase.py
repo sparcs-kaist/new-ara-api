@@ -15,12 +15,12 @@ _disabled = os.environ.get("FCM_DISABLED", "").strip().lower() in ("1", "true", 
 _cred_path = os.path.join(BASE_DIR, "firebaseServiceAccountKey.json")
 
 if _disabled:
-    log.info("FCM 꺼짐: FCM_DISABLED 환경변수")
+    log.info("FCM disabled via FCM_DISABLED env var")
 elif not os.path.isfile(_cred_path):
-    log.warning("FCM 꺼짐: 인증 파일이 없음 (%s)", _cred_path)
+    log.warning("FCM disabled: cred file not found at %s", _cred_path)
 else:
     try:
         firebase_admin.initialize_app(credentials.Certificate(_cred_path))
         FCM_ENABLED = True
     except Exception as e:
-        log.error("FCM 꺼짐: firebase 초기화 실패 (%r)", e)
+        log.error("FCM disabled: firebase init failed (%r)", e)
