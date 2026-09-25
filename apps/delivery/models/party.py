@@ -652,7 +652,7 @@ class DeliveryParty(MetaDataModel):
             if exclude_host:
                 memberships = memberships.exclude(user_id=self.host_id)
             user_ids = list(memberships.values_list("user_id", flat=True))
-        Notification.notify_chat_room_event(self.chat_room, title, content, user_ids)
+        Notification.notify_chat_room_event(self.chat_room, "delivery", title, content, user_ids)
 
     def broadcast_update(self):
         broadcast_room_update(self.chat_room_id, "delivery", "updated", self.id)

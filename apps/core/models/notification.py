@@ -97,6 +97,7 @@ class Notification(MetaDataModel):
     @classmethod
     def notify_commented(cls, comment):
         from apps.core.models import NotificationReadLog
+        from apps.user.models import UserNotificationPreference
 
         pushed_user_ids: set[int] = set()
 
@@ -117,6 +118,8 @@ class Notification(MetaDataModel):
             )
             if not Block.is_blocked(
                 blocked_by=_parent_article.created_by, user=_comment.created_by
+            ) and UserNotificationPreference.filter_push_targets(
+                [_parent_article.created_by_id], "article_commented"
             ):
                 enqueue_push_for_notification(
                     notification, _parent_article.created_by_id
@@ -143,6 +146,8 @@ class Notification(MetaDataModel):
                     blocked_by=_comment.parent_comment.created_by,
                     user=_comment.created_by,
                 )
+            ) and UserNotificationPreference.filter_push_targets(
+                [_comment.parent_comment.created_by_id], "comment_commented"
             ):
                 enqueue_push_for_notification(
                     notification, _comment.parent_comment.created_by_id
@@ -168,6 +173,7 @@ class Notification(MetaDataModel):
     def notify_message(cls, message : ChatMessage):
         from apps.core.models import NotificationReadLog
         from apps.chatting.models.message import ChatMessageType
+        from apps.user.models import UserNotificationPreference
 
         # 안내 메시지(참여/퇴장 등)는 알림을 보내지 않는다.
         # 꼭 알려야 하는 안내(마감, 취소 등)는 보내는 쪽에서 notify_chat_room_event 를 직접 부른다.
@@ -179,6 +185,7 @@ class Notification(MetaDataModel):
             room = message.chat_room
             cls.notify_chat_room_event(
                 chat_room=room,
+                push_kind="delivery",
                 title="🛵 배달이 도착했어요",
                 content=f"{room.room_title} 배달이 도착했어요. 받으러 가주세요!",
                 user_ids=room.membership_info_set.exclude(
@@ -239,7 +246,8 @@ class Notification(MetaDataModel):
             notify_chat_room_message(membership.user)
             recipient_ids.append(membership.user_id)
 
-        # FCM push: 한 번에 모든 수신자 토큰을 multicast
+        # FCM push: 한 번에 모든 수신자 토큰을 multicast (채팅 알림을 끈 사람 제외)
+        recipient_ids = UserNotificationPreference.filter_push_targets(recipient_ids, "chat_message")
         if recipient_ids:
             enqueue_push_for_notification_to_users(notification, recipient_ids)
 
@@ -247,8 +255,9 @@ class Notification(MetaDataModel):
     # 일반 메시지 알림과 달리 중복 알림을 건너뛰지 않고 user_ids 모두에게 보낸다.
     @classmethod
     @transaction.atomic
-    def notify_chat_room_event(cls, chat_room : ChatRoom, title : str, content : str, user_ids):
+    def notify_chat_room_event(cls, chat_room : ChatRoom, push_kind : str, title : str, content : str, user_ids):
         from apps.core.models import NotificationReadLog
+        from apps.user.models import UserNotificationPreference
 
         user_ids = list(user_ids)
         if not user_ids:
@@ -264,4 +273,6 @@ class Notification(MetaDataModel):
             NotificationReadLog(read_by_id=user_id, notification=notification)
             for user_id in user_ids
         ])
-        enqueue_push_for_notification_to_users(notification, user_ids)
+        push_ids = UserNotificationPreference.filter_push_targets(user_ids, push_kind)
+        if push_ids:
+            enqueue_push_for_notification_to_users(notification, push_ids)
