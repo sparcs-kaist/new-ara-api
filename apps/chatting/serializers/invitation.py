@@ -2,7 +2,7 @@ from rest_framework import serializers
 from apps.chatting.models.room_invitation import ChatRoomInvitation
 from apps.chatting.models.membership_room import ChatUserRole
 from apps.user.serializers.user import PublicUserSerializer
-from apps.chatting.models.room import ChatRoom
+from apps.chatting.models.room import ChatRoom, ChatRoomType
 from datetime import timedelta
 from django.utils import timezone
 
@@ -54,6 +54,10 @@ class ChatInvitationCreateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         invitation_to = attrs.get('invitation_to')
         invited_room = attrs.get('invited_room')
+
+        # 함께 배달 방은 배달 참여 API 로만 들어올 수 있다
+        if invited_room.room_type == ChatRoomType.DELIVERY.value:
+            raise serializers.ValidationError("함께 배달 방에는 초대할 수 없습니다.")
 
         if ChatRoomInvitation.objects.filter(
             invitation_to=invitation_to,

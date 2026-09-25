@@ -12,8 +12,11 @@ from drf_spectacular.utils import (
 )
 
 from ara.classes.viewset import ActionAPIViewSet
-from apps.chatting.models.message import ChatMessage
+from apps.chatting.models.message import ChatMessage, DELETABLE_MESSAGE_TYPES
+from apps.chatting.realtime import broadcast_room_update
+from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole
 from apps.chatting.serializers.message import (
+    attachment_related_names,
     MessageSerializer,
     MessageCreateSerializer, 
     MessageUpdateSerializer,
@@ -67,7 +70,18 @@ class ChatMessageViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     }
 
     def get_queryset(self):
-        queryset = ChatMessage.objects.all()
+        # 내가 참여한(차단 관계가 아닌) 방의 메시지만
+        my_room_ids = ChatRoomMemberShip.objects.filter(
+            user=self.request.user,
+        ).exclude(
+            role__in=[ChatUserRole.BLOCKED.value, ChatUserRole.BLOCKER.value],
+        ).values('chat_room_id')
+
+        queryset = ChatMessage.objects.filter(chat_room_id__in=my_room_ids).select_related(
+            'chat_room', 'created_by__profile', *attachment_related_names(),
+        ).prefetch_related(
+            'vote__options__ballots', 'payment_request__targets',
+        )
         room_id = self.request.query_params.get('chat_room')
         if room_id:
             queryset = queryset.filter(chat_room_id=room_id)
@@ -84,5 +98,12 @@ class ChatMessageViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         메시지 삭제
         """
         instance = self.get_object()
+        # 배달 주문 / 도착 / 안내 메시지는 지우지 않는다 (주문은 주문 취소로)
+        if instance.message_type not in DELETABLE_MESSAGE_TYPES:
+            return response.Response(
+                {"detail": "이 메시지는 삭제할 수 없습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         instance.delete()  # 소프트 삭제가 아니라면 일반 delete()
+        broadcast_room_update(instance.chat_room_id, "messages", "deleted", instance.id)
         return response.Response({"message": "메시지가 삭제되었습니다."}, status=status.HTTP_200_OK)

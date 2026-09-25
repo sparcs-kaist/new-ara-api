@@ -43,7 +43,9 @@ def enqueue_push_for_notification(notification: "Notification", user_id: int) ->
     transaction.on_commit(
         lambda: send_push_to_user.delay(
             user_id=user_id, title=title, body=body, data=data
-        )
+        ),
+        # broker 오류가 이미 커밋된 요청을 500 으로 만들지 않게
+        robust=True,
     )
 
 
@@ -66,7 +68,8 @@ def enqueue_push_for_notification_to_users(
     transaction.on_commit(
         lambda: send_push_to_users.delay(
             user_ids=user_ids, title=title, body=body, data=data
-        )
+        ),
+        robust=True,
     )
 
 

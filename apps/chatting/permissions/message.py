@@ -51,7 +51,6 @@ class MessageWritePermissions(permissions.BasePermission):
         return membership and membership.role not in [
             ChatUserRole.BLOCKED.value,
             ChatUserRole.BLOCKER.value,
-            ChatUserRole.OBSERVER.value,
         ]
 
 # 메시지 삭제 권한 : 본인 메시지 or 관리자 이상

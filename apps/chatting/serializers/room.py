@@ -51,6 +51,11 @@ class ChatRoomCreateSerializer(serializers.ModelSerializer):
     
     def validate(self, attrs):
         # 추가 유효성 검사 (예: 타입에 따른 필수 필드 등)
+        if attrs.get('room_type') == ChatRoomType.DELIVERY.value:
+            raise serializers.ValidationError(
+                "함께 배달 방은 이 엔드포인트로 생성할 수 없습니다. 'delivery'를 이용하세요."
+            )
+
         if attrs.get('room_type') == ChatRoomType.DM.value:
             # DM은 별도 엔드포인트에서 처리한다고 했으므로 에러 발생
             raise serializers.ValidationError(
@@ -64,19 +69,30 @@ class ChatRoomCreateSerializer(serializers.ModelSerializer):
         
         return attrs
     
+class ChatRoomUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChatRoom
+        fields = ['room_title', 'picture']
+
 class ChatRoomSerializer(serializers.ModelSerializer):
     """
     채팅방 정보 조회용 Serializer
     """
     recent_message = MessageSerializer(read_only=True)
+    # 배달방이면 배달방 id, 아니면 null
+    delivery_party = serializers.SerializerMethodField()
 
     class Meta:
         model = ChatRoom
         fields = [
             'id', 'room_title', 'room_type', 'chat_name_type',
-            'picture', 'recent_message_at', 'recent_message', 'created_at'
+            'picture', 'recent_message_at', 'recent_message', 'delivery_party', 'created_at'
         ]
         read_only_fields = ['recent_message_at', 'recent_message', 'created_at']
+
+    def get_delivery_party(self, obj):
+        party = getattr(obj, "delivery_party", None)
+        return party.id if party else None
 
 class ChatRoomByIdSerializer(serializers.Serializer):
     """
@@ -104,8 +120,12 @@ class ChatRoomByIdSerializer(serializers.Serializer):
 class ChatRoomMemberWithLastSeenSerializer(serializers.Serializer):
     """
     채팅방 멤버 정보와 마지막 접속 시간을 포함하는 Serializer
+    (익명 방에서는 user 가 null 이고 display_name 만 내려간다)
     """
-    user = PublicUserSerializer()
+    user = PublicUserSerializer(allow_null=True)
+    display_name = serializers.CharField()
+    anon_number = serializers.IntegerField(allow_null=True)
+    is_mine = serializers.BooleanField()
     role = serializers.CharField()
     last_seen_at = serializers.DateTimeField(allow_null=True)
 

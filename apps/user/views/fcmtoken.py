@@ -17,11 +17,15 @@ class FCMTokenView(APIView):
         elif mode == "update":
             if not request.user.is_authenticated:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
+            # "false" 같은 문자열로 와도 저장되게
+            is_web = request.data.get("is_web", True)
+            if isinstance(is_web, str):
+                is_web = is_web.lower() in ("true", "1")
             token = FCMToken(
                 token=token,
                 user=request.user,
                 last_activated_at=Now(),
-                is_web=request.data.get("is_web", True),
+                is_web=is_web,
             )
             token.save()
         return Response(status=status.HTTP_200_OK)

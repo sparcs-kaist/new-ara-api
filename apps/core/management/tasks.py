@@ -105,6 +105,12 @@ def send_push_to_users(user_ids: list, title: str, body: str, data: dict | None 
 
 
 @celery_app.task
+def sweep_delivery_deadlines():
+    from apps.delivery.models import DeliveryParty
+    DeliveryParty.sweep_deadlines()
+
+
+@celery_app.task
 def crawl_meal():
     #현재 날짜로 부터 앞으로 일주일간 식단 크롤링
     # 현재 날짜를 가져오기

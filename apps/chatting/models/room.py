@@ -9,6 +9,7 @@ class ChatRoomType(str, Enum):
     DM = "DM" # 1:1 채팅방
     GROUP_DM = "GROUP_DM" # 그룹 채팅방 (permission이 없이 유저 모두 동일한 참여자.)
     OPEN_CHAT = "OPEN_CHAT" # 오픈 그룹 채팅방 (role에 따라 permission이 설정된다.)
+    DELIVERY = "DELIVERY" # 함께 배달 기능을 위한 방
 
 class ChatNameType(str, Enum):
     NICKNAME = "NICKNAME"  # 닉네임
@@ -88,6 +89,10 @@ class ChatRoom(MetaDataModel):
         
         elif self.room_type == ChatRoomType.GROUP_DM or self.room_type == ChatRoomType.DM:
             return True
+
+        # 함께 배달 방은 배달 참여 API 로만 들어올 수 있다
+        elif self.room_type == ChatRoomType.DELIVERY:
+            return False
 
         # 그 외의 경우 초대장이 있는지 확인
         else:

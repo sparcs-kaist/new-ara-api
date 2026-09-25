@@ -42,7 +42,7 @@ def send_message(instance, state, objects, silent=True, sync=True):
     :param silent: silent noti 여부
     :param sync: False면 async
     """
-    if settings.TEST:
+    if getattr(settings, "TEST", False):
         return
 
     message_dict = {

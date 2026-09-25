@@ -30,6 +30,7 @@ urlpatterns = [
     path("", include(("apps.calendar.urls", "calendar"))),
     path("", include(("apps.chatting.urls", "chatting"))),
     path("", include(("apps.meal.urls", "meal"))),
+    path("", include(("apps.delivery.urls", "delivery"))),
     path("", include(("apps.course.urls", "course"))),
     path("", include(("apps.major.urls", "major"))),
     path("api/kaist/", include(("apps.kaist.urls", "kaist"))),
