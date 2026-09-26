@@ -30,6 +30,11 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
+# 배달 알림은 urgent 큐, 채팅 / 댓글 푸시는 push 큐 (채팅이 몰려도 배달 알림은 따로 바로 나간다)
+PUSH_QUEUE = "push"
+URGENT_QUEUE = "urgent"
+
+
 def enqueue_push_for_notification(notification: "Notification", user_id: int) -> None:
     if not getattr(settings, "FCM_ENABLED", False):
         return
@@ -41,16 +46,21 @@ def enqueue_push_for_notification(notification: "Notification", user_id: int) ->
     from apps.core.management.tasks import send_push_to_user
 
     transaction.on_commit(
-        lambda: send_push_to_user.delay(
-            user_id=user_id, title=title, body=body, data=data
+        lambda: send_push_to_user.apply_async(
+            kwargs=dict(user_id=user_id, title=title, body=body, data=data),
+            queue=PUSH_QUEUE,
         ),
         # broker 오류가 이미 커밋된 요청을 500 으로 만들지 않게
         robust=True,
     )
 
 
+# collapse_key 가 같은 푸시는 기기에서 하나로 교체된다 (같은 방 알림이 쌓이지 않게)
 def enqueue_push_for_notification_to_users(
-    notification: "Notification", user_ids: Iterable[int]
+    notification: "Notification",
+    user_ids: Iterable[int],
+    collapse_key: Optional[str] = None,
+    queue: str = PUSH_QUEUE,
 ) -> None:
     if not getattr(settings, "FCM_ENABLED", False):
         return
@@ -62,12 +72,15 @@ def enqueue_push_for_notification_to_users(
     title = notification.title
     body = (notification.content or "")[:200]
     data = _build_data(notification)
+    if collapse_key:
+        data["collapse_key"] = collapse_key
 
     from apps.core.management.tasks import send_push_to_users
 
     transaction.on_commit(
-        lambda: send_push_to_users.delay(
-            user_ids=user_ids, title=title, body=body, data=data
+        lambda: send_push_to_users.apply_async(
+            kwargs=dict(user_ids=user_ids, title=title, body=body, data=data),
+            queue=queue,
         ),
         robust=True,
     )
@@ -133,6 +146,10 @@ def _send_to_tokens(
 
     # FCM 은 모든 data 값을 string 으로 요구
     string_data = {k: str(v) for k, v in data.items()}
+    collapse_key = data.get("collapse_key")
+    apns_headers = {"apns-priority": "10"}
+    if collapse_key:
+        apns_headers["apns-collapse-id"] = collapse_key
 
     invalid_tokens: list[str] = []
     for i in range(0, len(tokens), _FCM_MULTICAST_LIMIT):
@@ -141,6 +158,17 @@ def _send_to_tokens(
             notification=messaging.Notification(title=title, body=body),
             data=string_data,
             tokens=chunk,
+            # high priority 가 없으면 백그라운드 / Doze 에서 늦거나 빠진다
+            android=messaging.AndroidConfig(
+                priority="high",
+                notification=messaging.AndroidNotification(
+                    channel_id="ara_default", tag=collapse_key,
+                ),
+            ),
+            apns=messaging.APNSConfig(
+                headers=apns_headers,
+                payload=messaging.APNSPayload(aps=messaging.Aps(sound="default")),
+            ),
         )
         try:
             response = messaging.send_each_for_multicast(message)

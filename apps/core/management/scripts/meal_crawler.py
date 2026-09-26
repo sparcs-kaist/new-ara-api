@@ -49,8 +49,8 @@ RESTAURANT_CODE_TO_NAME = {
     "fclt": "카이마루",
     "west": "서맛골",
     "emp":  "교수회관",
-    "east1": "동맛골(동측학생식당)",
-    "east2": "동맛골(동측 교직원식당)",
+    "east1": "동맛골 1층",
+    "east2": "동맛골 2층",
 }
 
 # display_name 이 비어 있을 때만 채운다 (admin 에서 바꾼 값은 덮어쓰지 않는다). 없으면 restaurant_name

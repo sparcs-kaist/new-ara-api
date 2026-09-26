@@ -51,6 +51,7 @@ class TestNotificationPreference(TestCase):
             ChatMessage.create(chat_room=room, created_by=self.user, message_type="TEXT", message_content="안녕")
 
         assert push.call_args.args[1] == [self.user2.id]
+        assert push.call_args.kwargs["collapse_key"] == f"room-{room.id}"
         assert NotificationReadLog.objects.filter(read_by=self.user3).exists()
 
 
@@ -72,3 +73,60 @@ class TestChatPushDedup(TestCase):
         assert send() == []
         ChatRoomMemberShip.objects.filter(chat_room=room, user=self.user2).update(last_seen_at=timezone.now())
         assert send() == [self.user2.id]
+
+
+@pytest.mark.usefixtures("set_user_client", "set_user_client2")
+class TestDeliveryPushQueue(TestCase):
+    def test_delivery_event_uses_urgent_queue_and_own_collapse_key(self):
+        from apps.delivery.models import DeliveryParty
+
+        party = DeliveryParty.open(
+            self.user, store_name="가게", place_name="희망관", min_order_amount=1000,
+            recruit_minutes=30, price=1000,
+        )
+        party.join(self.user2)
+        party.confirm_order(self.user)
+        with patch(PUSH) as push:
+            party.arrive(self.user)
+        assert push.call_args.kwargs["queue"] == "urgent"
+        assert push.call_args.kwargs["collapse_key"] == f"delivery-{party.chat_room_id}"
+
+
+@pytest.mark.usefixtures("set_user_client", "set_user_client2")
+class TestChatPushText(TestCase):
+    def send(self, room, **kwargs):
+        from apps.core.models import Notification
+
+        ChatMessage.create(chat_room=room, created_by=self.user, **kwargs)
+        return Notification.objects.filter(related_chat_room=room).latest("id")
+
+    def test_group_room_title_and_sender_preview(self):
+        room = ChatRoom.objects.create(room_title="스터디", room_type=ChatRoomType.GROUP_DM.value)
+        for user in (self.user, self.user2):
+            ChatRoomMemberShip.objects.create(chat_room=room, user=user, role=ChatUserRole.PARTICIPANT.value)
+        notification = self.send(room, message_type="TEXT", message_content="내일 몇 시?")
+        assert notification.title == "스터디"
+        assert notification.content == f"{self.user.profile.nickname}: 내일 몇 시?"
+
+    def test_dm_title_is_sender_and_photo_preview(self):
+        room = ChatRoom.objects.create(room_title="DM_a,b", room_type=ChatRoomType.DM.value)
+        for user in (self.user, self.user2):
+            ChatRoomMemberShip.objects.create(chat_room=room, user=user, role=ChatUserRole.PARTICIPANT.value)
+        notification = self.send(room, message_type="IMAGE", message_content="https://x.com/a.png")
+        assert notification.title == self.user.profile.nickname
+        assert notification.content == "사진"
+
+    def test_anonymous_delivery_room_uses_anon_name(self):
+        from apps.delivery.models import DeliveryParty
+
+        party = DeliveryParty.open(
+            self.user2, store_name="가게", place_name="희망관", min_order_amount=100000,
+            recruit_minutes=30, price=1000,
+        )
+        party.join(self.user)
+        notification = self.send(party.chat_room, message_type="TEXT", message_content="안녕하세요")
+        assert notification.title == "가게"
+        assert notification.content == "익명1: 안녕하세요"
+        party.place_order(self.user, price=3000)
+        from apps.core.models import Notification
+        assert Notification.objects.filter(related_chat_room=party.chat_room).latest("id").content == "익명1님이 주문을 등록했어요"
