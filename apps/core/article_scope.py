@@ -40,3 +40,14 @@ def scoped_article_sql_condition(table: str = "`core_article`") -> str:
         f"{table}.`related_course_group_id` IS NULL "
         f"AND {table}.`related_major_id` IS NULL"
     )
+
+
+def search_scoped_articles(queryset, request):
+    """과목/학과 글 목록의 `main_search__contains` (제목 + 본문 icontains).
+    scoped 글은 Elasticsearch 색인에서 빠져 있어 DB 에서 찾는다."""
+    from django.db.models import Q
+
+    keyword = request.query_params.get("main_search__contains", "").strip()
+    if not keyword:
+        return queryset
+    return queryset.filter(Q(title__icontains=keyword) | Q(content_text__icontains=keyword))

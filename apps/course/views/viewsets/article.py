@@ -11,9 +11,11 @@ URL: /api/courses/<course_id>/articles/[<pk>/]
 from __future__ import annotations
 
 from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import permissions, response, status, viewsets
 
+from apps.core.article_scope import search_scoped_articles
 from apps.core.models import Article, ArticleReadLog, Comment, Vote
 from apps.course.board import get_courses_board_id
 from apps.course.models import Course
@@ -59,6 +61,8 @@ class CourseArticleViewSet(viewsets.ModelViewSet):
                 "-created_at"
             )
         )
+        if self.action == "list":
+            queryset = search_scoped_articles(queryset, self.request)
         if self.action == "retrieve":
             queryset = queryset.prefetch_related(
                 Vote.prefetch_my_vote(self.request.user),
@@ -77,7 +81,10 @@ class CourseArticleViewSet(viewsets.ModelViewSet):
             ctx["board_id"] = get_courses_board_id()
         return ctx
 
-    @extend_schema(summary="과목 게시판 글 목록")
+    @extend_schema(
+        summary="과목 게시판 글 목록",
+        parameters=[OpenApiParameter("main_search__contains", OpenApiTypes.STR, description="제목 / 본문")],
+    )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
