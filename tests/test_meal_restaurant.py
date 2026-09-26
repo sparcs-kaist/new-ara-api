@@ -1,6 +1,10 @@
 import pytest
 
-from apps.core.management.scripts.meal_crawler import _crawl_and_save_course_restaurant, _get_or_create_restaurant
+from apps.core.management.scripts.meal_crawler import (
+    RESTAURANT_CODE_TO_NAME,
+    _crawl_and_save_course_restaurant,
+    _get_or_create_restaurant,
+)
 from apps.meal.models import Restaurant
 from tests.conftest import RequestSetting, TestCase
 
@@ -29,8 +33,14 @@ class TestRestaurant(TestCase, RequestSetting):
         assert res.data[0]["display_name"] == "서맛골"
 
     def test_display_name_is_filled_once(self):
-        restaurant = _get_or_create_restaurant("east1", "동맛골(동측학생식당)")
+        restaurant = _get_or_create_restaurant("east1", "동맛골 1층")
         assert restaurant.display_name == "동맛골 1층 (학생식당)"
         # admin 에서 바꾼 값은 크롤러가 덮어쓰지 않는다
         Restaurant.objects.filter(pk=restaurant.pk).update(display_name="바꾼 이름")
-        assert _get_or_create_restaurant("east1", "동맛골(동측학생식당)").display_name == "바꾼 이름"
+        assert _get_or_create_restaurant("east1", "동맛골 1층").display_name == "바꾼 이름"
+
+    def test_legacy_row_gets_code(self):
+        # 예전에 이름으로만 만든 식당 (prod id 3, 4) 을 그대로 이어 쓴다
+        legacy = Restaurant.objects.create(restaurant_name="동맛골 2층")
+        assert _get_or_create_restaurant("east2", RESTAURANT_CODE_TO_NAME["east2"]).pk == legacy.pk
+        assert Restaurant.objects.filter(restaurant_name__startswith="동맛골").count() == 1

@@ -173,7 +173,7 @@ class TestOps(TestCase, RequestSetting):
         res = self.http_request(self.admin, "get", "ops/users", querystring=f"q={self.user2.profile.nickname}")
         assert self.user2.id in [u["id"] for u in res.data]
 
-        restaurant = Restaurant.objects.create(restaurant_name="동맛골(동측학생식당)", code="east1")
+        restaurant = Restaurant.objects.create(restaurant_name="동맛골 1층", code="east1")
         res = self.http_request(self.admin, "patch", f"ops/restaurants/{restaurant.id}", {"display_name": "동맛골 1층", "is_active": False})
         assert res.status_code == 200
         assert res.data["display_name"] == "동맛골 1층"
