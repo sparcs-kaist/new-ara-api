@@ -1,10 +1,13 @@
 """인스타그램 공개 게시물 수집 (비로그인).
 
-로그인 없이 웹 프로필 엔드포인트를 쓰므로 서버 IP 가 429 나 로그인 요구로 막힐 수 있고,
-응답 구조도 예고 없이 바뀐다. 실패는 모두 이 모듈 경계에서 잡아 로그만 남기고 빈 결과를 돌려준다.
+프로필 페이지 HTML 에 최근 게시물(12개)이 JSON 으로 박혀 온다. API 엔드포인트는 바로 429 가 나서 쓰지 않는다.
+비로그인이라 캡션과 게시 시각은 없고, 게시 시각은 게시물 pk 에서 꺼낸다. 여러 장 게시물은 첫 장만 온다.
+막히거나(429, 로그인 요구) 구조가 바뀌면 이 모듈 경계에서 잡아 로그만 남기고 빈 결과를 돌려준다.
 """
 
+import json
 import logging
+import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import List, Optional, Tuple
@@ -13,14 +16,26 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-PROFILE_URL = "https://www.instagram.com/api/v1/users/web_profile_info/"
+PROFILE_URL = "https://www.instagram.com/{username}/"
+# Sec-Fetch 헤더가 없으면 게시물 없는 빈 페이지가 온다
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
-    # 인스타 웹이 쓰는 공개 app id. 없으면 바로 400 이 온다
-    "X-IG-App-ID": "936619743392459",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "ko-KR,ko;q=0.9",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Upgrade-Insecure-Requests": "1",
 }
 REQUEST_TIMEOUT = (5, 20)  # (connect, read)
 FETCH_ERRORS = (requests.RequestException, ValueError, KeyError, TypeError)
+
+TIMELINE_KEY = "polaris_ordered_timeline_connection"
+JSON_SCRIPT_RX = re.compile(r'<script type="application/json"[^>]*>(.*?)</script>', re.S)
+VIDEO = 2  # media_type. 1 사진, 8 여러 장
+# 인스타 id 는 상위 비트가 2011-08-24 기준 ms 타임스탬프다
+INSTAGRAM_EPOCH_MS = 1314220021721
 
 
 @dataclass(frozen=True)
@@ -32,11 +47,10 @@ class InstagramPost:
 
 def fetch_recent_posts(username: str) -> List[InstagramPost]:
     try:
-        res = requests.get(PROFILE_URL, params={"username": username}, headers=HEADERS, timeout=REQUEST_TIMEOUT)
+        res = requests.get(PROFILE_URL.format(username=username), headers=HEADERS, timeout=REQUEST_TIMEOUT)
         res.raise_for_status()
-        # 로그인 요구는 200 + HTML 로 오기도 한다 -> json() 에서 ValueError
-        edges = res.json()["data"]["user"]["edge_owner_to_timeline_media"]["edges"]
-        return [post for post in (to_post(edge["node"]) for edge in edges) if post.image_urls]
+        nodes = [edge["node"] for edge in find_timeline(res.text)["edges"]]
+        return [to_post(node) for node in nodes if node.get("media_type") != VIDEO]
     except FETCH_ERRORS as e:
         logger.warning("Instagram fetch failed for %s: %r", username, e)
         return []
@@ -44,7 +58,7 @@ def fetch_recent_posts(username: str) -> List[InstagramPost]:
 
 def download_image(url: str) -> Optional[bytes]:
     try:
-        res = requests.get(url, headers=HEADERS, timeout=REQUEST_TIMEOUT)
+        res = requests.get(url, headers={"User-Agent": HEADERS["User-Agent"]}, timeout=REQUEST_TIMEOUT)
         res.raise_for_status()
         return res.content
     except requests.RequestException as e:
@@ -52,12 +66,36 @@ def download_image(url: str) -> Optional[bytes]:
         return None
 
 
-# 여러 장 게시물은 사진만 순서대로, 영상은 뺀다
+# 로그인 요구 페이지나 구조가 바뀐 페이지에는 타임라인이 없다 -> KeyError
+def find_timeline(html: str) -> dict:
+    for blob in JSON_SCRIPT_RX.findall(html):
+        if TIMELINE_KEY in blob:
+            timeline = search_key(json.loads(blob), TIMELINE_KEY)
+            if timeline is not None:
+                return timeline
+    raise KeyError(TIMELINE_KEY)
+
+
+def search_key(obj, key):
+    if isinstance(obj, dict):
+        if key in obj:
+            return obj[key]
+        children = obj.values()
+    elif isinstance(obj, list):
+        children = obj
+    else:
+        return None
+    for child in children:
+        found = search_key(child, key)
+        if found is not None:
+            return found
+    return None
+
+
 def to_post(node: dict) -> InstagramPost:
-    children = [edge["node"] for edge in (node.get("edge_sidecar_to_children") or {}).get("edges", [])]
-    media = children or [node]
+    pk = int(node["pk"])
     return InstagramPost(
-        post_id=str(node["id"]),
-        taken_at=datetime.fromtimestamp(node["taken_at_timestamp"], tz=timezone.utc),
-        image_urls=tuple(item["display_url"] for item in media if not item.get("is_video")),
+        post_id=str(pk),
+        taken_at=datetime.fromtimestamp(((pk >> 23) + INSTAGRAM_EPOCH_MS) / 1000, tz=timezone.utc),
+        image_urls=(node["display_uri"],),
     )

@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
@@ -17,16 +18,24 @@ def kst(*args):
     return timezone.make_aware(datetime(*args))
 
 
-def node(post_id, taken_at, children=None):
-    data = {"id": post_id, "taken_at_timestamp": int(taken_at.timestamp()), "display_url": f"https://img/{post_id}", "is_video": False}
-    if children:
-        data["edge_sidecar_to_children"] = {"edges": [{"node": child} for child in children]}
-    return data
+def pk_at(moment, seq=1):
+    return str(((int(moment.timestamp() * 1000) - instagram_client.INSTAGRAM_EPOCH_MS) << 23) + seq)
 
 
-def profile_response(*nodes):
+def node(moment, media_type=1, seq=1):
+    return {"pk": pk_at(moment, seq), "code": "x", "display_uri": f"https://img/{seq}", "media_type": media_type, "caption": None}
+
+
+# 프로필 페이지에 박혀 오는 모양 (2026-09 실제 페이지 기준)
+def profile_page(*nodes):
+    data = {"require": [["ScheduledServerJS", "handle", None, [{"__bbox": {"require": [["RelayPrefetchedStreamCache", "next", [], [
+        "adp_PolarisLoggedOutDesktopWWWProfilePostsTabContentQueryRelayPreloader",
+        {"__bbox": {"complete": True, "result": {"data": {"xig_user_by_username": {
+            "polaris_ordered_timeline_connection": {"edges": [{"node": n} for n in nodes]},
+        }}}}},
+    ]]]}}]]]}
     res = MagicMock(status_code=200)
-    res.json.return_value = {"data": {"user": {"edge_owner_to_timeline_media": {"edges": [{"node": n} for n in nodes]}}}}
+    res.text = f'<html><script type="application/json" data-sjs>{json.dumps(data)}</script></html>'
     return res
 
 
@@ -39,25 +48,24 @@ class TestMealTimeOf(TestCase):
 
 
 class TestFetchRecentPosts(TestCase):
-    def test_parses_carousel_and_skips_video(self):
-        carousel = node("1", kst(2026, 9, 28, 11, 50), children=[
-            {"display_url": "https://img/a", "is_video": False},
-            {"display_url": "https://img/v", "is_video": True},
-            {"display_url": "https://img/b", "is_video": False},
-        ])
-        video = {**node("2", kst(2026, 9, 28, 12)), "is_video": True}
-        with patch.object(instagram_client.requests, "get", return_value=profile_response(carousel, video)):
+    def test_parses_page_and_skips_video(self):
+        page = profile_page(node(kst(2026, 9, 23, 11, 45), seq=1), node(kst(2026, 9, 23, 12), media_type=2, seq=2), node(kst(2026, 9, 17, 11, 13), media_type=8, seq=3))
+        with patch.object(instagram_client.requests, "get", return_value=page):
             posts = instagram_client.fetch_recent_posts("gaon_kaist_n11")
-        assert [(p.post_id, p.image_urls) for p in posts] == [("1", ("https://img/a", "https://img/b"))]
+        assert [p.image_urls for p in posts] == [("https://img/1",), ("https://img/3",)]
+        assert timezone.localtime(posts[0].taken_at).strftime("%m-%d %H:%M") == "09-23 11:45"
+
+    def test_real_post_id_time(self):
+        # 실제 게시물 DdnRI6kPdVi (카이마루 중식)
+        post = instagram_client.to_post({"pk": "3992234974118794594", "display_uri": "u"})
+        assert timezone.localtime(post.taken_at).strftime("%Y-%m-%d %H:%M") == "2026-09-23 11:45"
 
     def test_blocked_or_changed_returns_empty(self):
         blocked = MagicMock()
         blocked.raise_for_status.side_effect = requests.HTTPError("429")
-        login_page = MagicMock(status_code=200)
-        login_page.json.side_effect = ValueError("not json")
-        changed = MagicMock(status_code=200)
-        changed.json.return_value = {"data": {"user": None}}
-        for res in (blocked, login_page, changed):
+        login_page = MagicMock(status_code=200, text="<html>login</html>")
+        broken = MagicMock(status_code=200, text='<script type="application/json">{"polaris_ordered_timeline_connection": </script>')
+        for res in (blocked, login_page, broken):
             with patch.object(instagram_client.requests, "get", return_value=res):
                 assert instagram_client.fetch_recent_posts("gaon_kaist_n11") == []
         with patch.object(instagram_client.requests, "get", side_effect=requests.ConnectionError()):
@@ -69,12 +77,10 @@ class TestCrawlInstagramMenuPhotos(TestCase):
     def setUp(self):
         self.restaurant = Restaurant.objects.create(restaurant_name="카이마루", code="fclt")
         self.posts = [
-            instagram_client.to_post(node("10", kst(2026, 9, 28, 11, 40), children=[
-                {"display_url": "https://img/a", "is_video": False},
-                {"display_url": "https://img/b", "is_video": False},
-            ])),
+            instagram_client.to_post(node(kst(2026, 9, 28, 11, 40), seq=1)),
+            instagram_client.to_post(node(kst(2026, 9, 28, 11, 41), seq=2)),
             # 끼니 구간 밖
-            instagram_client.to_post(node("11", kst(2026, 9, 28, 15, 0))),
+            instagram_client.to_post(node(kst(2026, 9, 28, 15, 0), seq=3)),
         ]
 
     def crawl(self, now):
@@ -86,8 +92,8 @@ class TestCrawlInstagramMenuPhotos(TestCase):
     def test_saves_only_meal_window_posts_once(self):
         saved, _, _ = self.crawl(kst(2026, 9, 28, 11, 50))
         assert saved == 2
-        photos = MenuPhoto.objects.order_by("source_post_id")
-        assert [p.source_post_id for p in photos] == ["10_0", "10_1"]
+        photos = list(MenuPhoto.objects.order_by("source_post_id"))
+        assert sorted(p.source_post_id for p in photos) == sorted(f"{p.post_id}_0" for p in self.posts[:2])
         assert all(p.meal_time == "LUNCH" and p.is_official and p.created_by is None for p in photos)
 
         # 다시 돌거나 지운 뒤에도 다시 받지 않는다
