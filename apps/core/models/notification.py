@@ -176,8 +176,7 @@ class Notification(MetaDataModel):
         from apps.chatting.models.message import ChatMessageType
         from apps.user.models import UserNotificationPreference
 
-        # 안내 메시지(참여/퇴장 등)는 알림을 보내지 않는다.
-        # 꼭 알려야 하는 안내(마감, 취소 등)는 보내는 쪽에서 notify_chat_room_event 를 직접 부른다.
+        # 안내 메시지는 알리지 않는다. 꼭 알릴 안내는 보내는 쪽에서 notify_chat_room_event 로
         if message.message_type == ChatMessageType.SYSTEM.value:
             return
 
@@ -202,7 +201,6 @@ class Notification(MetaDataModel):
         _messaged_room : ChatRoom = message.chat_room
 
         # 2. 채팅방에 있는 User들 의 Membership 찾기
-        # 방을 차단했거나 차단당한 사람은 제외
         _memberships : list[ChatRoomMemberShip] = ChatRoomMemberShip.objects.filter(chat_room=_messaged_room).exclude(
             role__in=[ChatUserRole.BLOCKED.value, ChatUserRole.BLOCKER.value],
         )
@@ -223,7 +221,7 @@ class Notification(MetaDataModel):
             related_chat_room=_messaged_room,
         )
 
-        # 4. 이미 읽지 않은 알림이 있는지 확인 (멤버마다 조회하지 않고 한 번에)
+        # 4. 이미 읽지 않은 알림이 있는지 확인
         # 알림 읽음은 알림 목록에서만 해제되므로, 방을 다시 연 뒤(last_seen_at)
         # 생긴 알림만 본다. 아니면 첫 알림 이후 영영 막힌다.
         latest_unread = dict(NotificationReadLog.objects.filter(
@@ -256,8 +254,7 @@ class Notification(MetaDataModel):
         if recipient_ids:
             enqueue_push_for_notification_to_users(notification, recipient_ids)
 
-    # 채팅방에서 꼭 알려야 하는 일 (배달 마감/취소/도착 등).
-    # 일반 메시지 알림과 달리 중복 알림을 건너뛰지 않고 user_ids 모두에게 보낸다.
+    # 배달 마감 / 취소 / 도착처럼 꼭 알릴 일. 중복 알림을 건너뛰지 않는다
     @classmethod
     @transaction.atomic
     def notify_chat_room_event(cls, chat_room : ChatRoom, push_kind : str, title : str, content : str, user_ids):

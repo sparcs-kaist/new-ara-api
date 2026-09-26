@@ -75,7 +75,6 @@ class ChatPaymentViewSet(mixins.RetrieveModelMixin, ActionAPIViewSet):
         broadcast_message_created(payment_request.message)
         return self.payment_response(payment_request, status.HTTP_201_CREATED)
 
-    # (요청자) 정산 취소. 카드는 "취소된 정산"으로 남는다
     @extend_schema(request=None, responses={200: ChatPaymentRequestSerializer})
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):

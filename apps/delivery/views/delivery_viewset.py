@@ -130,7 +130,6 @@ class DeliveryPartyViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, Act
         penalty = DeliveryPenalty.get_active(request.user)
         if penalty is None:
             return response.Response({"until": None, "reason": None, "duration_hours": None})
-        # reason 은 패널티를 받은 배달방의 취소 사유 (HOST: 주문 후 방장 취소 / NO_DECISION: 확정 안 해서 자동 취소)
         return response.Response({
             "until": penalty.until,
             "reason": penalty.party.cancel_reason,

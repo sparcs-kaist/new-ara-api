@@ -32,19 +32,17 @@ from apps.delivery.models.penalty import DeliveryPenalty
 
 log = logging.getLogger(__name__)
 
-# RECRUITING -(마감)-> WAITING_DECISION -(방장 확정)-> ORDERED -> ARRIVED -> SETTLED
-# 최소 금액을 채우면 마감 전에도 바로 확정 가능. 연장하면 다시 RECRUITING
-# 방장 취소 / 결정 시간 초과 -> CANCELED
+# RECRUITING -> WAITING_DECISION(마감) -> ORDERED -> ARRIVED -> SETTLED, 확정 전 취소는 CANCELED
 class DeliveryStatus(str, Enum):
-    RECRUITING = "RECRUITING" # 모집 중
-    WAITING_DECISION = "WAITING_DECISION" # 마감됨. 방장이 주문 확정 / 연장 / 취소를 정해야 한다
+    RECRUITING = "RECRUITING"
+    WAITING_DECISION = "WAITING_DECISION" # 방장이 확정 / 연장 / 취소를 정해야 한다
     ORDERED = "ORDERED" # 방장이 주문함. 이후 주문 변경 불가
-    ARRIVED = "ARRIVED" # 배달 도착
-    SETTLED = "SETTLED" # 정산 완료
-    CANCELED = "CANCELED" # 모집 취소
+    ARRIVED = "ARRIVED"
+    SETTLED = "SETTLED"
+    CANCELED = "CANCELED"
 
 class DeliveryCancelReason(str, Enum):
-    HOST = "HOST" # 방장이 취소
+    HOST = "HOST"
     NO_DECISION = "NO_DECISION" # 마감 후 방장이 정하지 않아 자동 취소
 
 MIN_RECRUIT_MINUTES = 5
@@ -181,12 +179,11 @@ class DeliveryParty(MetaDataModel):
     def get_membership(self, user):
         return ChatRoomMemberShip.objects.filter(chat_room_id=self.chat_room_id, user=user).first()
 
-    # 방에 올라온 정산 중 취소 / 삭제되지 않은 것 (배달 정산 + 일반 정산)
+    # 배달 정산과 일반 정산 모두
     def active_payment_requests(self):
         return ChatPaymentRequest.active().filter(message__chat_room_id=self.chat_room_id)
 
-    # 배달 정산은 직전 배달 정산이 취소 / 삭제됐고, 거기서 아무도 송금하지 않았을 때만 다시 보낸다
-    # (누가 이미 보냈으면 두 번 청구되지 않도록 필요한 사람에게 일반 정산으로)
+    # 누가 이미 송금했으면 두 번 청구되지 않도록 배달 정산은 다시 보내지 않는다
     @property
     def can_request_payment(self) -> bool:
         if self.status not in (DeliveryStatus.ORDERED.value, DeliveryStatus.ARRIVED.value):
@@ -535,8 +532,7 @@ class DeliveryParty(MetaDataModel):
         self.broadcast_update()
         return self.payment_request
 
-    # 송금 완료 / 정산 취소 / 정산 삭제 때 호출된다 (signals 참고)
-    # 방에 살아 있는 정산이 하나 이상 있고, 모두 송금 완료면 정산 완료
+    # 송금 완료 / 정산 취소 / 정산 삭제 때 signals 에서 호출
     @transaction.atomic
     def settle_if_paid(self):
         self.lock_row()

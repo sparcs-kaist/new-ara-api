@@ -5,8 +5,7 @@ from django.db import models, transaction
 from ara.db.models import MetaDataModel
 from apps.chatting.models.message import ChatMessage, ChatMessageType
 
-# 채팅방 투표 (VOTE 메시지 하나에 투표 하나)
-# 익명 투표 / 결과 숨기기 / 마감은 나중에 필드를 추가하고 can_see_* 만 고치면 된다
+# 익명 투표 / 결과 숨기기 / 마감은 필드를 추가하고 can_see_* 만 고친다
 class ChatVote(MetaDataModel):
     message = models.OneToOneField(
         verbose_name = "투표 메시지",
@@ -48,7 +47,7 @@ class ChatVote(MetaDataModel):
         ])
         return vote
 
-    # 유저의 선택을 option_ids 로 통째로 바꾼다. 빈 리스트면 투표 취소
+    # 빈 리스트면 투표 취소
     @transaction.atomic
     def cast(self, user, option_ids: list[int]) -> None:
         list(ChatVote.objects.select_for_update().filter(pk=self.pk).values_list("pk", flat=True))

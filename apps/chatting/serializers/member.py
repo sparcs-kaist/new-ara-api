@@ -3,10 +3,7 @@ from apps.chatting.models.room import ChatNameType
 
 
 def member_directory(serializer, chat_room) -> dict:
-    """
-    채팅방의 {user_id: membership}. 나간 멤버도 포함 (예전 메시지 작성자 표시용)
-    응답 하나를 만드는 동안 context 에 캐시한다
-    """
+    # 나간 멤버도 포함 (예전 메시지 작성자 표시용). 응답 하나를 만드는 동안 context 에 캐시한다
     cache = serializer.context.setdefault("member_directory", {})
     if chat_room.id not in cache:
         memberships = ChatRoomMemberShip.objects.queryset_with_deleted.filter(
@@ -17,7 +14,7 @@ def member_directory(serializer, chat_room) -> dict:
     return cache[chat_room.id]
 
 
-# 여러 방을 한 번에 그릴 때(채팅방 목록) 방마다 조회하지 않도록 미리 채운다
+# 채팅방 목록에서 방마다 조회하지 않도록
 def prefill_member_directory(context: dict, room_ids) -> None:
     cache = context.setdefault("member_directory", {})
     for room_id in room_ids:
@@ -30,7 +27,6 @@ def prefill_member_directory(context: dict, room_ids) -> None:
 
 
 def member_summary(serializer, chat_room, user_id) -> dict | None:
-    """방 안에서 보여줄 유저 정보"""
     if user_id is None:
         return None
 

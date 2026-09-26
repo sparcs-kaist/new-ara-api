@@ -52,7 +52,6 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         "partial_update": ChatRoomUpdateSerializer,
     }
 
-    # PATCH chat/room/<id> : 방 이름 / 사진 바꾸기 (방 멤버. DM 과 배달방은 제외)
     def update(self, request, *args, **kwargs):
         if not kwargs.get("partial"):
             raise exceptions.MethodNotAllowed("PUT")
@@ -178,7 +177,6 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         membership = ChatRoomMemberShip.objects.filter(chat_room=room, user=request.user).first()
         if membership:
             membership.delete()
-            # 나간 사람의 소켓을 방에서 뺀다
             broadcast_member_removed(room.id, membership.anon_number)
         return response.Response(status=status.HTTP_204_NO_CONTENT)
 

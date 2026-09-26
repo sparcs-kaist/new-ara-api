@@ -6,7 +6,6 @@ from django.utils import timezone
 
 from ara.db.models import MetaDataModel
 
-# 처음엔 3시간, 최근 30일 안에 또 받으면 하루
 FIRST_PENALTY = timedelta(hours=3)
 REPEAT_PENALTY = timedelta(days=1)
 REPEAT_WINDOW = timedelta(days=30)

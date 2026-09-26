@@ -3,7 +3,6 @@ from django.db import models
 
 from ara.db.models import MetaDataModel
 
-# 배달 주문 (DELIVERY_ORDER 메시지 하나에 주문 하나)
 class DeliveryOrder(MetaDataModel):
     message = models.OneToOneField(
         verbose_name = "주문 메시지",

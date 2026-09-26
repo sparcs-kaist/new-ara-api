@@ -48,7 +48,6 @@ class MenuPhotoViewSet(mixins.ListModelMixin, mixins.DestroyModelMixin, ActionAP
         if params.get("meal_time"):
             queryset = queryset.filter(meal_time=params["meal_time"])
 
-        # 공식(입주업체 직원) 사진을 먼저
         return queryset.annotate(
             official_first=Case(
                 When(created_by__profile__group=UserProfile.UserGroup.STORE_EMPLOYEE, then=Value(0)),
@@ -78,7 +77,7 @@ class MenuPhotoViewSet(mixins.ListModelMixin, mixins.DestroyModelMixin, ActionAP
             status=status.HTTP_201_CREATED,
         )
 
-    # 본인 사진만 지운다 (관리자는 admin 에서)
+    # 관리자는 admin 에서 지운다
     def perform_destroy(self, instance):
         if instance.created_by_id != self.request.user.id:
             raise exceptions.PermissionDenied("내가 올린 사진만 지울 수 있어요.")

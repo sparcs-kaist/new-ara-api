@@ -4,7 +4,6 @@ from apps.user.models import UserNotificationPreference
 
 
 class UserNotificationPreferenceSerializer(serializers.ModelSerializer):
-    # 함께 배달 소식을 끌 때 안내를 확인했다는 표시
     confirm_delivery_off = serializers.BooleanField(write_only=True, required=False, default=False)
 
     class Meta:

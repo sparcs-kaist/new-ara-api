@@ -16,11 +16,8 @@ class DeliveryOffConfirmRequired(exceptions.APIException):
     default_code = "confirm_required"
 
 
+# 함께 배달 소식을 끄려면 confirm_delivery_off: true 를 같이 보내야 한다
 class NotificationPreferenceView(APIView):
-    """
-    내 푸시 알림 설정. 끄면 푸시만 안 가고 알림함에는 남는다
-    함께 배달 소식을 끄려면 confirm_delivery_off: true 를 같이 보내야 한다
-    """
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request):

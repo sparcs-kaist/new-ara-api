@@ -45,7 +45,7 @@ class Report(MetaDataModel):
         related_name="report_set",
         verbose_name="신고된 댓글",
     )
-    # 채팅 신고 (메시지 또는 방 멤버). 채팅 신고면 chat_room 이 항상 있다
+    # 채팅 신고면 chat_room 이 항상 있다
     chat_room = models.ForeignKey(
         on_delete=models.CASCADE,
         to="chatting.ChatRoom",
@@ -70,7 +70,7 @@ class Report(MetaDataModel):
         related_name="report_set",
         verbose_name="신고자",
     )
-    # 게시글 / 댓글은 작성자, 채팅은 대상 멤버 (익명 번호는 화면용이라 저장하지 않고 유저로 푼다)
+    # 익명 번호는 화면용이라 저장하지 않고 유저로 푼다
     reported_user = models.ForeignKey(
         on_delete=models.CASCADE,
         to=settings.AUTH_USER_MODEL,
@@ -80,7 +80,7 @@ class Report(MetaDataModel):
         related_name="received_report_set",
         verbose_name="피신고자",
     )
-    # 관리자가 admin 에서 바로 보도록 신고 시점의 이메일을 남긴다 (API 로는 내려주지 않는다)
+    # admin 용 신고 시점 이메일 (API 로는 내려주지 않는다)
     reporter_email = models.CharField(
         max_length=254,
         blank=True,
@@ -104,10 +104,9 @@ class Report(MetaDataModel):
         verbose_name="내용",
     )
 
-    # 관리자 처리 상태
-    STATUS_PENDING = "PENDING"  # 접수
-    STATUS_IN_PROGRESS = "IN_PROGRESS"  # 처리 중
-    STATUS_DONE = "DONE"  # 처리 완료
+    STATUS_PENDING = "PENDING"
+    STATUS_IN_PROGRESS = "IN_PROGRESS"
+    STATUS_DONE = "DONE"
 
     STATUS_CHOICES = (
         (STATUS_PENDING, "접수"),
@@ -159,7 +158,6 @@ class Report(MetaDataModel):
             update_fields=update_fields,
         )
 
-    # article | comment | chat_message | chat_member
     @property
     def target_type(self) -> str:
         if self.parent_article_id:

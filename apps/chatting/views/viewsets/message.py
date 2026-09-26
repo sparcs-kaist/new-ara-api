@@ -70,7 +70,6 @@ class ChatMessageViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     }
 
     def get_queryset(self):
-        # 내가 참여한(차단 관계가 아닌) 방의 메시지만
         my_room_ids = ChatRoomMemberShip.objects.filter(
             user=self.request.user,
         ).exclude(
@@ -81,7 +80,7 @@ class ChatMessageViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             'chat_room', 'created_by__profile', *attachment_related_names(),
         ).prefetch_related(
             'vote__options__ballots', 'payment_request__targets',
-        # 채팅방 FK 인덱스 (chat_room, id) 를 그대로 타도록 id 로 정렬
+        # (chat_room, deleted_at, id) 인덱스를 타도록
         ).order_by('-id')
         room_id = self.request.query_params.get('chat_room')
         if room_id:

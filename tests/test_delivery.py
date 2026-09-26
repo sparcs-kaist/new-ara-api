@@ -46,7 +46,6 @@ class TestDelivery(TestCase, RequestSetting):
         DeliveryParty.sweep_deadlines()
         party.refresh_from_db()
 
-    # ---------- 방 만들기 / 목록 ----------
 
     def test_open_creates_room_with_host_order(self):
         party = self.open_party()
@@ -64,7 +63,6 @@ class TestDelivery(TestCase, RequestSetting):
         assert res.data["host_orders"] == [{"menu_name": "떡볶이", "price": 8000}]
         assert res.data["members"][0]["display_name"] == "방장"
         assert res.data["members"][0]["is_mine"] is False
-        # 참여 전에는 전체 주문을 볼 수 없다
         assert res.data["orders"] is None
 
     def test_menu_name_is_optional(self):
@@ -74,7 +72,6 @@ class TestDelivery(TestCase, RequestSetting):
         assert order.message.message_content == "[주문] 8,000원"
 
     def test_recruit_minutes_range(self):
-        # 5 ~ 60 사이 아무 정수
         self.open_party(recruit_minutes=5)
         self.open_party(recruit_minutes=37)
         for minutes in (4, 61):
@@ -89,7 +86,6 @@ class TestDelivery(TestCase, RequestSetting):
         assert len(self.http_request(self.user2, "get", "delivery", querystring="search=희망관").data["results"]) == 1
         assert len(self.http_request(self.user2, "get", "delivery", querystring="search=피자").data["results"]) == 0
 
-    # ---------- 참여 / 주문 / 나가기 ----------
 
     def test_join_gives_anon_number_and_order_message(self):
         party = self.open_party()
@@ -120,15 +116,12 @@ class TestDelivery(TestCase, RequestSetting):
         party = self.open_party()
         order = self.join_and_order(party, self.user2, 5000)
 
-        # 방장은 못 나감
         assert self.http_request(self.user, "post", f"delivery/{party.id}/leave").status_code == 400
-        # 주문이 있으면 못 나감 -> 취소하면 나갈 수 있음
         assert self.http_request(self.user2, "post", f"delivery/{party.id}/leave").status_code == 400
         res = self.http_request(self.user2, "delete", f"delivery/{party.id}/orders/{order['id']}")
         assert res.status_code == 204
         assert self.http_request(self.user2, "post", f"delivery/{party.id}/leave").status_code == 204
 
-        # 다시 들어오면 같은 익명 번호
         self.http_request(self.user2, "post", f"delivery/{party.id}/join")
         assert party.get_membership(self.user2).anon_number == 1
 
@@ -140,7 +133,6 @@ class TestDelivery(TestCase, RequestSetting):
         assert res.status_code == 400
         assert party.get_membership(self.user2) is not None
 
-    # ---------- 방장: 확정 / 취소 / 패널티 ----------
 
     def test_confirm_requires_min_amount(self):
         party = self.open_party(min_order_amount=15000)
@@ -152,7 +144,6 @@ class TestDelivery(TestCase, RequestSetting):
         assert res.status_code == 200
         assert res.data["status"] == "ORDERED"
 
-        # 확정 후에는 주문 추가 불가
         res = self.http_request(self.user2, "post", f"delivery/{party.id}/orders", {"price": 1000})
         assert res.status_code == 400
 
@@ -169,7 +160,6 @@ class TestDelivery(TestCase, RequestSetting):
 
         penalty = DeliveryPenalty.objects.get(user=self.user)
         assert timedelta(hours=2, minutes=59) < penalty.until - timezone.now() <= timedelta(hours=3)
-        # 패널티 중에는 방을 못 만든다
         res = self.http_request(self.user, "post", "delivery", {
             "store_name": "교촌", "place_name": "사랑관 (N1)", "min_order_amount": 10000,
             "recruit_minutes": 10, "price": 5000,
@@ -185,7 +175,6 @@ class TestDelivery(TestCase, RequestSetting):
         penalty = DeliveryPenalty.give(self.user.id, party)
         assert penalty.until - timezone.now() > timedelta(hours=23)
 
-    # ---------- 마감 ----------
 
     def test_deadline_min_not_met_then_cancel_has_no_penalty(self):
         party = self.open_party(min_order_amount=30000)
@@ -194,7 +183,6 @@ class TestDelivery(TestCase, RequestSetting):
         assert party.status == DeliveryStatus.WAITING_DECISION.value
         assert party.decision_deadline_at is not None
 
-        # 마감 후에는 새로 참여할 수 없다
         assert self.http_request(self.user3, "post", f"delivery/{party.id}/join").status_code == 400
 
         self.http_request(self.user, "post", f"delivery/{party.id}/cancel")
@@ -226,7 +214,6 @@ class TestDelivery(TestCase, RequestSetting):
         assert party.status == "CANCELED"
         assert not DeliveryPenalty.objects.exists()
 
-    # ---------- 도착 / 정산 ----------
 
     def test_arrival_notifies_everyone(self):
         party = self.open_party(min_order_amount=10000)
@@ -245,7 +232,6 @@ class TestDelivery(TestCase, RequestSetting):
     def test_payment_request_splits_fee_and_settles(self):
         party = self.open_party(min_order_amount=10000, price=8000)
         self.join_and_order(party, self.user2, 5000)
-        # 한 사람이 여러 개 주문할 수 있다
         self.http_request(self.user2, "post", f"delivery/{party.id}/orders", {"price": 1000})
         self.join_and_order(party, self.user3, 3000)
         self.http_request(self.user, "post", f"delivery/{party.id}/confirm")
@@ -257,16 +243,13 @@ class TestDelivery(TestCase, RequestSetting):
         assert res.status_code == 201, res.data
         amounts = {t["user"]["display_name"]: t["amount"] for t in res.data["targets"]}
         assert amounts == {"익명1": 7000, "익명2": 4000}
-        # 카드에 "주문 6,000원 + 배송비 1,000원" 처럼 내역을 보여줄 수 있다
         breakdown = {t["user"]["display_name"]: (t["order_amount"], t["delivery_fee_share"]) for t in res.data["targets"]}
         assert breakdown == {"익명1": (6000, 1000), "익명2": (3000, 1000)}
 
-        # 정산 전에는 주문한 사람이 못 나감
         assert self.http_request(self.user3, "post", f"delivery/{party.id}/leave").status_code == 400
 
         payment_id = res.data["id"]
         self.http_request(self.user3, "patch", f"chat/payment/{payment_id}/paid", {"paid": True})
-        # 내 몫을 보냈으면 나갈 수 있다
         assert self.http_request(self.user3, "post", f"delivery/{party.id}/leave").status_code == 204
 
         party.refresh_from_db()
@@ -276,7 +259,6 @@ class TestDelivery(TestCase, RequestSetting):
         assert party.status == "SETTLED"
         assert ChatPaymentTarget.objects.filter(request_id=payment_id, paid_at__isnull=True).count() == 0
 
-        # 정산이 끝나면 방장도 나갈 수 있다
         assert self.http_request(self.user, "post", f"delivery/{party.id}/leave").status_code == 204
 
     def test_delivery_room_cannot_be_blocked(self):
@@ -291,10 +273,8 @@ class TestDelivery(TestCase, RequestSetting):
     def test_host_alone_can_leave_after_order(self):
         party = self.open_party(min_order_amount=5000)
         self.http_request(self.user, "post", f"delivery/{party.id}/confirm")
-        # 받을 돈이 없으니 정산 없이 나갈 수 있다
         assert self.http_request(self.user, "post", f"delivery/{party.id}/leave").status_code == 204
 
-    # ---------- 수정 / 내보내기 / 기타 ----------
 
     def test_edit_order_updates_card(self):
         party = self.open_party()
@@ -303,7 +283,6 @@ class TestDelivery(TestCase, RequestSetting):
         assert res.status_code == 200
         assert res.data["price"] == 5500
         assert ChatMessage.objects.get(pk=order["message_id"]).message_content == "[주문] 순대 · 5,500원"
-        # 남의 주문은 못 고친다
         res = self.http_request(self.user, "patch", f"delivery/{party.id}/orders/{order['id']}", {"price": 1})
         assert res.status_code == 403
 
@@ -314,7 +293,6 @@ class TestDelivery(TestCase, RequestSetting):
         assert res.status_code == 200
         assert res.data["order_link"] == "https://baemin.com/g/1"
         assert party.chat_room.message_set.filter(message_content="방장이 함께주문 링크를 올렸어요.").exists()
-        # 지금 인원(2명)보다 적게는 안 된다
         res = self.http_request(self.user, "patch", f"delivery/{party.id}", {"max_participants": 1})
         assert res.status_code == 400
         assert self.http_request(self.user2, "patch", f"delivery/{party.id}", {"memo": "x"}).status_code == 403
@@ -362,7 +340,6 @@ class TestDelivery(TestCase, RequestSetting):
     def test_resend_delivery_payment_when_nobody_paid(self):
         party = self.confirmed_party_with_two_orders()
         first = self.request_delivery_payment(party).data
-        # 살아 있는 동안은 다시 못 보낸다
         assert self.request_delivery_payment(party).status_code == 400
 
         self.http_request(self.user, "post", f"chat/payment/{first['id']}/cancel")
@@ -376,7 +353,6 @@ class TestDelivery(TestCase, RequestSetting):
         self.http_request(self.user3, "patch", f"chat/payment/{first['id']}/paid", {"paid": True})
         self.http_request(self.user, "post", f"chat/payment/{first['id']}/cancel")
 
-        # 누가 이미 송금했으니 배달 정산은 다시 못 보낸다
         assert self.http_request(self.user, "get", f"delivery/{party.id}").data["can_request_payment"] is False
         assert self.request_delivery_payment(party).status_code == 400
 

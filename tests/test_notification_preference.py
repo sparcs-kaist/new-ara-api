@@ -51,7 +51,6 @@ class TestNotificationPreference(TestCase):
             ChatMessage.create(chat_room=room, created_by=self.user, message_type="TEXT", message_content="안녕")
 
         assert push.call_args.args[1] == [self.user2.id]
-        # 알림함에는 남는다
         assert NotificationReadLog.objects.filter(read_by=self.user3).exists()
 
 
@@ -70,8 +69,6 @@ class TestChatPushDedup(TestCase):
             return push.call_args.args[1] if push.called else []
 
         assert send() == [self.user2.id]
-        # 안 읽은 알림이 있으면 건너뛴다
         assert send() == []
-        # 방을 다시 열면 다음 메시지부터 다시 보낸다
         ChatRoomMemberShip.objects.filter(chat_room=room, user=self.user2).update(last_seen_at=timezone.now())
         assert send() == [self.user2.id]
