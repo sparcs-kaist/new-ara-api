@@ -20,7 +20,7 @@ class StoreListSerializer(OpenStateMixin, serializers.ModelSerializer):
     class Meta:
         model = Store
         fields = [
-            "id", "name", "zone", "location", "hours", "hours_note", "cover", "restaurant",
+            "id", "name", "category", "zone", "location", "hours", "hours_note", "cover", "restaurant",
             "is_active", "signature_menus",
         ]
 
@@ -101,7 +101,7 @@ def validate_hours_value(value):
 class StoreUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Store
-        fields = ["name", "zone", "intro", "location", "hours", "hours_note", "cover", "phone", "link"]
+        fields = ["name", "category", "zone", "intro", "location", "hours", "hours_note", "cover", "phone", "link"]
 
     def validate_hours(self, value):
         return validate_hours_value(value)

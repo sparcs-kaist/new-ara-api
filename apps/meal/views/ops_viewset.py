@@ -14,7 +14,7 @@ class OpsStoreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Store
         fields = [
-            "id", "name", "intro", "zone", "location", "hours", "hours_note", "cover", "phone", "link",
+            "id", "name", "category", "intro", "zone", "location", "hours", "hours_note", "cover", "phone", "link",
             "restaurant", "is_active", "order",
         ]
 

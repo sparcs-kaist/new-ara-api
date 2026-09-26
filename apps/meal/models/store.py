@@ -23,6 +23,10 @@ WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 
 
 # 교내 입주 업체. 운영진이 admin 에서 만들고 StoreStaff 로 지정된 계정만 고친다
+def open_kind(kind, time=None) -> dict:
+    return {"kind": kind, "time": time, "reason": None, "until": None}
+
+
 class Store(MetaDataModel):
     name = models.CharField(
         verbose_name = "업체 이름",
@@ -37,6 +41,13 @@ class Store(MetaDataModel):
         verbose_name = "구역",
         max_length = 10,
         choices = [(zone.value, zone.name) for zone in StoreZone],
+    )
+    # 일식, 카페, 한식 ...
+    category = models.CharField(
+        verbose_name = "분류",
+        max_length = 20,
+        blank = True,
+        default = "",
     )
     location = models.CharField(
         verbose_name = "위치 (건물 / 상세)",
@@ -121,22 +132,26 @@ class Store(MetaDataModel):
 
         closed = next((e for e in events if e.kind == StoreEventKind.CLOSED.value), None)
         if closed:
+            until = timezone.localtime(closed.ends_at) if closed.ends_at else None
             note = "임시 휴무"
             if closed.reason:
                 note += f" · {closed.reason}"
-            if closed.ends_at:
-                note += f" ({timezone.localtime(closed.ends_at):%m/%d}까지)"
-            return {"is_open": False, "open_note": note, "today_hours": today_hours}
+            if until:
+                note += f" ({until:%m/%d}까지)"
+            state = {"kind": "TEMP_CLOSED", "time": None, "reason": closed.reason or None, "until": until and f"{until:%Y-%m-%d}"}
+            return {"is_open": False, "open_note": note, "today_hours": today_hours, "open_state": state}
 
         if not intervals:
-            return {"is_open": False, "open_note": "오늘 휴무", "today_hours": None}
+            return {"is_open": False, "open_note": "오늘 휴무", "today_hours": None, "open_state": open_kind("CLOSED_TODAY")}
         current = local.strftime("%H:%M")
         for open_at, close_at in intervals:
             if open_at <= current < close_at:
-                return {"is_open": True, "open_note": f"{close_at}까지 영업", "today_hours": today_hours}
+                kind = "TEMP_OPEN" if opened else "OPEN"
+                return {"is_open": True, "open_note": f"{close_at}까지 영업", "today_hours": today_hours, "open_state": open_kind(kind, close_at)}
         upcoming = next((o for o, _ in intervals if current < o), None)
-        note = f"{upcoming} 영업 시작" if upcoming else "영업 종료"
-        return {"is_open": False, "open_note": note, "today_hours": today_hours}
+        if upcoming:
+            return {"is_open": False, "open_note": f"{upcoming} 영업 시작", "today_hours": today_hours, "open_state": open_kind("BEFORE_OPEN", upcoming)}
+        return {"is_open": False, "open_note": "영업 종료", "today_hours": today_hours, "open_state": open_kind("CLOSED")}
 
     def active_notices(self):
         now = timezone.now()

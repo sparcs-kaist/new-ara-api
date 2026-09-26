@@ -18,7 +18,10 @@ from apps.meal.serializers.store_serializers import (
 
 
 @extend_schema_view(
-    list=extend_schema(parameters=[OpenApiParameter("zone", OpenApiTypes.STR, enum=["EAST", "WEST", "NORTH"])]),
+    list=extend_schema(parameters=[
+        OpenApiParameter("zone", OpenApiTypes.STR, enum=["EAST", "WEST", "NORTH"]),
+        OpenApiParameter("q", OpenApiTypes.STR, description="업체 이름 / 분류 / 메뉴 이름"),
+    ]),
 )
 class StoreViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, ActionAPIViewSet):
     serializer_class = StoreDetailSerializer
@@ -56,7 +59,13 @@ class StoreViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, ActionAPIVi
         )
         if self.action == "list":
             zone = self.request.query_params.get("zone")
-            return queryset.filter(zone=zone) if zone else queryset
+            if zone:
+                queryset = queryset.filter(zone=zone)
+            q = self.request.query_params.get("q", "").strip()
+            if q:
+                menu_store_ids = StoreMenu.objects.filter(name__icontains=q).values("store_id")
+                queryset = queryset.filter(Q(name__icontains=q) | Q(category__icontains=q) | Q(id__in=menu_store_ids))
+            return queryset
         return queryset.prefetch_related(Prefetch("menus", queryset=StoreMenu.objects.order_by("order", "id")))
 
     def get_staff_store(self):

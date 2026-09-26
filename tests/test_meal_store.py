@@ -62,22 +62,32 @@ class TestStore(TestCase, RequestSetting):
         self.store.hours = HOURS
         self.store.save()
         # 2026-09-28 은 월요일
-        assert self.store.open_state(kst(2026, 9, 28, 10)) == {"is_open": True, "open_note": "14:00까지 영업", "today_hours": "09:00–14:00, 15:00–18:00"}
-        assert self.store.open_state(kst(2026, 9, 28, 14, 30))["open_note"] == "15:00 영업 시작"
-        assert self.store.open_state(kst(2026, 9, 28, 19))["open_note"] == "영업 종료"
-        assert self.store.open_state(kst(2026, 9, 27, 12)) == {"is_open": False, "open_note": "오늘 휴무", "today_hours": None}
+        state = self.store.open_state(kst(2026, 9, 28, 10))
+        assert state["is_open"] is True
+        assert state["open_note"] == "14:00까지 영업"
+        assert state["today_hours"] == "09:00–14:00, 15:00–18:00"
+        assert state["open_state"] == {"kind": "OPEN", "time": "14:00", "reason": None, "until": None}
+        state = self.store.open_state(kst(2026, 9, 28, 14, 30))
+        assert (state["open_note"], state["open_state"]["kind"], state["open_state"]["time"]) == ("15:00 영업 시작", "BEFORE_OPEN", "15:00")
+        state = self.store.open_state(kst(2026, 9, 28, 19))
+        assert (state["open_note"], state["open_state"]["kind"]) == ("영업 종료", "CLOSED")
+        state = self.store.open_state(kst(2026, 9, 27, 12))
+        assert (state["open_note"], state["today_hours"], state["open_state"]["kind"]) == ("오늘 휴무", None, "CLOSED_TODAY")
 
         # 일요일 임시 영업
         StoreEvent.objects.create(
             store=self.store, kind="OPEN", starts_at=kst(2026, 9, 27, 0), ends_at=kst(2026, 9, 27, 23),
             open_time=time(11), close_time=time(15),
         )
-        assert self.store.open_state(kst(2026, 9, 27, 12))["open_note"] == "15:00까지 영업"
+        state = self.store.open_state(kst(2026, 9, 27, 12))
+        assert state["open_note"] == "15:00까지 영업"
+        assert state["open_state"] == {"kind": "TEMP_OPEN", "time": "15:00", "reason": None, "until": None}
         # 휴무가 이긴다
         StoreEvent.objects.create(store=self.store, kind="CLOSED", starts_at=kst(2026, 9, 26, 0), ends_at=kst(2026, 9, 28, 23), reason="재료 소진")
         state = self.store.open_state(kst(2026, 9, 27, 12))
         assert state["is_open"] is False
         assert state["open_note"] == "임시 휴무 · 재료 소진 (09/28까지)"
+        assert state["open_state"] == {"kind": "TEMP_CLOSED", "time": None, "reason": "재료 소진", "until": "2026-09-28"}
 
     def test_events_crud(self):
         path = f"stores/{self.store.id}/events"
@@ -108,7 +118,24 @@ class TestStore(TestCase, RequestSetting):
         res = self.http_request(self.user2, "get", "stores")
         cafe = next(s for s in res.data if s["id"] == self.store.id)
         assert len(cafe["signature_menus"]) == 3
-        assert {"is_open", "open_note", "today_hours", "hours_note"} <= set(cafe)
+        assert {"is_open", "open_note", "open_state", "today_hours", "hours_note", "category"} <= set(cafe)
+
+    def test_search(self):
+        Store.objects.filter(pk=self.store.pk).update(category="카페")
+        menu = StoreMenu.objects.create(store=self.store, name="떡볶이 세트")
+        Store.objects.create(name="떡볶이집", zone="WEST", category="분식")
+
+        def names(**query):
+            res = self.http_request(self.user2, "get", "stores", querystring="&".join(f"{k}={v}" for k, v in query.items()))
+            return sorted(s["name"] for s in res.data)
+
+        assert names(q="떡볶이") == ["떡볶이집", "카페"]
+        assert names(q="떡볶이", zone="WEST") == ["떡볶이집"]
+        assert names(q="분식") == ["떡볶이집", "분식"]
+        assert names(q="아메리카노") == ["카페"]
+        # 지운 메뉴로는 안 걸린다
+        menu.delete()
+        assert names(q="떡볶이 세트") == []
 
     def test_menu_crud_with_photo_and_sold_out(self):
         self.api_client.force_authenticate(user=self.user)
