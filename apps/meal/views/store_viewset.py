@@ -6,11 +6,12 @@ from rest_framework import exceptions, mixins, permissions, response, status
 from rest_framework.decorators import action
 
 from ara.classes.viewset import ActionAPIViewSet
-from apps.meal.models import Store, StoreEvent, StoreMenu, StoreNotice, StoreStaff
+from apps.meal.models import Store, StoreEvent, StoreMenu, StoreMenuCategory, StoreNotice, StoreStaff
 from apps.meal.serializers.store_serializers import (
     StoreDetailSerializer,
     StoreEventSerializer,
     StoreListSerializer,
+    StoreMenuCategorySerializer,
     StoreMenuSerializer,
     StoreNoticeSerializer,
     StoreUpdateSerializer,
@@ -33,6 +34,8 @@ class StoreViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, ActionAPIVi
         "partial_update": (permissions.IsAuthenticated,),
         "menus": (permissions.IsAuthenticated,),
         "menu_detail": (permissions.IsAuthenticated,),
+        "categories": (permissions.IsAuthenticated,),
+        "category_detail": (permissions.IsAuthenticated,),
         "notices": (permissions.IsAuthenticated,),
         "notice_detail": (permissions.IsAuthenticated,),
         "events": (permissions.IsAuthenticated,),
@@ -44,6 +47,8 @@ class StoreViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, ActionAPIVi
         "partial_update": StoreUpdateSerializer,
         "menus": StoreMenuSerializer,
         "menu_detail": StoreMenuSerializer,
+        "categories": StoreMenuCategorySerializer,
+        "category_detail": StoreMenuCategorySerializer,
         "notices": StoreNoticeSerializer,
         "notice_detail": StoreNoticeSerializer,
         "events": StoreEventSerializer,
@@ -66,7 +71,10 @@ class StoreViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, ActionAPIVi
                 menu_store_ids = StoreMenu.objects.filter(name__icontains=q).values("store_id")
                 queryset = queryset.filter(Q(name__icontains=q) | Q(category__icontains=q) | Q(id__in=menu_store_ids))
             return queryset
-        return queryset.prefetch_related(Prefetch("menus", queryset=StoreMenu.objects.order_by("order", "id")))
+        return queryset.prefetch_related(
+            Prefetch("menus", queryset=StoreMenu.objects.order_by("order", "id")),
+            Prefetch("menu_categories", queryset=StoreMenuCategory.objects.order_by("order", "id")),
+        )
 
     def get_staff_store(self):
         store = self.get_object()
@@ -74,10 +82,11 @@ class StoreViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, ActionAPIVi
             raise exceptions.PermissionDenied("이 업체를 관리하는 계정이 아니에요.")
         return store
 
-    def save_child(self, request, serializer_class, instance=None, **extra):
-        serializer = serializer_class(instance, data=request.data, partial=instance is not None)
+    # store 는 검증(context)에 쓰고, 새로 만들 때는 그 업체에 붙인다
+    def save_child(self, request, serializer_class, instance=None, store=None):
+        serializer = serializer_class(instance, data=request.data, partial=instance is not None, context={"store": store})
         serializer.is_valid(raise_exception=True)
-        return serializer.save(**extra)
+        return serializer.save() if instance is not None else serializer.save(store=store)
 
     # 직원: 운영 여부 / 식당 연결 / 정렬 외 업체 정보 전부
     def partial_update(self, request, pk=None):
@@ -104,7 +113,30 @@ class StoreViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, ActionAPIVi
         if request.method == "DELETE":
             menu.delete()
             return response.Response(status=status.HTTP_204_NO_CONTENT)
-        return response.Response(StoreMenuSerializer(self.save_child(request, StoreMenuSerializer, menu)).data)
+        return response.Response(StoreMenuSerializer(self.save_child(request, StoreMenuSerializer, menu, store=store)).data)
+
+    @extend_schema(request=StoreMenuCategorySerializer, responses={200: StoreMenuCategorySerializer(many=True), 201: StoreMenuCategorySerializer})
+    @action(detail=True, methods=["get", "post"])
+    def categories(self, request, pk=None):
+        store = self.get_staff_store()
+        if request.method == "GET":
+            return response.Response(StoreMenuCategorySerializer(store.menu_categories.order_by("order", "id"), many=True).data)
+        category = self.save_child(request, StoreMenuCategorySerializer, store=store)
+        return response.Response(StoreMenuCategorySerializer(category).data, status=status.HTTP_201_CREATED)
+
+    # DELETE 해도 메뉴는 남고 미분류가 된다
+    @extend_schema(request=StoreMenuCategorySerializer, responses={200: StoreMenuCategorySerializer, 204: None})
+    @action(detail=True, methods=["patch", "delete"], url_path=r"categories/(?P<category_id>\d+)")
+    def category_detail(self, request, pk=None, category_id=None):
+        store = self.get_staff_store()
+        category = store.menu_categories.filter(pk=category_id).first()
+        if category is None:
+            raise exceptions.NotFound("카테고리를 찾을 수 없어요.")
+        if request.method == "DELETE":
+            category.menus.update(category=None)
+            category.delete()
+            return response.Response(status=status.HTTP_204_NO_CONTENT)
+        return response.Response(StoreMenuCategorySerializer(self.save_child(request, StoreMenuCategorySerializer, category, store=store)).data)
 
     @extend_schema(request=StoreNoticeSerializer, responses={201: StoreNoticeSerializer})
     @action(detail=True, methods=["post"])

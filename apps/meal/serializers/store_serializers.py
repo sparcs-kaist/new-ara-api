@@ -2,7 +2,7 @@ import re
 
 from rest_framework import serializers
 
-from apps.meal.models import WEEKDAYS, Store, StoreEvent, StoreEventKind, StoreMenu, StoreNotice
+from apps.meal.models import WEEKDAYS, Store, StoreEvent, StoreEventKind, StoreMenu, StoreMenuCategory, StoreNotice
 
 TIME_RX = re.compile(r"^([01]\d|2[0-4]):[0-5]\d$")
 
@@ -31,10 +31,46 @@ class StoreListSerializer(OpenStateMixin, serializers.ModelSerializer):
         return [menu.name for menu in menus][:3]
 
 
+class StoreMenuCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StoreMenuCategory
+        fields = ["id", "name", "order"]
+        extra_kwargs = {"name": {"allow_blank": True}, "order": {"required": False}}
+
+    def validate(self, attrs):
+        if "name" in attrs:
+            if not attrs["name"]:
+                raise serializers.ValidationError({"detail": "카테고리 이름을 입력해 주세요."})
+            duplicated = self.context["store"].menu_categories.filter(name=attrs["name"])
+            if self.instance is not None:
+                duplicated = duplicated.exclude(pk=self.instance.pk)
+            if duplicated.exists():
+                raise serializers.ValidationError({"detail": "같은 이름의 카테고리가 있어요."})
+        return attrs
+
+    def create(self, validated_data):
+        # order 를 안 주면 맨 뒤
+        if "order" not in validated_data:
+            last = self.context["store"].menu_categories.order_by("-order").first()
+            validated_data["order"] = last.order + 1 if last else 0
+        return super().create(validated_data)
+
+
 class StoreMenuSerializer(serializers.ModelSerializer):
+    # multipart 의 빈 문자열은 null 로 들어온다
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=StoreMenuCategory.objects.all(), allow_null=True, required=False,
+    )
+
     class Meta:
         model = StoreMenu
-        fields = ["id", "section", "name", "price", "description", "photo", "is_sold_out", "is_signature", "order"]
+        fields = ["id", "category", "name", "price", "description", "photo", "is_sold_out", "is_signature", "order"]
+
+    def validate(self, attrs):
+        category = attrs.get("category")
+        if category is not None and category.store_id != self.context["store"].id:
+            raise serializers.ValidationError({"detail": "이 업체의 카테고리가 아니에요."})
+        return attrs
 
 
 class StoreNoticeSerializer(serializers.ModelSerializer):
@@ -65,13 +101,14 @@ class StoreEventSerializer(serializers.ModelSerializer):
 
 
 class StoreDetailSerializer(StoreListSerializer):
+    categories = StoreMenuCategorySerializer(source="menu_categories", many=True, read_only=True)
     menus = StoreMenuSerializer(many=True, read_only=True)
     notices = serializers.SerializerMethodField()
     events = serializers.SerializerMethodField()
     is_staff = serializers.SerializerMethodField()
 
     class Meta(StoreListSerializer.Meta):
-        fields = StoreListSerializer.Meta.fields + ["intro", "phone", "link", "menus", "notices", "events", "is_staff"]
+        fields = StoreListSerializer.Meta.fields + ["intro", "phone", "link", "categories", "menus", "notices", "events", "is_staff"]
 
     def get_notices(self, obj):
         return StoreNoticeSerializer(obj.active_notices(), many=True).data
