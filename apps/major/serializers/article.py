@@ -61,6 +61,7 @@ class MajorArticleSerializer(ScopedBoardHiddenInfoMixin, ArticleSerializer):
             "negative_vote_count",
             "hit_count",
             "my_vote",
+            "my_scrap",
             "comments",
             "is_mine",
             "is_hidden",

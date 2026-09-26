@@ -40,3 +40,15 @@ def scoped_article_sql_condition(table: str = "`core_article`") -> str:
         f"{table}.`related_course_group_id` IS NULL "
         f"AND {table}.`related_major_id` IS NULL"
     )
+
+
+def search_scoped_articles(queryset, request):
+    """과목/학과 글 목록의 `main_search__contains` (제목 + 본문 icontains).
+    Elasticsearch 에는 게시판 권한도 과목/학과 구분도 없고 검색이 전체 최신 500건만 가져오므로,
+    게시판 하나 안에서 찾는 이 검색은 DB 에서 한다."""
+    from django.db.models import Q
+
+    keyword = request.query_params.get("main_search__contains", "").strip()
+    if not keyword:
+        return queryset
+    return queryset.filter(Q(title__icontains=keyword) | Q(content_text__icontains=keyword))

@@ -10,10 +10,12 @@ Major row 는 접근 시 SSO 정보로 lazy get_or_create 된다.
 from __future__ import annotations
 
 from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import permissions, response, status, viewsets
 
-from apps.core.models import Article, ArticleReadLog, Comment, Vote
+from apps.core.article_scope import search_scoped_articles
+from apps.core.models import Article, ArticleReadLog, Comment, Scrap, Vote
 from apps.major.access import get_or_create_major_for_user, user_major_id
 from apps.major.board import get_major_board_id
 from apps.major.models import Major
@@ -61,9 +63,12 @@ class MajorArticleViewSet(viewsets.ModelViewSet):
                 "-created_at"
             )
         )
+        if self.action == "list":
+            queryset = search_scoped_articles(queryset, self.request)
         if self.action == "retrieve":
             queryset = queryset.prefetch_related(
                 Vote.prefetch_my_vote(self.request.user),
+                Scrap.prefetch_my_scrap(self.request.user),
                 Comment.prefetch_for_article(self.request.user),
             )
         return queryset
@@ -84,7 +89,10 @@ class MajorArticleViewSet(viewsets.ModelViewSet):
             ctx["board_id"] = get_major_board_id()
         return ctx
 
-    @extend_schema(summary="학과 게시판 글 목록")
+    @extend_schema(
+        summary="학과 게시판 글 목록",
+        parameters=[OpenApiParameter("main_search__contains", OpenApiTypes.STR, description="제목 / 본문")],
+    )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
