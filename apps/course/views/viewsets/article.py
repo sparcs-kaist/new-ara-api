@@ -16,7 +16,7 @@ from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema
 from rest_framework import permissions, response, status, viewsets
 
 from apps.core.article_scope import search_scoped_articles
-from apps.core.models import Article, ArticleReadLog, Comment, Vote
+from apps.core.models import Article, ArticleReadLog, Comment, Scrap, Vote
 from apps.course.board import get_courses_board_id
 from apps.course.models import Course
 from apps.course.permissions import IsEnrolledInCourseGroup
@@ -66,6 +66,7 @@ class CourseArticleViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             queryset = queryset.prefetch_related(
                 Vote.prefetch_my_vote(self.request.user),
+                Scrap.prefetch_my_scrap(self.request.user),
                 Comment.prefetch_for_article(self.request.user),
             )
         return queryset
