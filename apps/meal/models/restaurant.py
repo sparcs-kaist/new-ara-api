@@ -26,6 +26,13 @@ class Restaurant(MetaDataModel):
         blank=True,
         default=None,
     )
+    # 화면에 보일 이름. restaurant_name 은 학교 표기 그대로 둔다
+    display_name = models.CharField(
+        verbose_name="표시 이름",
+        max_length=32,
+        blank=True,
+        default="",
+    )
     # 없어진 식당은 지우지 않고 끈다 (과거 식단이 참조하므로)
     is_active = models.BooleanField(
         verbose_name="운영 중",

@@ -12,6 +12,6 @@ class MenuPhotoAdmin(admin.ModelAdmin):
 
 @admin.register(Restaurant)
 class RestaurantAdmin(admin.ModelAdmin):
-    list_display = ("id", "restaurant_name", "code", "is_active")
+    list_display = ("id", "restaurant_name", "display_name", "code", "is_active")
     list_filter = ("is_active",)
-    list_editable = ("is_active",)
+    list_editable = ("display_name", "is_active")

@@ -4,6 +4,8 @@
 1. 카이마루       : fclt
 2. 서맛골         : west
 3. 교수회관       : emp
+4. 동맛골(학생)   : east1
+5. 동맛골(교직원) : east2
 
 example URL: https://www.kaist.ac.kr/kr/html/campus/053001.html?dvs_cd=emp&stt_dt=2025-03-18
 
@@ -22,6 +24,7 @@ import requests
 from bs4 import BeautifulSoup
 from django.db import transaction
 
+from apps.core.management.scripts.meal_llm import MealLLMError, parse_menu_with_llm
 from apps.meal.models import Course, MealType, Menu, MenuAllergy, Restaurant
 
 
@@ -46,6 +49,14 @@ RESTAURANT_CODE_TO_NAME = {
     "fclt": "카이마루",
     "west": "서맛골",
     "emp":  "교수회관",
+    "east1": "동맛골(동측학생식당)",
+    "east2": "동맛골(동측 교직원식당)",
+}
+
+# display_name 이 비어 있을 때만 채운다 (admin 에서 바꾼 값은 덮어쓰지 않는다). 없으면 restaurant_name
+DEFAULT_DISPLAY_NAMES = {
+    "east1": "동맛골 1층 (학생식당)",
+    "east2": "동맛골 2층 (교직원식당)",
 }
 
 TIME_INDEX_TO_MEAL_TYPE = {
@@ -72,14 +83,16 @@ NOISE_KEYWORDS = (
     # 칼로리 정보
     "kcal",
     # 공지/안내 일반
-    "안내", "공지",
+    "안내", "공지", "감사합니다", "이용에 참고", "제공이 종료",
+    # 줄 맨 앞 '*' 로 시작하는 안내문 (예: "** 천원의 아침밥 간식 ...")
+    "**",
     # 모든 끼니 마지막에 항상 붙는 공통 샐러드 마커 - 메뉴로 취급하지 않는다.
     # 다른 메뉴(예: 치즈 샐러드)와 충돌을 피하기 위해 boilerplate 의 '드레싱' 부분을 키로 사용.
     "드레싱",
 )
 
 # 라인이 이 마커를 포함하면 그 시점부터 파싱 중단(식당 미운영 등).
-END_MARKERS = ("미운영", "휴무")
+END_MARKERS = ("미운영", "휴무", "운영없음")
 
 
 # ---------- 정규식 ----------
@@ -87,12 +100,15 @@ END_MARKERS = ("미운영", "휴무")
 # 코스 헤더: "이름(5,500원)", "이름[5,000원]", "<이름 5,500원>" 모두 허용.
 # group 1 = 코스명, group 2 = 가격(쉼표 포함 가능).
 _COURSE_HEADER_RX = re.compile(
-    r"^<?\s*(.+?)\s*[\(\[\s]\s*([\d,]+)\s*원\s*[\)\]>]?\s*$"
+    r"^<?\s*(.+?)\s*[\(\[\s]\s*([\d,]+)\s*원\s*[\)\]>]?\s*(?:/.*)?$"
 )
 # 메뉴 + 알러지 (괄호 표기): "김치찌개(1,2,5)"
 _MENU_PAREN_RX = re.compile(r"^(.+?)\(([\d,\s]*)\)\s*$")
 # 알러지 표기만 단독으로 있는 라인 (긴 메뉴명 뒤 줄바꿈된 경우): "(1,2,5,6,9,10,13,15)"
 _ALLERGEN_ONLY_RX = re.compile(r"^\(\s*[\d,\s]+\s*\)\s*$")
+# 동맛골: 가격 없는 코스 헤더 "(한식)" / 알러지가 괄호 없이 붙는 메뉴 "김치콩나물국5,6,9"
+_EAST_COURSE_RX = re.compile(r"^\(([^\d()]+)\)$")
+_MENU_TRAILING_ALLERGEN_RX = re.compile(r"^(.*?\D)([\d,]+)$")
 
 
 # ---------- 공통 유틸 ----------
@@ -106,7 +122,8 @@ def current_date() -> str:
 
 
 def _is_noise(text: str) -> bool:
-    return any(kw in text for kw in NOISE_KEYWORDS)
+    lowered = text.lower()
+    return any(kw in lowered for kw in NOISE_KEYWORDS)
 
 
 def _is_end_marker(text: str) -> bool:
@@ -120,7 +137,8 @@ def _clean_lines(menu_list: List[str]) -> List[str]:
         s = raw.strip()
         if not s:
             continue
-        if _is_noise(s):
+        # "조식(3,500원) /*... 과일 제공이 제한됩니다" 처럼 헤더 뒤에 안내가 붙는 경우
+        if _is_noise(s) and _parse_course_header(s) is None:
             continue
         cleaned.append(s)
     return cleaned
@@ -133,7 +151,7 @@ def _parse_course_header(text: str) -> Optional[Tuple[str, int]]:
     m = _COURSE_HEADER_RX.match(text)
     if not m:
         return None
-    name = m.group(1).strip().strip("<>").strip()
+    name = m.group(1).strip().strip("<>[]:").strip()
     if not name:
         return None
     try:
@@ -267,11 +285,47 @@ def _parser_west(menu_list: List[str], time: int) -> CourseDataType:
     return courses
 
 
+def _parse_menu_trailing(text: str) -> MenuItemType:
+    m = _MENU_TRAILING_ALLERGEN_RX.match(text)
+    if not m:
+        return [text, []]
+    allergens = [int(x) for x in m.group(2).split(",") if x]
+    return [m.group(1).strip(), allergens]
+
+
+def _parser_east(menu_list: List[str], time: int) -> CourseDataType:
+    """동맛골: 코스 헤더 '(한식)' 에 가격이 없다. 헤더가 없는 끼니(조식 등)는 끼니 이름을 코스로 쓴다."""
+    DEFAULT = {0: "조식", 1: "중식", 2: "석식"}
+
+    courses: CourseDataType = {}
+    current = (DEFAULT.get(time, ""), None)
+    for line in _clean_lines(menu_list):
+        if _is_end_marker(line):
+            break
+        header = _EAST_COURSE_RX.match(line)
+        if header:
+            current = (header.group(1).strip(), None)
+            continue
+        courses.setdefault(current, []).append(_parse_menu_trailing(line))
+    return courses
+
+
 _PARSERS: Dict[str, Callable[[List[str], int], CourseDataType]] = {
     "fclt": _parser_fclt,
     "west": _parser_west,
     "emp":  _parser_emp,
+    "east1": _parser_east,
+    "east2": _parser_east,
 }
+
+
+# LLM 이 더 정확해서 먼저 쓰고, 서버가 없거나 실패하면 정규식 파서로
+def _parse_meal(restaurant_code: str, lines: List[str], time: int) -> CourseDataType:
+    try:
+        return parse_menu_with_llm(restaurant_code, lines, time)
+    except MealLLMError as e:
+        logger.debug("[%s] LLM parse failed, falling back to regex: %s", restaurant_code, e)
+    return _PARSERS[restaurant_code](lines, time)
 
 
 # ---------- 크롤링 ----------
@@ -294,7 +348,6 @@ def _crawl_meal(restaurant_code: str, date: str) -> Optional[List[CourseDataType
         return None
 
     soup = BeautifulSoup(response.text, "html.parser")
-    parser = _PARSERS[restaurant_code]
 
     meal_info: List[CourseDataType] = []
     for nth in (1, 2, 3):
@@ -304,7 +357,7 @@ def _crawl_meal(restaurant_code: str, date: str) -> Optional[List[CourseDataType
         if cell is None:
             return None
         text_lines = "".join(c.text for c in cell.contents).split("\r")
-        meal_info.append(parser(text_lines, nth - 1))
+        meal_info.append(_parse_meal(restaurant_code, text_lines, nth - 1))
     return meal_info
 
 
@@ -312,12 +365,13 @@ def _crawl_meal(restaurant_code: str, date: str) -> Optional[List[CourseDataType
 
 def _get_or_create_restaurant(restaurant_code: str, restaurant_name: str) -> Restaurant:
     restaurant = Restaurant.objects.filter(code=restaurant_code).first()
-    if restaurant:
-        return restaurant
-    # code 를 넣기 전에 이름으로 만들어진 식당
-    restaurant, _ = Restaurant.objects.get_or_create(restaurant_name=restaurant_name)
-    restaurant.code = restaurant_code
-    restaurant.save(update_fields=["code", "updated_at"])
+    if restaurant is None:
+        # code 를 넣기 전에 이름으로 만들어진 식당
+        restaurant, _ = Restaurant.objects.get_or_create(restaurant_name=restaurant_name)
+        restaurant.code = restaurant_code
+    if not restaurant.display_name:
+        restaurant.display_name = DEFAULT_DISPLAY_NAMES.get(restaurant_code, restaurant.restaurant_name)
+    restaurant.save(update_fields=["code", "display_name", "updated_at"])
     return restaurant
 
 

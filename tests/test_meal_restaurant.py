@@ -26,3 +26,11 @@ class TestRestaurant(TestCase, RequestSetting):
         res = self.http_request(self.user, "get", "meal/restaurants")
         assert res.status_code == 200
         assert [r["code"] for r in res.data] == ["west"]
+        assert res.data[0]["display_name"] == "서맛골"
+
+    def test_display_name_is_filled_once(self):
+        restaurant = _get_or_create_restaurant("east1", "동맛골(동측학생식당)")
+        assert restaurant.display_name == "동맛골 1층 (학생식당)"
+        # admin 에서 바꾼 값은 크롤러가 덮어쓰지 않는다
+        Restaurant.objects.filter(pk=restaurant.pk).update(display_name="바꾼 이름")
+        assert _get_or_create_restaurant("east1", "동맛골(동측학생식당)").display_name == "바꾼 이름"
