@@ -265,3 +265,24 @@ class TestStructuredMessageEdit(TestCase, RequestSetting):
         assert self.http_request(self.user, "delete", f"chat/message/{res.data['message_id']}").status_code == 200
         res = self.http_request(self.user2, "get", "chat/message", querystring=f"chat_room={self.room.id}")
         assert res.data["results"] == []
+
+
+@pytest.mark.usefixtures("set_user_client", "set_user_client2", "set_user_client3")
+class TestDMPartner(TestCase, RequestSetting):
+    def test_room_list_has_dm_partner_only_for_dm(self):
+        dm = ChatRoom.objects.create(room_title="DM_x,y", room_type=ChatRoomType.DM.value)
+        ChatRoomMemberShip.objects.create(chat_room=dm, user=self.user)
+        ChatRoomMemberShip.objects.create(chat_room=dm, user=self.user2)
+        group = ChatRoom.objects.create(room_title="g", room_type=ChatRoomType.GROUP_DM.value)
+        ChatRoomMemberShip.objects.create(chat_room=group, user=self.user)
+        ChatRoomMemberShip.objects.create(chat_room=group, user=self.user3)
+
+        rooms = {r["id"]: r for r in self.http_request(self.user, "get", "chat/room").data["results"]}
+        assert rooms[dm.id]["partner"]["id"] == self.user2.id
+        assert rooms[dm.id]["partner"]["nickname"] == self.user2.profile.nickname
+        assert rooms[group.id]["partner"] is None
+
+        # 탈퇴(비활성) 처리된 상대는 null
+        type(self.user2).objects.filter(pk=self.user2.pk).update(is_active=False)
+        rooms = {r["id"]: r for r in self.http_request(self.user, "get", "chat/room").data["results"]}
+        assert rooms[dm.id]["partner"] is None
