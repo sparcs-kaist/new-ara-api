@@ -9,6 +9,7 @@ from django.utils.functional import cached_property
 from apps.core.models import Article, Block, Comment
 from apps.core.models.board import NameType
 from apps.core.push import (
+    URGENT_QUEUE,
     enqueue_push_for_notification,
     enqueue_push_for_notification_to_users,
 )
@@ -252,7 +253,9 @@ class Notification(MetaDataModel):
         # FCM push: 한 번에 모든 수신자 토큰을 multicast (채팅 알림을 끈 사람 제외)
         recipient_ids = UserNotificationPreference.filter_push_targets(recipient_ids, "chat_message")
         if recipient_ids:
-            enqueue_push_for_notification_to_users(notification, recipient_ids)
+            enqueue_push_for_notification_to_users(
+                notification, recipient_ids, collapse_key=f"room-{_messaged_room.id}",
+            )
 
     # 배달 마감 / 취소 / 도착처럼 꼭 알릴 일. 중복 알림을 건너뛰지 않는다
     @classmethod
@@ -277,4 +280,6 @@ class Notification(MetaDataModel):
         ])
         push_ids = UserNotificationPreference.filter_push_targets(user_ids, push_kind)
         if push_ids:
-            enqueue_push_for_notification_to_users(notification, push_ids)
+            enqueue_push_for_notification_to_users(
+                notification, push_ids, collapse_key=f"delivery-{chat_room.id}", queue=URGENT_QUEUE,
+            )

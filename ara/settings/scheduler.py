@@ -50,9 +50,9 @@ SCHEDULERS = {
     ),  # 매일 오전 5시
 }
 
-# 푸시 / 배달 마감이 크롤링 뒤에서 기다리지 않도록 (worker 는 supervisor-celery-worker.conf)
+# 크롤링 뒤에서 기다리지 않도록 (worker 는 supervisor-celery-worker.conf). 푸시 큐는 apps/core/push.py 에서 고른다
 CELERY_TASK_ROUTES = {
-    "apps.core.management.tasks.send_push_to_user": {"queue": "urgent"},
-    "apps.core.management.tasks.send_push_to_users": {"queue": "urgent"},
+    "apps.core.management.tasks.send_push_to_user": {"queue": "push"},
+    "apps.core.management.tasks.send_push_to_users": {"queue": "push"},
     "apps.core.management.tasks.sweep_delivery_deadlines": {"queue": "urgent"},
 }

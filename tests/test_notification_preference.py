@@ -51,6 +51,7 @@ class TestNotificationPreference(TestCase):
             ChatMessage.create(chat_room=room, created_by=self.user, message_type="TEXT", message_content="안녕")
 
         assert push.call_args.args[1] == [self.user2.id]
+        assert push.call_args.kwargs["collapse_key"] == f"room-{room.id}"
         assert NotificationReadLog.objects.filter(read_by=self.user3).exists()
 
 
@@ -72,3 +73,20 @@ class TestChatPushDedup(TestCase):
         assert send() == []
         ChatRoomMemberShip.objects.filter(chat_room=room, user=self.user2).update(last_seen_at=timezone.now())
         assert send() == [self.user2.id]
+
+
+@pytest.mark.usefixtures("set_user_client", "set_user_client2")
+class TestDeliveryPushQueue(TestCase):
+    def test_delivery_event_uses_urgent_queue_and_own_collapse_key(self):
+        from apps.delivery.models import DeliveryParty
+
+        party = DeliveryParty.open(
+            self.user, store_name="가게", place_name="희망관", min_order_amount=1000,
+            recruit_minutes=30, price=1000,
+        )
+        party.join(self.user2)
+        party.confirm_order(self.user)
+        with patch(PUSH) as push:
+            party.arrive(self.user)
+        assert push.call_args.kwargs["queue"] == "urgent"
+        assert push.call_args.kwargs["collapse_key"] == f"delivery-{party.chat_room_id}"
