@@ -202,9 +202,9 @@ class Notification(MetaDataModel):
         _messaged_room : ChatRoom = message.chat_room
 
         # 2. 채팅방에 있는 User들 의 Membership 찾기
-        _memberships : list[ChatRoomMemberShip] = ChatRoomMemberShip.objects.filter(chat_room=_messaged_room).exclude(
+        _memberships : list[ChatRoomMemberShip] = list(ChatRoomMemberShip.objects.filter(chat_room=_messaged_room).exclude(
             role__in=[ChatUserRole.BLOCKED.value, ChatUserRole.BLOCKER.value],
-        )
+        ).select_related("chat_room", "user__profile"))
 
         # 3. 메시지 작성자가 아니고, 메시지 이후로 방을 안 본 멤버
         _unread_memberships = [
@@ -215,10 +215,12 @@ class Notification(MetaDataModel):
         ]
 
         #같은 notification을 여러번 보내야 하므로 notification 먼저 생성
+        sender = next((m for m in _memberships if m.user_id == message.created_by_id), None)
+        title, content = cls.chat_message_push_text(message, sender)
         notification = cls.objects.create(
             type="chat_message",
-            title=f"새로운 메시지가 도착했습니다.",
-            content=f"{_messaged_room.room_title}에 읽지 않은 메시지가 있습니다.",
+            title=title,
+            content=content,
             related_chat_room=_messaged_room,
         )
 
@@ -256,6 +258,33 @@ class Notification(MetaDataModel):
             enqueue_push_for_notification_to_users(
                 notification, recipient_ids, collapse_key=f"room-{_messaged_room.id}",
             )
+
+    # 제목: DM 은 보낸 사람(= 받는 사람의 상대), 그 외는 방 이름. 익명 방은 익명 표시명만 쓴다
+    @staticmethod
+    def chat_message_push_text(message : ChatMessage, sender) -> tuple[str, str]:
+        from apps.chatting.models.message import ChatMessageType
+        from apps.chatting.models.room import ChatRoomType
+
+        room = message.chat_room
+        name = sender.get_display_name() if sender else "알 수 없음"
+        is_dm = room.room_type == ChatRoomType.DM.value
+        title = name if is_dm else room.room_title
+
+        summaries = {
+            ChatMessageType.DELIVERY_ORDER.value: f"{name}님이 주문을 등록했어요",
+            ChatMessageType.PAYMENT_REQUEST.value: f"{name}님이 정산을 요청했어요",
+            ChatMessageType.VOTE.value: f"{name}님이 투표를 올렸어요",
+        }
+        if message.message_type in summaries:
+            return title, summaries[message.message_type]
+
+        previews = {
+            ChatMessageType.IMAGE.value: "사진",
+            ChatMessageType.FILE.value: "파일",
+            ChatMessageType.EMOTICON.value: "이모티콘",
+        }
+        preview = previews.get(message.message_type, message.message_content[:100])
+        return title, preview if is_dm else f"{name}: {preview}"
 
     # 배달 마감 / 취소 / 도착처럼 꼭 알릴 일. 중복 알림을 건너뛰지 않는다
     @classmethod
