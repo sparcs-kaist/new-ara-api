@@ -50,13 +50,22 @@ class TestQueryCount(TestCase, RequestSetting):
         large = self.count_queries("get", "chat/message", f"chat_room={room.id}")
         assert small == large
 
+    def make_dm(self, other):
+        room = ChatRoom.objects.create(room_title="DM", room_type=ChatRoomType.DM.value)
+        ChatRoomMemberShip.objects.create(chat_room=room, user=self.user)
+        ChatRoomMemberShip.objects.create(chat_room=room, user=other)
+        return room
+
     def test_room_list(self):
-        users = Utils.create_users(3)
+        users = Utils.create_users(8)
         for _ in range(2):
-            self.add_messages(self.make_room(users), users, 1)
+            self.add_messages(self.make_room(users[:3]), users[:3], 1)
+        self.make_dm(users[3])
         small = self.count_queries("get", "chat/room")
         for _ in range(5):
-            self.add_messages(self.make_room(users), users, 1)
+            self.add_messages(self.make_room(users[:3]), users[:3], 1)
+        for user in users[4:]:
+            self.make_dm(user)
         large = self.count_queries("get", "chat/room")
         assert small == large
 

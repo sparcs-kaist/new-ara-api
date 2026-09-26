@@ -310,8 +310,14 @@ def _crawl_meal(restaurant_code: str, date: str) -> Optional[List[CourseDataType
 
 # ---------- DB 저장/비교 ----------
 
-def _get_or_create_restaurant(restaurant_name: str) -> Restaurant:
+def _get_or_create_restaurant(restaurant_code: str, restaurant_name: str) -> Restaurant:
+    restaurant = Restaurant.objects.filter(code=restaurant_code).first()
+    if restaurant:
+        return restaurant
+    # code 를 넣기 전에 이름으로 만들어진 식당
     restaurant, _ = Restaurant.objects.get_or_create(restaurant_name=restaurant_name)
+    restaurant.code = restaurant_code
+    restaurant.save(update_fields=["code", "updated_at"])
     return restaurant
 
 
@@ -403,12 +409,14 @@ def _crawl_and_save_course_restaurant(restaurant_code: str, date_str: str) -> st
     date = _parse_date(date_str)
 
     try:
+        restaurant = _get_or_create_restaurant(restaurant_code, db_restaurant_name)
+        if not restaurant.is_active:
+            return "skipped"
+
         crawled = _crawl_meal(restaurant_code=restaurant_code, date=date_str)
         if crawled is None:
             logger.warning("[%s] 크롤링 실패 - HTTP 요청 실패", restaurant_code)
             return "failed"
-
-        restaurant = _get_or_create_restaurant(db_restaurant_name)
 
         changes_needed = []
         for time_idx, new_data in enumerate(crawled):

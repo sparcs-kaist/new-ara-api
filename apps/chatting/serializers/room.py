@@ -4,6 +4,7 @@ from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRol
 from apps.chatting.models.room_permission import ChatRoomPermission
 from apps.user.serializers.user import PublicUserSerializer
 from apps.chatting.serializers.message import MessageSerializer
+from apps.chatting.serializers.member import member_directory
 
 import random
 
@@ -80,18 +81,35 @@ class ChatRoomSerializer(serializers.ModelSerializer):
     """
     recent_message = MessageSerializer(read_only=True)
     delivery_party = serializers.SerializerMethodField()
+    partner = serializers.SerializerMethodField()
 
     class Meta:
         model = ChatRoom
         fields = [
             'id', 'room_title', 'room_type', 'chat_name_type',
-            'picture', 'recent_message_at', 'recent_message', 'delivery_party', 'created_at'
+            'picture', 'recent_message_at', 'recent_message', 'delivery_party', 'partner', 'created_at'
         ]
         read_only_fields = ['recent_message_at', 'recent_message', 'created_at']
 
     def get_delivery_party(self, obj):
         party = getattr(obj, "delivery_party", None)
         return party.id if party else None
+
+    # DM 상대. 방 이름(DM_닉네임,닉네임)은 만든 순서에 따라 달라서 파싱하지 않도록 따로 내려준다
+    def get_partner(self, obj):
+        request = self.context.get("request")
+        if obj.room_type != ChatRoomType.DM.value or not request:
+            return None
+        others = [m for uid, m in member_directory(self, obj).items() if uid != request.user.id]
+        if not others or not others[0].user.is_active:
+            return None
+        user = others[0].user
+        profile = getattr(user, "profile", None)
+        return {
+            "id": user.id,
+            "nickname": profile.nickname if profile else None,
+            "picture": profile.picture.url if profile and profile.picture else None,
+        }
 
 class ChatRoomByIdSerializer(serializers.Serializer):
     """
