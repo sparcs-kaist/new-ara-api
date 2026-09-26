@@ -6,7 +6,7 @@ from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema
 from rest_framework import exceptions, mixins, permissions, response, status
 
 from ara.classes.viewset import ActionAPIViewSet
-from apps.meal.models import MAX_PHOTOS_PER_MEAL, MenuPhoto
+from apps.meal.models import MAX_PHOTOS_PER_MEAL, MenuPhoto, MenuPhotoSource
 from apps.meal.serializers.menu_photo_serializers import MenuPhotoCreateSerializer, MenuPhotoSerializer
 from apps.user.models import UserProfile
 
@@ -51,6 +51,7 @@ class MenuPhotoViewSet(mixins.ListModelMixin, mixins.DestroyModelMixin, ActionAP
         return queryset.annotate(
             official_first=Case(
                 When(created_by__profile__group=UserProfile.UserGroup.STORE_EMPLOYEE, then=Value(0)),
+                When(source=MenuPhotoSource.INSTAGRAM.value, then=Value(0)),
                 default=Value(1),
                 output_field=IntegerField(),
             ),

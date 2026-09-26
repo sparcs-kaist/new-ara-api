@@ -48,6 +48,25 @@ SCHEDULERS = {
     "CRAWL_MEAL": create_scheduler_config(
         "CRAWL_MEAL", crontab=crontab(hour=5, minute=0)
     ),  # 매일 오전 5시
+    "CRAWL_MEAL_PHOTOS": create_scheduler_config(
+        "CRAWL_MEAL_PHOTOS", crontab=crontab(minute="*/10")
+    ),  # 10분마다, 끼니 구간 밖이면 바로 끝난다
+}
+
+
+def env_map(name, default):
+    raw = os_environ.get(name, default)
+    return dict(item.strip().split("=", 1) for item in raw.split(",") if item.strip())
+
+
+# 인스타 계정=식당 code
+MEAL_PHOTO_INSTAGRAM_ACCOUNTS = env_map("NEWARA_MEAL_PHOTO_INSTAGRAM_ACCOUNTS", "gaon_kaist_n11=fclt")
+# 끼니=HH:MM-HH:MM (KST). 이 구간에 올라온 게시물만, 이 구간에만 수집한다
+MEAL_PHOTO_WINDOWS = {
+    meal_time: tuple(span.split("-"))
+    for meal_time, span in env_map(
+        "NEWARA_MEAL_PHOTO_WINDOWS", "BREAKFAST=07:00-09:30,LUNCH=10:30-13:30,DINNER=16:30-19:00",
+    ).items()
 }
 
 # 크롤링 뒤에서 기다리지 않도록 (worker 는 supervisor-celery-worker.conf). 푸시 큐는 apps/core/push.py 에서 고른다

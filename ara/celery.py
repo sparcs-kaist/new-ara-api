@@ -54,4 +54,9 @@ app.conf.beat_schedule = {
         "schedule": settings.SCHEDULERS["CRAWL_MEAL"]["CRONTAB"],
         "args": [],
     },
+    "crawl_meal_photos": {
+        "task": "apps.core.management.tasks.crawl_meal_photos",
+        "schedule": settings.SCHEDULERS["CRAWL_MEAL_PHOTOS"]["CRONTAB"],
+        "args": [],
+    },
 }

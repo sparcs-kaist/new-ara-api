@@ -14,7 +14,7 @@ class MenuPhotoSource(str, Enum):
 MAX_PHOTOS_PER_MEAL = 3
 
 
-# 입주업체 직원(STORE_EMPLOYEE)이 올린 사진은 공식 사진
+# 입주업체 직원(STORE_EMPLOYEE)이 올린 사진과 식당 인스타에서 가져온 사진은 공식 사진
 class MenuPhoto(MetaDataModel):
     restaurant = models.ForeignKey(
         verbose_name = "식당",
@@ -46,6 +46,14 @@ class MenuPhoto(MetaDataModel):
         choices = [(source.value, source.name) for source in MenuPhotoSource],
         default = MenuPhotoSource.USER.value,
     )
+    # 자동 수집한 게시물 id (여러 장이면 id_순번). 다시 가져오지 않게 막는다
+    source_post_id = models.CharField(
+        verbose_name = "원본 게시물 id",
+        max_length = 64,
+        null = True,
+        blank = True,
+        unique = True,
+    )
     # 자동 수집 사진은 작성자가 없다
     created_by = models.ForeignKey(
         verbose_name = "올린 사람",
@@ -65,5 +73,7 @@ class MenuPhoto(MetaDataModel):
     def is_official(self) -> bool:
         from apps.user.models import UserProfile
 
+        if self.source == MenuPhotoSource.INSTAGRAM.value:
+            return True
         profile = getattr(self.created_by, "profile", None) if self.created_by_id else None
         return bool(profile and profile.group == UserProfile.UserGroup.STORE_EMPLOYEE)

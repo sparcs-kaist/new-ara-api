@@ -6,6 +6,7 @@ from apps.core.management.scripts.reminder_email_for_reply import send_email
 from apps.core.models import BestArticle
 from apps.kaist.portal.worker import Worker as PortalCrawlWorker
 from apps.core.management.scripts.meal_crawler import crawl_daily_meal
+from apps.core.management.scripts.meal_instagram import crawl_instagram_menu_photos
 
 from ara import celery_app, redis
 from datetime import datetime, timedelta
@@ -124,3 +125,8 @@ def crawl_meal():
         #식단 크롤링
         crawl_daily_meal(date)
         time.sleep(2)
+
+
+@celery_app.task
+def crawl_meal_photos():
+    crawl_instagram_menu_photos()
