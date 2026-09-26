@@ -77,8 +77,7 @@ class MenuPhotoViewSet(mixins.ListModelMixin, mixins.DestroyModelMixin, ActionAP
             status=status.HTTP_201_CREATED,
         )
 
-    # 관리자는 admin 에서 지운다
     def perform_destroy(self, instance):
-        if instance.created_by_id != self.request.user.id:
+        if instance.created_by_id != self.request.user.id and not self.request.user.is_staff:
             raise exceptions.PermissionDenied("내가 올린 사진만 지울 수 있어요.")
         instance.delete()
