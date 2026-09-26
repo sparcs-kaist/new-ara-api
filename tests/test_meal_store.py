@@ -1,12 +1,22 @@
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 
 import pytest
 from django.test import override_settings
 from django.utils import timezone
 
-from apps.meal.models import Store, StoreMenu, StoreNotice, StoreStaff
+from apps.meal.models import Store, StoreEvent, StoreMenu, StoreNotice, StoreStaff
 from tests.conftest import RequestSetting, TestCase
 from tests.test_meal_photo import MEMORY_STORAGE, make_image
+
+
+HOURS = {
+    "mon": [{"open": "09:00", "close": "14:00"}, {"open": "15:00", "close": "18:00"}],
+    "sun": [],
+}
+
+
+def kst(*args):
+    return timezone.make_aware(datetime(*args))
 
 
 @override_settings(STORAGES=MEMORY_STORAGE)
@@ -35,12 +45,70 @@ class TestStore(TestCase, RequestSetting):
 
     def test_only_staff_edits(self):
         path = f"stores/{self.store.id}"
-        assert self.http_request(self.user2, "patch", path, {"hours": "9-18"}).status_code == 403
-        res = self.http_request(self.user, "patch", path, {"hours": "9-18", "name": "바꾼 이름"})
-        assert res.status_code == 200
-        assert res.data["hours"] == "9-18"
-        # 이름은 운영진만 (직원 API 로는 안 바뀐다)
-        assert res.data["name"] == "카페"
+        assert self.http_request(self.user2, "patch", path, {"name": "x"}).status_code == 403
+        res = self.http_request(self.user, "patch", path, {"hours": HOURS, "name": "바꾼 이름", "zone": "WEST", "is_active": False})
+        assert res.status_code == 200, res.data
+        assert res.data["hours"] == HOURS
+        assert (res.data["name"], res.data["zone"]) == ("바꾼 이름", "WEST")
+        # 운영 여부는 운영진만
+        assert res.data["is_active"] is True
+
+    def test_hours_validation(self):
+        path = f"stores/{self.store.id}"
+        for bad in ["9-18", {"monday": []}, {"mon": [{"open": "18:00", "close": "09:00"}]}, {"mon": [{"open": "9:00", "close": "18:00"}]}]:
+            assert self.http_request(self.user, "patch", path, {"hours": bad}).status_code == 400, bad
+
+    def test_open_state(self):
+        self.store.hours = HOURS
+        self.store.save()
+        # 2026-09-28 은 월요일
+        assert self.store.open_state(kst(2026, 9, 28, 10)) == {"is_open": True, "open_note": "14:00까지 영업", "today_hours": "09:00–14:00, 15:00–18:00"}
+        assert self.store.open_state(kst(2026, 9, 28, 14, 30))["open_note"] == "15:00 영업 시작"
+        assert self.store.open_state(kst(2026, 9, 28, 19))["open_note"] == "영업 종료"
+        assert self.store.open_state(kst(2026, 9, 27, 12)) == {"is_open": False, "open_note": "오늘 휴무", "today_hours": None}
+
+        # 일요일 임시 영업
+        StoreEvent.objects.create(
+            store=self.store, kind="OPEN", starts_at=kst(2026, 9, 27, 0), ends_at=kst(2026, 9, 27, 23),
+            open_time=time(11), close_time=time(15),
+        )
+        assert self.store.open_state(kst(2026, 9, 27, 12))["open_note"] == "15:00까지 영업"
+        # 휴무가 이긴다
+        StoreEvent.objects.create(store=self.store, kind="CLOSED", starts_at=kst(2026, 9, 26, 0), ends_at=kst(2026, 9, 28, 23), reason="재료 소진")
+        state = self.store.open_state(kst(2026, 9, 27, 12))
+        assert state["is_open"] is False
+        assert state["open_note"] == "임시 휴무 · 재료 소진 (09/28까지)"
+
+    def test_events_crud(self):
+        path = f"stores/{self.store.id}/events"
+        now = timezone.now()
+        assert self.http_request(self.user2, "post", path, {"kind": "CLOSED", "starts_at": now.isoformat()}).status_code == 403
+        res = self.http_request(self.user, "post", path, {"kind": "CLOSED", "starts_at": now.isoformat()})
+        assert res.status_code == 201, res.data
+        event_id = res.data["id"]
+        # OPEN 은 시간이 필요하다
+        assert self.http_request(self.user, "post", path, {"kind": "OPEN", "starts_at": now.isoformat()}).status_code == 400
+        res = self.http_request(self.user, "post", path, {"kind": "OPEN", "starts_at": now.isoformat(), "open": "11:00", "close": "15:00"})
+        assert (res.data["open"], res.data["close"]) == ("11:00", "15:00")
+        StoreEvent.objects.create(store=self.store, kind="CLOSED", starts_at=now - timedelta(days=3), ends_at=now - timedelta(days=1))
+
+        # 끝난 이벤트는 안 보인다
+        assert len(self.http_request(self.user, "get", path).data) == 2
+        detail = self.http_request(self.user2, "get", f"stores/{self.store.id}").data
+        assert detail["is_open"] is False and detail["open_note"] == "임시 휴무"
+
+        res = self.http_request(self.user, "patch", f"{path}/{event_id}", {"reason": "휴가"})
+        assert res.data["reason"] == "휴가"
+        assert self.http_request(self.user, "delete", f"{path}/{event_id}").status_code == 204
+        assert self.http_request(self.user2, "get", f"stores/{self.store.id}").data["open_note"] != "임시 휴무"
+
+    def test_signature_menus_in_list(self):
+        for i in range(4):
+            StoreMenu.objects.create(store=self.store, name=f"대표{i}", is_signature=True, order=i + 2)
+        res = self.http_request(self.user2, "get", "stores")
+        cafe = next(s for s in res.data if s["id"] == self.store.id)
+        assert len(cafe["signature_menus"]) == 3
+        assert {"is_open", "open_note", "today_hours", "hours_note"} <= set(cafe)
 
     def test_menu_crud_with_photo_and_sold_out(self):
         self.api_client.force_authenticate(user=self.user)
@@ -95,9 +163,9 @@ class TestOps(TestCase, RequestSetting):
         assert [s["id"] for s in self.http_request(self.admin, "get", path).data] == [self.user.id]
 
         # 지정된 계정은 자기 업체를 고칠 수 있다
-        assert self.http_request(self.user, "patch", f"stores/{self.store.id}", {"hours": "9-18"}).status_code == 200
+        assert self.http_request(self.user, "patch", f"stores/{self.store.id}", {"hours_note": "시험기간 연장"}).status_code == 200
         assert self.http_request(self.admin, "delete", f"{path}/{self.user.id}").status_code == 204
-        assert self.http_request(self.user, "patch", f"stores/{self.store.id}", {"hours": "x"}).status_code == 403
+        assert self.http_request(self.user, "patch", f"stores/{self.store.id}", {"hours_note": "x"}).status_code == 403
 
     def test_user_search_and_restaurant_edit(self):
         from apps.meal.models import Restaurant
@@ -109,10 +177,6 @@ class TestOps(TestCase, RequestSetting):
         res = self.http_request(self.admin, "patch", f"ops/restaurants/{restaurant.id}", {"display_name": "동맛골 1층", "is_active": False})
         assert res.status_code == 200
         assert res.data["display_name"] == "동맛골 1층"
-
-    def test_me_has_is_staff(self):
-        self.api_client.force_authenticate(user=self.admin)
-        assert self.api_client.get("/api/me").data["is_staff"] is True
 
     def test_staff_deletes_any_menu_photo(self):
         from apps.meal.models import MenuPhoto, Restaurant

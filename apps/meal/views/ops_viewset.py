@@ -4,6 +4,7 @@ from rest_framework import exceptions, mixins, permissions, response, serializer
 from rest_framework.decorators import action
 
 from apps.meal.models import Restaurant, Store, StoreStaff
+from apps.meal.serializers.store_serializers import validate_hours_value
 from apps.user.models import UserProfile
 
 User = get_user_model()
@@ -13,9 +14,12 @@ class OpsStoreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Store
         fields = [
-            "id", "name", "intro", "zone", "location", "hours", "cover", "phone", "link",
+            "id", "name", "intro", "zone", "location", "hours", "hours_note", "cover", "phone", "link",
             "restaurant", "is_active", "order",
         ]
+
+    def validate_hours(self, value):
+        return validate_hours_value(value)
 
 
 class OpsRestaurantSerializer(serializers.ModelSerializer):

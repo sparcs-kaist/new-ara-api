@@ -1,7 +1,7 @@
 from django.contrib import admin, messages
 from django.utils.html import format_html
 
-from apps.meal.models import MenuPhoto, Restaurant, Store, StoreMenu, StoreNotice, StoreStaff
+from apps.meal.models import MenuPhoto, Restaurant, Store, StoreEvent, StoreMenu, StoreNotice, StoreStaff
 from apps.user.models import UserProfile
 
 
@@ -29,7 +29,7 @@ class StoreStaffInline(admin.TabularInline):
 class StoreMenuInline(admin.TabularInline):
     model = StoreMenu
     extra = 0
-    fields = ("order", "section", "name", "price", "description", "photo", "is_sold_out")
+    fields = ("order", "section", "name", "price", "description", "photo", "is_sold_out", "is_signature")
 
 
 class StoreNoticeInline(admin.TabularInline):
@@ -38,13 +38,19 @@ class StoreNoticeInline(admin.TabularInline):
     fields = ("title", "body", "starts_at", "ends_at")
 
 
+class StoreEventInline(admin.TabularInline):
+    model = StoreEvent
+    extra = 0
+    fields = ("kind", "starts_at", "ends_at", "reason", "open_time", "close_time")
+
+
 @admin.register(Store)
 class StoreAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "zone", "location", "is_active", "order", "cover_preview")
     list_filter = ("zone", "is_active")
     search_fields = ("name", "location")
     readonly_fields = ("cover_preview",)
-    inlines = (StoreStaffInline, StoreMenuInline, StoreNoticeInline)
+    inlines = (StoreStaffInline, StoreMenuInline, StoreNoticeInline, StoreEventInline)
 
     @admin.display(description="대표 이미지")
     def cover_preview(self, obj):

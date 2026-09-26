@@ -70,13 +70,6 @@ class PublicUserProfileSerializer(BaseUserProfileSerializer):
 
 class MyPageUserProfileSerializer(BaseUserProfileSerializer):
     num_articles = serializers.SerializerMethodField()
-    # 웹이 운영진 관리 메뉴를 보여줄지 정한다
-    is_staff = serializers.SerializerMethodField()
-
-    @staticmethod
-    def get_is_staff(obj) -> bool:
-        return obj.user.is_staff
-
     num_comments = serializers.SerializerMethodField()
     num_positive_votes = serializers.SerializerMethodField()
 

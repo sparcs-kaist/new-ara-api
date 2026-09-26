@@ -1,13 +1,15 @@
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
+from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import exceptions, mixins, permissions, response, status
 from rest_framework.decorators import action
 
 from ara.classes.viewset import ActionAPIViewSet
-from apps.meal.models import Store, StoreMenu, StoreNotice, StoreStaff
+from apps.meal.models import Store, StoreEvent, StoreMenu, StoreNotice, StoreStaff
 from apps.meal.serializers.store_serializers import (
     StoreDetailSerializer,
+    StoreEventSerializer,
     StoreListSerializer,
     StoreMenuSerializer,
     StoreNoticeSerializer,
@@ -30,6 +32,8 @@ class StoreViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, ActionAPIVi
         "menu_detail": (permissions.IsAuthenticated,),
         "notices": (permissions.IsAuthenticated,),
         "notice_detail": (permissions.IsAuthenticated,),
+        "events": (permissions.IsAuthenticated,),
+        "event_detail": (permissions.IsAuthenticated,),
         "mine": (permissions.IsAuthenticated,),
     }
     action_serializer_class = {
@@ -39,10 +43,17 @@ class StoreViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, ActionAPIVi
         "menu_detail": StoreMenuSerializer,
         "notices": StoreNoticeSerializer,
         "notice_detail": StoreNoticeSerializer,
+        "events": StoreEventSerializer,
+        "event_detail": StoreEventSerializer,
     }
 
     def get_queryset(self):
-        queryset = Store.objects.filter(is_active=True)
+        # 끝나지 않은 이벤트 (시작 전 포함). 영업 상태 계산과 events 목록에 같이 쓴다
+        current_events = StoreEvent.objects.filter(Q(ends_at__isnull=True) | Q(ends_at__gte=timezone.now()))
+        queryset = Store.objects.filter(is_active=True).prefetch_related(
+            Prefetch("events", queryset=current_events, to_attr="current_events"),
+            Prefetch("menus", queryset=StoreMenu.objects.filter(is_signature=True), to_attr="signature_list"),
+        )
         if self.action == "list":
             zone = self.request.query_params.get("zone")
             return queryset.filter(zone=zone) if zone else queryset
@@ -59,7 +70,7 @@ class StoreViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, ActionAPIVi
         serializer.is_valid(raise_exception=True)
         return serializer.save(**extra)
 
-    # 직원: 소개 / 위치 / 운영 시간 / 대표 이미지 / 연락처
+    # 직원: 운영 여부 / 식당 연결 / 정렬 외 업체 정보 전부
     def partial_update(self, request, pk=None):
         store = self.get_staff_store()
         self.save_child(request, StoreUpdateSerializer, store)
@@ -104,6 +115,27 @@ class StoreViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, ActionAPIVi
             notice.delete()
             return response.Response(status=status.HTTP_204_NO_CONTENT)
         return response.Response(StoreNoticeSerializer(self.save_child(request, StoreNoticeSerializer, notice)).data)
+
+    @extend_schema(request=StoreEventSerializer, responses={200: StoreEventSerializer(many=True), 201: StoreEventSerializer})
+    @action(detail=True, methods=["get", "post"])
+    def events(self, request, pk=None):
+        store = self.get_staff_store()
+        if request.method == "GET":
+            return response.Response(StoreEventSerializer(store.current_events, many=True).data)
+        event = self.save_child(request, StoreEventSerializer, store=store)
+        return response.Response(StoreEventSerializer(event).data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(request=StoreEventSerializer, responses={200: StoreEventSerializer, 204: None})
+    @action(detail=True, methods=["patch", "delete"], url_path=r"events/(?P<event_id>\d+)")
+    def event_detail(self, request, pk=None, event_id=None):
+        store = self.get_staff_store()
+        event = store.events.filter(pk=event_id).first()
+        if event is None:
+            raise exceptions.NotFound("이벤트를 찾을 수 없어요.")
+        if request.method == "DELETE":
+            event.delete()
+            return response.Response(status=status.HTTP_204_NO_CONTENT)
+        return response.Response(StoreEventSerializer(self.save_child(request, StoreEventSerializer, event)).data)
 
     # 내가 관리하는 업체 id 목록
     @extend_schema(responses={200: OpenApiTypes.OBJECT})
