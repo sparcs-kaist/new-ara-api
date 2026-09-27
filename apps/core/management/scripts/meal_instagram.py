@@ -10,6 +10,11 @@ from apps.meal.models import MealType, MenuPhoto, MenuPhotoSource, Restaurant
 
 MealWindows = Dict[str, Tuple[str, str]]
 
+# 인스타 계정 -> DB 식당 code
+INSTAGRAM_ACCOUNTS = {
+    "gaon_kaist_n11": "fclt",  # 카이마루
+}
+
 
 def meal_time_of(moment: datetime, windows: MealWindows) -> Optional[Tuple[date, MealType]]:
     local = timezone.localtime(moment)
@@ -56,7 +61,7 @@ def crawl_instagram_menu_photos(now: Optional[datetime] = None) -> int:
         return 0
 
     saved = 0
-    for username, restaurant_code in settings.MEAL_PHOTO_INSTAGRAM_ACCOUNTS.items():
+    for username, restaurant_code in INSTAGRAM_ACCOUNTS.items():
         restaurant = Restaurant.objects.filter(code=restaurant_code, is_active=True).first()
         if restaurant is None:
             continue

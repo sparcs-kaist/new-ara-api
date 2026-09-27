@@ -59,8 +59,6 @@ def env_map(name, default):
     return dict(item.strip().split("=", 1) for item in raw.split(",") if item.strip())
 
 
-# 인스타 계정=식당 code
-MEAL_PHOTO_INSTAGRAM_ACCOUNTS = env_map("NEWARA_MEAL_PHOTO_INSTAGRAM_ACCOUNTS", "gaon_kaist_n11=fclt")
 # 끼니=HH:MM-HH:MM (KST). 이 구간에 올라온 게시물만, 이 구간에만 수집한다
 MEAL_PHOTO_WINDOWS = {
     meal_time: tuple(span.split("-"))

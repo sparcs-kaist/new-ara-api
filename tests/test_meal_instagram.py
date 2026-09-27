@@ -72,7 +72,7 @@ class TestFetchRecentPosts(TestCase):
             assert instagram_client.fetch_recent_posts("gaon_kaist_n11") == []
 
 
-@override_settings(STORAGES=MEMORY_STORAGE, MEAL_PHOTO_WINDOWS=WINDOWS, MEAL_PHOTO_INSTAGRAM_ACCOUNTS={"gaon_kaist_n11": "fclt"})
+@override_settings(STORAGES=MEMORY_STORAGE, MEAL_PHOTO_WINDOWS=WINDOWS)
 class TestCrawlInstagramMenuPhotos(TestCase):
     def setUp(self):
         self.restaurant = Restaurant.objects.create(restaurant_name="카이마루", code="fclt")
