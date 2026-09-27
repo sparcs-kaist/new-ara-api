@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from django.test import override_settings
 from django.utils import timezone
@@ -5,6 +7,7 @@ from django.utils import timezone
 from apps.core.models import Article
 from apps.course import board as course_board
 from apps.course.models import Course, CourseEnrollment, CourseGroup
+from apps.major import board as major_board
 from tests.conftest import RequestSetting, TestCase
 from tests.test_meal_photo import MEMORY_STORAGE
 
@@ -63,3 +66,38 @@ class TestCourseArticleSearch(TestCase, RequestSetting):
         assert sorted(a["id"] for a in detail["attachments"]) == sorted([image.id, pdf.id])
         types = {a["title"]: a["attachment_type"] for a in self.http_request(self.user, "get", path).data["results"]}
         assert types["첨부"] == "BOTH" and types["잡담"] == "NONE"
+
+        # 필드를 빼면 그대로, 빈 목록이면 전부 지운다
+        self.http_request(self.user, "patch", f"{path}/{article_id}", {"title": "첨부 수정"})
+        assert Article.objects.get(pk=article_id).attachments.count() == 2
+        self.http_request(self.user, "patch", f"{path}/{article_id}", {"attachments": []})
+        assert Article.objects.get(pk=article_id).attachments.count() == 0
+
+
+@pytest.mark.usefixtures("set_user_client")
+class TestMajorArticleAttachments(TestCase, RequestSetting):
+    def setUp(self):
+        major_board._cached_board_id = None
+        self.user.profile.sso_user_info = {"kaist_v2_info": json.dumps({"std_dept_id": 1234, "std_dept_kor_nm": "전산학부"})}
+        self.user.profile.save()
+
+    @override_settings(STORAGES=MEMORY_STORAGE)
+    def test_attachments(self):
+        from apps.core.models import Attachment
+
+        image = Attachment.objects.create(file="a.png", alias="a.png", size=1, mimetype="image/png")
+        path = "majors/1234/articles"
+        res = self.http_request(self.user, "post", path, {"title": "첨부", "content": "본문", "attachments": [image.id]})
+        assert res.status_code == 201, res.data
+        article = Article.objects.get(pk=res.data["id"])
+        assert list(article.attachments.values_list("id", flat=True)) == [image.id]
+        assert self.http_request(self.user, "get", path).data["results"][0]["attachment_type"] == "IMAGE"
+        # 첨부 없이 쓴 글
+        res = self.http_request(self.user, "post", path, {"title": "그냥", "content": "본문"})
+        assert res.status_code == 201 and res.data["attachments"] == []
+
+        # 필드를 빼면 그대로, 빈 목록이면 전부 지운다
+        self.http_request(self.user, "patch", f"{path}/{article.id}", {"title": "첨부 수정"})
+        assert article.attachments.count() == 1
+        self.http_request(self.user, "patch", f"{path}/{article.id}", {"attachments": []})
+        assert article.attachments.count() == 0
