@@ -140,7 +140,7 @@ class TestStore(TestCase, RequestSetting):
     def test_menu_crud_with_photo_and_sold_out(self):
         self.api_client.force_authenticate(user=self.user)
         res = self.api_client.post(f"/api/stores/{self.store.id}/menus/", {
-            "name": "라떼", "price": 3000, "section": "커피", "photo": make_image(),
+            "name": "라떼", "price": 3000, "category": "", "photo": make_image(),
         }, format="multipart")
         assert res.status_code == 201, res.data
         menu_id = res.data["id"]
@@ -150,6 +150,37 @@ class TestStore(TestCase, RequestSetting):
         assert res.data["is_sold_out"] is True
         assert self.http_request(self.user2, "patch", f"stores/{self.store.id}/menus/{menu_id}", {"is_sold_out": False}).status_code == 403
         assert self.http_request(self.user, "delete", f"stores/{self.store.id}/menus/{menu_id}").status_code == 204
+
+    def test_menu_categories(self):
+        path = f"stores/{self.store.id}/categories"
+        assert self.http_request(self.user2, "post", path, {"name": "커피"}).status_code == 403
+        coffee = self.http_request(self.user, "post", path, {"name": "커피"}).data
+        tea = self.http_request(self.user, "post", path, {"name": "차"}).data
+        assert (coffee["order"], tea["order"]) == (0, 1)
+        for bad in ({"name": "커피"}, {"name": "  "}):
+            res = self.http_request(self.user, "post", path, bad)
+            assert res.status_code == 400 and "detail" in str(res.data), res.data
+
+        menu = StoreMenu.objects.get(name="아메리카노")
+        menu_path = f"stores/{self.store.id}/menus/{menu.id}"
+        assert self.http_request(self.user, "patch", menu_path, {"category": coffee["id"]}).data["category"] == coffee["id"]
+        # 다른 업체의 카테고리는 못 붙인다
+        other = Store.objects.get(name="분식").menu_categories.create(name="김밥")
+        assert self.http_request(self.user, "patch", menu_path, {"category": other.id}).status_code == 400
+
+        self.http_request(self.user, "patch", f"{path}/{tea['id']}", {"order": 0})
+        self.http_request(self.user, "patch", f"{path}/{coffee['id']}", {"order": 1})
+        detail = self.http_request(self.user2, "get", f"stores/{self.store.id}").data
+        assert [c["name"] for c in detail["categories"]] == ["차", "커피"]
+        assert detail["menus"][0]["category"] == coffee["id"]
+
+        # 카테고리를 지워도 메뉴는 남고 미분류가 된다
+        assert self.http_request(self.user, "delete", f"{path}/{coffee['id']}").status_code == 204
+        detail = self.http_request(self.user2, "get", f"stores/{self.store.id}").data
+        assert detail["menus"][0]["category"] is None
+        assert [c["name"] for c in self.http_request(self.user, "get", path).data] == ["차"]
+        # 지운 이름은 다시 쓸 수 있다
+        assert self.http_request(self.user, "post", path, {"name": "커피"}).status_code == 201
 
     def test_notice_and_mine(self):
         res = self.http_request(self.user, "post", f"stores/{self.store.id}/notices", {"title": "재료 소진"})

@@ -161,6 +161,30 @@ class Store(MetaDataModel):
         )
 
 
+class StoreMenuCategory(MetaDataModel):
+    store = models.ForeignKey(
+        verbose_name = "업체",
+        to = Store,
+        on_delete = models.CASCADE,
+        related_name = "menu_categories",
+    )
+    name = models.CharField(
+        verbose_name = "이름",
+        max_length = 20,
+    )
+    order = models.PositiveIntegerField(
+        verbose_name = "정렬 순서",
+        default = 0,
+    )
+
+    class Meta(MetaDataModel.Meta):
+        ordering = ("order", "id")
+        unique_together = (("store", "name", "deleted_at"),)
+
+    def __str__(self):
+        return self.name
+
+
 class StoreMenu(MetaDataModel):
     store = models.ForeignKey(
         verbose_name = "업체",
@@ -168,11 +192,14 @@ class StoreMenu(MetaDataModel):
         on_delete = models.CASCADE,
         related_name = "menus",
     )
-    section = models.CharField(
-        verbose_name = "분류",
-        max_length = 30,
+    # 카테고리를 지우면 미분류(null)가 된다
+    category = models.ForeignKey(
+        verbose_name = "카테고리",
+        to = StoreMenuCategory,
+        on_delete = models.SET_NULL,
+        related_name = "menus",
+        null = True,
         blank = True,
-        default = "",
     )
     name = models.CharField(
         verbose_name = "메뉴 이름",
