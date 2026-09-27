@@ -87,18 +87,16 @@ class MajorArticleCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # ViewSet context의 major와 board ID로 scoped relations을 설정한다.
         name_type = NameType[validated_data.pop("name_type")]
-        attachments = validated_data.pop("attachments", [])
         major = self.context["major"]
         board_id = self.context["board_id"]
-        article = Article.objects.create(
+        # 첨부(M2M)는 일반 글처럼 ModelSerializer 기본 처리에 맡긴다
+        return super().create({
             **validated_data,
-            parent_board_id=board_id,
-            related_major=major,
-            name_type=name_type.value,
-            created_by=self.context["request"].user,
-        )
-        article.attachments.set(attachments)
-        return article
+            "parent_board_id": board_id,
+            "related_major": major,
+            "name_type": name_type.value,
+            "created_by": self.context["request"].user,
+        })
 
 
 class MajorArticleUpdateSerializer(serializers.ModelSerializer):
