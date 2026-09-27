@@ -29,6 +29,10 @@ from apps.otl.client import OtlApiError, OtlAuthError
 log = logging.getLogger(__name__)
 
 SYNC_TTL = timedelta(hours=24)
+# 처음 들어온 유저의 지난 학기를 몇 년치 채울지
+BACKFILL_YEARS = 4
+# 채우는 중이면 이 시간 동안 다시 넣지 않는다. 다 채우면 표시가 영구로 남는다
+BACKFILL_RETRY_SECONDS = 60 * 60
 
 
 class OtlSyncError(Exception):
@@ -112,6 +116,40 @@ def sync_user_courses(user, year: int, semester: int, *, force: bool = False) ->
     log.info(
         "sync_user_courses done: user=%s year=%s semester=%s", user.id, year, semester,
     )
+
+
+def backfill_key(user_id: int) -> str:
+    return f"otl-backfill:{user_id}"
+
+
+def backfill_terms() -> list[Tuple[int, int]]:
+    cy, cs = current_term()
+    terms = [(y, s) for y in range(cy - BACKFILL_YEARS, cy + 1) for s in (1, 2, 3, 4) if (y, s) < (cy, cs)]
+    return sorted(terms, reverse=True)
+
+
+def request_backfill(user) -> None:
+    from apps.core.management.tasks import backfill_user_courses
+    from ara import redis
+
+    try:
+        if redis.set(backfill_key(user.id), "pending", nx=True, ex=BACKFILL_RETRY_SECONDS):
+            backfill_user_courses.delay(user.id)
+    except Exception:
+        log.warning("OTL backfill enqueue failed for user %s", user.id, exc_info=True)
+
+
+# 이미 채운 지난 학기는 sync_user_courses 가 캐시로 건너뛴다
+def backfill_past_terms(user) -> None:
+    from ara import redis
+
+    for year, semester in backfill_terms():
+        try:
+            sync_user_courses(user, year, semester)
+        except OtlSyncError as e:
+            log.warning("OTL backfill stopped for user %s at (%s, %s): %r", user.id, year, semester, e)
+            return
+    redis.set(backfill_key(user.id), "done")
 
 
 def _apply_my_timetable(user, year: int, semester: int, payload: dict) -> None:

@@ -35,7 +35,7 @@ from rest_framework import (
 from apps.course.models import Course, CourseEnrollment
 from apps.course.permissions import IsEnrolledInCourse
 from apps.course.serializers import CourseSerializer
-from apps.otl.sync import OtlSyncError, current_term, sync_user_courses
+from apps.otl.sync import OtlSyncError, current_term, request_backfill, sync_user_courses
 
 log = logging.getLogger(__name__)
 
@@ -137,6 +137,8 @@ class CourseViewSet(
                 "OTL sync failed for user %s (%s, %s), serving stale enrollment: %r",
                 request.user.id, year, semester, e, exc_info=True,
             )
+        # 처음 들어온 유저는 지난 학기를 비동기로 채운다
+        request_backfill(request.user)
 
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset, many=True)
