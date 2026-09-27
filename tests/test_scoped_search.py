@@ -1,10 +1,12 @@
 import pytest
+from django.test import override_settings
 from django.utils import timezone
 
 from apps.core.models import Article
 from apps.course import board as course_board
 from apps.course.models import Course, CourseEnrollment, CourseGroup
 from tests.conftest import RequestSetting, TestCase
+from tests.test_meal_photo import MEMORY_STORAGE
 
 
 @pytest.mark.usefixtures("set_user_client")
@@ -42,3 +44,22 @@ class TestCourseArticleSearch(TestCase, RequestSetting):
         assert self.http_request(self.user, "get", path).data["my_scrap"] is None
         scrap = Scrap.objects.create(parent_article=article, scrapped_by=self.user)
         assert self.http_request(self.user, "get", path).data["my_scrap"]["id"] == scrap.id
+
+    @override_settings(STORAGES=MEMORY_STORAGE)
+    def test_attachments(self):
+        from apps.core.models import Attachment
+
+        image = Attachment.objects.create(file="a.png", alias="a.png", size=1, mimetype="image/png")
+        pdf = Attachment.objects.create(file="b.pdf", alias="b.pdf", size=1, mimetype="application/pdf")
+        path = f"courses/{self.course.id}/articles"
+        res = self.http_request(self.user, "post", path, {"title": "첨부", "content": "본문", "attachments": [image.id]})
+        assert res.status_code == 201, res.data
+        assert [a["id"] for a in res.data["attachments"]] == [image.id]
+
+        article_id = res.data["id"]
+        res = self.http_request(self.user, "patch", f"{path}/{article_id}", {"attachments": [image.id, pdf.id]})
+        assert res.status_code == 200, res.data
+        detail = self.http_request(self.user, "get", f"{path}/{article_id}").data
+        assert sorted(a["id"] for a in detail["attachments"]) == sorted([image.id, pdf.id])
+        types = {a["title"]: a["attachment_type"] for a in self.http_request(self.user, "get", path).data["results"]}
+        assert types["첨부"] == "BOTH" and types["잡담"] == "NONE"

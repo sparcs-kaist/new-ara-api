@@ -130,3 +130,13 @@ def crawl_meal():
 @celery_app.task
 def crawl_meal_photos():
     crawl_instagram_menu_photos()
+
+
+@celery_app.task
+def backfill_user_courses(user_id: int):
+    from django.contrib.auth import get_user_model
+    from apps.otl.sync import backfill_past_terms
+
+    user = get_user_model().objects.filter(pk=user_id).select_related("profile").first()
+    if user is not None:
+        backfill_past_terms(user)

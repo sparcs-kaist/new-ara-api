@@ -69,10 +69,18 @@ class TestChatPushDedup(TestCase):
                 ChatMessage.create(chat_room=room, created_by=self.user, message_type="TEXT", message_content="x")
             return push.call_args.args[1] if push.called else []
 
+        from apps.core.models import Notification
+
+        def notification_count():
+            return Notification.objects.filter(related_chat_room=room).count()
+
         assert send() == [self.user2.id]
         assert send() == []
+        # 받을 사람이 없으면 알림 객체도 만들지 않는다
+        assert notification_count() == 1
         ChatRoomMemberShip.objects.filter(chat_room=room, user=self.user2).update(last_seen_at=timezone.now())
         assert send() == [self.user2.id]
+        assert notification_count() == 2
 
 
 @pytest.mark.usefixtures("set_user_client", "set_user_client2")
@@ -127,6 +135,9 @@ class TestChatPushText(TestCase):
         notification = self.send(party.chat_room, message_type="TEXT", message_content="안녕하세요")
         assert notification.title == "가게"
         assert notification.content == "익명1: 안녕하세요"
+        # 방장이 아직 안 읽은 알림이 있으면 새 알림을 만들지 않으므로, 방을 본 뒤로 맞춘다
+        from django.utils import timezone
+        ChatRoomMemberShip.objects.filter(chat_room=party.chat_room, user=self.user2).update(last_seen_at=timezone.now())
         party.place_order(self.user, price=3000)
         from apps.core.models import Notification
         assert Notification.objects.filter(related_chat_room=party.chat_room).latest("id").content == "익명1님이 주문을 등록했어요"

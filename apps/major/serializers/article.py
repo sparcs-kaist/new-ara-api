@@ -37,6 +37,7 @@ class MajorArticleListSerializer(
             "positive_vote_count",
             "negative_vote_count",
             "hit_count",
+            "attachment_type",
             "is_hidden",
             "why_hidden",
             "can_override_hidden",
@@ -62,6 +63,7 @@ class MajorArticleSerializer(ScopedBoardHiddenInfoMixin, ArticleSerializer):
             "hit_count",
             "my_vote",
             "my_scrap",
+            "attachments",
             "comments",
             "is_mine",
             "is_hidden",
@@ -80,23 +82,26 @@ class MajorArticleCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Article
-        fields = ("title", "content", "content_text", "name_type")
+        fields = ("title", "content", "content_text", "name_type", "attachments")
 
     def create(self, validated_data):
         # ViewSet context의 major와 board ID로 scoped relations을 설정한다.
         name_type = NameType[validated_data.pop("name_type")]
+        attachments = validated_data.pop("attachments", [])
         major = self.context["major"]
         board_id = self.context["board_id"]
-        return Article.objects.create(
+        article = Article.objects.create(
             **validated_data,
             parent_board_id=board_id,
             related_major=major,
             name_type=name_type.value,
             created_by=self.context["request"].user,
         )
+        article.attachments.set(attachments)
+        return article
 
 
 class MajorArticleUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
-        fields = ("title", "content", "content_text")
+        fields = ("title", "content", "content_text", "attachments")
