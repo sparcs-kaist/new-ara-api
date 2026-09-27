@@ -214,16 +214,6 @@ class Notification(MetaDataModel):
             )
         ]
 
-        #같은 notification을 여러번 보내야 하므로 notification 먼저 생성
-        sender = next((m for m in _memberships if m.user_id == message.created_by_id), None)
-        title, content = cls.chat_message_push_text(message, sender)
-        notification = cls.objects.create(
-            type="chat_message",
-            title=title,
-            content=content,
-            related_chat_room=_messaged_room,
-        )
-
         # 4. 이미 읽지 않은 알림이 있는지 확인
         # 알림 읽음은 알림 목록에서만 해제되므로, 방을 다시 연 뒤(last_seen_at)
         # 생긴 알림만 본다. 아니면 첫 알림 이후 영영 막힌다.
@@ -231,8 +221,6 @@ class Notification(MetaDataModel):
             read_by_id__in=[membership.user_id for membership in _unread_memberships],
             notification__related_chat_room=_messaged_room,
             is_read=False,
-        ).exclude(
-            notification=notification,
         ).values("read_by_id").annotate(
             latest=Max("notification__created_at"),
         ).values_list("read_by_id", "latest"))
@@ -245,8 +233,19 @@ class Notification(MetaDataModel):
                 and latest_unread[membership.user_id] >= membership.last_seen_at
             )
         ]
+        # 받을 사람이 없으면 알림 자체를 만들지 않는다
+        if not recipient_ids:
+            return
 
         # 5. 대상 User에게 알림 보내기
+        sender = next((m for m in _memberships if m.user_id == message.created_by_id), None)
+        title, content = cls.chat_message_push_text(message, sender)
+        notification = cls.objects.create(
+            type="chat_message",
+            title=title,
+            content=content,
+            related_chat_room=_messaged_room,
+        )
         NotificationReadLog.objects.bulk_create([
             NotificationReadLog(read_by_id=user_id, notification=notification)
             for user_id in recipient_ids
