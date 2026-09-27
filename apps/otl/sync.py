@@ -11,7 +11,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Tuple
 
 from django.db import transaction
@@ -29,8 +29,9 @@ from apps.otl.client import OtlApiError, OtlAuthError
 log = logging.getLogger(__name__)
 
 SYNC_TTL = timedelta(hours=24)
-# 처음 들어온 유저의 지난 학기를 몇 년치 채울지
-BACKFILL_YEARS = 4
+# 지난 학기는 이 해 봄학기까지 거슬러 가되, 빈 학기가 이만큼 이어지면 멈춘다 (군 휴학 2년 = 8학기보다 넉넉히)
+BACKFILL_FROM_YEAR = 2009
+BACKFILL_EMPTY_STREAK = 12
 # 채우는 중이면 이 시간 동안 다시 넣지 않는다. 다 채우면 표시가 영구로 남는다
 BACKFILL_RETRY_SECONDS = 60 * 60
 
@@ -68,19 +69,25 @@ def _term_enrollment_qs(user, year: int, semester: int):
     )
 
 
+# 학기가 끝났다고 볼 시점 (다음 학기 시작 무렵, 실제 종강보다 조금 늦게 잡는다)
+def term_end(year: int, semester: int) -> datetime:
+    month_day = {1: (year, 7, 1), 2: (year, 9, 1), 3: (year + 1, 1, 1), 4: (year + 1, 3, 1)}[semester]
+    return timezone.make_aware(datetime(*month_day))
+
+
 def is_term_cache_fresh(user, year: int, semester: int) -> bool:
-    qs = _term_enrollment_qs(user, year, semester)
-    if is_past_term(year, semester):
-        # 과거 학기: 1건이라도 있으면 영구 캐시. 0건이면 한 번 더 시도 (신규 유저 등).
-        return qs.exists()
-    # 현재/미래 학기: 가장 최근 last_seen 이 24h 안쪽이면 fresh.
     latest = (
-        qs.order_by("-last_seen_in_otl_at")
+        _term_enrollment_qs(user, year, semester)
+        .order_by("-last_seen_in_otl_at")
         .values_list("last_seen_in_otl_at", flat=True)
         .first()
     )
     if latest is None:
         return False
+    if is_past_term(year, semester):
+        # 과거 학기: 종강 뒤에 한 번이라도 sync 됐으면 영구 캐시. 학기 중에만 sync 됐으면 드랍이 빠졌을 수 있어 다시 부른다
+        return latest >= term_end(year, semester)
+    # 현재/직전 학기: 가장 최근 last_seen 이 24h 안쪽이면 fresh.
     return (timezone.now() - latest) < SYNC_TTL
 
 
@@ -118,13 +125,14 @@ def sync_user_courses(user, year: int, semester: int, *, force: bool = False) ->
     )
 
 
+# 규칙이 바뀌면 v 를 올려 기존 done 을 무효로 한다
 def backfill_key(user_id: int) -> str:
-    return f"otl-backfill:{user_id}"
+    return f"otl-backfill-v2:{user_id}"
 
 
 def backfill_terms() -> list[Tuple[int, int]]:
     cy, cs = current_term()
-    terms = [(y, s) for y in range(cy - BACKFILL_YEARS, cy + 1) for s in (1, 2, 3, 4) if (y, s) < (cy, cs)]
+    terms = [(y, s) for y in range(BACKFILL_FROM_YEAR, cy + 1) for s in (1, 2, 3, 4) if (y, s) < (cy, cs)]
     return sorted(terms, reverse=True)
 
 
@@ -143,12 +151,16 @@ def request_backfill(user) -> None:
 def backfill_past_terms(user) -> None:
     from ara import redis
 
+    empty_streak = 0 if _term_enrollment_qs(user, *current_term()).exists() else 1
     for year, semester in backfill_terms():
+        if empty_streak >= BACKFILL_EMPTY_STREAK:
+            break
         try:
             sync_user_courses(user, year, semester)
         except OtlSyncError as e:
             log.warning("OTL backfill stopped for user %s at (%s, %s): %r", user.id, year, semester, e)
             return
+        empty_streak = 0 if _term_enrollment_qs(user, year, semester).exists() else empty_streak + 1
     redis.set(backfill_key(user.id), "done")
 
 
