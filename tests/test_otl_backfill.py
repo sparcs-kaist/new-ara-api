@@ -106,3 +106,10 @@ class TestOtlBackfill(TestCase, RequestSetting):
             calls = otl.call_count
             self.http_request(self.user, "get", "courses/me", querystring="refresh=true")
             assert otl.call_count > calls + 1
+
+
+def test_backfill_runs_on_its_own_queue():
+    from ara import celery_app
+
+    route = celery_app.amqp.router.route({}, "apps.core.management.tasks.backfill_user_courses")
+    assert route["queue"].name == "course"
