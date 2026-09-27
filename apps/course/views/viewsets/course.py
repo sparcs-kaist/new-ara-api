@@ -138,7 +138,7 @@ class CourseViewSet(
                 request.user.id, year, semester, e, exc_info=True,
             )
         # 처음 들어온 유저는 지난 학기를 비동기로 채운다
-        request_backfill(request.user)
+        request_backfill(request.user, force=force)
 
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset, many=True)

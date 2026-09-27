@@ -95,3 +95,14 @@ class TestOtlBackfill(TestCase, RequestSetting):
             sync.sync_user_courses(self.user, 2025, 1)
         assert call.call_count == 1
         assert list(CourseEnrollment.objects.filter(user=self.user).values_list("course__course_code", flat=True)) == ["A"]
+
+    def test_refresh_runs_backfill_again(self):
+        with patch.object(sync.client, "get_my_timetable", return_value={"lectures": []}) as otl:
+            self.http_request(self.user, "get", "courses/me")
+            # 현재 학기가 비어 있으면 현재 학기만 매번 다시 부른다
+            calls = otl.call_count
+            self.http_request(self.user, "get", "courses/me")
+            assert otl.call_count == calls + 1
+            calls = otl.call_count
+            self.http_request(self.user, "get", "courses/me", querystring="refresh=true")
+            assert otl.call_count > calls + 1
