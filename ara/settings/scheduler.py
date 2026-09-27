@@ -72,4 +72,8 @@ CELERY_TASK_ROUTES = {
     "apps.core.management.tasks.send_push_to_user": {"queue": "push"},
     "apps.core.management.tasks.send_push_to_users": {"queue": "push"},
     "apps.core.management.tasks.sweep_delivery_deadlines": {"queue": "urgent"},
+    # 과목 게시판 지난 학기 채우기. 포털 크롤링 뒤에 밀리지 않게 따로 돈다
+    "apps.core.management.tasks.backfill_user_courses": {"queue": "course"},
+    # 포털 응답이 느리면 한 번에 10분 넘게 걸려서, 기본 큐의 다른 크롤러를 막지 않게 뺀다
+    "apps.core.management.tasks.crawl_portal": {"queue": "portal"},
 }

@@ -136,11 +136,14 @@ def backfill_terms() -> list[Tuple[int, int]]:
     return sorted(terms, reverse=True)
 
 
-def request_backfill(user) -> None:
+# force: 새로고침(refresh=true) 이면 done / pending 표시를 무시하고 다시 채운다
+def request_backfill(user, force: bool = False) -> None:
     from apps.core.management.tasks import backfill_user_courses
     from ara import redis
 
     try:
+        if force:
+            redis.delete(backfill_key(user.id))
         if redis.set(backfill_key(user.id), "pending", nx=True, ex=BACKFILL_RETRY_SECONDS):
             backfill_user_courses.delay(user.id)
     except Exception:
