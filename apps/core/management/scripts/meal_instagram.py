@@ -1,9 +1,3 @@
-"""가온 인스타그램 게시물로 학식 메뉴 사진 채우기.
-
-계정 -> 식당은 settings 의 MEAL_PHOTO_INSTAGRAM_ACCOUNTS, 게시 시각 -> 끼니는 MEAL_PHOTO_WINDOWS 로 정한다.
-끼니 구간 밖에 올라온 게시물은 버린다. 캡션은 보지 않는다.
-"""
-
 from datetime import date, datetime
 from typing import Dict, Optional, Tuple
 
