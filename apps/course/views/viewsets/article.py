@@ -57,9 +57,9 @@ class CourseArticleViewSet(viewsets.ModelViewSet):
         queryset = (
             Article.objects.filter(related_course_group_id=course.group_id)
             # Content masking의 per-row query를 막기 위해 board와 author를 join한다.
-            .select_related("created_by__profile", "parent_board").order_by(
-                "-created_at"
-            )
+            .select_related("created_by__profile", "parent_board")
+            .prefetch_related("attachments")
+            .order_by("-created_at")
         )
         if self.action == "list":
             queryset = search_scoped_articles(queryset, self.request)

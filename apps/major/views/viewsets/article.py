@@ -59,9 +59,9 @@ class MajorArticleViewSet(viewsets.ModelViewSet):
         queryset = (
             Article.objects.filter(related_major_id=std_dept_id)
             # Masking과 author rendering의 per-row query를 막기 위해 related objects를 join한다.
-            .select_related("created_by__profile", "parent_board").order_by(
-                "-created_at"
-            )
+            .select_related("created_by__profile", "parent_board")
+            .prefetch_related("attachments")
+            .order_by("-created_at")
         )
         if self.action == "list":
             queryset = search_scoped_articles(queryset, self.request)
