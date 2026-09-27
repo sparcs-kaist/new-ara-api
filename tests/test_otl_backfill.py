@@ -113,3 +113,11 @@ def test_backfill_runs_on_its_own_queue():
 
     route = celery_app.amqp.router.route({}, "apps.core.management.tasks.backfill_user_courses")
     assert route["queue"].name == "course"
+
+
+def test_portal_crawl_runs_on_its_own_queue():
+    from ara import celery_app
+
+    route = celery_app.amqp.router.route({}, "apps.core.management.tasks.crawl_portal")
+    assert route["queue"].name == "portal"
+    assert celery_app.conf.beat_schedule["crawl_portal"]["options"]["expire_seconds"] == 540

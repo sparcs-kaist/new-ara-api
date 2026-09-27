@@ -23,10 +23,12 @@ app.conf.timezone = "Asia/Seoul"
 
 # Task 등록시 이름은 동사로 시작하도록 합시다
 app.conf.beat_schedule = {
+    # 10분마다 도는 작업은 밀려서 다음 차례가 오면 지난 것은 버린다
     "crawl_portal": {
         "task": "apps.core.management.tasks.crawl_portal",
         "schedule": settings.SCHEDULERS["CRAWL_PORTAL"]["CRONTAB"],
         "args": [],
+        "options": {"expire_seconds": 9 * 60},
     },
     # sync_portal_view_counts: deprecated — 매 10분 portal 다발 호출 부담으로 비활성화
     "save_daily_best": {
@@ -58,5 +60,6 @@ app.conf.beat_schedule = {
         "task": "apps.core.management.tasks.crawl_meal_photos",
         "schedule": settings.SCHEDULERS["CRAWL_MEAL_PHOTOS"]["CRONTAB"],
         "args": [],
+        "options": {"expire_seconds": 9 * 60},
     },
 }
