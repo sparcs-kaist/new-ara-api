@@ -64,16 +64,10 @@ class BlockDMPermission(permissions.BasePermission):
 
             if dm_room:
                 # 내 멤버십 확인
-                my_membership = ChatRoomMemberShip.objects.filter(
-                    chat_room=dm_room,
-                    user=request.user
-                ).first()
+                my_membership = ChatRoomMemberShip.get_membership(dm_room, request.user)
 
                 # 상대방 멤버십 확인
-                other_membership = ChatRoomMemberShip.objects.filter(
-                    chat_room=dm_room,
-                    user=other_user
-                ).first()
+                other_membership = ChatRoomMemberShip.get_membership(dm_room, other_user)
 
                 # 내가 이미 차단 상태인 경우 차단 불가
                 if my_membership and my_membership.role == ChatUserRole.BLOCKER.value:
@@ -117,16 +111,10 @@ class UnblockDMPermission(permissions.BasePermission):
 
             if dm_room:
                 # 내 멤버십 확인
-                my_membership = ChatRoomMemberShip.objects.filter(
-                    chat_room=dm_room,
-                    user=request.user
-                ).first()
+                my_membership = ChatRoomMemberShip.get_membership(dm_room, request.user)
 
                 # 상대방 멤버십 확인
-                other_membership = ChatRoomMemberShip.objects.filter(
-                    chat_room=dm_room,
-                    user=other_user
-                ).first()
+                other_membership = ChatRoomMemberShip.get_membership(dm_room, other_user)
 
                 # 내가 차단자인 경우에만 차단 해제 가능
                 if my_membership and my_membership.role == ChatUserRole.BLOCKER.value:

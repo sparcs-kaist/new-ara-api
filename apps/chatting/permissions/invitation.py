@@ -17,10 +17,7 @@ BLOCK_ROLES = [
 
 # 공통 유틸 함수
 def get_membership(room, user):
-    return ChatRoomMemberShip.objects.filter(
-        chat_room=room,
-        user=user
-    ).first()
+    return ChatRoomMemberShip.get_membership(room, user)
 
 
 def is_blocked_or_blocker(membership):

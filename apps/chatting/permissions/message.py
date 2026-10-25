@@ -23,10 +23,7 @@ class MessageReadPermissions(permissions.BasePermission):
         if not chat_room_id:
             return True
 
-        membership = ChatRoomMemberShip.objects.filter(
-            chat_room_id=chat_room_id,
-            user=request.user
-        ).first()
+        membership = ChatRoomMemberShip.get_membership(chat_room_id, request.user)
 
         return membership and membership.role not in [
             ChatUserRole.BLOCKED.value,
@@ -43,10 +40,7 @@ class MessageWritePermissions(permissions.BasePermission):
         if not chat_room_id:
             return False
         
-        membership = ChatRoomMemberShip.objects.filter(
-            chat_room_id=chat_room_id,
-            user=request.user
-        ).first()
+        membership = ChatRoomMemberShip.get_membership(chat_room_id, request.user)
 
         return membership and membership.role not in [
             ChatUserRole.BLOCKED.value,
@@ -62,10 +56,7 @@ class MessageDeletePermissions(permissions.BasePermission):
         message = obj  # ChatMessage 인스턴스
         # 본인이 작성한 메시지이거나, 관리자인 경우 허용
         is_owner = (message.created_by == request.user)
-        membership = ChatRoomMemberShip.objects.filter(
-            chat_room=message.chat_room,
-            user=request.user
-        ).first()
+        membership = ChatRoomMemberShip.get_membership(message.chat_room, request.user)
         is_admin = membership and membership.role in [
             ChatUserRole.OWNER.value,
             ChatUserRole.ADMIN.value,

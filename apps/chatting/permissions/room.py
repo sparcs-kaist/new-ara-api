@@ -11,10 +11,7 @@ class RoomDeletePermission(permissions.BasePermission):
             return False
         
         room = view.get_object()
-        membership = ChatRoomMemberShip.objects.filter(
-            chat_room=room,
-            user=request.user
-        ).first()
+        membership = ChatRoomMemberShip.get_membership(room, request.user)
         return membership and membership.role == ChatUserRole.OWNER.value
     
 #채팅방 읽기 : 참여되어 있고, 차단되거나 차단하지 않은 채팅방만 가능
@@ -24,10 +21,7 @@ class RoomReadPermission(permissions.BasePermission):
             return False
         
         room = view.get_object()
-        membership = ChatRoomMemberShip.objects.filter(
-            chat_room=room,
-            user=request.user
-        ).first()
+        membership = ChatRoomMemberShip.get_membership(room, request.user)
 
         return membership and \
             (membership.role != ChatUserRole.BLOCKED.value) and \
@@ -40,10 +34,7 @@ class RoomLeavePermission(permissions.BasePermission):
             return False
         
         room = view.get_object()
-        membership = ChatRoomMemberShip.objects.filter(
-            chat_room=room,
-            user=request.user
-        ).first()
+        membership = ChatRoomMemberShip.get_membership(room, request.user)
 
         return membership and membership.role != ChatUserRole.OWNER.value
     
@@ -54,10 +45,7 @@ class RoomBlockPermission(permissions.BasePermission):
             return False
 
         room = view.get_object()
-        membership = ChatRoomMemberShip.objects.filter(
-            chat_room=room,
-            user=request.user
-        ).first()
+        membership = ChatRoomMemberShip.get_membership(room, request.user)
         
         # 아직 참여 안 한 채팅방 - 차단 허용
         if membership is None:

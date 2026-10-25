@@ -154,9 +154,7 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             if dm_room:
                 # 기존 DM 방이 있으면 차단 처리
                 # 내 멤버십 찾기/업데이트
-                my_membership = dm_room.membership_info_set.filter(
-                    user_id=request.user.id
-                ).first()
+                my_membership = ChatRoomMemberShip.get_membership(dm_room, request.user)
                 
                 if my_membership:
                     my_membership.role = ChatUserRole.BLOCKER.value
@@ -169,9 +167,7 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                     )
                 
                 # 상대방 멤버십 찾기/업데이트
-                other_membership = dm_room.membership_info_set.filter(
-                    user_id=other_user.id
-                ).first()
+                other_membership = ChatRoomMemberShip.get_membership(dm_room, other_user)
                 
                 if other_membership:
                     other_membership.role = ChatUserRole.BLOCKED.value
@@ -233,13 +229,9 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
             if dm_room:
                 # 멤버십 찾기
-                my_membership = dm_room.membership_info_set.filter(
-                    user_id=request.user.id
-                ).first()
+                my_membership = ChatRoomMemberShip.get_membership(dm_room, request.user)
                 
-                other_membership = dm_room.membership_info_set.filter(
-                    user_id=other_user.id
-                ).first()
+                other_membership = ChatRoomMemberShip.get_membership(dm_room, other_user)
                 
                 # 차단 해제 처리
                 if my_membership:
