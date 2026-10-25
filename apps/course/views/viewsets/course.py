@@ -145,6 +145,7 @@ class CourseViewSet(
         return response.Response(serializer.data)
 
     @extend_schema(
+        tags=["course"],
         summary="본인 수강 학기 목록 조회",
         responses=inline_serializer(
             name="CourseSemester",
