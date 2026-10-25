@@ -16,6 +16,9 @@ class ChatUserRole(str, Enum):
     BLOCKED = "BLOCKED"          # 차단됨 - 채팅방에서 차단된 사람
     BLOCKER = "BLOCKER"         # 채팅방을 차단한 사람 (초대 거부)
 
+# 차단 상태의 역할 (채팅방 참여자로 보지 않는다)
+BLOCK_ROLES = [ChatUserRole.BLOCKED.value, ChatUserRole.BLOCKER.value]
+
 # 각각의 유저가 참여하고 있는 채팅방 정보
 class ChatRoomMemberShip(MetaDataModel):
     # User object
@@ -135,7 +138,7 @@ class ChatRoomMemberShip(MetaDataModel):
             chat_room=chat_room,
             user=user,
         ).exclude(
-            role__in=[ChatUserRole.BLOCKED.value, ChatUserRole.BLOCKER.value],
+            role__in=BLOCK_ROLES,
         ).first()
 
     # 두 User 사이의 DM 방 조회 (없으면 None)

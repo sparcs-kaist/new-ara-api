@@ -1,5 +1,5 @@
 from rest_framework import permissions
-from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole
+from apps.chatting.models.membership_room import BLOCK_ROLES, ChatRoomMemberShip, ChatUserRole
 from apps.chatting.models.message import ChatMessage
 
 # 채팅방 메시지 읽기 권한
@@ -25,10 +25,7 @@ class MessageReadPermissions(permissions.BasePermission):
 
         membership = ChatRoomMemberShip.get_membership(chat_room_id, request.user)
 
-        return membership and membership.role not in [
-            ChatUserRole.BLOCKED.value,
-            ChatUserRole.BLOCKER.value,
-        ]
+        return membership and membership.role not in BLOCK_ROLES
 
 # 메시지 작성 : 참여자 이상
 class MessageWritePermissions(permissions.BasePermission):
@@ -42,10 +39,7 @@ class MessageWritePermissions(permissions.BasePermission):
         
         membership = ChatRoomMemberShip.get_membership(chat_room_id, request.user)
 
-        return membership and membership.role not in [
-            ChatUserRole.BLOCKED.value,
-            ChatUserRole.BLOCKER.value,
-        ]
+        return membership and membership.role not in BLOCK_ROLES
 
 # 메시지 삭제 권한 : 본인 메시지 or 관리자 이상
 class MessageDeletePermissions(permissions.BasePermission):
