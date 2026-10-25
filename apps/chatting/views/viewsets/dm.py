@@ -149,17 +149,10 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             other_user = User.objects.get(id=user_id)
             
             # 이미 존재하는 DM 방 찾기
-            dm_rooms = ChatRoom.objects.filter(
-                room_type=ChatRoomType.DM.value,
-                membership_info_set__user_id=request.user.id
-            ).filter(
-                membership_info_set__user_id=other_user.id
-            ).distinct()
-            
-            if dm_rooms.exists():
+            dm_room = ChatRoomMemberShip.find_dm_room(request.user, other_user)
+
+            if dm_room:
                 # 기존 DM 방이 있으면 차단 처리
-                dm_room = dm_rooms.first()
-                
                 # 내 멤버십 찾기/업데이트
                 my_membership = dm_room.membership_info_set.filter(
                     user_id=request.user.id
@@ -236,16 +229,9 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             other_user = User.objects.get(id=user_id)
             
             # 기존 DM 방 찾기
-            dm_rooms = ChatRoom.objects.filter(
-                room_type=ChatRoomType.DM.value,
-                membership_info_set__user_id=request.user.id
-            ).filter(
-                membership_info_set__user_id=other_user.id
-            ).distinct()
-            
-            if dm_rooms.exists():
-                dm_room = dm_rooms.first()
-                
+            dm_room = ChatRoomMemberShip.find_dm_room(request.user, other_user)
+
+            if dm_room:
                 # 멤버십 찾기
                 my_membership = dm_room.membership_info_set.filter(
                     user_id=request.user.id
@@ -301,15 +287,9 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        room = (
-            ChatRoom.objects.filter(room_type=ChatRoomType.DM.value)
-            .filter(membership_info_set__user_id=request.user.id)
-            .filter(membership_info_set__user_id=other_user.id)
-            .values("id")
-            .first()
-        )
+        room = ChatRoomMemberShip.find_dm_room(request.user, other_user)
 
-        data = {"dm_room": room["id"] if room else None}
+        data = {"dm_room": room.id if room else None}
 
         # 응답 직렬화 후 반환 (스웨거 스키마에도 반영됨)
         serializer = DMRoomLookupResponseSerializer(data)

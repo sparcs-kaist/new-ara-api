@@ -5,6 +5,7 @@ import random
 from django.db import IntegrityError, models, transaction
 from ara.db.models import MetaDataModel
 
+
 class ChatRoomType(str, Enum):
     DM = "DM" # 1:1 채팅방
     GROUP_DM = "GROUP_DM" # 그룹 채팅방 (permission이 없이 유저 모두 동일한 참여자.)

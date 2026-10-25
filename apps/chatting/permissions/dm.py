@@ -1,6 +1,5 @@
 from rest_framework import permissions
-from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole, ChatRoom, ChatRoomType
-from django.db.models import Q
+from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole
 from django.contrib.auth import get_user_model
 
 #DM 생성 권한 - 이미 만들어진 방이 없고, 차단 상태가 아닌 경우
@@ -61,28 +60,21 @@ class BlockDMPermission(permissions.BasePermission):
                 return False
             
             # 두 사용자 간의 DM 방 찾기
-            dm_rooms = ChatRoom.objects.filter(
-                room_type=ChatRoomType.DM.value,
-                membership_info_set__user=request.user
-            ).filter(
-                membership_info_set__user=other_user
-            ).distinct()
-            
-            if dm_rooms.exists():
-                dm_room = dm_rooms.first()
-                
+            dm_room = ChatRoomMemberShip.find_dm_room(request.user, other_user)
+
+            if dm_room:
                 # 내 멤버십 확인
                 my_membership = ChatRoomMemberShip.objects.filter(
                     chat_room=dm_room,
                     user=request.user
                 ).first()
-                
+
                 # 상대방 멤버십 확인
                 other_membership = ChatRoomMemberShip.objects.filter(
                     chat_room=dm_room,
                     user=other_user
                 ).first()
-                
+
                 # 내가 이미 차단 상태인 경우 차단 불가
                 if my_membership and my_membership.role == ChatUserRole.BLOCKER.value:
                     return False
@@ -121,28 +113,21 @@ class UnblockDMPermission(permissions.BasePermission):
             other_user = User.objects.get(id=user_id)
             
             # 두 사용자 간의 DM 방 찾기
-            dm_rooms = ChatRoom.objects.filter(
-                room_type=ChatRoomType.DM.value,
-                membership_info_set__user=request.user
-            ).filter(
-                membership_info_set__user=other_user
-            ).distinct()
-            
-            if dm_rooms.exists():
-                dm_room = dm_rooms.first()
-                
+            dm_room = ChatRoomMemberShip.find_dm_room(request.user, other_user)
+
+            if dm_room:
                 # 내 멤버십 확인
                 my_membership = ChatRoomMemberShip.objects.filter(
                     chat_room=dm_room,
                     user=request.user
                 ).first()
-                
+
                 # 상대방 멤버십 확인
                 other_membership = ChatRoomMemberShip.objects.filter(
                     chat_room=dm_room,
                     user=other_user
                 ).first()
-                
+
                 # 내가 차단자인 경우에만 차단 해제 가능
                 if my_membership and my_membership.role == ChatUserRole.BLOCKER.value:
                     return True
