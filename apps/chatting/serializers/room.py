@@ -1,22 +1,10 @@
 from rest_framework import serializers
-from apps.chatting.models.room import ChatRoom, ChatRoomType
+from apps.chatting.models.room import ChatRoom, ChatRoomType, get_default_chatroom_picture
 from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole
 from apps.chatting.models.room_permission import ChatRoomPermission
 from apps.user.serializers.user import PublicUserSerializer
 from apps.chatting.serializers.message import MessageSerializer
 from apps.chatting.serializers.member import member_directory
-
-import random
-
-#랜덤 프로필 사진 지정 함수
-#일단은 적당한 asset이 아직 만들어지지 않은 관계로 기존의 UserProfile과 동일하게 사용
-def get_default_chatroom_picture() -> str:
-    colors = ["blue", "red", "gray"]
-    numbers = ["1", "2", "3"]
-
-    col = random.choice(colors)
-    num = random.choice(numbers)
-    return f"user_profiles/default_pictures/{col}-default{num}.png"
 
 class ChatRoomCreateSerializer(serializers.ModelSerializer):
     class Meta:

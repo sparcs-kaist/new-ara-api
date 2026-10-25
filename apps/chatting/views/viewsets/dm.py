@@ -16,7 +16,7 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from django.utils import timezone
 
 from ara.classes.viewset import ActionAPIViewSet
-from apps.chatting.models.room import ChatRoom, ChatRoomType
+from apps.chatting.models.room import ChatRoom, ChatRoomType, get_default_chatroom_picture
 from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole
 from apps.chatting.serializers.dm import (
     DMCreateSerializer, 
@@ -30,18 +30,7 @@ from apps.chatting.permissions.dm import (
     UnblockDMPermission,
 )
 
-import random
 from ara.settings import MIN_TIME
-
-#랜덤 프로필 사진 지정 함수
-#일단은 적당한 asset이 아직 만들어지지 않은 관계로 기존의 UserProfile과 동일하게 사용
-def get_default_chatroom_picture() -> str:
-    colors = ["blue", "red", "gray"]
-    numbers = ["1", "2", "3"]
-
-    col = random.choice(colors)
-    num = random.choice(numbers)
-    return f"user_profiles/default_pictures/{col}-default{num}.png"
 
 
 class DMRoomLookupResponseSerializer(serializers.Serializer):

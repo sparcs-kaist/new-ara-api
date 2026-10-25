@@ -1,9 +1,9 @@
 from enum import Enum
 import datetime
+import random
 
 from django.db import IntegrityError, models, transaction
 from ara.db.models import MetaDataModel
-
 
 class ChatRoomType(str, Enum):
     DM = "DM" # 1:1 채팅방
@@ -124,3 +124,14 @@ class ChatRoom(MetaDataModel):
         messages = self.message_set.order_by("-id")[start_index:end_index]
         
         return messages
+
+#랜덤 프로필 사진 지정 함수
+#일단은 적당한 asset이 아직 만들어지지 않은 관계로 기존의 UserProfile과 동일하게 사용
+def get_default_chatroom_picture() -> str:
+    """Choose a default chatroom image from the existing user profile assets."""
+    colors = ["blue", "red", "gray"]
+    numbers = ["1", "2", "3"]
+
+    col = random.choice(colors)
+    num = random.choice(numbers)
+    return f"user_profiles/default_pictures/{col}-default{num}.png"
