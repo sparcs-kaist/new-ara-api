@@ -174,7 +174,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 {"detail": "함께 배달 방은 배달 나가기 API 를 사용해주세요."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        membership = ChatRoomMemberShip.objects.filter(chat_room=room, user=request.user).first()
+        membership = ChatRoomMemberShip.get_membership(room, request.user)
         if membership:
             membership.delete()
             broadcast_member_removed(room.id, membership.anon_number)
@@ -185,7 +185,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     @action(detail=True, methods=["patch"])
     def read(self, request, pk=None):
         room = self.get_object()
-        membership = ChatRoomMemberShip.objects.filter(chat_room=room, user=request.user).first()
+        membership = ChatRoomMemberShip.get_membership(room, request.user)
         if membership:
             membership.last_seen_at = timezone.now()
             
@@ -238,7 +238,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 {"detail": "함께 배달 방은 차단할 수 없습니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        membership = ChatRoomMemberShip.objects.filter(chat_room=room, user=request.user).first()
+        membership = ChatRoomMemberShip.get_membership(room, request.user)
         if membership and membership.role == ChatUserRole.BLOCKER.value:
             # 차단 해제시 바로 참여자로 변경하면, 차단이 초대를 우회할 수 있으므로 방에서 나간것 처리 = 삭제
             membership.delete()

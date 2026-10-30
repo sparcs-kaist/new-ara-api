@@ -24,7 +24,8 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
     # 익명 방이면 user id 를 내보내지 않는다
     @database_sync_to_async
     def get_member_identity(self, room_id):
-        from apps.chatting.models import ChatRoomMemberShip, ChatUserRole
+        from apps.chatting.models import ChatRoomMemberShip
+        from apps.chatting.models.membership_room import BLOCK_ROLES
         from apps.chatting.models.room import ChatNameType
 
         user = self.scope.get("user")
@@ -34,7 +35,7 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
             chat_room_id=room_id,
             user=user,
         ).exclude(
-            role__in=[ChatUserRole.BLOCKED.value, ChatUserRole.BLOCKER.value],
+            role__in=BLOCK_ROLES,
         ).select_related("chat_room", "user__profile").first()
         if membership is None:
             return None
