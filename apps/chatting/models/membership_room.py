@@ -157,8 +157,8 @@ class ChatRoomMemberShip(MetaDataModel):
         return cls.find_dm_room(user1, user2) is not None
     
     #User의 DM을 Block 설정 하는 경우
-    @transaction.atomic
     @classmethod
+    @transaction.atomic
     def block_dm(cls, blocker, blocked) -> None:
         dm_room = cls.find_dm_room(blocker, blocked)
 
@@ -191,8 +191,8 @@ class ChatRoomMemberShip(MetaDataModel):
             )
 
     #User의 Unblock 설정
-    @transaction.atomic
     @classmethod
+    @transaction.atomic
     #blocker : 자신이 block한 사람을 차단 해제 하려는 User
     #blocked : blocked 된 User -> 차단 해제 대상
     def unblock_dm(cls, blocker, blocked) -> None:
