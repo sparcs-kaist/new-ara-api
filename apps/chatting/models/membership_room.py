@@ -16,6 +16,9 @@ class ChatUserRole(str, Enum):
     BLOCKED = "BLOCKED"          # 차단됨 - 채팅방에서 차단된 사람
     BLOCKER = "BLOCKER"         # 채팅방을 차단한 사람 (초대 거부)
 
+# 차단 상태의 역할 (채팅방 참여자로 보지 않는다)
+BLOCK_ROLES = [ChatUserRole.BLOCKED.value, ChatUserRole.BLOCKER.value]
+
 # 각각의 유저가 참여하고 있는 채팅방 정보
 class ChatRoomMemberShip(MetaDataModel):
     # User object
@@ -120,40 +123,52 @@ class ChatRoomMemberShip(MetaDataModel):
             return profile.realname
         return profile.nickname
 
+    # 차단 상태(BLOCKED, BLOCKER)를 포함한 멤버십 조회 (없으면 None)
+    # chat_room, user 에는 객체와 id 모두 넘길 수 있다
+    @classmethod
+    def get_membership(cls, chat_room, user):
+        return cls.objects.filter(
+            chat_room=chat_room,
+            user=user,
+        ).first()
+
     @classmethod
     def get_active(cls, chat_room, user):
         return cls.objects.filter(
             chat_room=chat_room,
             user=user,
         ).exclude(
-            role__in=[ChatUserRole.BLOCKED.value, ChatUserRole.BLOCKER.value],
+            role__in=BLOCK_ROLES,
         ).first()
 
+    # 두 User 사이의 DM 방 조회 (없으면 None)
+    # filter를 나눠야 멤버십을 두 번 조인해서 "두 User가 모두 참여한 방"을 찾는다
     @classmethod
-    def is_dm_exist(cls, user1, user2) -> bool:
+    def find_dm_room(cls, user1, user2):
         return ChatRoom.objects.filter(
             room_type=ChatRoomType.DM.value,
             membership_info_set__user=user1
         ).filter(
             membership_info_set__user=user2
-        ).exists()
+        ).first()
+
+    @classmethod
+    def is_dm_exist(cls, user1, user2) -> bool:
+        return cls.find_dm_room(user1, user2) is not None
     
     #User의 DM을 Block 설정 하는 경우
-    @transaction.atomic
     @classmethod
+    @transaction.atomic
     def block_dm(cls, blocker, blocked) -> None:
-        dm_room = ChatRoom.objects.filter(
-            Q(membership_info_set__user=blocker) & Q(membership_info_set__user=blocked),
-            room_type=ChatRoomType.DM.value
-        ).first()
+        dm_room = cls.find_dm_room(blocker, blocked)
 
         # 이미 채팅방이 존재하는 경우
         if dm_room:
-            blocker_membership = dm_room.membership_info_set.filter(user=blocker).first()
+            blocker_membership = cls.get_membership(dm_room, blocker)
             blocker_membership.role = ChatUserRole.BLOCKER.value
             blocker_membership.save()
 
-            blocked_membership = dm_room.membership_info_set.filter(user=blocked).first()
+            blocked_membership = cls.get_membership(dm_room, blocked)
             blocked_membership.role = ChatUserRole.BLOCKED.value
             blocked_membership.save()
 
@@ -176,26 +191,23 @@ class ChatRoomMemberShip(MetaDataModel):
             )
 
     #User의 Unblock 설정
-    @transaction.atomic
     @classmethod
+    @transaction.atomic
     #blocker : 자신이 block한 사람을 차단 해제 하려는 User
     #blocked : blocked 된 User -> 차단 해제 대상
     def unblock_dm(cls, blocker, blocked) -> None:
-        dm_room = ChatRoom.objects.filter(
-            Q(membership_info_set__user=blocker) & Q(membership_info_set__user=blocked),
-            room_type=ChatRoomType.DM.value
-        ).first()
+        dm_room = cls.find_dm_room(blocker, blocked)
 
         # 채팅방이 존재하지 않는 경우 : (Blocked 되지 않은 경우임)
         if not dm_room:
             raise IntegrityError("차단되지 않은 User입니다.")
 
         # Blocked 상태에서 Unblock 상태로 변경
-        blocker_membership = dm_room.membership_info_set.filter(user=blocker).first()
+        blocker_membership = cls.get_membership(dm_room, blocker)
         blocker_membership.role = ChatUserRole.PARTICIPANT.value
         blocker_membership.save()
 
-        blocked_membership = dm_room.membership_info_set.filter(user=blocked).first()
+        blocked_membership = cls.get_membership(dm_room, blocked)
         blocked_membership.role = ChatUserRole.PARTICIPANT.value
         blocked_membership.save()
 

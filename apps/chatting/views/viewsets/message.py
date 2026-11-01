@@ -14,7 +14,7 @@ from drf_spectacular.utils import (
 from ara.classes.viewset import ActionAPIViewSet
 from apps.chatting.models.message import ChatMessage, DELETABLE_MESSAGE_TYPES
 from apps.chatting.realtime import broadcast_room_update
-from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole
+from apps.chatting.models.membership_room import BLOCK_ROLES, ChatRoomMemberShip
 from apps.chatting.serializers.message import (
     attachment_related_names,
     MessageSerializer,
@@ -73,7 +73,7 @@ class ChatMessageViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         my_room_ids = ChatRoomMemberShip.objects.filter(
             user=self.request.user,
         ).exclude(
-            role__in=[ChatUserRole.BLOCKED.value, ChatUserRole.BLOCKER.value],
+            role__in=BLOCK_ROLES,
         ).values('chat_room_id')
 
         queryset = ChatMessage.objects.filter(chat_room_id__in=my_room_ids).select_related(

@@ -1,5 +1,5 @@
 from rest_framework import permissions
-from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole
+from apps.chatting.models.membership_room import BLOCK_ROLES, ChatRoomMemberShip, ChatUserRole
 from apps.chatting.models.room import ChatRoom
 
 # 역할 상수 정리
@@ -9,18 +9,10 @@ ALLOWED_INVITATION_ROLES = [
     ChatUserRole.PARTICIPANT.value,
 ]
 
-BLOCK_ROLES = [
-    ChatUserRole.BLOCKER.value,
-    ChatUserRole.BLOCKED.value,
-]
-
 
 # 공통 유틸 함수
 def get_membership(room, user):
-    return ChatRoomMemberShip.objects.filter(
-        chat_room=room,
-        user=user
-    ).first()
+    return ChatRoomMemberShip.get_membership(room, user)
 
 
 def is_blocked_or_blocker(membership):

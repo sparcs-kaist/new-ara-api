@@ -1,3 +1,4 @@
+import hashlib
 from enum import Enum
 
 import bs4
@@ -10,7 +11,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
 
-from apps.user.views.viewsets import get_profile_picture, hashlib
+from apps.user.models.user_profile import get_profile_picture
 from ara.classes.decorator import cache_by_user
 from ara.db.models import MetaDataModel
 from ara.sanitizer import sanitize

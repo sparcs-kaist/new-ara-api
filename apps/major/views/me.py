@@ -1,6 +1,7 @@
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
-from rest_framework import status
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -22,6 +23,18 @@ class MeView(APIView):
         }
     """
 
+    @extend_schema(
+        tags=["major"],
+        summary="내 학과 정보 조회",
+        responses=inline_serializer(
+            name="MajorMe",
+            fields={
+                "std_dept_id": serializers.IntegerField(),
+                "major_name": serializers.CharField(),
+                "major_name_eng": serializers.CharField(),
+            },
+        ),
+    )
     @method_decorator(ensure_csrf_cookie)
     def get(self, request):
         if not request.user.is_authenticated:

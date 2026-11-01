@@ -17,6 +17,7 @@ from rest_framework import decorators, permissions, response, status
 
 from apps.user.models import UserProfile
 from apps.user.models.user.manual import ManualUser
+from apps.user.models.user_profile import NOUNS, get_profile_picture
 from apps.user.permissions.user import UserPermission
 from ara.classes.sparcssso import Client as SSOClient
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
@@ -32,48 +33,6 @@ from django.http import JsonResponse
 import logging
 logger = logging.getLogger("auth_logger")
 
-NOUNS = [
-    "외계인",
-    "펭귄",
-    "코뿔소",
-    "여우",
-    "염소",
-    "타조",
-    "사과",
-    "포도",
-    "다람쥐",
-    "도토리",
-    "해바라기",
-    "코끼리",
-    "돌고래",
-    "거북이",
-    "나비",
-    "앵무새",
-    "알파카",
-    "강아지",
-    "고양이",
-    "원숭이",
-    "두더지",
-    "낙타",
-    "망아지",
-    "시조새",
-    "힙스터",
-    "로봇",
-    "감자",
-    "고구마",
-    "가마우지",
-    "직박구리",
-    "오리너구리",
-    "보노보",
-    "개미핥기",
-    "치타",
-    "사자",
-    "구렁이",
-    "도마뱀",
-    "개구리",
-    "올빼미",
-    "부엉이",
-]
 ADJECTIVES = [
     "부지런한",
     "즐거운",
@@ -133,21 +92,6 @@ def _make_random_name() -> str:
     except UserProfile.DoesNotExist:
         pass
     return temp_nickname
-
-
-def get_profile_picture(hash_val=None) -> str:
-    colors = ["blue", "red", "gray"]
-    numbers = ["1", "2", "3"]
-
-    if hash_val is None:
-        col = random.choice(colors)
-        num = random.choice(numbers)
-    else:
-        nidx, cidx = divmod(hash_val, len(colors))
-        col = colors[cidx]
-        num = numbers[nidx % len(numbers)]
-
-    return f"user_profiles/default_pictures/{col}-default{num}.png"
 
 
 class UserViewSet(ActionAPIViewSet):

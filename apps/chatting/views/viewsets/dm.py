@@ -16,7 +16,7 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from django.utils import timezone
 
 from ara.classes.viewset import ActionAPIViewSet
-from apps.chatting.models.room import ChatRoom, ChatRoomType
+from apps.chatting.models.room import ChatRoom, ChatRoomType, get_default_chatroom_picture
 from apps.chatting.models.membership_room import ChatRoomMemberShip, ChatUserRole
 from apps.chatting.serializers.dm import (
     DMCreateSerializer, 
@@ -30,18 +30,7 @@ from apps.chatting.permissions.dm import (
     UnblockDMPermission,
 )
 
-import random
 from ara.settings import MIN_TIME
-
-#랜덤 프로필 사진 지정 함수
-#일단은 적당한 asset이 아직 만들어지지 않은 관계로 기존의 UserProfile과 동일하게 사용
-def get_default_chatroom_picture() -> str:
-    colors = ["blue", "red", "gray"]
-    numbers = ["1", "2", "3"]
-
-    col = random.choice(colors)
-    num = random.choice(numbers)
-    return f"user_profiles/default_pictures/{col}-default{num}.png"
 
 
 class DMRoomLookupResponseSerializer(serializers.Serializer):
@@ -160,21 +149,12 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             other_user = User.objects.get(id=user_id)
             
             # 이미 존재하는 DM 방 찾기
-            dm_rooms = ChatRoom.objects.filter(
-                room_type=ChatRoomType.DM.value,
-                membership_info_set__user_id=request.user.id
-            ).filter(
-                membership_info_set__user_id=other_user.id
-            ).distinct()
-            
-            if dm_rooms.exists():
+            dm_room = ChatRoomMemberShip.find_dm_room(request.user, other_user)
+
+            if dm_room:
                 # 기존 DM 방이 있으면 차단 처리
-                dm_room = dm_rooms.first()
-                
                 # 내 멤버십 찾기/업데이트
-                my_membership = dm_room.membership_info_set.filter(
-                    user_id=request.user.id
-                ).first()
+                my_membership = ChatRoomMemberShip.get_membership(dm_room, request.user)
                 
                 if my_membership:
                     my_membership.role = ChatUserRole.BLOCKER.value
@@ -187,9 +167,7 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                     )
                 
                 # 상대방 멤버십 찾기/업데이트
-                other_membership = dm_room.membership_info_set.filter(
-                    user_id=other_user.id
-                ).first()
+                other_membership = ChatRoomMemberShip.get_membership(dm_room, other_user)
                 
                 if other_membership:
                     other_membership.role = ChatUserRole.BLOCKED.value
@@ -247,24 +225,13 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             other_user = User.objects.get(id=user_id)
             
             # 기존 DM 방 찾기
-            dm_rooms = ChatRoom.objects.filter(
-                room_type=ChatRoomType.DM.value,
-                membership_info_set__user_id=request.user.id
-            ).filter(
-                membership_info_set__user_id=other_user.id
-            ).distinct()
-            
-            if dm_rooms.exists():
-                dm_room = dm_rooms.first()
-                
+            dm_room = ChatRoomMemberShip.find_dm_room(request.user, other_user)
+
+            if dm_room:
                 # 멤버십 찾기
-                my_membership = dm_room.membership_info_set.filter(
-                    user_id=request.user.id
-                ).first()
+                my_membership = ChatRoomMemberShip.get_membership(dm_room, request.user)
                 
-                other_membership = dm_room.membership_info_set.filter(
-                    user_id=other_user.id
-                ).first()
+                other_membership = ChatRoomMemberShip.get_membership(dm_room, other_user)
                 
                 # 차단 해제 처리
                 if my_membership:
@@ -312,15 +279,9 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        room = (
-            ChatRoom.objects.filter(room_type=ChatRoomType.DM.value)
-            .filter(membership_info_set__user_id=request.user.id)
-            .filter(membership_info_set__user_id=other_user.id)
-            .values("id")
-            .first()
-        )
+        room = ChatRoomMemberShip.find_dm_room(request.user, other_user)
 
-        data = {"dm_room": room["id"] if room else None}
+        data = {"dm_room": room.id if room else None}
 
         # 응답 직렬화 후 반환 (스웨거 스키마에도 반영됨)
         serializer = DMRoomLookupResponseSerializer(data)
