@@ -16,6 +16,10 @@ AWS_S3_BUCKET_NAME = env("AWS_BUCKET_NAME")
 
 AWS_S3_BUCKET_NAME_STATIC = env("AWS_BUCKET_NAME_STATIC")
 
+ATTACHMENT_UPLOAD_MAX_BYTES = env.int(
+    "ATTACHMENT_UPLOAD_MAX_BYTES", default=5 * 1024**3
+)
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
