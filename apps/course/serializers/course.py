@@ -11,6 +11,9 @@ class ProfessorSerializer(serializers.ModelSerializer):
 
 class CourseSerializer(serializers.ModelSerializer):
     professors = ProfessorSerializer(many=True, read_only=True)
+    otl_lecture_ids = serializers.ListField(
+        child=serializers.IntegerField(), read_only=True
+    )
     enrollment_count = serializers.IntegerField(read_only=True)
 
     class Meta:
@@ -24,6 +27,7 @@ class CourseSerializer(serializers.ModelSerializer):
             "semester",
             "credit",
             "professors",
+            "otl_lecture_ids",
             "enrollment_count",
             "last_synced_at",
         )
