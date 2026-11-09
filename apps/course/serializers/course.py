@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.course.models import Course, CourseGroup, Professor
@@ -34,6 +35,18 @@ class CourseSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class OfferedTermSerializer(serializers.Serializer):
+    """`CourseGroupSerializer.offered_terms` 항목의 schema 정의용.
+    (Swagger에 offered_terms의 type이 string으로 표시되었었음)
+    """
+
+    course_id = serializers.IntegerField()
+    year = serializers.IntegerField()
+    semester = serializers.IntegerField()
+    otl_lecture_ids = serializers.ListField(child=serializers.IntegerField())
+    enrollment_count = serializers.IntegerField(allow_null=True)
+
+
 class CourseGroupSerializer(serializers.ModelSerializer):
     """학기/연도 무관 누적 그룹. 겹치는 정보(코드/제목/교수)는 그룹 레벨에
     한 번만 두고, 학기마다 달라지는 값만 offered_terms 로 펼친다.
@@ -61,12 +74,14 @@ class CourseGroupSerializer(serializers.ModelSerializer):
         professors = sorted(professors_by_id.values(), key=lambda professor: professor.id)
         return ProfessorSerializer(professors, many=True).data
 
+    @extend_schema_field(OfferedTermSerializer(many=True))
     def get_offered_terms(self, obj):
         return [
             {
                 "course_id": course.id,
                 "year": course.year,
                 "semester": course.semester,
+                "otl_lecture_ids": course.otl_lecture_ids,
                 "enrollment_count": getattr(course, "enrollment_count", None),
             }
             for course in obj.courses.all()
