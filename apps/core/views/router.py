@@ -40,6 +40,7 @@ router.register(
     viewset=viewsets.BlockViewSet,
 )
 
+# S3 직접 업로드용 API: Cloudflare의 업로드 크기 제한에 대응한다.
 # Register before the attachment detail route, which also matches "uploads".
 router.register(
     prefix=r"attachments/uploads",

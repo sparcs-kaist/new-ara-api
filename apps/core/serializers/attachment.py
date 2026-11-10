@@ -20,9 +20,23 @@ class AttachmentSerializer(BaseAttachmentSerializer):
 
 
 class StartAttachmentUploadSerializer(serializers.Serializer):
-    filename = serializers.CharField(max_length=255)
-    alias = serializers.CharField(max_length=255, required=False, allow_blank=True)
-    size = serializers.IntegerField(min_value=1, max_value=S3_PUT_MAX_BYTES)
+    filename = serializers.CharField(
+        max_length=255, help_text="S3에 직접 업로드할 원본 파일명 (브라우저의 File.name)."
+    )
+    alias = serializers.CharField(
+        max_length=255,
+        required=False,
+        allow_blank=True,
+        help_text="표시할 파일명. 생략하거나 비우면 원본 파일명을 사용합니다.",
+    )
+    size = serializers.IntegerField(
+        min_value=1,
+        max_value=S3_PUT_MAX_BYTES,
+        help_text=(
+            "원본 파일 크기 (바이트, 브라우저의 File.size). "
+            "기본 최대 5GiB이며 배포 환경의 설정에 따라 더 낮을 수 있습니다."
+        ),
+    )
 
     def validate_filename(self, value: str) -> str:
         if "/" in value or "\\" in value:
@@ -37,7 +51,11 @@ class StartAttachmentUploadSerializer(serializers.Serializer):
 
 
 class AttachmentUploadSessionSerializer(serializers.Serializer):
-    id = serializers.UUIDField()
-    upload_url = serializers.URLField()
-    headers = serializers.DictField(child=serializers.CharField())
-    expires_in = serializers.IntegerField()
+    id = serializers.UUIDField(
+        help_text="완료 API에 사용할 업로드 세션 UUID. 게시글에 연결하는 Attachment.id와 다릅니다."
+    )
+    upload_url = serializers.URLField(help_text="원본 파일을 직접 PUT할 S3 업로드 URL.")
+    headers = serializers.DictField(
+        child=serializers.CharField(), help_text="S3 PUT 요청에 그대로 포함할 헤더."
+    )
+    expires_in = serializers.IntegerField(help_text="업로드 URL의 유효기간 (초).")
