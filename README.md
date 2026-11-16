@@ -38,6 +38,27 @@ make run
   - `/api/schema/swagger/`
   - `/api/schema/redoc/`
 
+## Article content format
+
+The `content` field remains a string and accepts either HTML or a serialized
+TipTap document (`{"type":"doc","content":[...]}`). The API sanitizes HTML as
+HTML, and validates TipTap nodes, marks, and URL attributes as structured data.
+TipTap text is plain text: `<Perception>` and the literal text `&lt;Perception&gt;`
+must remain distinct. JSON must never pass through `bleach.clean` or `linkify`.
+
+New TipTap documents carry the reserved root key `"ara_format":"ara-tiptap-v1"`.
+Clients should ignore this storage metadata and must not HTML-decode text inside
+these documents. On reading older unversioned JSON, the API repairs legacy
+linkification and decodes escaped values once, then returns versioned JSON.
+Subsequent saves persist that version, so an edit or a counter update cannot
+repeat the decoding. HTML articles retain their existing sanitization policy.
+
+This is a lazy compatibility conversion; no database migration or bulk rewrite
+is required. Legacy HTML sanitization already made a literal `&lt;` and `<`
+indistinguishable, so that original distinction cannot be reconstructed for old
+rows. Deploy the API together with the frontend change that removes client-side
+entity decoding and JSON repair.
+
 ## Direct attachment uploads to S3
 
 Use the existing Ara authentication for the start and completion requests.

@@ -24,6 +24,7 @@ from apps.core.serializers.mixins.hidden import (
 )
 from apps.core.serializers.topic import TopicSerializer
 from apps.user.serializers.user import PublicUserSerializer
+from ara.article_content import normalize_stored_content
 from ara.classes.serializers import MetaDataModelSerializer
 
 
@@ -74,7 +75,7 @@ class BaseArticleSerializer(HiddenSerializerMixin, MetaDataModelSerializer):
 
     def get_content(self, obj) -> str | None:
         if self.visible_verdict(obj):
-            return obj.content
+            return normalize_stored_content(obj.content)
         return None
 
     def get_created_by(self, obj) -> dict:

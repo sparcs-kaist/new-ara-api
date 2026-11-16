@@ -12,9 +12,9 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext
 
 from apps.user.models.user_profile import get_profile_picture
+from ara.article_content import normalize_stored_content, sanitize_article_content
 from ara.classes.decorator import cache_by_user
 from ara.db.models import MetaDataModel
-from ara.sanitizer import sanitize
 from ara.settings import (
     ANSWER_PERIOD,
     HASH_SECRET_VALUE,
@@ -228,6 +228,15 @@ class Article(MetaDataModel):
             ),
         ]
 
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+        if "content" in field_names:
+            # Legacy storage ran an HTML sanitizer over JSON. Normalize at the
+            # storage boundary, before reads or unrelated saves can reuse it.
+            instance.content = normalize_stored_content(instance.content)
+        return instance
+
     def __str__(self):
         return self.title
 
@@ -243,8 +252,9 @@ class Article(MetaDataModel):
                 "self.parent_board should be parent_board of self.parent_topic"
             )
 
-        if not self.parent_board.is_readonly:
-            self.content = sanitize(self.content)
+        self.content = sanitize_article_content(
+            self.content, sanitize_html=not self.parent_board.is_readonly
+        )
         if len(self.content) == 0 :
             self.content_text = ""
         elif self.content[0] == "{":
