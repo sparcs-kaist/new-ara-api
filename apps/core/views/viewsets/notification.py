@@ -1,4 +1,4 @@
-from rest_framework import decorators, response, serializers, status, viewsets
+from rest_framework import decorators, permissions, response, serializers, status, viewsets
 
 from apps.core.filters.notification import NotificationFilter
 from apps.core.models import Notification, NotificationReadLog
@@ -10,6 +10,7 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet, ActionAPIViewSet):
     queryset = Notification.objects.all()
     filterset_class = NotificationFilter
     serializer_class = NotificationSerializer
+    permission_classes = (permissions.IsAuthenticated,)
     action_serializer_class = {
         "read": serializers.Serializer,
         "read_all": serializers.Serializer,

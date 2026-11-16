@@ -1,4 +1,5 @@
 import pytest
+from rest_framework.test import APIClient
 
 from apps.chatting.models import (
     ChatMessage,
@@ -11,6 +12,16 @@ from apps.chatting.models import (
 )
 from apps.chatting.models.room import ChatNameType
 from tests.conftest import RequestSetting, TestCase, Utils
+
+
+def test_blocked_room_list_requires_authentication():
+    response = APIClient().get("/api/chat/room/blocked_list/")
+    assert response.status_code == 401
+
+
+def test_dm_detail_requires_authentication():
+    response = APIClient().get("/api/chat/dm/1/")
+    assert response.status_code == 401
 
 
 @pytest.fixture(scope="function")
