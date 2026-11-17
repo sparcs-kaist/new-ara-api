@@ -41,6 +41,7 @@ from apps.chatting.serializers.invitation import (
 )
 
 class ChatInvitationViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
+    http_method_names = ["get", "post", "delete", "head", "options"]
     queryset = ChatRoomInvitation.objects.all()
     serializer_class = ChatInvitationSerializer
 

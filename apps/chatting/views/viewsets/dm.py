@@ -61,6 +61,7 @@ class DMViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     
     action_permission_classes = {
         "list": (permissions.IsAuthenticated,),
+        "retrieve": (permissions.IsAuthenticated,),
         "create": (permissions.IsAuthenticated, CreateDMPermission,),
         "block": (permissions.IsAuthenticated, BlockDMPermission,),  # 권한 추가
         "unblock": (permissions.IsAuthenticated, UnblockDMPermission,),  # 권한 추가

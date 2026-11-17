@@ -40,7 +40,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         "leave": (permissions.IsAuthenticated, RoomLeavePermission),
         "read": (permissions.IsAuthenticated, RoomReadPermission),
         "block": (permissions.IsAuthenticated, RoomBlockPermission),
-        "blocked": (permissions.IsAuthenticated,),
+        "blocked_list": (permissions.IsAuthenticated,),
         "retrieve": (permissions.IsAuthenticated,),
         "partial_update": (permissions.IsAuthenticated,),
     }

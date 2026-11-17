@@ -1,8 +1,17 @@
 import pytest
 from django.test import override_settings
+from rest_framework.test import APIClient
 
 from apps.core.models import Article, Board, Comment, Notification, NotificationReadLog
 from tests.conftest import RequestSetting, TestCase, Utils
+
+
+def test_notification_endpoints_require_authentication():
+    client = APIClient()
+
+    assert client.get("/api/notifications/").status_code == 401
+    assert client.post("/api/notifications/read_all/").status_code == 401
+    assert client.post("/api/notifications/1/read/").status_code == 401
 
 
 @pytest.fixture(scope="class")
