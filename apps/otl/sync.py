@@ -259,20 +259,30 @@ def _apply_my_timetable(user, year: int, semester: int, payload: dict) -> None:
                 group.save(
                     update_fields=["title", "title_year", "title_semester"]
                 )
+            course_fields = {
+                "title": first["name"],
+                "otl_course_id": first["courseId"],
+                "credit": first["credit"],
+                "department_name": first["department_name"],
+                "group": group,
+            }
             course, created = Course.objects.update_or_create(
                 course_code=code,
                 year=year,
                 semester=semester,
                 professors_key=prof_key,
-                defaults={
-                    "title": first["name"],
-                    "otl_course_id": first["courseId"],
-                    "otl_lecture_ids": otl_lecture_ids,
-                    "credit": first["credit"],
-                    "department_name": first["department_name"],
-                    "group": group,
-                },
+                defaults=course_fields,
+                create_defaults={**course_fields, "otl_lecture_ids": otl_lecture_ids},
             )
+            # `my-timetable`은 이 user가 듣는 분반만 담으므로, 같은 Course row를 쓰는
+            # 다른 분반 user의 lecture id를 덮어쓰지 않도록 기존 값과 합집합으로 저장한다.
+            # update_or_create의 select_for_update lock이 outer atomic 동안 유지되어
+            # 동시 sync 간 lost update는 생기지 않는다.
+            if not created:
+                merged_lecture_ids = sorted(set(course.otl_lecture_ids) | set(otl_lecture_ids))
+                if merged_lecture_ids != course.otl_lecture_ids:
+                    course.otl_lecture_ids = merged_lecture_ids
+                    course.save(update_fields=["otl_lecture_ids"])
             course.professors.set(first["prof_ids"])
             course_ids.append(course.id)
             if created:
