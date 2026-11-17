@@ -1,6 +1,7 @@
 from rest_framework import routers
 
 from apps.core.views import viewsets
+from apps.core.views.viewsets.attachment_upload import AttachmentUploadViewSet
 
 router = routers.DefaultRouter()
 
@@ -37,6 +38,14 @@ router.register(
 router.register(
     prefix=r"blocks",
     viewset=viewsets.BlockViewSet,
+)
+
+# S3 직접 업로드용 API: Cloudflare의 업로드 크기 제한에 대응한다.
+# Register before the attachment detail route, which also matches "uploads".
+router.register(
+    prefix=r"attachments/uploads",
+    viewset=AttachmentUploadViewSet,
+    basename="attachment-upload",
 )
 
 # AttachmentViewSet
