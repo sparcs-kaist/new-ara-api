@@ -248,8 +248,7 @@ class Article(MetaDataModel):
         if len(self.content) == 0 :
             self.content_text = ""
         elif self.content[0] == "{":
-            self.content_text = ""
-            # self.content_text = self.extract_text_from_json(self.content) - for query optimization
+            self.content_text = self.extract_text_from_json(self.content)
         else:
             self.content_text = " ".join(
             bs4.BeautifulSoup(self.content, features="html5lib").find_all(string=True)
@@ -391,17 +390,20 @@ class Article(MetaDataModel):
         return reasons
 
     # json 형식에서 text 추출
-    def extract_text_from_json(self, data_string):
+    def extract_text_from_json(self, data_string: str) -> str:
         try:
             data = json.loads(data_string)
         except json.JSONDecodeError as e:
             return ""
 
         def traverse(node):
+            if not isinstance(node, dict):
+                return ""
             node_type = node.get("type")
 
             if node_type == "text":
-                return node.get("text", "")
+                text = node.get("text", "")
+                return text if isinstance(text, str) else ""
             if node_type == "hardBreak":
                 return "\n"
             if node_type in ["attachmentImage", "linkBookmark"]:
@@ -413,7 +415,9 @@ class Article(MetaDataModel):
                 for i, child_node in enumerate(content):
                     full_text += traverse(child_node)
                     
-                    child_type = child_node.get("type")
+                    child_type = (
+                        child_node.get("type") if isinstance(child_node, dict) else None
+                    )
                     if child_type in ["paragraph", "heading", "blockquote", "listItem", "codeBlock"]:
                         if i < len(content) - 1:
                             full_text += '\n'
@@ -436,10 +440,12 @@ class Article(MetaDataModel):
 
         if isinstance(node_list, list):
             for top_level_node in node_list:
+                if not isinstance(top_level_node, dict):
+                    continue
                 node_type = top_level_node.get("type")
                 
                 if node_type == "codeBlock":
-                    code_content = top_level_node.get("content", [{}])[0].get("text", "")
+                    code_content = traverse(top_level_node)
                     result_lines.append(code_content)
                     continue
 

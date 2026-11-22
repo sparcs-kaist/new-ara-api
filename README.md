@@ -38,6 +38,39 @@ make run
   - `/api/schema/swagger/`
   - `/api/schema/redoc/`
 
+## Article search
+
+Pass `main_search__contains` (the keyword) and `search_type` to article list
+requests. The dropdown values are:
+
+| Dropdown | `search_type` |
+| --- | --- |
+| 제목 | `title` |
+| 내용 | `content` |
+| 제목+내용 | `title_content` |
+| 작성자 | `author` |
+
+Example: `GET /api/articles/?main_search__contains=시험&search_type=title_content`
+
+The same parameters work on `/api/articles/top/`, `/api/articles/recent/`,
+`/api/courses/{course_id}/articles/`, and `/api/majors/{std_dept_id}/articles/`.
+Board filters, ordering, pagination, and access rules continue to apply.
+Content searches use plain text (`content_text`). Author searches partially
+match public nicknames and only return `REGULAR` articles; anonymous and
+real-name articles are excluded. An invalid mode returns `400` with a
+`search_type` error. An empty keyword leaves the list unfiltered.
+
+Omitting `search_type` preserves the existing behavior: general article
+search includes title, content, and nickname; course/major search includes
+title and content. The dropdown should always send an explicit mode.
+No database migration is required. On deployment, restore search text for
+existing JSON articles and rebuild the Elasticsearch index:
+
+```bash
+python manage.py backfill_article_content_text
+python manage.py search_index --rebuild
+```
+
 ## Direct attachment uploads to S3
 
 Use the existing Ara authentication for the start and completion requests.
