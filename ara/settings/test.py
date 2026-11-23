@@ -5,6 +5,14 @@ from ara.settings import *
 DEBUG = True
 TEST = True
 
+# Tests also run in images without the optional development tools.
+INSTALLED_APPS = [app for app in INSTALLED_APPS if app != "debug_toolbar"]
+MIDDLEWARE = [
+    middleware
+    for middleware in MIDDLEWARE
+    if middleware != "debug_toolbar.middleware.DebugToolbarMiddleware"
+]
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",

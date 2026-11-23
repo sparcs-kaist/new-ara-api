@@ -2,7 +2,7 @@
 
 Restful API for Ara, KAIST's official community service
 
-![GitHub Pipenv locked Python version (master)][badge/python-version]
+![Python version][badge/python-version]
 [![Code style: black][badge/black]][repo/black]
 [![Imports: isort][badge/isort]][isort]
 [![pre-commit][badge/pre-commit]][repo/pre-commit]
@@ -10,25 +10,111 @@ Restful API for Ara, KAIST's official community service
 
 ## Project Setup
 
-Use pipenv to install packages. (e.g., `pipenv install <package>`)
+Use Python 3.14.7 and [uv](https://docs.astral.sh/uv/getting-started/installation/)
+0.13.9 for new setups. Container builds pin uv 0.13.9. Existing local installations
+of uv `>=0.11.15,<0.14` can also use an already installed Python 3.14.7.
+The project uses `.python-version`, `pyproject.toml`, and the committed `uv.lock`
+for the Python interpreter, dependency policy, and exact resolved versions.
 
 ```bash
-pipenv --python 3.11 # Use python 3.11
-pipenv shell # Activate virtual environment
-pipenv install --dev # Install packages (`--dev` flag for development)
+uv python install
+uv sync --locked # Creates .venv, including development and test dependencies
 
 # Run `pre-commit` automatically on `git commit`
-pre-commit install
-pre-commit install --hook-type commit-msg
+uv run --locked pre-commit install
+uv run --locked pre-commit install --hook-type commit-msg
 ```
 
 ## How to Run
 
 ```bash
 docker compose -f docker-compose.local.yml up -d
-pipenv shell
 make run
 ```
+
+Configure `.env` for the services above before starting the API. For local
+file logging, set `LOG_FILE_PATH=logs/http_access.log` and create `logs/`.
+The Makefile runs Python commands through `uv run --locked`; activating a shell
+is optional. Editors should use `.venv/bin/python`.
+
+## Dependency changes
+
+```bash
+uv add 'package>=1,<2'              # Add a runtime dependency
+uv add --group dev package         # Add a development tool
+uv add --group test package        # Add a test dependency
+uv remove package
+uv lock --upgrade-package package  # Update one package within its allowed range
+uv lock --upgrade                  # Update all packages within their allowed ranges
+uv sync --locked
+uv lock --check
+```
+
+Commit `pyproject.toml` and `uv.lock` together. Major upgrades require reviewing
+the declared compatibility bounds as well as release notes. Production installs
+use `uv sync --locked --no-dev`; test-only installs add `--group test`.
+AWS CLI is an external tool rather than an application dependency; use AWS CLI
+v2 or `uvx --from awscli aws` when needed.
+
+The [dependency upgrade report](docs/dependency-upgrade.json) records previous
+and locked versions, dependency group changes, validation and deployment follow-up.
+Django stays on the 5.2 LTS patch series. The Elasticsearch libraries stay on 7.x
+to match the existing server; their major upgrade requires a server and index
+migration. `python-dateutil` stays below 3 to satisfy Botocore's requirements.
+Weekly Dependabot updates cover uv dependencies, GitHub Actions and Docker;
+Python dependency major upgrades remain deliberate compatibility changes.
+
+## Tests
+
+```bash
+make test_docker      # Builds the test image and runs the isolated integration suite
+make test_docker_down # Stops the test services
+```
+
+This environment has dedicated MySQL, Redis and Elasticsearch containers and uses
+dummy credentials with Firebase disabled. It does not require production secrets.
+Elasticsearch installs the Nori plugin on first startup and can take a few minutes.
+On Apple Silicon the retained Elasticsearch 7.9.2 image runs under amd64 emulation.
+
+For host-based tests, point the `NEWARA_*` variables at dedicated test services,
+set `FCM_DISABLED=1` and a writable `LOG_FILE_PATH`, then run:
+
+```bash
+make i18n_compile
+make test
+```
+
+Do not point tests at shared services: the fixtures clear application Redis keys
+and rebuild the test search index. The test settings run Celery tasks eagerly.
+To check the actual worker in the isolated environment:
+
+```bash
+docker compose -p newara-test -f docker-compose.test.yml --profile worker up -d celery
+docker compose -p newara-test -f docker-compose.test.yml exec celery celery -A ara inspect ping
+```
+
+## Container builds
+
+```bash
+docker build --target production -t newara:production .
+docker build --target development -t newara:development .
+docker build --target test -t newara:test .
+```
+
+The default target is `production`. Development and test images extend the same
+application layer, adding only their dependency groups. Supervisor, Gunicorn,
+Daphne and Celery use the image's `.venv/bin` via `PATH`.
+
+Environment files and Firebase service account keys are excluded from images.
+Supply environment variables at runtime and mount the Firebase key read-only at
+`/newara/www/firebaseServiceAccountKey.json` when push notifications are enabled.
+CI tests the test image and checks the production image before publishing it.
+
+Before deployment, verify migrations against a staging database, back up the
+database, and retain the previous image digest. Apply migrations once, restart
+the API and workers, and verify authentication, search, uploads, WebSockets,
+scheduled tasks and queue processing. Reverting an image does not undo database
+migrations; review schema compatibility before rolling back.
 
 ## URLs
 
@@ -85,7 +171,7 @@ to 5 GiB and can be lowered for the deployment.
 1. Follow [Conventional Commits][conventional-commits] for writing commit messages.
 2. Use type hints strictly. (Check [PEP 484][pep-484].)
 
-[badge/python-version]: https://img.shields.io/github/pipenv/locked/python-version/sparcs-kaist/new-ara-api/master
+[badge/python-version]: https://img.shields.io/badge/python-3.14.7-blue
 [badge/black]: https://img.shields.io/badge/code%20style-black-000000
 [badge/isort]: https://img.shields.io/badge/%20imports-isort-%231674b1?labelColor=ef8336
 [badge/pre-commit]: https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit

@@ -1,7 +1,7 @@
-from crypt import crypt
 from string import ascii_lowercase, ascii_uppercase, digits
 
 from django.db import models
+from passlib.hash import des_crypt
 
 from ara.db.models import MetaDataModel
 
@@ -39,7 +39,8 @@ class LegacyUser(MetaDataModel):
         @type raw_password: string
         @type salt: string
         """
-        pw = crypt(raw_password, salt)
+        # ARAra used two-character DES salts; retain those hashes after crypt's removal.
+        pw = des_crypt.using(salt=salt[:2]).hash(raw_password)
         asc1 = pw[1:2]
         asc2 = pw[3:4]
 
@@ -51,7 +52,7 @@ class LegacyUser(MetaDataModel):
         except TypeError:
             pass
         while True:
-            pw = crypt(pw, pw)
+            pw = des_crypt.using(salt=pw[:2]).hash(pw)
             i += 1
             if not (i % 13 != 0):
                 break

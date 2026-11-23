@@ -1,9 +1,11 @@
 from typing import Any
 
-from pydantic import BaseModel, PrivateAttr
+from pydantic import BaseModel, ConfigDict, PrivateAttr
 
 
 class AraEntity(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     _updated_fields: set[str] = PrivateAttr(set())
 
     @property
@@ -26,10 +28,6 @@ class AraEntity(BaseModel):
             self._updated_fields.add(name)
         return super().__setattr__(name, value)
 
-    class Config:
-        arbitrary_types_allowed = True
-
 
 class AraEntityCreateInput(BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)

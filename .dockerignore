@@ -24,3 +24,12 @@
 **/local_settings.py
 LICENSE
 README.md
+.venv
+.uv-cache
+__pycache__
+.pytest_cache
+htmlcov
+logs
+env
+firebaseServiceAccountKey*.json
+**/.env.*

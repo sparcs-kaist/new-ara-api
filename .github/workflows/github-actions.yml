@@ -8,60 +8,61 @@ on:
   pull_request:
   release:
     types: [created]
+
 env:
   PROJECT_NAME: newara
   GHCR_IMAGE: ghcr.io/sparcs-kaist/new-ara-api
-  SECRET_KEY: ${{ secrets.SECRET_KEY }}
-  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  SSO_CLIENT_ID: ${{ secrets.SSO_CLIENT_ID }}
-  SSO_SECRET_KEY: ${{ secrets.SSO_SECRET_KEY }}
-  FIREBASE_SERVICE_ACCOUNT_KEY_DEV: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY_DEV }}
-  FIREBASE_SERVICE_ACCOUNT_KEY_PROD: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY_PROD }}
-  AWS_REGION: ap-northeast-2
+  COMPOSE_PROJECT_NAME: newara-ci
+  NEWARA_TEST_IMAGE: newara:test
 
 jobs:
   deploy:
-    name: Run Tests
-    runs-on: ubuntu-22.04
+    name: Build and test
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: write
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
+
+      - name: Select image tag
+        run: |
+          . .github/workflows/generate-docker-tag.sh
+          echo "PUSH=$PUSH" >> "$GITHUB_ENV"
+          echo "DOCKER_TAG=$DOCKER_TAG" >> "$GITHUB_ENV"
+
+      - name: Build production image
+        run: docker build --target production -t "$PROJECT_NAME:production" .
+
+      - name: Build test image
+        run: docker build --target test -t "$NEWARA_TEST_IMAGE" .
+
+      - name: Check production dependencies
+        run: |
+          docker run --rm --entrypoint python \
+            -e DJANGO_ENV=production -e FCM_DISABLED=1 \
+            -e LOG_FILE_PATH=/tmp/ara-check.log \
+            "$PROJECT_NAME:production" manage.py check
+
+      - name: Run tests
+        run: docker compose -f docker-compose.test.yml run --rm api test
+
+      - name: Clean up test services
+        if: always()
+        run: docker compose -f docker-compose.test.yml down --volumes --remove-orphans
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        if: env.PUSH == 'true'
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install
+      - name: Push production image
+        if: env.PUSH == 'true'
         run: |
-          chmod +x .github/workflows/generate-docker-tag.sh
-          touch firebaseServiceAccountKey.json
-          . .github/workflows/generate-docker-tag.sh
-          echo "PUSH=$PUSH" >> $GITHUB_ENV
-          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
-          echo "DJANGO_ENV=$DJANGO_ENV" >> $GITHUB_ENV
-          docker pull ${{ env.GHCR_IMAGE }}:$DJANGO_ENV || true
-
-      - name: Build
-        run: |
-          docker build --build-arg AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --build-arg AWS_SECRET_ACCESS_KEY=$(echo $AWS_SECRET_ACCESS_KEY) --cache-from $ECR/$PROJECT_NAME:$DJANGO_ENV  -t $PROJECT_NAME .
-
-      - name: Run test
-        run: |
-          docker compose -f docker-compose.test.yml run api test
-          docker compose -f docker-compose.test.yml down
-
-      - if: env.PUSH == 'true'
-        name: Push docker image
-        run: |
-          echo "Start docker image push to GHCR"
-          docker tag $PROJECT_NAME ${{ env.GHCR_IMAGE }}:$DOCKER_TAG
-          docker push ${{ env.GHCR_IMAGE }}:$DOCKER_TAG
-          echo "Finish docker image push"
+          docker tag "$PROJECT_NAME:production" "$GHCR_IMAGE:$DOCKER_TAG"
+          docker push "$GHCR_IMAGE:$DOCKER_TAG"

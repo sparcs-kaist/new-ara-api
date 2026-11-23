@@ -1,4 +1,3 @@
-import socket
 from datetime import datetime, timezone
 
 from ara.settings import INSTALLED_APPS, LOGGING, MIDDLEWARE
@@ -30,13 +29,11 @@ INSTALLED_APPS += [
 MIDDLEWARE += [
     "corsheaders.middleware.CorsMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
-    "debug_toolbar_force.middleware.ForceDebugToolbarMiddleware",
 ]
 
 # https://django-debug-toolbar.readthedocs.io/
 
-_, _, ips = socket.gethostbyname_ex(socket.gethostname())
-INTERNAL_IPS = [ip[: ip.rfind(".")] + ".1" for ip in ips] + [
+INTERNAL_IPS = [
     "127.0.0.1",
     "10.0.2.2",
 ]
@@ -48,7 +45,7 @@ DEBUG_TOOLBAR_CONFIG = {
 REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = (
     "rest_framework.authentication.BasicAuthentication",
     "ara.authentication.CsrfExemptSessionAuthentication",
-    "ara.authentication.OneAppJWTAuthentication", #OneApp전용 JWT 인증 Class
+    "ara.authentication.OneAppJWTAuthentication",  # OneApp전용 JWT 인증 Class
 )
 
 LOGGING["disable_existing_loggers"] = False
