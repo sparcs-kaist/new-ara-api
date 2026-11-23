@@ -7,6 +7,7 @@ from django.http import Http404
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
+from drf_spectacular.utils import extend_schema
 from rest_framework import (
     decorators,
     permissions,
@@ -21,8 +22,11 @@ from apps.core.article_scope import (
     exclude_scoped_articles,
     scoped_article_sql_condition,
 )
-from apps.core.documents import ArticleDocument
 from apps.core.filters.article import ArticleFilter
+from apps.core.filters.article_search import (
+    ARTICLE_SEARCH_PARAMETERS,
+    filter_article_search,
+)
 from apps.core.models import (
     Article,
     ArticleDeleteLog,
@@ -109,6 +113,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
     }
 
     # Override list action for further optimization
+    @extend_schema(parameters=ARTICLE_SEARCH_PARAMETERS)
     def list(self, request):
         queryset = self.filter_queryset(self.get_queryset())
 
@@ -459,12 +464,14 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
 
         return response.Response(status=status.HTTP_200_OK)
 
+    @extend_schema(parameters=ARTICLE_SEARCH_PARAMETERS)
     @decorators.action(detail=False, methods=["get"])
     def recent(self, request, *args, **kwargs):
-        search_keyword = request.query_params.get("main_search__contains")
+        search_keyword = request.query_params.get("main_search__contains", "").strip()
+        search_queryset = filter_article_search(self.get_queryset(), request, general=True)
         search_restriction_sql = ""
         if search_keyword:
-            id_set = ArticleDocument.get_main_search_id_set(search_keyword)
+            id_set = list(search_queryset.values_list("id", flat=True))
             if id_set:
                 search_restriction_sql = "AND `core_articlereadlog`.`article_id` IN %s"
             else:
@@ -526,6 +533,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
         )
         return self.paginator.get_paginated_response(serializer.data)
 
+    @extend_schema(parameters=ARTICLE_SEARCH_PARAMETERS)
     @decorators.action(detail=False, methods=["get"])
     def top(self, request):
         current_date = datetime.datetime.combine(
@@ -543,10 +551,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
             .prefetch_related("article_metadata_set")  # prefetch 추가
         )
 
-        search_keyword = request.query_params.get("main_search__contains")
-        if search_keyword:
-            id_set = ArticleDocument.get_main_search_id_set(search_keyword)
-            top_articles = top_articles.filter(id__in=id_set)
+        top_articles = filter_article_search(top_articles, request, general=True)
 
         page = self.paginate_queryset(top_articles)
         if page is not None:

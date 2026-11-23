@@ -1,10 +1,10 @@
-from django_filters.rest_framework import CharFilter, FilterSet
+from django_filters.rest_framework import CharFilter
 
-from apps.core.documents import ArticleDocument
+from apps.core.filters.article_search import GeneralArticleSearchFilter
 from apps.core.models import Article
 
 
-class ArticleFilter(FilterSet):
+class ArticleFilter(GeneralArticleSearchFilter):
     board = CharFilter(field_name="parent_board__slug", lookup_expr="exact")
 
     class Meta:
@@ -52,13 +52,3 @@ class ArticleFilter(FilterSet):
                 "lt",
             ],
         }
-
-    main_search__contains = CharFilter(
-        field_name="main_search",
-        label="메인 검색 (제목포함, 본문포함, 닉네임일치)",
-        method="get_main_search__contains",
-    )
-
-    @staticmethod
-    def get_main_search__contains(queryset, name, value):
-        return queryset.filter(id__in=ArticleDocument.get_main_search_id_set(value))

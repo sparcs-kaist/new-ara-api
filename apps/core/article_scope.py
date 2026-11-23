@@ -44,9 +44,6 @@ def scoped_article_sql_condition(table: str = "`core_article`") -> str:
 
 # 과목/학과 글 목록 검색. ES 는 권한 구분 없이 최신 500건만 줘서 DB 에서 찾는다
 def search_scoped_articles(queryset, request):
-    from django.db.models import Q
+    from apps.core.filters.article_search import filter_article_search
 
-    keyword = request.query_params.get("main_search__contains", "").strip()
-    if not keyword:
-        return queryset
-    return queryset.filter(Q(title__icontains=keyword) | Q(content_text__icontains=keyword))
+    return filter_article_search(queryset, request)

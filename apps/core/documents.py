@@ -44,7 +44,6 @@ newline_analyzer = analyzer(
 
 @registry.register_document
 class ArticleDocument(Document):
-
     title = fields.TextField(
         attr="title", analyzer=ngram_analyzer, search_analyzer=newline_analyzer
     )
@@ -96,7 +95,14 @@ class ArticleDocument(Document):
         ]
 
     @staticmethod
-    def get_main_search_id_set(value):
+    def get_main_search_id_set(value: str, search_type: str | None = None) -> list[str]:
+        # 모드가 없으면 기존 통합 검색 범위를 유지한다.
+        search_fields = {
+            None: ["title", "content_text", "created_by_nickname"],
+            "title": ["title"],
+            "content": ["content_text"],
+            "title_content": ["title", "content_text"],
+        }
         qt = "multi_match"  # query type: match. Use search_analyzer
         es_search_str = "".join([f"{x.replace('_',' ')}\n" for x in value.split()])
 
@@ -104,7 +110,7 @@ class ArticleDocument(Document):
             Q(
                 qt,
                 query=es_search_str,
-                fields=["title", "content_text", "created_by_nickname"],
+                fields=search_fields[search_type],
             )
         )
 

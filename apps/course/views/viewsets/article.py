@@ -11,11 +11,11 @@ URL: /api/courses/<course_id>/articles/[<pk>/]
 from __future__ import annotations
 
 from django.shortcuts import get_object_or_404
-from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import permissions, response, status, viewsets
 
 from apps.core.article_scope import search_scoped_articles
+from apps.core.filters.article_search import ARTICLE_SEARCH_PARAMETERS
 from apps.core.models import Article, ArticleReadLog, Comment, Scrap, Vote
 from apps.course.board import get_courses_board_id
 from apps.course.models import Course
@@ -84,7 +84,7 @@ class CourseArticleViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         summary="과목 게시판 글 목록",
-        parameters=[OpenApiParameter("main_search__contains", OpenApiTypes.STR, description="제목 / 본문")],
+        parameters=ARTICLE_SEARCH_PARAMETERS,
     )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
