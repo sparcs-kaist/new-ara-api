@@ -3,6 +3,7 @@ from django.db import transaction
 from django.utils import timezone
 from tqdm import tqdm
 from datetime import timedelta
+from urllib.parse import parse_qs, urlparse
 
 from apps.core.models import Article
 from apps.kaist.models import Post, PostViewCountLog
@@ -22,9 +23,44 @@ User = get_user_model()
 class Worker:
     PORTAL_NOTICE_BOARD_ID = 1
 
+    # Portal responses omit Ara links; preserve them when refreshing snapshots.
     _updatable_fields: tuple[str] = tuple(
-        Post._meta._non_pk_concrete_field_names - {"created_at"}
+        Post._meta._non_pk_concrete_field_names
+        - {"created_at", "ara_article", "ara_article_id"}
     )
+
+    @classmethod
+    def get_latest_saved_post(cls) -> Post:
+        latest_article = (
+            Article.objects.filter(parent_board__slug="portal-notice")
+            .order_by("-created_at", "-id")
+            .first()
+        )
+        if latest_article is None:
+            return Post.objects.latest("registered_at")
+
+        post = Post.objects.filter(ara_article_id=latest_article.id).first()
+        if post is not None:
+            return post
+
+        # Older imports can have an Article without a corresponding Post.
+        # Rebuild its tracking record instead of skipping to the portal's latest.
+        url = urlparse(latest_article.url or "")
+        raw_id = url.fragment or parse_qs(url.query).get("bltnNo", [""])[0]
+        if not raw_id.isdecimal():
+            raise ValueError(
+                f"Portal article {latest_article.id} has no valid portal post ID"
+            )
+
+        post = Crawler.get_post(int(raw_id))
+        post, _ = Post.objects.update_or_create(
+            id=post.id,
+            defaults={
+                **{field: getattr(post, field) for field in cls._updatable_fields},
+                "ara_article_id": latest_article.id,
+            },
+        )
+        return post
 
     @staticmethod
     def find_valid_anchor_start_id(latest_post : Post) -> int:
@@ -54,7 +90,7 @@ class Worker:
         """
 
         Crawler.update_session_id()
-        latest_post = Post.objects.latest("created_at")
+        latest_post = Worker.get_latest_saved_post()
 
         start_id = Worker.find_valid_anchor_start_id(latest_post)
 

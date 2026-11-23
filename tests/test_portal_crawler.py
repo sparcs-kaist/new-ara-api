@@ -3,6 +3,7 @@ from unittest.mock import patch
 import requests
 from django.test import SimpleTestCase
 
+from apps.core.models import Article
 from apps.kaist.models import Post
 from apps.kaist.portal import crawler, worker
 from apps.kaist.portal.crawler import (
@@ -79,7 +80,7 @@ class PortalSessionTest(SimpleTestCase):
 
         self.redis_get.side_effect = [b"first-session", b"second-session"]
         with (
-            patch.object(Post.objects, "latest", return_value=post),
+            patch.object(Worker, "get_latest_saved_post", return_value=post),
             patch.object(worker, "CrawlIterator", return_value=(post,)),
             patch.object(Crawler, "_parse_response", return_value=post),
             patch.object(Crawler._session, "send", side_effect=send),
@@ -139,9 +140,95 @@ class PortalSessionTest(SimpleTestCase):
         with (
             patch.object(crawler, "PORTAL_JSESSIONID", ""),
             patch.object(Worker, "_send_session_expired_alert") as alert,
-            patch.object(Post.objects, "latest") as latest,
+            patch.object(Worker, "get_latest_saved_post") as latest,
         ):
             Worker.fetch_and_save_from_the_latest(32)
 
         alert.assert_called_once_with()
         latest.assert_not_called()
+
+
+class PortalAnchorTest(SimpleTestCase):
+    def setUp(self):
+        self.article = Article(
+            id=456, url="https://portal.kaist.ac.kr/kaist/portal/board/ntc/0#123"
+        )
+        articles_patch = patch.object(Article.objects, "filter")
+        self.articles = articles_patch.start()
+        self.addCleanup(articles_patch.stop)
+        self.article_query = self.articles.return_value.order_by.return_value
+        self.article_query.first.return_value = self.article
+
+        posts_patch = patch.object(Post.objects, "filter")
+        self.posts = posts_patch.start()
+        self.addCleanup(posts_patch.stop)
+        self.posts.return_value.first.return_value = None
+
+    def test_anchors_to_latest_published_article_instead_of_tracking_insert_time(self):
+        linked = Post(id=123, ara_article_id=self.article.id)
+        self.posts.return_value.first.return_value = linked
+        with patch.object(Post.objects, "latest") as tracking_latest:
+            self.assertIs(Worker.get_latest_saved_post(), linked)
+
+        self.articles.assert_called_once_with(parent_board__slug="portal-notice")
+        self.articles.return_value.order_by.assert_called_once_with(
+            "-created_at", "-id"
+        )
+        self.posts.assert_called_once_with(ara_article_id=self.article.id)
+        tracking_latest.assert_not_called()
+
+    def test_rebuilds_unlinked_article_tracking_without_creating_an_article(self):
+        fresh = Post(id=123)
+        with (
+            patch.object(Crawler, "get_post", return_value=fresh) as get_post,
+            patch.object(
+                Post.objects, "update_or_create", return_value=(fresh, True)
+            ) as save,
+            patch.object(Article.objects, "create") as create_article,
+            patch.object(Crawler, "_get_recent_post_id") as portal_latest,
+        ):
+            self.assertIs(Worker.get_latest_saved_post(), fresh)
+
+        get_post.assert_called_once_with(123)
+        self.assertEqual(save.call_args.kwargs["id"], 123)
+        defaults = save.call_args.kwargs["defaults"]
+        self.assertEqual(defaults["ara_article_id"], self.article.id)
+        self.assertNotIn("created_at", defaults)
+        create_article.assert_not_called()
+        portal_latest.assert_not_called()
+
+    def test_supports_legacy_portal_links(self):
+        self.article.url = (
+            "https://portal.kaist.ac.kr/board/read.brd?boardId=today_notice&bltnNo=123"
+        )
+        fresh = Post(id=123)
+        with (
+            patch.object(Crawler, "get_post", return_value=fresh) as get_post,
+            patch.object(Post.objects, "update_or_create", return_value=(fresh, True)),
+        ):
+            Worker.get_latest_saved_post()
+        get_post.assert_called_once_with(123)
+
+    def test_invalid_latest_article_link_does_not_skip_unpublished_posts(self):
+        for url in (
+            None,
+            "https://portal.kaist.ac.kr/",
+            "https://portal.kaist.ac.kr/#invalid",
+        ):
+            with self.subTest(url=url):
+                self.article.url = url
+                with (
+                    patch.object(Crawler, "get_post") as get_post,
+                    patch.object(Crawler, "_get_recent_post_id") as portal_latest,
+                    self.assertRaisesMessage(ValueError, "no valid portal post ID"),
+                ):
+                    Worker.get_latest_saved_post()
+                get_post.assert_not_called()
+                portal_latest.assert_not_called()
+
+    def test_without_published_articles_uses_original_post_date(self):
+        self.article_query.first.return_value = None
+        post = Post(id=123)
+        with patch.object(Post.objects, "latest", return_value=post) as latest:
+            self.assertIs(Worker.get_latest_saved_post(), post)
+        latest.assert_called_once_with("registered_at")
