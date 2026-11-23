@@ -53,6 +53,7 @@ class Worker:
         :param visualize: Whether to visualize the crawling progress
         """
 
+        Crawler.update_session_id()
         latest_post = Post.objects.latest("created_at")
 
         start_id = Worker.find_valid_anchor_start_id(latest_post)
@@ -96,6 +97,7 @@ class Worker:
     @classmethod
     def fetch_and_save_single(cls, post_id: int) -> None:
         try:
+            Crawler.update_session_id()
             post = Crawler.get_post(post_id)
         except DeletedPostException:
             return
