@@ -1,4 +1,5 @@
 import hashlib
+from collections.abc import Iterable, Sequence
 from enum import Enum
 
 import bs4
@@ -231,9 +232,32 @@ class Article(MetaDataModel):
     def __str__(self):
         return self.title
 
+    @classmethod
+    def from_db(
+        cls, db: str, field_names: Sequence[str], values: Sequence[object]
+    ) -> "Article":
+        instance = super().from_db(db, field_names, values)
+        # Deferred content는 읽지 않고, 추가 SELECT 없이 변경 여부를 비교한다.
+        instance._saved_content = instance.__dict__.get("content", models.DEFERRED)
+        return instance
+
+    def refresh_from_db(
+        self,
+        using: str | None = None,
+        fields: Iterable[str] | None = None,
+        from_queryset: models.QuerySet | None = None,
+    ) -> None:
+        if fields is not None:
+            fields = set(fields)
+        super().refresh_from_db(using=using, fields=fields, from_queryset=from_queryset)
+        if fields is None or "content" in fields:
+            self._saved_content = self.__dict__.get("content", models.DEFERRED)
+
     def save(
         self, force_insert=False, force_update=False, using=None, update_fields=None
     ):
+        if update_fields is not None:
+            update_fields = frozenset(update_fields)
         try:
             if self.parent_topic:
                 assert self.parent_topic.parent_board == self.parent_board
@@ -243,16 +267,26 @@ class Article(MetaDataModel):
                 "self.parent_board should be parent_board of self.parent_topic"
             )
 
-        if not self.parent_board.is_readonly:
-            self.content = sanitize(self.content)
-        if len(self.content) == 0 :
-            self.content_text = ""
-        elif self.content[0] == "{":
-            self.content_text = self.extract_text_from_json(self.content)
-        else:
-            self.content_text = " ".join(
-            bs4.BeautifulSoup(self.content, features="html5lib").find_all(string=True)
-            )
+        content = self.__dict__.get("content", models.DEFERRED)
+        saves_content = content is not models.DEFERRED and (
+            update_fields is None or "content" in update_fields
+        )
+        if saves_content and (
+            self._state.adding
+            or content != getattr(self, "_saved_content", models.DEFERRED)
+        ):
+            if not self.parent_board.is_readonly:
+                self.content = sanitize(self.content)
+            if not self.content:
+                self.content_text = ""
+            elif self.content[0] == "{":
+                self.content_text = self.extract_text_from_json(self.content)
+            else:
+                self.content_text = " ".join(
+                    bs4.BeautifulSoup(self.content, features="html5lib").find_all(string=True)
+                )
+            if update_fields is not None:
+                update_fields = set(update_fields) | {"content_text"}
 
         super().save(
             force_insert=force_insert,
@@ -260,6 +294,8 @@ class Article(MetaDataModel):
             using=using,
             update_fields=update_fields,
         )
+        if saves_content:
+            self._saved_content = self.content
 
     def update_hit_count(self):
         self.hit_count = (
