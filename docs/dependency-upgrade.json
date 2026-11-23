@@ -1,0 +1,1736 @@
+{
+  "reviewed_on": "2026-11-23",
+  "baseline_python": "3.11.15",
+  "target_python": "3.14.7",
+  "uv_version": "0.13.9",
+  "lock_sha256": "9feb8191149ce37f97d46cd6e7ed3d67cce6b6bf85af61894930eceeb39f5ffc",
+  "summary": {
+    "updated": 109,
+    "retained": 44,
+    "removed": 7,
+    "added": 5
+  },
+  "validation": {
+    "linux_docker_suite": "328 passed on Python 3.14.7, after rebuilding the isolated test image against the develop base.",
+    "django_checks": "Development and production checks passed.",
+    "model_migrations": "No changes detected.",
+    "runtime_audit": {
+      "tool": "pip-audit 2.10.1",
+      "known_vulnerabilities": 0
+    },
+    "worker": "A real Celery 5.7 worker completed a task through the isolated Redis broker and result backend.",
+    "websocket": "A WebSocket connection sent and received a message through the real Redis channel layer.",
+    "format_and_hooks": "All pre-commit checks passed for the changed files.",
+    "container_targets": "Production, development and test image builds passed.",
+    "local_uv": "uv 0.11.15 read the final lock, synced it without changes and ran Python 3.14.7.",
+    "all_dependencies_audit": {
+      "tool": "pip-audit 2.10.1",
+      "known_vulnerabilities": 0
+    },
+    "base_revision": "fda8f92705dca4d4e8f1d2e517ecc4dbaa260891"
+  },
+  "deployment_notes": [
+    "Runtime environment variables must be supplied by the deployment configuration.",
+    "Mount the Firebase service account read-only at /newara/www/firebaseServiceAccountKey.json; credentials are no longer baked into images.",
+    "Do not upgrade an existing database or Elasticsearch data volume by only changing image tags."
+  ],
+  "pending_external_validation": [
+    "Staging checks against real SSO, S3, SES, Firebase and Sentry accounts.",
+    "Production database backup, deployment window and rollback verification.",
+    "Elasticsearch server/client major migration including Nori, synonyms and index switching."
+  ],
+  "dependencies": [
+    {
+      "name": "amqp",
+      "previous_version": "5.3.1",
+      "locked_versions": [
+        "5.4.2"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "annotated-types",
+      "previous_version": "0.7.0",
+      "locked_versions": [
+        "0.8.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "anyio",
+      "previous_version": "4.13.0",
+      "locked_versions": [
+        "4.16.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "asgiref",
+      "previous_version": "3.11.1",
+      "locked_versions": [
+        "3.13.0"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<4,>=3.13.0",
+      "latest_stable_seen": "3.13.0"
+    },
+    {
+      "name": "asttokens",
+      "previous_version": "3.0.1",
+      "locked_versions": [
+        "3.0.2"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "attrs",
+      "previous_version": "26.1.0",
+      "locked_versions": [
+        "26.1.0"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "autobahn",
+      "previous_version": "25.12.2",
+      "locked_versions": [
+        "26.11.1"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "automat",
+      "previous_version": "25.4.16",
+      "locked_versions": [
+        "25.4.16"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "awscli",
+      "previous_version": "1.45.2",
+      "locked_versions": [],
+      "decision": "removed",
+      "reason": "Move the CLI outside the application environment; use AWS CLI v2 or uvx."
+    },
+    {
+      "name": "beautifulsoup4",
+      "previous_version": "4.14.3",
+      "locked_versions": [
+        "4.15.0"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<5,>=4.15.0",
+      "latest_stable_seen": "4.15.0"
+    },
+    {
+      "name": "billiard",
+      "previous_version": "4.2.4",
+      "locked_versions": [
+        "4.3.2"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "black",
+      "previous_version": "26.3.1",
+      "locked_versions": [
+        "26.10.1"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "dev"
+      ],
+      "declared_range": "<27,>=26.10.1",
+      "latest_stable_seen": "26.10.1"
+    },
+    {
+      "name": "bleach",
+      "previous_version": "6.3.0",
+      "locked_versions": [
+        "6.4.0"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<7,>=6.4.0",
+      "latest_stable_seen": "6.4.0"
+    },
+    {
+      "name": "boto3",
+      "previous_version": "1.43.2",
+      "locked_versions": [
+        "1.44.9"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<2,>=1.44.9",
+      "latest_stable_seen": "1.44.9"
+    },
+    {
+      "name": "botocore",
+      "previous_version": "1.43.2",
+      "locked_versions": [
+        "1.44.9"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<2,>=1.44.9",
+      "latest_stable_seen": "1.44.9"
+    },
+    {
+      "name": "cachecontrol",
+      "previous_version": "0.14.4",
+      "locked_versions": [
+        "0.15.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "cbor2",
+      "previous_version": "6.0.1",
+      "locked_versions": [
+        "5.9.0",
+        "6.3.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "celery",
+      "previous_version": "5.6.3",
+      "locked_versions": [
+        "5.7.0"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<6,>=5.7.0",
+      "latest_stable_seen": "5.7.0"
+    },
+    {
+      "name": "certifi",
+      "previous_version": "2026.4.22",
+      "locked_versions": [
+        "2026.11.20"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "cffi",
+      "previous_version": "2.0.0",
+      "locked_versions": [
+        "2.1.1"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "cfgv",
+      "previous_version": "3.5.0",
+      "locked_versions": [
+        "3.5.0"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "channels",
+      "previous_version": "4.3.2",
+      "locked_versions": [
+        "4.3.2"
+      ],
+      "decision": "retained",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<5,>=4.3.2",
+      "latest_stable_seen": "4.3.2"
+    },
+    {
+      "name": "channels-redis",
+      "previous_version": "4.3.0",
+      "locked_versions": [
+        "4.3.0"
+      ],
+      "decision": "retained",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<5,>=4.3.0",
+      "latest_stable_seen": "4.3.0"
+    },
+    {
+      "name": "charset-normalizer",
+      "previous_version": "3.4.7",
+      "locked_versions": [
+        "3.5.3"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "click",
+      "previous_version": "8.3.3",
+      "locked_versions": [
+        "8.5.1"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "click-didyoumean",
+      "previous_version": "0.3.1",
+      "locked_versions": [
+        "0.3.1"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "click-plugins",
+      "previous_version": "1.1.1.2",
+      "locked_versions": [
+        "1.1.1.2"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "click-repl",
+      "previous_version": "0.3.0",
+      "locked_versions": [
+        "0.4.1"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "colorama",
+      "previous_version": "0.4.6",
+      "locked_versions": [
+        "0.4.6"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "constantly",
+      "previous_version": "23.10.4",
+      "locked_versions": [
+        "23.10.4"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "coverage",
+      "previous_version": "7.13.5",
+      "locked_versions": [
+        "7.17.4"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "cron-descriptor",
+      "previous_version": "1.4.5",
+      "locked_versions": [
+        "1.4.5"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "cryptography",
+      "previous_version": "47.0.0",
+      "locked_versions": [
+        "50.0.2"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "daphne",
+      "previous_version": "4.2.1",
+      "locked_versions": [
+        "4.2.3"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<5,>=4.2.3",
+      "latest_stable_seen": "4.2.3"
+    },
+    {
+      "name": "decorator",
+      "previous_version": "5.2.1",
+      "locked_versions": [],
+      "decision": "removed",
+      "reason": "No longer required by the resolved dependency graph."
+    },
+    {
+      "name": "distlib",
+      "previous_version": "0.4.0",
+      "locked_versions": [
+        "0.4.4"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "django",
+      "previous_version": "5.2.13",
+      "locked_versions": [
+        "5.2.19"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<5.3,>=5.2.19",
+      "latest_stable_seen": "6.1.3",
+      "reason": "Keep Django 5.2 LTS. Review the 6.1 major upgrade separately."
+    },
+    {
+      "name": "django-cacheops",
+      "previous_version": "7.2",
+      "locked_versions": [
+        "7.2"
+      ],
+      "decision": "retained",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<8,>=7.2",
+      "latest_stable_seen": "7.2"
+    },
+    {
+      "name": "django-celery-beat",
+      "previous_version": "2.9.0",
+      "locked_versions": [
+        "2.9.0"
+      ],
+      "decision": "retained",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<3,>=2.9.0",
+      "latest_stable_seen": "2.9.0"
+    },
+    {
+      "name": "django-celery-results",
+      "previous_version": "2.6.0",
+      "locked_versions": [
+        "2.6.0"
+      ],
+      "decision": "retained",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<3,>=2.6.0",
+      "latest_stable_seen": "2.6.0"
+    },
+    {
+      "name": "django-cors-headers",
+      "previous_version": "4.9.0",
+      "locked_versions": [
+        "4.9.0"
+      ],
+      "decision": "retained",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<5,>=4.9.0",
+      "latest_stable_seen": "4.9.0"
+    },
+    {
+      "name": "django-debug-toolbar",
+      "previous_version": "6.3.0",
+      "locked_versions": [
+        "8.0.0"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "dev"
+      ],
+      "declared_range": "<9,>=8.0.0",
+      "latest_stable_seen": "8.0.0",
+      "reason": "Moved from runtime requirements to the development dependency group."
+    },
+    {
+      "name": "django-debug-toolbar-force",
+      "previous_version": "0.2",
+      "locked_versions": [],
+      "decision": "removed",
+      "reason": "Use the native SHOW_TOOLBAR_CALLBACK instead of the extra middleware."
+    },
+    {
+      "name": "django-elasticsearch-dsl",
+      "previous_version": "7.4",
+      "locked_versions": [
+        "7.4"
+      ],
+      "decision": "retained",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<8,>=7.4",
+      "latest_stable_seen": "9.0",
+      "reason": "Match the existing Elasticsearch 7 server. Upgrade with the server and index migration."
+    },
+    {
+      "name": "django-environ",
+      "previous_version": "0.13.0",
+      "locked_versions": [
+        "0.14.0"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<0.15,>=0.14.0",
+      "latest_stable_seen": "0.14.0"
+    },
+    {
+      "name": "django-extensions",
+      "previous_version": "4.1",
+      "locked_versions": [
+        "4.1"
+      ],
+      "decision": "retained",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<5,>=4.1",
+      "latest_stable_seen": "4.1"
+    },
+    {
+      "name": "django-filter",
+      "previous_version": "25.2",
+      "locked_versions": [
+        "26.2"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<27,>=26.2",
+      "latest_stable_seen": "26.2"
+    },
+    {
+      "name": "django-nine",
+      "previous_version": "0.2.7",
+      "locked_versions": [],
+      "decision": "removed",
+      "reason": "No longer required by the resolved dependency graph."
+    },
+    {
+      "name": "django-redis",
+      "previous_version": "6.0.0",
+      "locked_versions": [
+        "7.0.0"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<8,>=7.0.0",
+      "latest_stable_seen": "7.0.0"
+    },
+    {
+      "name": "django-s3-storage",
+      "previous_version": "0.15.0",
+      "locked_versions": [
+        "0.15.0"
+      ],
+      "decision": "retained",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<0.16,>=0.15.0",
+      "latest_stable_seen": "0.15.0"
+    },
+    {
+      "name": "django-ses",
+      "previous_version": "4.7.2",
+      "locked_versions": [
+        "4.9.1"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<5,>=4.9.1",
+      "latest_stable_seen": "4.9.1"
+    },
+    {
+      "name": "django-timezone-field",
+      "previous_version": "7.2.1",
+      "locked_versions": [
+        "7.2.2"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "djangorestframework",
+      "previous_version": "3.17.1",
+      "locked_versions": [
+        "3.18.3"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<4,>=3.18.3",
+      "latest_stable_seen": "3.18.3"
+    },
+    {
+      "name": "djangorestframework-simplejwt",
+      "previous_version": "5.5.1",
+      "locked_versions": [
+        "5.5.1"
+      ],
+      "decision": "retained",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<6,>=5.5.1",
+      "latest_stable_seen": "5.5.1"
+    },
+    {
+      "name": "docutils",
+      "previous_version": "0.19",
+      "locked_versions": [],
+      "decision": "removed",
+      "reason": "No longer required by the resolved dependency graph."
+    },
+    {
+      "name": "drf-spectacular",
+      "previous_version": "0.29.0",
+      "locked_versions": [
+        "0.30.0"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<0.31,>=0.30.0",
+      "latest_stable_seen": "0.30.0"
+    },
+    {
+      "name": "elasticsearch",
+      "previous_version": "7.17.13",
+      "locked_versions": [
+        "7.17.13"
+      ],
+      "decision": "retained",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<8,>=7.17.13",
+      "latest_stable_seen": "9.5.1",
+      "reason": "Match the existing Elasticsearch 7 server. Upgrade with the server and index migration."
+    },
+    {
+      "name": "elasticsearch-dsl",
+      "previous_version": "7.4.1",
+      "locked_versions": [
+        "7.4.1"
+      ],
+      "decision": "retained",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<8,>=7.4.1",
+      "latest_stable_seen": "8.18.0",
+      "reason": "Match the existing Elasticsearch 7 server. Upgrade with the server and index migration."
+    },
+    {
+      "name": "executing",
+      "previous_version": "2.2.1",
+      "locked_versions": [
+        "2.3.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "filelock",
+      "previous_version": "3.29.0",
+      "locked_versions": [
+        "4.3.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "firebase-admin",
+      "previous_version": "7.4.0",
+      "locked_versions": [
+        "7.8.0"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<8,>=7.8.0",
+      "latest_stable_seen": "7.8.0"
+    },
+    {
+      "name": "funcy",
+      "previous_version": "2.0",
+      "locked_versions": [
+        "2.1"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "google-api-core",
+      "previous_version": "2.30.3",
+      "locked_versions": [
+        "2.44.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "google-auth",
+      "previous_version": "2.50.0",
+      "locked_versions": [
+        "2.63.1"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "google-cloud-core",
+      "previous_version": "2.5.1",
+      "locked_versions": [
+        "2.8.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "google-cloud-firestore",
+      "previous_version": "2.27.0",
+      "locked_versions": [
+        "2.34.1"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "google-cloud-storage",
+      "previous_version": "3.10.1",
+      "locked_versions": [
+        "3.17.1"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "google-crc32c",
+      "previous_version": "1.8.0",
+      "locked_versions": [
+        "1.9.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "google-resumable-media",
+      "previous_version": "2.8.2",
+      "locked_versions": [
+        "2.11.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "googleapis-common-protos",
+      "previous_version": "1.74.0",
+      "locked_versions": [
+        "1.76.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "grpcio",
+      "previous_version": "1.80.0",
+      "locked_versions": [
+        "1.85.3"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "grpcio-status",
+      "previous_version": "1.80.0",
+      "locked_versions": [
+        "1.85.3"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "gunicorn",
+      "previous_version": "25.3.0",
+      "locked_versions": [
+        "27.0.1"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<28,>=27.0.1",
+      "latest_stable_seen": "27.0.1"
+    },
+    {
+      "name": "h11",
+      "previous_version": "0.16.0",
+      "locked_versions": [
+        "0.16.0"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "h2",
+      "previous_version": "4.3.0",
+      "locked_versions": [
+        "4.4.1"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "hpack",
+      "previous_version": "4.1.0",
+      "locked_versions": [
+        "4.2.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "html5lib",
+      "previous_version": "1.1",
+      "locked_versions": [
+        "1.1"
+      ],
+      "decision": "retained",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<2,>=1.1",
+      "latest_stable_seen": "1.1"
+    },
+    {
+      "name": "httpcore",
+      "previous_version": "1.0.9",
+      "locked_versions": [
+        "1.0.9"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "httpx",
+      "previous_version": "0.28.1",
+      "locked_versions": [
+        "0.28.1"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "hyperframe",
+      "previous_version": "6.1.0",
+      "locked_versions": [
+        "6.1.0"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "hyperlink",
+      "previous_version": "21.0.0",
+      "locked_versions": [
+        "21.0.0"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "identify",
+      "previous_version": "2.6.19",
+      "locked_versions": [
+        "2.6.20"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "idna",
+      "previous_version": "3.13",
+      "locked_versions": [
+        "3.20"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "incremental",
+      "previous_version": "24.11.0",
+      "locked_versions": [
+        "24.11.0"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "inflection",
+      "previous_version": "0.5.1",
+      "locked_versions": [
+        "0.5.1"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "iniconfig",
+      "previous_version": "2.3.0",
+      "locked_versions": [
+        "2.3.1"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "ipython",
+      "previous_version": "9.13.0",
+      "locked_versions": [
+        "9.18.1"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "dev"
+      ],
+      "declared_range": "<10,>=9.18.1",
+      "latest_stable_seen": "9.18.1"
+    },
+    {
+      "name": "ipython-pygments-lexers",
+      "previous_version": "1.1.1",
+      "locked_versions": [
+        "1.1.1"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "isort",
+      "previous_version": "8.0.1",
+      "locked_versions": [
+        "9.0.2"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "dev"
+      ],
+      "declared_range": "<10,>=9.0.2",
+      "latest_stable_seen": "9.0.2"
+    },
+    {
+      "name": "jedi",
+      "previous_version": "0.20.0",
+      "locked_versions": [
+        "0.20.1"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "jmespath",
+      "previous_version": "1.1.0",
+      "locked_versions": [
+        "1.1.0"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "jsonschema",
+      "previous_version": "4.26.0",
+      "locked_versions": [
+        "4.26.0"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "jsonschema-specifications",
+      "previous_version": "2025.9.1",
+      "locked_versions": [
+        "2025.9.1"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "kombu",
+      "previous_version": "5.6.2",
+      "locked_versions": [
+        "5.7.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "lxml",
+      "previous_version": "6.1.0",
+      "locked_versions": [
+        "6.1.3"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<7,>=6.1.3",
+      "latest_stable_seen": "6.1.3"
+    },
+    {
+      "name": "matplotlib-inline",
+      "previous_version": "0.2.1",
+      "locked_versions": [
+        "0.2.2"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "msgpack",
+      "previous_version": "1.1.2",
+      "locked_versions": [
+        "1.2.4"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "mypy-extensions",
+      "previous_version": "1.1.0",
+      "locked_versions": [
+        "1.2.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "mysqlclient",
+      "previous_version": "2.2.8",
+      "locked_versions": [
+        "2.3.2"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<3,>=2.3.2",
+      "latest_stable_seen": "2.3.2"
+    },
+    {
+      "name": "nodeenv",
+      "previous_version": "1.10.0",
+      "locked_versions": [
+        "1.12.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "opentelemetry-api",
+      "previous_version": null,
+      "locked_versions": [
+        "1.45.2"
+      ],
+      "decision": "added",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "packaging",
+      "previous_version": "26.2",
+      "locked_versions": [
+        "26.3"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "parso",
+      "previous_version": "0.8.7",
+      "locked_versions": [
+        "0.8.7"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "passlib",
+      "previous_version": null,
+      "locked_versions": [
+        "1.9.5"
+      ],
+      "decision": "added",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<2,>=1.9.5"
+    },
+    {
+      "name": "pathspec",
+      "previous_version": "1.1.1",
+      "locked_versions": [
+        "1.1.1"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "pexpect",
+      "previous_version": null,
+      "locked_versions": [
+        "4.9.0"
+      ],
+      "decision": "added",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "pillow",
+      "previous_version": "12.2.0",
+      "locked_versions": [
+        "13.0.0"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<14,>=13.0.0",
+      "latest_stable_seen": "13.0.0"
+    },
+    {
+      "name": "platformdirs",
+      "previous_version": "4.9.6",
+      "locked_versions": [
+        "4.14.8"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "pluggy",
+      "previous_version": "1.6.0",
+      "locked_versions": [
+        "1.7.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "pre-commit",
+      "previous_version": "4.6.0",
+      "locked_versions": [
+        "4.7.0"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "dev"
+      ],
+      "declared_range": "<5,>=4.7.0",
+      "latest_stable_seen": "4.7.0"
+    },
+    {
+      "name": "prompt-toolkit",
+      "previous_version": "3.0.52",
+      "locked_versions": [
+        "3.0.53"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "proto-plus",
+      "previous_version": "1.27.2",
+      "locked_versions": [
+        "1.29.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "protobuf",
+      "previous_version": "6.33.6",
+      "locked_versions": [
+        "7.36.2"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "psutil",
+      "previous_version": "7.2.2",
+      "locked_versions": [
+        "7.2.2"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "ptyprocess",
+      "previous_version": null,
+      "locked_versions": [
+        "0.7.0"
+      ],
+      "decision": "added",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "pure-eval",
+      "previous_version": "0.2.3",
+      "locked_versions": [
+        "0.2.4"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "py-ubjson",
+      "previous_version": "0.16.1",
+      "locked_versions": [],
+      "decision": "removed",
+      "reason": "No longer required by the resolved dependency graph."
+    },
+    {
+      "name": "pyasn1",
+      "previous_version": "0.6.3",
+      "locked_versions": [
+        "0.6.5"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "pyasn1-modules",
+      "previous_version": "0.4.2",
+      "locked_versions": [
+        "0.4.2"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "pycparser",
+      "previous_version": "3.0",
+      "locked_versions": [
+        "3.12"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "pydantic",
+      "previous_version": "2.13.3",
+      "locked_versions": [
+        "2.14.4"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<3,>=2.14.4",
+      "latest_stable_seen": "2.14.4"
+    },
+    {
+      "name": "pydantic-core",
+      "previous_version": "2.46.3",
+      "locked_versions": [
+        "2.50.5"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "pygments",
+      "previous_version": "2.20.0",
+      "locked_versions": [
+        "2.21.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "pyjwt",
+      "previous_version": "2.12.1",
+      "locked_versions": [
+        "2.15.1"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<3,>=2.15.1",
+      "latest_stable_seen": "2.15.1"
+    },
+    {
+      "name": "pyopenssl",
+      "previous_version": "26.1.0",
+      "locked_versions": [
+        "26.4.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "pytest",
+      "previous_version": "9.0.3",
+      "locked_versions": [
+        "9.2.0"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "test"
+      ],
+      "declared_range": "<10,>=9.2.0",
+      "latest_stable_seen": "9.2.0",
+      "reason": "Moved from runtime requirements to the test dependency group."
+    },
+    {
+      "name": "pytest-cov",
+      "previous_version": "7.1.0",
+      "locked_versions": [
+        "7.1.0"
+      ],
+      "decision": "retained",
+      "direct_dependency_groups": [
+        "test"
+      ],
+      "declared_range": "<8,>=7.1.0",
+      "latest_stable_seen": "7.1.0"
+    },
+    {
+      "name": "pytest-django",
+      "previous_version": "4.12.0",
+      "locked_versions": [
+        "4.14.0"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "test"
+      ],
+      "declared_range": "<5,>=4.14.0",
+      "latest_stable_seen": "4.14.0",
+      "reason": "Moved from runtime requirements to the test dependency group."
+    },
+    {
+      "name": "python-crontab",
+      "previous_version": "3.3.0",
+      "locked_versions": [
+        "3.4.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "python-dateutil",
+      "previous_version": "2.9.0.post0",
+      "locked_versions": [
+        "2.9.0.post0"
+      ],
+      "decision": "retained",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<3,>=2.9.0.post0",
+      "latest_stable_seen": "4.0.0",
+      "reason": "Botocore requires python-dateutil<3. Current application use of relativedelta/parser is retained."
+    },
+    {
+      "name": "python-discovery",
+      "previous_version": "1.2.2",
+      "locked_versions": [
+        "1.9.6"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "python-dotenv",
+      "previous_version": "1.2.2",
+      "locked_versions": [
+        "1.2.4"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<2,>=1.2.4",
+      "latest_stable_seen": "1.2.4"
+    },
+    {
+      "name": "pytokens",
+      "previous_version": "0.4.1",
+      "locked_versions": [
+        "0.4.1"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "pytz",
+      "previous_version": "2026.2",
+      "locked_versions": [
+        "2026.6"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<2027,>=2026.6",
+      "latest_stable_seen": "2026.6"
+    },
+    {
+      "name": "pyyaml",
+      "previous_version": "5.3.1",
+      "locked_versions": [
+        "6.0.4"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<7,>=6.0.4",
+      "latest_stable_seen": "6.0.4"
+    },
+    {
+      "name": "redis",
+      "previous_version": "7.4.0",
+      "locked_versions": [
+        "8.1.0"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<9,>=8.1.0",
+      "latest_stable_seen": "8.1.0"
+    },
+    {
+      "name": "referencing",
+      "previous_version": "0.37.0",
+      "locked_versions": [
+        "0.37.0"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "requests",
+      "previous_version": "2.33.1",
+      "locked_versions": [
+        "2.34.2"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<3,>=2.34.2",
+      "latest_stable_seen": "2.34.2"
+    },
+    {
+      "name": "rpds-py",
+      "previous_version": "0.30.0",
+      "locked_versions": [
+        "2026.9.1"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "rsa",
+      "previous_version": "4.7.2",
+      "locked_versions": [],
+      "decision": "removed",
+      "reason": "No longer required by the resolved dependency graph."
+    },
+    {
+      "name": "s3transfer",
+      "previous_version": "0.17.0",
+      "locked_versions": [
+        "0.19.3"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "sentry-sdk",
+      "previous_version": "2.59.0",
+      "locked_versions": [
+        "2.75.0"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<3,>=2.75.0",
+      "latest_stable_seen": "2.75.0"
+    },
+    {
+      "name": "service-identity",
+      "previous_version": "24.2.0",
+      "locked_versions": [
+        "26.1.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "six",
+      "previous_version": "1.17.0",
+      "locked_versions": [
+        "1.17.0"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "slack-sdk",
+      "previous_version": "3.41.0",
+      "locked_versions": [
+        "3.48.0"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<4,>=3.48.0",
+      "latest_stable_seen": "3.48.0"
+    },
+    {
+      "name": "soupsieve",
+      "previous_version": "2.8.3",
+      "locked_versions": [
+        "4.1.3"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "sqlparse",
+      "previous_version": "0.5.5",
+      "locked_versions": [
+        "0.6.1"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "stack-data",
+      "previous_version": "0.6.3",
+      "locked_versions": [
+        "0.6.3"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "tqdm",
+      "previous_version": "4.67.3",
+      "locked_versions": [
+        "4.70.1"
+      ],
+      "decision": "updated",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<5,>=4.70.1",
+      "latest_stable_seen": "4.70.1"
+    },
+    {
+      "name": "traitlets",
+      "previous_version": "5.14.3",
+      "locked_versions": [
+        "5.16.1"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "twisted",
+      "previous_version": "25.5.0",
+      "locked_versions": [
+        "26.10.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "txaio",
+      "previous_version": "25.12.2",
+      "locked_versions": [
+        "26.6.1"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "typing-extensions",
+      "previous_version": "4.15.0",
+      "locked_versions": [
+        "4.16.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "typing-inspection",
+      "previous_version": "0.4.2",
+      "locked_versions": [
+        "0.4.5"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "tzdata",
+      "previous_version": "2026.2",
+      "locked_versions": [
+        "2026.6"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "tzlocal",
+      "previous_version": "5.3.1",
+      "locked_versions": [
+        "5.4.5"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "u-msgpack-python",
+      "previous_version": null,
+      "locked_versions": [
+        "2.9.0"
+      ],
+      "decision": "added",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "ujson",
+      "previous_version": "5.12.0",
+      "locked_versions": [
+        "6.1.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "uritemplate",
+      "previous_version": "4.2.0",
+      "locked_versions": [
+        "4.2.0"
+      ],
+      "decision": "retained",
+      "direct_dependency_groups": [
+        "runtime"
+      ],
+      "declared_range": "<5,>=4.2.0",
+      "latest_stable_seen": "4.2.0"
+    },
+    {
+      "name": "urllib3",
+      "previous_version": "2.6.3",
+      "locked_versions": [
+        "2.8.0"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "vine",
+      "previous_version": "5.1.0",
+      "locked_versions": [
+        "5.1.0"
+      ],
+      "decision": "retained",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "virtualenv",
+      "previous_version": "21.3.0",
+      "locked_versions": [
+        "21.15.12"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "wcwidth",
+      "previous_version": "0.7.0",
+      "locked_versions": [
+        "0.9.5"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "webencodings",
+      "previous_version": "0.5.1",
+      "locked_versions": [
+        "0.6.1"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    },
+    {
+      "name": "zope-interface",
+      "previous_version": "8.4",
+      "locked_versions": [
+        "8.7"
+      ],
+      "decision": "updated",
+      "reason": "Resolved transitively within the declared compatibility ranges."
+    }
+  ],
+  "minimum_local_uv_version": "0.11.15"
+}

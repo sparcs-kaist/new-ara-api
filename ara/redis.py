@@ -107,4 +107,9 @@ class Pipeline(PrefixedRedis, PyRedisPipeline):
         )
 
 
-redis = Redis(settings.REDIS_HOST, "newara:", db=settings.REDIS_DATABASE)
+redis = Redis(
+    settings.REDIS_HOST,
+    "newara:",
+    port=int(settings.REDIS_PORT),
+    db=settings.REDIS_DATABASE,
+)

@@ -1,89 +1,92 @@
-version: "3"
+x-test-environment: &test-environment
+  DJANGO_SETTINGS_MODULE: ara.settings.test
+  DJANGO_ENV: development
+  SECRET_KEY: isolated-test-secret-not-for-production
+  ONE_APP_JWT_SECRET: isolated-test-jwt-secret-not-for-production
+  FCM_DISABLED: "1"
+  AWS_EC2_METADATA_DISABLED: "true"
+  AWS_BUCKET_NAME: ara-test
+  AWS_BUCKET_NAME_STATIC: ara-test-static
+  AWS_ACCESS_KEY_ID: testing
+  AWS_SECRET_ACCESS_KEY: testing
+  SSO_CLIENT_ID: testing
+  SSO_SECRET_KEY: testing
+  PORTAL_JSESSIONID: ""
+  NEWARA_DB_HOST: db
+  NEWARA_DB_PORT: "3306"
+  NEWARA_DB_USER: root
+  NEWARA_DB_PASSWORD: root-password
+  NEWARA_DB_NAME: new_ara
+  NEWARA_REDIS_ADDRESS: redis
+  NEWARA_REDIS_PORT: "6379"
+  NEWARA_REDIS_DATABASE: "2"
+  NEWARA_ELASTICSEARCH_HOST: elastic
+  NEWARA_ELASTICSEARCH_PORT: "9200"
+
+x-test-dependencies: &test-dependencies
+  db:
+    condition: service_healthy
+  redis:
+    condition: service_healthy
+  elastic:
+    condition: service_healthy
 
 services:
   api:
-    image: newara
-    depends_on:
-      - celery
-      - db
-      - redis
-      - elastic
-    environment:
-      - DJANGO_SETTINGS_MODULE=ara.settings.test
-      - DJANGO_ENV=${DJANGO_ENV}
-      - SECRET_KEY=${SECRET_KEY}
-      - AWS_BUCKET_NAME=sparcs-newara-dev
-      - AWS_BUCKET_NAME_STATIC=sparcs-kaist-ara-beta-static
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - SSO_CLIENT_ID=${SSO_CLIENT_ID}
-      - SSO_SECRET_KEY=${SSO_SECRET_KEY}
-      - NEWARA_DB_HOST=db
-      - NEWARA_DB_PORT=3306
-      - NEWARA_DB_USER=root
-      - NEWARA_DB_PASSWORD=root-password
-      - NEWARA_DB_NAME=new_ara
-      - NEWARA_REDIS_ADDRESS=redis
-      - NEWARA_REDIS_PORT=6379
-      - NEWARA_ELASTICSEARCH_HOST=elastic
-      - NEWARA_ELASTICSEARCH_PORT=9200
+    image: ${NEWARA_TEST_IMAGE:-newara:test}
+    build:
+      context: .
+      target: test
+    depends_on: *test-dependencies
+    environment: *test-environment
     entrypoint: /newara/www/.docker/run.sh
-    volumes:
-      - synonym:/newara/www/ara/db/elasticsearch
+    command: test
 
   celery:
-    image: newara
-    depends_on:
-      - db
-      - redis
-      - elastic
+    image: ${NEWARA_TEST_IMAGE:-newara:test}
+    profiles: [worker]
+    depends_on: *test-dependencies
     environment:
-      - DJANGO_SETTINGS_MODULE=main.settings.test
-      - DJANGO_ENV=${DJANGO_ENV}
-      - SECRET_KEY=${SECRET_KEY}
-      - AWS_BUCKET_NAME=sparcs-newara-dev
-      - AWS_BUCKET_NAME_STATIC=sparcs-kaist-ara-beta-static
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - SSO_CLIENT_ID=${SSO_CLIENT_ID}
-      - SSO_SECRET_KEY=${SSO_SECRET_KEY}
-      - NEWARA_DB_HOST=db
-      - NEWARA_DB_PORT=3306
-      - NEWARA_DB_USER=root
-      - NEWARA_DB_PASSWORD=root-password
-      - NEWARA_DB_NAME=new_ara
-      - NEWARA_REDIS_ADDRESS=redis
-      - NEWARA_REDIS_PORT=6379
-      - NEWARA_ELASTICSEARCH_HOST=elastic
-      - NEWARA_ELASTICSEARCH_PORT=9200
-      - C_FORCE_ROOT=true
+      <<: *test-environment
+      C_FORCE_ROOT: "true"
     entrypoint: /newara/www/.docker/run-celery.sh
 
   db:
-    image: mysql:8
-    expose:
-      - 3306
+    image: mysql:8.4.13
     environment:
-      - MYSQL_ROOT_PASSWORD=root-password
-      - MYSQL_DATABASE=new_ara
+      MYSQL_ROOT_PASSWORD: root-password
+      MYSQL_DATABASE: new_ara
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: [CMD-SHELL, "mysqladmin ping -h 127.0.0.1 -proot-password --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
 
   redis:
-    image: redis:6
-    expose:
-      - 6379
+    image: redis:6.2
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   elastic:
+    # Retained with the 7.x Python clients until the search migration is complete.
     image: elasticsearch:7.9.2
-    expose:
-      - 9200
+    platform: linux/amd64
     environment:
-      - discovery.type=single-node
+      discovery.type: single-node
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
     command: >
-      bash -c "bin/elasticsearch-plugin list | grep -q analysis-nori || bin/elasticsearch-plugin install --batch analysis-nori
-      && /usr/local/bin/docker-entrypoint.sh"
+      bash -c "bin/elasticsearch-plugin list | grep -qx analysis-nori || bin/elasticsearch-plugin install --batch analysis-nori;
+      exec /usr/local/bin/docker-entrypoint.sh"
     volumes:
-      - synonym:/usr/share/elasticsearch/config/analysis
-
-volumes:
-  synonym:
+      - ./ara/db/elasticsearch/synonym.txt:/usr/share/elasticsearch/config/analysis/synonym.txt:ro
+    healthcheck:
+      test: [CMD-SHELL, "curl -fsS 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s' > /dev/null"]
+      interval: 5s
+      timeout: 10s
+      retries: 60
+      start_period: 30s
