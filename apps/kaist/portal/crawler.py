@@ -166,9 +166,15 @@ class Crawler:
 
     @classmethod
     def update_session_id(cls) -> None:
-        new_session_id = redis.get(cls.SESSION_REDIS_KEY).decode()
-        if new_session_id is not None:
-            log.info(
-                f"KAIST Portal Crawler :: JSESSIONID updated to ({new_session_id})"
-            )
-            cls._session.cookies.set(cls.SESSION_KEY, new_session_id)
+        stored_session_id = redis.get(cls.SESSION_REDIS_KEY)
+        new_session_id = (
+            stored_session_id.decode() if stored_session_id else PORTAL_JSESSIONID
+        )
+        if not new_session_id:
+            raise SessionExpiredException("No portal JSESSIONID configured")
+
+        # A response may have added a domain-scoped JSESSIONID. Replacing only
+        # the unscoped cookie leaves both values in subsequent requests.
+        cls._session.cookies.clear()
+        cls._session.cookies.set(cls.SESSION_KEY, new_session_id)
+        log.info("KAIST Portal Crawler :: JSESSIONID refreshed")
